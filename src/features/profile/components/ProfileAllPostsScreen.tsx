@@ -272,9 +272,19 @@ export function ProfileAllPostsScreen({
       ? parentPath
       : (savedPath && !savedPath.includes("/posts") && !savedPath.startsWith("/post/"))
         ? savedPath
-        : (userId && !isOwner ? `/profile/${userId}` : "/feed");
+        : (userId && !isOwner ? `/profile/${userId}` : "/profile");
 
-    router.push(targetPath);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("cocpit_profile_posts_parent_path");
+    }
+
+    // If navigated from within the app, use router.back() to pop the posts screen off the history stack
+    // so going back from the profile does not navigate back into the posts screen
+    if (typeof window !== "undefined" && window.history.length > 1 && (parentPath || savedPath)) {
+      router.back();
+    } else {
+      router.replace(targetPath);
+    }
   };
 
   // Client-side filtering per active sub-tab

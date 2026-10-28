@@ -803,7 +803,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentProfile?.type === 'COMPANY' && currentProfile.id === payload.orgId) {
         if (
           typeof window !== 'undefined' &&
-          (sessionStorage.getItem('cocpit_is_deactivating') === 'true' ||
+          ((window as any).__cocpit_is_deactivating ||
+            (window as any).__cocpit_is_deleting ||
+            sessionStorage.getItem('cocpit_is_deactivating') === 'true' ||
+
             sessionStorage.getItem('cocpit_is_deleting') === 'true')
         ) {
           return;
@@ -845,6 +848,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         String(currentProfile.id) === String(targetOrgId) &&
         (payload.status === 'deleted' || payload.status === 'deactivated' || payload.action === 'deleted')
       ) {
+        if (
+          typeof window !== 'undefined' &&
+          ((window as any).__cocpit_is_deactivating ||
+            (window as any).__cocpit_is_deleting ||
+            sessionStorage.getItem('cocpit_is_deactivating') === 'true' ||
+            sessionStorage.getItem('cocpit_is_deleting') === 'true')
+        ) {
+          return;
+        }
         if (switchProfile && session?.user?.id) {
           switchProfile('USER', session.user.id);
         }

@@ -208,6 +208,7 @@ export default function AddProjectForm({
       }
     }
 
+    if (roleDescription.length > 2000) return;
     if (!title.trim() || !details.trim() || missingEndDate || hasDateLogicError || teamSizeError) return;
 
     setIsSaving(true);
@@ -726,12 +727,18 @@ export default function AddProjectForm({
 
               {/* Role description (Height aligned to CSS layer specs: 90px) */}
               <div className="flex flex-col">
-                <Label className={labelStyles}>Role description</Label>
+                <div className="flex justify-between items-center mb-[8px]">
+                  <Label className={labelStyles}>Role description</Label>
+                  <span className={cn("text-[10px] block font-['DM_Sans']", roleDescription.length >= 2000 ? "text-destructive" : "text-muted-foreground")}>
+                    {roleDescription.length}/2000
+                  </span>
+                </div>
                 <Textarea
                   value={roleDescription}
+                  maxLength={2000}
                   onChange={(e) => setRoleDescription(e.target.value)}
                   placeholder="Describe your work, impact, or achievements"
-                  className="w-full h-[90px] min-h-[90px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none"
+                  className={cn("w-full h-[90px] min-h-[90px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none", roleDescription.length >= 2000 && "border-destructive")}
                 />
               </div>
             </div>

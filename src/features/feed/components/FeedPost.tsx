@@ -99,6 +99,18 @@ export const FeedPost = (props: FeedPostProps) => {
     likedUsers: targetLikedUsers
   } = interactionTargetProps as any;
 
+  // Fallback: if backend didn't return sample_liker_username but liked_users has entries,
+  // pick the first liker that isn't the post author so LikeBar always has a name to show.
+  const resolvedSampleLikerUsername: string | undefined =
+    targetSampleLikerUsername ||
+    (Array.isArray(targetLikedUsers) && targetLikedUsers.length > 0
+      ? (targetLikedUsers.find(
+          (u: any) =>
+            u.username &&
+            u.username.toLowerCase() !== (targetAuthor as string | undefined)?.toLowerCase()
+        )?.username ?? targetLikedUsers[0]?.username ?? undefined)
+      : undefined);
+
   const hasImages = Boolean(
     (targetImageSrc && typeof targetImageSrc === 'string' && targetImageSrc.trim() !== '') ||
     (Array.isArray(targetImages) && targetImages.length > 0)
@@ -875,7 +887,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 tags={targetTags}
                 likeCount={likeCount}
                 isLiked={isLiked}
-                sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+                sampleLikerUsername={resolvedSampleLikerUsername ?? undefined}
                 likedUsers={targetLikedUsers}
                 viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
                 onShowLikes={() => handleOpenLikesModal()}
@@ -902,7 +914,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 tags={targetTags}
                 likeCount={likeCount}
                 isLiked={isLiked}
-                sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+                sampleLikerUsername={resolvedSampleLikerUsername ?? undefined}
                 likedUsers={targetLikedUsers}
                 viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
                 onShowLikes={() => handleOpenLikesModal()}
@@ -980,7 +992,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 tags={targetTags}
                 likeCount={likeCount}
                 isLiked={isLiked}
-                sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+                sampleLikerUsername={resolvedSampleLikerUsername ?? undefined}
                 likedUsers={targetLikedUsers}
                 viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
                 onShowLikes={() => handleOpenLikesModal()}
@@ -1015,7 +1027,7 @@ export const FeedPost = (props: FeedPostProps) => {
         <LikeBar
           likeCount={likeCount}
           isLiked={isLiked}
-          sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+          sampleLikerUsername={resolvedSampleLikerUsername ?? undefined}
           likedUsers={targetLikedUsers}
           viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
           onShowLikes={() => handleOpenLikesModal()}

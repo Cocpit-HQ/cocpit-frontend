@@ -133,6 +133,8 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, mention
               );
             }
 
+            // Disabled hashtag navigation: do not redirect to any page
+            /*
             return (
               <Fragment key={i}>
                 {leadingSpace}
@@ -144,6 +146,18 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, mention
                 >
                   #{hashtagMatch[2]}
                 </Link>
+              </Fragment>
+            );
+            */
+            return (
+              <Fragment key={i}>
+                {leadingSpace}
+                <span
+                  className="inline-block px-1 -mx-1 text-ds-text-primary text-[var(--ds-text-primary)] !text-[var(--ds-text-primary)] font-semibold"
+                  style={{ color: 'var(--ds-text-primary)' }}
+                >
+                  #{hashtagMatch[2]}
+                </span>
               </Fragment>
             );
           }

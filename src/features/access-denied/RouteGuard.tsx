@@ -39,6 +39,19 @@ export default function RouteGuard({
   const { activeProfile, isCompany, isLoading } = useActiveProfile();
   const { checkPermission } = useCompanyPermissions(activeProfile);
 
+  // During company deactivation or deletion transition, retain existing children
+  // to avoid flashing AccessDenied while the browser redirects to the destination
+  const isTransitioning =
+    typeof window !== 'undefined' &&
+    ((window as any).__cocpit_is_deactivating ||
+      (window as any).__cocpit_is_deleting ||
+      sessionStorage.getItem('cocpit_is_deactivating') === 'true' ||
+      sessionStorage.getItem('cocpit_is_deleting') === 'true');
+
+  if (isTransitioning) {
+    return <>{children}</>;
+  }
+
   // While the active profile is still loading, show a loader.
   // This prevents children from mounting and firing API calls.
   if (isLoading) {

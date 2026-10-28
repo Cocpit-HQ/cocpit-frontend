@@ -394,7 +394,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     shared_post: sharedPost,
     location: backendPost.location || undefined,
     tags: backendPost.tags || [],
-    sampleLikerUsername: backendPost.sample_liker_username || undefined,
+    sampleLikerUsername: backendPost.sample_liker_username || (((backendPost as any).liked_users && (backendPost as any).liked_users.length > 0) ? (backendPost as any).liked_users[0].username : undefined),
     authorHeadline: backendPost.author_headline || undefined,
     rankingScore: backendPost._rankingMeta?.score,
     slotType: backendPost._rankingMeta?.slot_type,

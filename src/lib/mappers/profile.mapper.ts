@@ -261,7 +261,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     })(),
     location: backendPost.location || undefined,
     tags: backendPost.tags || [],
-    sampleLikerUsername: backendPost.sample_liker_username || undefined,
+    sampleLikerUsername: backendPost.sample_liker_username || (((backendPost as any).liked_users && (backendPost as any).liked_users.length > 0) ? (backendPost as any).liked_users[0].username : undefined),
     authorHeadline: backendPost.author_headline || undefined,
     post_type: backendPost.post_type,
     votes: (backendPost as any).votes,

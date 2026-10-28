@@ -88,7 +88,7 @@ export default function SavedPostsGeneralPage() {
   }, [hasMore, fetchPosts]);
 
   return (
-    <div className="flex-1 w-full p-6 md:p-8 bg-white rounded-r-[24px]">
+    <div className="flex-1 w-full p-6 md:p-8 bg-white rounded-r-[24px] font-['DM_Sans']">
       <div className="w-full max-w-[666px]">
         {/* Navigation Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -99,8 +99,8 @@ export default function SavedPostsGeneralPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground font-[family-name:var(--font-poppins)]">General</h1>
-            <p className="text-sm text-gray-500">Saved Posts</p>
+            <h1 className="text-2xl font-bold text-foreground font-['DM_Sans']">General</h1>
+            <p className="text-sm text-gray-500 font-['DM_Sans']">Saved Posts</p>
           </div>
         </div>
 
@@ -124,7 +124,7 @@ export default function SavedPostsGeneralPage() {
               ) : (
                 !loading && (
                   <div className="text-center py-20 bg-white rounded-[24px] border border-dashed border-border/60 w-full">
-                    <p className="text-muted-foreground font-[family-name:var(--font-poppins)]">No saved posts in this folder.</p>
+                    <p className="text-muted-foreground font-['DM_Sans']">No saved posts in this folder.</p>
                   </div>
                 )
               )}

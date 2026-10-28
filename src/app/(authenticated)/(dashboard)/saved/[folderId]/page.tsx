@@ -137,7 +137,7 @@ export default function CustomSavedPostsPage() {
   }, [hasMore, fetchPosts]);
 
   return (
-    <div className="flex-1 w-full p-6 md:p-8 bg-white rounded-r-[24px]">
+    <div className="flex-1 w-full p-6 md:p-8 bg-white rounded-r-[24px] font-['DM_Sans']">
       <div className="w-full max-w-[666px]">
         {/* Navigation Header */}
         <div className="flex flex-col gap-[20px] mb-8 w-full max-w-[666px]">
@@ -150,8 +150,8 @@ export default function CustomSavedPostsPage() {
               <ArrowLeft className="w-5 h-5 text-gray-600" strokeWidth={2} />
             </button>
             <div className="flex flex-col justify-center">
-              <span className="text-[24px] font-[family-name:var(--font-poppins)] font-semibold text-black leading-tight">Saved</span>
-              <span className="text-[14px] font-[family-name:var(--font-poppins)] text-gray-400 leading-tight">Collection</span>
+              <span className="text-[24px] font-['DM_Sans'] font-semibold text-black leading-tight">Saved</span>
+              <span className="text-[14px] font-['DM_Sans'] text-gray-400 leading-tight">Collection</span>
             </div>
           </div>
 
@@ -166,8 +166,8 @@ export default function CustomSavedPostsPage() {
                 </div>
               )}
               <div className="flex flex-col gap-[4px]">
-                <span className="text-[16px] font-[family-name:var(--font-poppins)] font-normal text-black leading-[24px]">{folder?.name || "Loading..."}</span>
-                <span className="text-[12px] font-[family-name:var(--font-poppins)] font-normal text-[#6B7280] leading-[16px]">Post - {folder?.post_count || 0}</span>
+                <span className="text-[16px] font-['DM_Sans'] font-normal text-black leading-[24px]">{folder?.name || "Loading..."}</span>
+                <span className="text-[12px] font-['DM_Sans'] font-normal text-[#6B7280] leading-[16px]">Post - {folder?.post_count || 0}</span>
               </div>
             </div>
 
@@ -205,7 +205,7 @@ export default function CustomSavedPostsPage() {
               ) : (
                 !loading && (
                   <div className="text-center py-20 bg-white rounded-[24px] border border-dashed border-border/60 w-full">
-                    <p className="text-muted-foreground font-[family-name:var(--font-poppins)]">No saved posts in this folder.</p>
+                    <p className="text-muted-foreground font-['DM_Sans']">No saved posts in this folder.</p>
                   </div>
                 )
               )}

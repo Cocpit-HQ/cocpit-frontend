@@ -233,7 +233,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     })(),
     location: publicPost.location || undefined,
     tags: publicPost.tags || [],
-    sampleLikerUsername: publicPost.sample_liker_username || undefined,
+    sampleLikerUsername: publicPost.sample_liker_username || (((publicPost as any).liked_users && (publicPost as any).liked_users.length > 0) ? (publicPost as any).liked_users[0].username : undefined),
     authorHeadline: publicPost.author_headline || undefined,
     post_type: publicPost.post_type,
     type: publicPost.post_type,

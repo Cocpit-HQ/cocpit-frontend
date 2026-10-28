@@ -70,7 +70,7 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
             )}
           </div>
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs p-3 bg-popover border-border text-popover-foreground">
+        <TooltipContent className="max-w-xs p-3">
           <div className="space-y-2">
             <p className="font-semibold text-sm">{skill}</p>
 

@@ -255,7 +255,7 @@
   /* For cards (slightly more to read as containers) */
   --radius-card-new: 8px;
   /* For tooltips */
-  --radius-tooltip: 4px;
+  --radius-tooltip: 0.5rem;
   /* For dropdown menus */
   --radius-dropdown: 6px;
 

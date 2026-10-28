@@ -155,16 +155,16 @@ export function SavedPostCard({
             )}
           </AvatarFallback>
         </Avatar>
-        <div className="flex flex-col justify-center items-start min-w-0">
+        <div className="flex flex-col justify-center items-start min-w-0 font-['DM_Sans']">
           <span
-            className={`text-[16px] leading-[24px] font-semibold text-ds-text-primary ${
+            className={`text-[16px] leading-[24px] font-semibold text-ds-text-primary font-['DM_Sans'] ${
               !isNested ? "group-hover:text-white transition-colors" : ""
             } truncate w-full max-w-[200px] sm:max-w-[300px]`}
           >
             {p.author}
           </span>
           {p.authorHeadline && (
-            <span className="text-[10px] leading-[12px] font-normal text-ds-text-muted truncate w-full max-w-[200px] sm:max-w-[300px]">
+            <span className="text-[10px] leading-[12px] font-normal text-ds-text-muted truncate w-full max-w-[200px] sm:max-w-[300px] font-['DM_Sans']">
               {p.authorHeadline}
             </span>
           )}
@@ -189,7 +189,7 @@ export function SavedPostCard({
   if (isArticle) {
     return (
       <article
-        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer font-['DM_Sans']"
         onClick={() => handlePostClick(displayPost.id || post.id)}
       >
         {/* Frame 2608569: Author Header */}
@@ -220,7 +220,7 @@ export function SavedPostCard({
     const mediaUrl = sharedPostMedia;
     return (
       <article
-        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer font-['DM_Sans']"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609527: Reposter header */}
@@ -289,7 +289,7 @@ export function SavedPostCard({
   if (isRepostWithThoughts && !sharedPostMedia) {
     return (
       <article
-        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer font-['DM_Sans']"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609527: Reposter header */}
@@ -325,7 +325,7 @@ export function SavedPostCard({
   if (isRepost) {
     return (
       <article
-        className="flex w-full flex-col items-center gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-center gap-[12px] cursor-pointer font-['DM_Sans']"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609526: Repost indicator */}
@@ -352,7 +352,7 @@ export function SavedPostCard({
 
   // Fallback layout: Poll (Frame 2609260), Media (Frame 2609258), or Text (Frame 2609255)
   return (
-    <div className="flex flex-col items-start p-0 gap-[12px] w-full cursor-pointer rounded-lg transition-colors group">
+    <div className="flex flex-col items-start p-0 gap-[12px] w-full cursor-pointer rounded-lg transition-colors group font-['DM_Sans']">
       {/* Header section (632x36px) */}
       <div className="flex flex-row justify-between items-center w-full h-[36px]">
         <AuthorHeader p={displayPost} />

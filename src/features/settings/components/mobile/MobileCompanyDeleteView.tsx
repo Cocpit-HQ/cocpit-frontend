@@ -101,6 +101,10 @@ export function MobileCompanyDeleteView({ onBack }: MobileCompanyDeleteViewProps
     setIsLoading(true);
     setErrorMsg('');
     try {
+      if (typeof window !== 'undefined') {
+        (window as any).__cocpit_is_deleting = true;
+        sessionStorage.setItem('cocpit_is_deleting', 'true');
+      }
       await companyService.verifyAndDeleteCompany(targetId, code);
       setIsSuccess(true);
       toast.success(`Your ${entityLabel} page has been scheduled for deletion`);
@@ -113,9 +117,13 @@ export function MobileCompanyDeleteView({ onBack }: MobileCompanyDeleteViewProps
       }
 
       setTimeout(() => {
-        window.location.replace('/feed');
+        window.location.replace('/profile');
       }, 500);
     } catch (err: any) {
+      if (typeof window !== 'undefined') {
+        delete (window as any).__cocpit_is_deleting;
+        sessionStorage.removeItem('cocpit_is_deleting');
+      }
       const rawMsg = err.response?.data?.message || err.message;
       const message = (rawMsg === 'Incorrect code' || rawMsg === 'Invalid verification code')
         ? 'Invalid verification code'

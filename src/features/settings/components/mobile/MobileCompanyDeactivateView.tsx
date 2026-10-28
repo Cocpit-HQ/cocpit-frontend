@@ -130,6 +130,8 @@ export function MobileCompanyDeactivateView({
         if (onBack) onBack();
       } else {
         if (typeof window !== 'undefined') {
+          (window as any).__cocpit_is_deactivating = true;
+
           sessionStorage.setItem('cocpit_is_deactivating', 'true');
         }
         await deactivateOrganization(targetId, code);
@@ -144,11 +146,13 @@ export function MobileCompanyDeactivateView({
         }
 
         setTimeout(() => {
-          window.location.replace('/feed');
+          window.location.replace('/profile');
         }, 500);
       }
     } catch (err: any) {
       if (typeof window !== 'undefined') {
+        delete (window as any).__cocpit_is_deactivating;
+
         sessionStorage.removeItem('cocpit_is_deactivating');
       }
       const rawMsg = err.response?.data?.message || err.message;

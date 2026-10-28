@@ -265,6 +265,9 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
     useEffect(() => {
         if (typeof window !== "undefined") {
+            delete (window as any).__cocpit_is_deactivating;
+            delete (window as any).__cocpit_is_deleting;
+
             sessionStorage.removeItem("cocpit_is_deactivating");
             sessionStorage.removeItem("cocpit_is_deleting");
         }
@@ -417,7 +420,12 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 if (typeof window !== "undefined") {
                     for (let i = sessionStorage.length - 1; i >= 0; i--) {
                         const key = sessionStorage.key(i);
-                        if (key && (key.startsWith("scroll-") || key.startsWith("cocpit_"))) {
+                        if (
+                            key &&
+                            key !== "cocpit_is_deactivating" &&
+                            key !== "cocpit_is_deleting" &&
+                            (key.startsWith("scroll-") || key.startsWith("cocpit_"))
+                        ) {
                             sessionStorage.removeItem(key);
                         }
                     }

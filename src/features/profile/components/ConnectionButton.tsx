@@ -88,7 +88,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
     useEffect(() => {
         if (!socket) return;
 
-        const handleUpdate = (payload: { userId: string; status: string; type?: string }) => {
+        const handleUpdate = (payload: { userId: string; status: string; type?: string; connection_request_id?: string; id?: string }) => {
             // Check if matches userId OR if it's a company update
             const isMatch = isCompany
                 ? (payload.userId === userId && (payload.type === 'company' || payload.type === 'company_connection'))
@@ -96,6 +96,8 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
 
             if (isMatch) {
                 setRelationship(payload.status as RelationshipState);
+                const reqId = payload.connection_request_id || payload.id;
+                if (reqId) setRequestId(reqId);
                 // Also invalidate profile stats so counts update
                 invalidateCounts();
             }
@@ -131,11 +133,15 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
             if (isCompany && activeProfile) {
                 const res = await companyService.sendConnectionRequest(activeProfile.id, userId);
                 if (res.status) setRelationship(res.status as RelationshipState);
+                const reqId = res.connection_request_id || res.id;
+                if (reqId) setRequestId(reqId);
                 toast.success(res.message || 'Connection request sent');
             } else {
                 const res = await sendConnectionRequest(userId);
                 if (res.relationship) setRelationship(res.relationship as RelationshipState);
                 if (res.connected) setRelationship('connected');
+                const reqId = res.connection_request_id || res.id;
+                if (reqId) setRequestId(reqId);
                 toast.success(res.message || 'Connection request sent');
             }
             invalidateCounts();

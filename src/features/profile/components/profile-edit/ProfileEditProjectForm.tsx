@@ -221,6 +221,10 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
       }
     }
 
+    if (formData.role_description && formData.role_description.length > 2000) {
+      newErrors.role_description = "Role description cannot exceed 2000 characters";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -795,11 +799,12 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
             id="proj_role_description"
             label="Role description"
             isTextarea={true}
-            maxLength={500}
+            maxLength={2000}
             showCounter={true}
             placeholder="Describe your responsibilities and contributions"
             value={formData.role_description}
             onChange={(val) => setFormData((prev) => ({ ...prev, role_description: val }))}
+            error={errors.role_description}
           />
         </div>
       </div>

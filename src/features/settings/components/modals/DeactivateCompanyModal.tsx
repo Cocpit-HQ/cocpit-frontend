@@ -114,6 +114,8 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
     setErrorMsg('');
     try {
       if (typeof window !== 'undefined') {
+        (window as any).__cocpit_is_deactivating = true;
+
         sessionStorage.setItem('cocpit_is_deactivating', 'true');
       }
       await deactivateOrganization(activeProfile.id, code);
@@ -128,12 +130,14 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
         sessionStorage.removeItem('cocpit_active_profile');
       }
 
-      // Smooth atomic navigation to feed while keeping modal backdrop visible
+      // Smooth atomic navigation to profile while keeping modal backdrop visible
       setTimeout(() => {
-        window.location.replace('/feed');
+        window.location.replace('/profile');
       }, 500);
     } catch (err: any) {
       if (typeof window !== 'undefined') {
+        delete (window as any).__cocpit_is_deactivating;
+
         sessionStorage.removeItem('cocpit_is_deactivating');
       }
       const rawMsg = err.response?.data?.message || err.message;
