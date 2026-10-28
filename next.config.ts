@@ -74,6 +74,8 @@ const IMAGE_HOSTS = [
   // ── Cloudflare R2 / CDN (Dual-Asset Architecture) ──────────────────────
   "pub-432e428714cf45fa81543429322f3026.r2.dev", // R2 public dev URL for cocpit-media
   "pub-9ab7b27b805e4ef3954360339e67917a.r2.dev", // R2 public dev URL (fallback)
+  "customer-oai3tli0rr6632d4.cloudflarestream.com", // Cloudflare Stream thumbnails
+  "videodelivery.net",                             // Cloudflare Stream default CDN
   "cdn.cocpit.com",            // Future custom CDN domain (connect in Cloudflare dashboard)
   ...(process.env.IMAGE_REMOTE_HOSTS || "").split(",").map((h) => h.trim()).filter(Boolean),
 ];
