@@ -907,6 +907,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 imageSrc={targetImageSrc}
                 images={targetImages}
                 avifImages={interactionTargetProps.avifImages}
+                imageVariants={interactionTargetProps.imageVariants}
                 imageProcessingStatuses={interactionTargetProps.imageProcessingStatuses}
                 imageLocalPreviews={interactionTargetProps.imageLocalPreviews}
                 imageDimensions={interactionTargetProps.imageDimensions}
@@ -993,6 +994,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 imageSrc={targetImageSrc}
                 images={targetImages}
                 avifImages={interactionTargetProps.avifImages}
+                imageVariants={interactionTargetProps.imageVariants}
                 imageProcessingStatuses={interactionTargetProps.imageProcessingStatuses}
                 imageLocalPreviews={interactionTargetProps.imageLocalPreviews}
                 imageDimensions={interactionTargetProps.imageDimensions}

@@ -31,6 +31,11 @@ export interface Experience {
   skills?: Array<string | { id?: string | number; name?: string; skill_name?: string }>;
 }
 
+export interface ImageVariantSet {
+  fallback?: Array<{ width: number; url: string }>;
+  avif?: Array<{ width: number; url: string }>;
+}
+
 export interface PostMediaItem {
   media_id?: string;
   post_id?: string;
@@ -42,6 +47,7 @@ export interface PostMediaItem {
   master_url?: string;
   fallback_url?: string | null;
   avif_url?: string | null;
+  variants?: ImageVariantSet | null;
   processing_status?: "processing" | "ready" | "failed";
   stream_uid?: string | null;
   stream_hls_url?: string | null;
@@ -171,6 +177,7 @@ export interface Post {
   imageSrc?: string;
   images?: string[];
   avifImages?: Array<string | null>;
+  imageVariants?: Array<ImageVariantSet | null>;
   imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
   imageLocalPreviews?: Array<string | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;

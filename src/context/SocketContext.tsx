@@ -928,6 +928,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         url?: string;
         fallback_url?: string | null;
         avif_url?: string | null;
+        variants?: { fallback?: Array<{ width: number; url: string }>; avif?: Array<{ width: number; url: string }> } | null;
         width?: number | null;
         height?: number | null;
         media_type?: 'image' | 'video';
@@ -979,12 +980,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 statuses[imageIndex] = payload.processing_status;
                 const avifImages = [...(post.avifImages || [])];
                 avifImages[imageIndex] = payload.media?.avif_url || null;
+                const imageVariants = [...(post.imageVariants || [])];
+                imageVariants[imageIndex] = payload.media?.variants || null;
                 return {
                   ...updated,
                   images,
                   imageSrc: images[0],
                   imageProcessingStatuses: statuses,
                   avifImages,
+                  imageVariants,
                   imageDimensions: (post.imageDimensions || []).map((dimension: any, index: number) =>
                     index === imageIndex && payload.media?.width && payload.media?.height
                       ? { width: payload.media.width, height: payload.media.height }

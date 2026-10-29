@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Post, Comment } from "@/types/entities";
+import { Post, Comment, type ImageVariantSet } from "@/types/entities";
 import { BackendPost } from "@/services/api/feed";
 import { getLocalMediaPreview } from "@/features/feed/utils/localMediaPreview";
 
@@ -34,6 +34,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   // Extract images and video
   const images: string[] = [];
   const avifImages: Array<string | null> = [];
+  const imageVariants: Array<ImageVariantSet | null> = [];
   const imageProcessingStatuses: Array<"processing" | "ready" | "failed" | undefined> = [];
   const imageLocalPreviews: Array<string | undefined> = [];
   const imageDimensions: Array<{ width: number; height: number } | null> = [];
@@ -62,6 +63,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       images.push(item.processing_status === "processing" && localPreview ? localPreview : item.url);
       imageLocalPreviews.push(localPreview);
       avifImages.push(item.avif_url || null);
+      imageVariants.push(item.variants || null);
       imageProcessingStatuses.push(item.processing_status);
       imageDimensions.push(
         (item.width && item.height) ? { width: item.width, height: item.height } : null
@@ -189,6 +191,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     } else if (sp.author && sp.post_id) { // Ensure required fields exist
       const spImages: string[] = [];
       const spAvifImages: Array<string | null> = [];
+      const spImageVariants: Array<ImageVariantSet | null> = [];
       const spImageProcessingStatuses: Array<"processing" | "ready" | "failed" | undefined> = [];
       let spVideoSrc: string | undefined = undefined;
 
@@ -205,6 +208,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
           if (mediaType === "image") {
             spImages.push(item.url);
             spAvifImages.push(item.avif_url || null);
+            spImageVariants.push(item.variants || null);
             spImageProcessingStatuses.push(item.processing_status);
             spImageDimensions.push(
               (item.width && item.height) ? { width: item.width, height: item.height } : null
@@ -284,6 +288,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         imageSrc: spImages.length > 0 ? spImages[0] : undefined,
         images: spImages.length > 0 ? spImages : undefined,
         avifImages: spAvifImages,
+        imageVariants: spImageVariants,
         imageProcessingStatuses: spImageProcessingStatuses,
         imageDimensions: spImageDimensions.length > 0 ? spImageDimensions : undefined,
         mediaWidth: spMediaWidth,
@@ -386,6 +391,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     avifImages,
+    imageVariants,
     imageProcessingStatuses,
     imageLocalPreviews,
     imageDimensions: imageDimensions.length > 0 ? imageDimensions : undefined,

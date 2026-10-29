@@ -10,11 +10,14 @@ import { VideoScrubber } from './VideoScrubber';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { useAdaptiveHls } from '@/features/feed/hooks/use-adaptive-hls';
+import { FEED_IMAGE_SIZES, imageSrcSet } from '@/features/feed/utils/responsiveImage';
+import type { ImageVariantSet } from '@/types/entities';
 
 interface PostMediaProps {
   imageSrc?: string;
   images?: string[];
   avifImages?: Array<string | null>;
+  imageVariants?: Array<ImageVariantSet | null>;
   imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
   imageLocalPreviews?: Array<string | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;
@@ -48,7 +51,7 @@ interface PostMediaProps {
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], avifImages = [], imageProcessingStatuses = [], imageLocalPreviews = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoHlsSrc, videoHdrSrc, videoPosterSrc, videoLocalPreview, videoProcessingStatus, videoHdrProcessingStatus, videoRef, onLoad, priority, onClick, tags = [],
+  imageSrc, images = [], avifImages = [], imageVariants = [], imageProcessingStatuses = [], imageLocalPreviews = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoHlsSrc, videoHdrSrc, videoPosterSrc, videoLocalPreview, videoProcessingStatus, videoHdrProcessingStatus, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes,
   hideOverlayLikeBar = false, isFullContent = false, isProfileView = false,
   videoOverlay = false, overlayHeader, overlayCaption
@@ -229,6 +232,7 @@ export const PostMedia = ({
           <PostCarousel
             images={validImages}
             avifImages={avifImages}
+            imageVariants={imageVariants}
             imageProcessingStatuses={imageProcessingStatuses}
             imageLocalPreviews={imageLocalPreviews}
             imageDimensions={imageDimensions}
@@ -440,13 +444,16 @@ export const PostMedia = ({
               {isImageProcessingPlaceholder ? "Preparing image…" : "Image unavailable"}
             </div>
           ) : contentImgSrc ? (
-            <picture className="contents">
+            <>
             {localImagePreview && localImagePreview !== displayImageSrc && loadedImageSrc !== displayImageSrc && (
               <img src={localImagePreview} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain object-left" />
             )}
-            {avifImages[0] && displayImageSrc === contentImgSrc && <source srcSet={avifImages[0]} type="image/avif" />}
+            <picture className="contents">
+            {displayImageSrc === contentImgSrc && (imageSrcSet(imageVariants[0], 'avif') || avifImages[0]) && <source srcSet={imageSrcSet(imageVariants[0], 'avif') || avifImages[0] || undefined} sizes={FEED_IMAGE_SIZES} type="image/avif" />}
             <img
               src={displayImageSrc}
+              srcSet={displayImageSrc === contentImgSrc ? imageSrcSet(imageVariants[0], 'fallback') : undefined}
+              sizes={FEED_IMAGE_SIZES}
               alt="Post content"
               loading={priority ? "eager" : "lazy"}
               decoding="async"
@@ -456,6 +463,7 @@ export const PostMedia = ({
               onError={() => setFailedImageSrc(displayImageSrc)}
             />
             </picture>
+            </>
           ) : null}
 
           {/* Liked By Overlay — hidden in video overlay mode (handled separately) */}

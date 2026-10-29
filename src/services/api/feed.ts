@@ -172,6 +172,7 @@ export interface BackendMedia {
   master_url?: string;
   fallback_url?: string | null;
   avif_url?: string | null;
+  variants?: { fallback?: Array<{ width: number; url: string }>; avif?: Array<{ width: number; url: string }> } | null;
   processing_status?: "processing" | "ready" | "failed";
   stream_uid?: string | null;
   stream_hls_url?: string | null;

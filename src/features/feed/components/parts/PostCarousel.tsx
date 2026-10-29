@@ -7,10 +7,13 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CarouselDots } from "./CarouselDots";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { FEED_IMAGE_SIZES, imageSrcSet } from "@/features/feed/utils/responsiveImage";
+import type { ImageVariantSet } from "@/types/entities";
 
 export interface PostCarouselProps {
   images: string[];
   avifImages?: Array<string | null>;
+  imageVariants?: Array<ImageVariantSet | null>;
   imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
   imageLocalPreviews?: Array<string | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;
@@ -83,6 +86,7 @@ function computeSlideWidth(
 export function PostCarousel({
   images,
   avifImages = [],
+  imageVariants = [],
   imageProcessingStatuses = [],
   imageLocalPreviews = [],
   imageDimensions,
@@ -325,11 +329,13 @@ export function PostCarousel({
                       {imageProcessingStatuses[index] === "processing" ? "Preparing image…" : "Image unavailable"}
                     </div>
                   ) : (
-                  <picture>
+                  <>
                   {imageLocalPreviews[index] && imageLocalPreviews[index] !== src && (
                     <img src={imageLocalPreviews[index]} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain" />
                   )}
-                  {avifImages[index] && <source srcSet={avifImages[index] || undefined} type="image/avif" />}
+                  <picture>
+                  {(imageSrcSet(imageVariants[index], 'avif') || avifImages[index]) && <source srcSet={imageSrcSet(imageVariants[index], 'avif') || avifImages[index] || undefined} sizes={FEED_IMAGE_SIZES} type="image/avif" />}
+                  {imageSrcSet(imageVariants[index], 'fallback') && <source srcSet={imageSrcSet(imageVariants[index], 'fallback')} sizes={FEED_IMAGE_SIZES} />}
                   <Image
                     src={failedImageUrls.includes(src) ? imageLocalPreviews[index] || src : src}
                     alt={`Post image ${index + 1}`}
@@ -361,6 +367,7 @@ export function PostCarousel({
                     onError={() => setFailedImageUrls((current) => current.includes(src) ? current : [...current, src])}
                   />
                   </picture>
+                  </>
                   )}
                 </div>
               );
