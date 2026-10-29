@@ -330,11 +330,6 @@ export const CocpitUserProfileImageEditor: React.FC<
       return;
     }
 
-    if (!isDirty && initialImage && !initialFile) {
-      onClose();
-      return;
-    }
-
     try {
       setIsSaving(true);
 
@@ -657,9 +652,7 @@ export const CocpitUserProfileImageEditor: React.FC<
               type="button"
               onClick={handleSave}
               disabled={
-                isSaving ||
-                (!hasImage && !isPhotoRemoved && !initialImage && !initialFile) ||
-                (!isDirty && Boolean(initialImage) && !initialFile)
+                isSaving || (!hasImage && !isPhotoRemoved)
               }
               className="w-16 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 rounded-[100px] flex justify-center items-center transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-default"
             >

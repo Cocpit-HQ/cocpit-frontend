@@ -70,7 +70,7 @@ export function AccountSettingsPage() {
               >
                 <button
                   type="button"
-                  className="w-[200px] h-[36px] px-4 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
+                  className="w-[170px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
                 >
                   <span className="text-ds-text-primary ds-text-body-1 whitespace-nowrap">
                     {isLoading ? '...' : hasPassword ? 'Change password' : 'Add password'}

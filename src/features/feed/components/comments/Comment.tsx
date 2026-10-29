@@ -482,7 +482,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                     ref={optionsBtnRef}
                     aria-label="More options"
                     onClick={(e) => e.stopPropagation()}
-                    className="min-w-[28px] min-h-[28px] -mr-1 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 rounded outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent transition-colors cursor-pointer"
+                    className="min-w-[28px] min-h-[28px] -mr-1 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary bg-transparent hover:bg-transparent active:bg-transparent focus:bg-transparent shadow-none hover:shadow-none active:shadow-none focus:shadow-none outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent transition-colors cursor-pointer"
                   >
                     <Icon name="menu" className="w-[20px] h-[20px] pointer-events-none" />
                   </button>
@@ -502,7 +502,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                   }}
                   onClick={(e) => e.stopPropagation()}
                   className={cn(
-                    "w-[135px] min-w-[135px] flex flex-col items-start p-[12px] gap-[16px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[8px] shadow-xl !outline-none !ring-0 font-dmsans data-[state=closed]:!animate-none data-[state=closed]:!duration-0 box-border",
+                    "w-[135px] min-w-[135px] flex flex-col items-start p-[12px] gap-[16px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[8px] !shadow-none !outline-none !ring-0 font-dmsans data-[state=closed]:!animate-none data-[state=closed]:!duration-0 box-border",
                     (isMobile || Boolean(optionsBtnRef.current?.closest('[data-vaul-drawer]'))) ? "!z-[150]" : "!z-[30]"
                   )}
                 >

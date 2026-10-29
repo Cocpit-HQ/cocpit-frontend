@@ -342,6 +342,16 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.invalidateQueries({ queryKey: ["sharedPost"] });
     queryClient.invalidateQueries({ queryKey: ["jobContext"] });
     queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+    queryClient.invalidateQueries({ queryKey: ["followers"] });
+    queryClient.invalidateQueries({ queryKey: ["following"] });
+    queryClient.invalidateQueries({ queryKey: ["connections"] });
+    queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+    queryClient.invalidateQueries({ queryKey: ["relationshipStatus"] });
+    queryClient.invalidateQueries({ queryKey: ["org_followers"] });
+    queryClient.invalidateQueries({ queryKey: ["org_following"] });
+    queryClient.invalidateQueries({ queryKey: ["company_followers"] });
+    queryClient.invalidateQueries({ queryKey: ["company_relationship"] });
+    queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
   };
 
   const blockUser = async (id: string) => {

@@ -38,6 +38,18 @@ export default function TabPermissionGuard({
   const { activeProfile, isCompany, isLoading } = useActiveProfile();
   const { checkPermission } = useCompanyPermissions(activeProfile);
 
+  // During company deactivation or deletion transition, retain existing children
+  const isTransitioning =
+    typeof window !== 'undefined' &&
+    ((window as any).__cocpit_is_deactivating ||
+      (window as any).__cocpit_is_deleting ||
+      sessionStorage.getItem('cocpit_is_deactivating') === 'true' ||
+      sessionStorage.getItem('cocpit_is_deleting') === 'true');
+
+  if (isTransitioning) {
+    return <>{children}</>;
+  }
+
   // If loading or completely external public profile, render children
   if (isLoading || (!isCompany && !isOwnProfile)) {
     return <>{children}</>;

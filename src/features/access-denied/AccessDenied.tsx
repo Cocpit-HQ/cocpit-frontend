@@ -132,6 +132,7 @@ export default function AccessDenied({
     }
 
     const slug = (activeProfile as any)?.slug;
+    
     const isCompany = activeProfile?.type === 'COMPANY';
 
     const dynamicPages: AccessiblePagePill[] = [
@@ -169,6 +170,17 @@ export default function AccessDenied({
       return true;
     });
   }, [accessiblePages, perms, activeProfile]);
+
+  // Prevent AccessDenied screen from briefly flashing during company deactivation or deletion
+  if (
+    typeof window !== 'undefined' &&
+    ((window as any).__cocpit_is_deactivating ||
+      (window as any).__cocpit_is_deleting ||
+      sessionStorage.getItem('cocpit_is_deactivating') === 'true' ||
+      sessionStorage.getItem('cocpit_is_deleting') === 'true')
+  ) {
+    return null;
+  }
 
   return (
     <div className="access-denied-page fixed inset-0 left-0 sm:left-[220px] sm:pr-[220px] z-20 overflow-y-auto bg-ds-bg flex flex-col">

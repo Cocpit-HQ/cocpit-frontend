@@ -3,7 +3,7 @@
 import React, { useState, useCallback, memo } from 'react';
 import { Loader2, ChevronLeft } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { BlockIcon, UserIcon } from '@/components/icons';
+import { BlockIcon, UserIcon, BusinessBuildingIcon } from '@/components/icons';
 import { useBlockedUsers, BlockedUser } from '../hooks/useBlockedUsers';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 import { MobileSettingsHeader } from '../components/MobileSettingsView';
@@ -23,24 +23,40 @@ interface BlockedUserRowProps {
 }
 
 const BlockedUserRow = memo(({ user, onUnblock, canManageBlock = true, noBlockMessage }: BlockedUserRowProps) => {
-  const [imageError, setImageError] = useState(false);
+  const router = useRouter();
+  const roundedClass = user.isCompany ? 'rounded-[8px]' : 'rounded-full';
 
-  // Removed hover classes from the row since it is not interactive
+  const handleNavigate = () => {
+    const target = user.slug || user.account_name || user.id;
+    if (!target) return;
+    if (user.isCompany) {
+      router.push(`/organization/${target}`);
+    } else {
+      router.push(`/profile/${target}`);
+    }
+  };
+
   return (
     <div className="self-stretch p-3 sm:p-4 inline-flex justify-between items-center rounded-xl gap-2">
-      <div className="flex justify-start items-center gap-2 min-w-0 flex-1 mr-2">
-        {user.avatar && !imageError ? (
-          <img
-            className="w-8 h-8 rounded-full object-cover shrink-0"
-            src={user.avatar}
-            alt={user.name}
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-ds-surface-1 border border-ds-border flex items-center justify-center shrink-0">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleNavigate}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleNavigate();
+          }
+        }}
+        className="flex justify-start items-center gap-2 min-w-0 flex-1 mr-2 cursor-pointer hover:opacity-80 transition-opacity ds-focus-ring rounded-lg"
+      >
+        <div className={`w-8 h-8 ${roundedClass} bg-ds-surface-1 border border-ds-border flex items-center justify-center shrink-0`}>
+          {user.isCompany ? (
+            <BusinessBuildingIcon className="w-5 h-5 text-ds-text-secondary" />
+          ) : (
             <UserIcon className="w-5 h-5 text-ds-text-secondary" />
-          </div>
-        )}
+          )}
+        </div>
         <div className="inline-flex flex-col justify-center items-start min-w-0">
           <div className="justify-center ds-text-body-2 text-ds-text-primary truncate">
             {user.name}

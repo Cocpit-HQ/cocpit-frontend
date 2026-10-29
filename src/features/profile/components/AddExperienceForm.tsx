@@ -468,12 +468,12 @@ function RoleSection({
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
-              maxLength={1500}
-              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 1500 || fieldErrors.description) && "border-destructive focus:border-destructive")}
+              maxLength={2000}
+              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 2000 || fieldErrors.description) && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
-            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
-              {role.description.length}/1500 characters
+            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", role.description.length >= 2000 ? "text-destructive" : "text-muted-foreground")}>
+              {role.description.length}/2000
             </span>
             {fieldErrors.description && (
               <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
@@ -683,12 +683,12 @@ function RoleSection({
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
-              maxLength={1500}
-              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 1500 || fieldErrors.description) && "border-destructive focus:border-destructive")}
+              maxLength={2000}
+              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 2000 || fieldErrors.description) && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
-            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
-              {role.description.length}/1500 characters
+            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", role.description.length >= 2000 ? "text-destructive" : "text-muted-foreground")}>
+              {role.description.length}/2000
             </span>
             {fieldErrors.description && (
               <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
@@ -937,6 +937,11 @@ export default function AddExperienceForm({
       // Title required
       if (!role.title.trim()) {
         roleErrors.title = "Role title is required"
+        valid = false
+      }
+
+      if (role.description && role.description.length > 2000) {
+        roleErrors.description = "About cannot exceed 2000 characters"
         valid = false
       }
 

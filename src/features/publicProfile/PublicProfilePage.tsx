@@ -238,7 +238,15 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     // Optimistic update
     queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_sent" });
     try {
-      await sendConnectionRequest(targetUserId);
+      const res = await sendConnectionRequest(targetUserId);
+      const reqId = res?.connection_request_id || res?.id || res?.request_id;
+      if (reqId) {
+        queryClient.setQueryData(["relationshipStatus", targetUserId], (old: any) => ({
+          ...(old || {}),
+          status: "pending_sent",
+          request_id: reqId,
+        }));
+      }
       invalidateRelationshipCaches();
       toast.success("Connection request sent!");
     } catch (err: any) {

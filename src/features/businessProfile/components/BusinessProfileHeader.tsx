@@ -223,9 +223,16 @@ export default function BusinessProfileHeader({
         });
       }
 
-      // 3. Invalidate feed and social queries
+      // 3. Invalidate feed, followers/following and social queries
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["followers"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
+      queryClient.invalidateQueries({ queryKey: ["org_followers"] });
+      queryClient.invalidateQueries({ queryKey: ["org_following"] });
+      queryClient.invalidateQueries({ queryKey: ["company_followers"] });
+      queryClient.invalidateQueries({ queryKey: ["company_relationship"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationStats"] });
 
       // 4. Notify app via custom event and cross-tab localStorage
       if (typeof window !== "undefined" && orgId) {

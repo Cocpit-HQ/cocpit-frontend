@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useId } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo } from 'react';
 
 export interface CarouselDotsProps {
   total: number;
@@ -12,6 +11,7 @@ export interface CarouselDotsProps {
 }
 
 const MAX_VISIBLE = 5;
+const GAP_PX = 2; // 2px gap between dot slots
 
 export const CarouselDots: React.FC<CarouselDotsProps> = ({
   total,
@@ -20,8 +20,6 @@ export const CarouselDots: React.FC<CarouselDotsProps> = ({
   className = '',
   imageDimensions,
 }) => {
-  const instanceId = useId();
-
   if (total <= 1) return null;
 
   const clampedActive = Math.max(0, Math.min(activeIndex, total - 1));
@@ -31,6 +29,40 @@ export const CarouselDots: React.FC<CarouselDotsProps> = ({
   if (total > MAX_VISIBLE) {
     windowStart = Math.max(0, Math.min(clampedActive - 2, total - MAX_VISIBLE));
   }
+  const windowEnd = Math.min(total - 1, windowStart + MAX_VISIBLE - 1);
+
+  // Compute proportional natural widths per image based on aspect ratio
+  const naturalWidths = useMemo(() => {
+    return Array.from({ length: total }, (_, i) => {
+      let nw = 8; // Default medium pill
+      if (imageDimensions && imageDimensions[i]) {
+        const dim = imageDimensions[i];
+        if (dim && dim.height > 0) {
+          const ar = dim.width / dim.height;
+          if (ar < 0.8) nw = 4;        // Portrait: compact 4px pill
+          else if (ar > 1.2) nw = 16;  // Landscape: wide 16px pill
+          else nw = 8;                 // Square / standard: 8px pill
+        }
+      }
+      return nw;
+    });
+  }, [total, imageDimensions]);
+
+  // Compute fixed positions for each dot slot along the track
+  const positions = useMemo(() => {
+    const pos: number[] = [];
+    let current = 0;
+    for (let i = 0; i < naturalWidths.length; i++) {
+      pos.push(current);
+      current += naturalWidths[i] + GAP_PX;
+    }
+    return pos;
+  }, [naturalWidths]);
+
+  // Viewport width encompasses the visible window of dots
+  const viewportWidth =
+    positions[windowEnd] + naturalWidths[windowEnd] - positions[windowStart];
+  const translateX = -positions[windowStart];
 
   return (
     <div
@@ -38,98 +70,98 @@ export const CarouselDots: React.FC<CarouselDotsProps> = ({
       aria-label="Carousel pagination"
       role="tablist"
     >
-      <div className="flex flex-row items-center justify-center h-[6px]">
-        {Array.from({ length: total }, (_, i) => {
-          const isActive = i === clampedActive;
-          const isInsideWindow =
-            total <= MAX_VISIBLE ||
-            (i >= windowStart && i < windowStart + MAX_VISIBLE);
+      {/* Fixed-width clipping viewport */}
+      <div
+        className="relative overflow-hidden flex items-center justify-start h-[6px]"
+        style={{
+          width: `${viewportWidth}px`,
+          transition: 'width 200ms cubic-bezier(0.2, 0, 0, 1)',
+        }}
+      >
+        {/* Animated sliding track */}
+        <div
+          className="flex flex-row items-center h-[6px] will-change-transform"
+          style={{
+            transform: `translateX(${translateX}px)`,
+            transition: 'transform 250ms cubic-bezier(0.2, 0, 0, 1)',
+          }}
+        >
+          {Array.from({ length: total }, (_, i) => {
+            const isActive = i === clampedActive;
+            const isInsideWindow =
+              total <= MAX_VISIBLE ||
+              (i >= windowStart && i <= windowEnd);
 
-          const isLeftEdge =
-            total > MAX_VISIBLE && i === windowStart && windowStart > 0;
-          const isRightEdge =
-            total > MAX_VISIBLE &&
-            i === windowStart + MAX_VISIBLE - 1 &&
-            windowStart + MAX_VISIBLE - 1 < total - 1;
+            const isLeftEdge =
+              total > MAX_VISIBLE && i === windowStart && windowStart > 0;
+            const isRightEdge =
+              total > MAX_VISIBLE &&
+              i === windowEnd &&
+              windowEnd < total - 1;
 
-          let width = 0;
-          let height = 0;
-          let opacity = 0;
-          let bgColor = '#726B67';
-          let marginLeft = 0;
-
-          if (isInsideWindow) {
-            opacity = 1;
-            marginLeft = i === windowStart ? 0 : 2; // 2px gap
-
-            // Calculate proportional width
-            let naturalWidth = 8; // Default medium pill
-            if (imageDimensions && imageDimensions[i]) {
-              const dim = imageDimensions[i]!;
-              if (dim.height > 0) {
-                const ar = dim.width / dim.height;
-                if (ar < 0.8) naturalWidth = 4;
-                else if (ar > 1.2) naturalWidth = 16;
-                else naturalWidth = 8;
-              }
-            }
+            const naturalWidth = naturalWidths[i];
+            let dotWidth = naturalWidth;
+            let dotHeight = 4;
+            let opacity = 0;
+            let bgColor = '#726B67';
 
             if (isActive) {
-              width = naturalWidth;
-              height = 6;
-              bgColor = 'transparent'; // Let the motion.div handle the color
+              dotWidth = naturalWidth;
+              dotHeight = 6;
+              opacity = 1;
+              bgColor = '#EC6229'; // Active primary brand accent
             } else if (isLeftEdge || isRightEdge) {
-              width = 4; // Shrink edges
-              height = 4;
+              dotWidth = 4; // Shrink edge indicators
+              dotHeight = 4;
+              opacity = 0.75;
+              bgColor = '#726B67';
+            } else if (isInsideWindow) {
+              dotWidth = naturalWidth;
+              dotHeight = 4;
+              opacity = 1;
+              bgColor = '#726B67';
             } else {
-              width = naturalWidth;
-              height = 4;
+              dotWidth = naturalWidth;
+              dotHeight = 4;
+              opacity = 0;
+              bgColor = '#726B67';
             }
-          }
 
-          return (
-            <button
-              key={i}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-label={`Go to slide ${i + 1}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDotClick?.(i);
-              }}
-              className="flex items-center justify-center border-none bg-transparent p-0 cursor-pointer outline-none focus-visible:opacity-80"
-              style={{
-                width: `${width}px`,
-                height: `6px`, // Container is fixed height for alignment
-                marginLeft: `${marginLeft}px`,
-                transition: 'width 250ms ease, margin 250ms ease, opacity 250ms ease',
-                opacity,
-                pointerEvents: isInsideWindow ? 'auto' : 'none',
-              }}
-              tabIndex={isInsideWindow ? 0 : -1}
-            >
-              <span
-                className="rounded-[2px] pointer-events-none block relative"
-                style={{
-                  width: '100%',
-                  height: `${height}px`,
-                  backgroundColor: isActive ? 'transparent' : bgColor,
-                  transition: 'height 250ms ease, background-color 200ms ease',
+            return (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDotClick?.(i);
                 }}
+                className="flex items-center justify-center shrink-0 border-none bg-transparent p-0 cursor-pointer outline-none focus-visible:opacity-80"
+                style={{
+                  width: `${naturalWidth}px`,
+                  height: '6px',
+                  marginRight: i === total - 1 ? 0 : `${GAP_PX}px`,
+                  pointerEvents: isInsideWindow ? 'auto' : 'none',
+                }}
+                tabIndex={isInsideWindow ? 0 : -1}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId={`activeCarouselDot-${instanceId}`}
-                    className="absolute inset-0 rounded-[2px]"
-                    style={{ backgroundColor: '#EC6229' }}
-                    transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                  />
-                )}
-              </span>
-            </button>
-          );
-        })}
+                <span
+                  className="rounded-[2px] block pointer-events-none will-change-transform"
+                  style={{
+                    width: `${dotWidth}px`,
+                    height: `${dotHeight}px`,
+                    backgroundColor: bgColor,
+                    opacity,
+                    transition:
+                      'width 200ms ease, height 200ms ease, background-color 200ms ease, opacity 200ms ease',
+                  }}
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

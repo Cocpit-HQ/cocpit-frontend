@@ -7,6 +7,14 @@ import { RepostIcon, PlayIcon, Icon, BusinessBuildingIcon, UserIcon } from "@/co
 import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyPermissions } from "@/features/businessProfile";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SavedPostCardProps {
   post: Post;
@@ -21,6 +29,9 @@ export function SavedPostCard({
 }: SavedPostCardProps) {
   const [isUnsaving, setIsUnsaving] = useState(false);
   const router = useRouter();
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { checkPermission, isOwner, isAdmin } = useCompanyPermissions(activeProfile);
+  const canInteract = !isCompany || isOwner || isAdmin || checkPermission('CREATE_POST');
 
   const handlePostClick = (postId: string) => {
     saveScrollPosition("saved", postId);
@@ -155,16 +166,16 @@ export function SavedPostCard({
             )}
           </AvatarFallback>
         </Avatar>
-        <div className="flex flex-col justify-center items-start min-w-0">
+        <div className="flex flex-col justify-center items-start min-w-0 font-['DM_Sans']">
           <span
-            className={`text-[16px] leading-[24px] font-semibold text-ds-text-primary ${
+            className={`text-[16px] leading-[24px] font-semibold text-ds-text-primary font-['DM_Sans'] ${
               !isNested ? "group-hover:text-white transition-colors" : ""
             } truncate w-full max-w-[200px] sm:max-w-[300px]`}
           >
             {p.author}
           </span>
           {p.authorHeadline && (
-            <span className="text-[10px] leading-[12px] font-normal text-ds-text-muted truncate w-full max-w-[200px] sm:max-w-[300px]">
+            <span className="text-[10px] leading-[12px] font-normal text-ds-text-muted truncate w-full max-w-[200px] sm:max-w-[300px] font-['DM_Sans']">
               {p.authorHeadline}
             </span>
           )}
@@ -173,23 +184,51 @@ export function SavedPostCard({
     );
   };
 
-  const BookmarkButton = () => (
-    <div className="flex flex-col items-center justify-center shrink-0">
-      <button
-        type="button"
-        onClick={handleUnsave}
-        className="p-1 hover:opacity-80 transition-opacity cursor-pointer text-ds-accent shrink-0"
-        title="Remove from saved"
-      >
-        <Icon name="save-filled" className="size-5 text-current" />
-      </button>
-    </div>
-  );
+  const BookmarkButton = () => {
+    if (!canInteract) {
+      return (
+        <div className="flex flex-col items-center justify-center shrink-0" onClick={(e) => e.stopPropagation()}>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center justify-center cursor-not-allowed">
+                  <button
+                    type="button"
+                    disabled
+                    aria-label="Remove from saved"
+                    className="p-1 pointer-events-none text-[#EC6229] shrink-0"
+                  >
+                    <Icon name="save-filled" className="size-5 text-[#EC6229]" />
+                  </button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-50">
+                You don't have access to post interactions on the behalf of company
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center shrink-0">
+        <button
+          type="button"
+          onClick={handleUnsave}
+          className="p-1 hover:opacity-80 transition-opacity cursor-pointer text-ds-accent shrink-0"
+          title="Remove from saved"
+        >
+          <Icon name="save-filled" className="size-5 text-current" />
+        </button>
+      </div>
+    );
+  };
 
   if (isArticle) {
     return (
       <article
-        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer font-['DM_Sans']"
         onClick={() => handlePostClick(displayPost.id || post.id)}
       >
         {/* Frame 2608569: Author Header */}
@@ -220,7 +259,7 @@ export function SavedPostCard({
     const mediaUrl = sharedPostMedia;
     return (
       <article
-        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer font-['DM_Sans']"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609527: Reposter header */}
@@ -289,7 +328,7 @@ export function SavedPostCard({
   if (isRepostWithThoughts && !sharedPostMedia) {
     return (
       <article
-        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer font-['DM_Sans']"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609527: Reposter header */}
@@ -325,7 +364,7 @@ export function SavedPostCard({
   if (isRepost) {
     return (
       <article
-        className="flex w-full flex-col items-center gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-center gap-[12px] cursor-pointer font-['DM_Sans']"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609526: Repost indicator */}
@@ -352,7 +391,7 @@ export function SavedPostCard({
 
   // Fallback layout: Poll (Frame 2609260), Media (Frame 2609258), or Text (Frame 2609255)
   return (
-    <div className="flex flex-col items-start p-0 gap-[12px] w-full cursor-pointer rounded-lg transition-colors group">
+    <div className="flex flex-col items-start p-0 gap-[12px] w-full cursor-pointer rounded-lg transition-colors group font-['DM_Sans']">
       {/* Header section (632x36px) */}
       <div className="flex flex-row justify-between items-center w-full h-[36px]">
         <AuthorHeader p={displayPost} />

@@ -9,6 +9,9 @@ export interface BlockedUser {
   name: string;
   date: string;
   avatar: string;
+  slug?: string;
+  account_name?: string;
+  isCompany?: boolean;
 }
 
 export const BLOCKED_USERS_QUERY_KEY = ["blockedUsers"];
@@ -30,8 +33,11 @@ const formatBlockTime = (dateString?: string) => {
 const mapBlockedUser = (u: any): BlockedUser => ({
   id: u.id || u.user_id,
   name: u.name || u.full_name || u.username || "Unknown User",
+  slug: u.slug || u.account_name || u.username || String(u.id || u.user_id),
+  account_name: u.account_name || u.slug || u.username,
   date: u.date || (u.created_at ? formatBlockTime(u.created_at) : "Blocked recently"),
   avatar: u.avatar || u.avatar_url || "",
+  isCompany: u.type === 'company' || u.isCompany === true,
 });
 
 export function useBlockedUsers() {
@@ -43,7 +49,10 @@ export function useBlockedUsers() {
     queryFn: async () => {
       const users = await getBlockedUsers();
       return (users || [])
-        .filter((u: any) => Boolean(u && (u.id || u.user_id) && u.name && u.name !== 'Unknown User' && u.name !== 'Blocked Account'))
+        .filter((u: any) => {
+          const name = u?.name || u?.full_name || u?.username;
+          return Boolean(u && (u.id || u.user_id) && name && name !== 'Unknown User' && name !== 'Blocked Account');
+        })
         .map(mapBlockedUser);
     },
   });

@@ -545,7 +545,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
     // isPhoneVerified &&
     headline.trim().length > 0 &&
     headline.trim().length <= 255 &&
-    (description ? description.length <= 500 : true) &&
+    (description ? description.length <= 2000 : true) &&
     (locationQuery.trim().length > 0 || (hqCity && hqCity.trim().length > 0)) &&
     (organizationSize || "1–10 members").trim().length > 0 &&
     isWebsiteValid,
@@ -1202,7 +1202,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
               ref={descriptionTextareaRef}
               id="description-input"
               rows={1}
-              maxLength={500}
+              maxLength={2000}
               value={description}
               onChange={(e) => {
                 updateField("description", e.target.value);
@@ -1222,7 +1222,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
             <div className="flex-1" />
             <div className="flex-none ml-2">
               <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-ds-text-muted">
-                {(description || "").length}/500
+                {(description || "").length}/2000
               </span>
             </div>
           </div>

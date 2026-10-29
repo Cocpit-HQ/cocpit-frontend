@@ -146,7 +146,7 @@ export function SavedSettingsPage() {
     const displayCount = selectedFolder.post_count !== undefined ? selectedFolder.post_count : posts.length;
 
     return (
-      <div className="w-full max-w-[712px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-3 rounded-tr-3xl rounded-br-3xl text-ds-text-primary">
+      <div className="w-full max-w-[712px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-3 rounded-tr-3xl rounded-br-3xl text-ds-text-primary font-['DM_Sans']">
         {/* Mobile Back Header */}
         <MobileSettingsHeader title="Save" onBack={() => router.push(pathname)} />
 
@@ -156,7 +156,7 @@ export function SavedSettingsPage() {
           className="hidden md:flex self-stretch px-4 justify-start items-center gap-2.5 cursor-pointer group py-1"
         >
           <ChevronLeft className="size-5 text-ds-text-primary group-hover:-translate-x-0.5 transition-transform" />
-          <span className="text-ds-text-primary text-base font-semibold leading-6">Saved</span>
+          <span className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">Saved</span>
         </div>
 
         <div className="self-stretch px-4 flex flex-col justify-start items-start gap-3 w-full">
@@ -164,10 +164,10 @@ export function SavedSettingsPage() {
           <div className="self-stretch p-2 border-b border-ds-border flex justify-between items-center w-full">
             <div className="flex justify-start items-center gap-4 min-w-0">
               <div className="flex flex-col justify-start items-start gap-1 min-w-0">
-                <span className="text-ds-text-primary text-base font-semibold leading-6 truncate">
+                <span className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6 truncate">
                   {selectedFolder.name}
                 </span>
-                <span className="text-ds-text-muted text-[10px] font-normal leading-3">
+                <span className="text-ds-text-muted text-[10px] font-normal font-['DM_Sans'] leading-3">
                   Post - {displayCount}
                 </span>
               </div>
@@ -197,13 +197,13 @@ export function SavedSettingsPage() {
           </div>
 
           {/* Saved Posts List (Frame 2609256) */}
-          <div className="self-stretch p-2 rounded-[24px] flex flex-col justify-start items-start gap-[12px] w-full">
+          <div className="self-stretch p-2 rounded-[24px] flex flex-col justify-start items-start gap-[12px] w-full font-['DM_Sans']">
             {isLoadingPosts ? (
               <div className="self-stretch flex justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-ds-accent" />
               </div>
             ) : posts.length === 0 ? (
-              <div className="self-stretch py-12 text-center text-ds-text-secondary text-sm">
+              <div className="self-stretch py-12 text-center text-ds-text-secondary text-sm font-['DM_Sans']">
                 No saved posts in this collection.
               </div>
             ) : (
@@ -264,7 +264,7 @@ export function SavedSettingsPage() {
   // View 1: Collections List View (Default)
   // -------------------------------------------------------------
   return (
-    <div className="w-full max-w-[712px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-3 rounded-tr-3xl rounded-br-3xl text-ds-text-primary font-sans">
+    <div className="w-full max-w-[712px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-3 rounded-tr-3xl rounded-br-3xl text-ds-text-primary font-['DM_Sans']">
       {/* Mobile Back Header (visible on mobile only) */}
       <MobileSettingsHeader title="Save" />
 

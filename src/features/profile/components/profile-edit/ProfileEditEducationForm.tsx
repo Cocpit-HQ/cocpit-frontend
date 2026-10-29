@@ -251,6 +251,10 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
       }
     }
 
+    if (formData.description && formData.description.length > 2000) {
+      newErrors.description = "About cannot exceed 2000 characters";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -512,13 +516,14 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
             id="edu_about"
             label="About"
             isTextarea={true}
-            maxLength={500}
+            maxLength={2000}
             placeholder="Describe your work, impact, or achievements"
             value={formData.description}
             onChange={(val) => setFormData((prev) => ({ ...prev, description: val }))}
+            error={errors.description}
           />
           <div className="text-center justify-start text-[var(--ds-text-muted)] text-xs font-normal font-['DM_Sans'] leading-4">
-            {formData.description.length}/500
+            {formData.description.length}/2000
           </div>
         </div>
       </div>

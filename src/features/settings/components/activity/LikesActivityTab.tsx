@@ -7,6 +7,14 @@ import { LikeActivityItem } from './activity.types';
 import { extractPostMedia, cleanActivityText } from './activityUtils';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyPermissions } from "@/features/businessProfile";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 
 interface LikesActivityTabProps {
@@ -36,6 +44,9 @@ export function LikesEmptyState() {
 
 export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivityTabProps) {
   const router = useRouter();
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { checkPermission, isOwner, isAdmin } = useCompanyPermissions(activeProfile);
+  const canInteract = !isCompany || isOwner || isAdmin || checkPermission('CREATE_POST');
 
   const likesList = useMemo<LikeActivityItem[]>(() => {
     if (!data || data.length === 0) return [];
@@ -141,14 +152,38 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
             </div>
 
             {/* Unlike / Heart Icon Button with accessible hit area */}
-            <button
-              type="button"
-              onClick={(e) => onRemove(e, item.id, item.postId ? String(item.postId) : undefined)}
-              className="min-w-[36px] min-h-[36px] flex items-center justify-center text-ds-accent transition-transform hover:scale-110 active:scale-95 cursor-pointer bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-md"
-              aria-label="Unlike post"
-            >
-              <LikeFilledIcon className="w-5 h-5 text-ds-accent" fill="currentColor" />
-            </button>
+            {!canInteract ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center justify-center cursor-not-allowed">
+                        <button
+                          type="button"
+                          disabled
+                          aria-label="Unlike post"
+                          className="min-w-[36px] min-h-[36px] flex items-center justify-center text-[#EC6229] pointer-events-none bg-transparent border-0 p-0 rounded-md"
+                        >
+                          <LikeFilledIcon className="w-5 h-5 text-[#EC6229]" fill="#EC6229" />
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-50">
+                      You don't have access to post interactions on the behalf of company
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => onRemove(e, item.id, item.postId ? String(item.postId) : undefined)}
+                className="min-w-[36px] min-h-[36px] flex items-center justify-center text-ds-accent transition-transform hover:scale-110 active:scale-95 cursor-pointer bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-md"
+                aria-label="Unlike post"
+              >
+                <LikeFilledIcon className="w-5 h-5 text-ds-accent" fill="currentColor" />
+              </button>
+            )}
           </div>
 
           {/* Post Content based on type */}

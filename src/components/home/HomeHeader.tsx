@@ -292,9 +292,9 @@ export const HomeHeader = () => {
                 if (activeIndex < visibleHashtags.length) {
                     const h = visibleHashtags[activeIndex];
                     saveSearch(`#${h.tag}`);
-                    setIsSearchFocused(false);
                     setSearchQuery("");
                     router.push(`/hashtag/${h.tag.toLowerCase()}`);
+
                 } else if (hasSeeMore && activeIndex === visibleHashtags.length) {
                     setIsSearchFocused(false);
                     router.push(`/search?q=${encodeURIComponent(searchQuery)}`);

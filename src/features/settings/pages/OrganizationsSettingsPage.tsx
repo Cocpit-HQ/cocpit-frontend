@@ -376,7 +376,7 @@ export function OrganizationsSettingsPage() {
   return (
     <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3">
       {/* Header / Back */}
-      <div className="self-stretch inline-flex justify-start items-center gap-2 shrink-0 pb-1 px-0 sm:px-4">
+      <div className="self-stretch inline-flex md:hidden justify-start items-center gap-2 shrink-0 pb-1 px-0 sm:px-4">
         <button
           type="button"
           onClick={() => {

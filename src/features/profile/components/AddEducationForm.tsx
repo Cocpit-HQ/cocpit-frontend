@@ -644,6 +644,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       errors.degree = "Qualification is required"
     }
 
+    if (formData.description && formData.description.length > 2000) {
+      errors.description = "About cannot exceed 2000 characters"
+    }
+
     if (!formData.startMonth || !formData.startYear) {
       errors.startDate = "Start date is required"
     }
@@ -1127,12 +1131,17 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              maxLength={1500}
-              className={cn("w-full h-[40px] min-h-[40px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[8px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", formData.description.length >= 1500 && "border-destructive focus:border-destructive")}
+              maxLength={2000}
+              className={cn("w-full h-[40px] min-h-[40px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[8px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (formData.description.length >= 2000 || fieldErrors.description) && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
-            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", formData.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
-              {formData.description.length}/1500 characters
+            {fieldErrors.description && (
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
+                <AlertTriangle className="w-3 h-3" />{fieldErrors.description}
+              </p>
+            )}
+            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", formData.description.length >= 2000 ? "text-destructive" : "text-muted-foreground")}>
+              {formData.description.length}/2000
             </span>
           </div>
 

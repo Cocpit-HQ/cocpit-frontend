@@ -381,6 +381,10 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
       }
     }
 
+    if (formData.description && formData.description.length > 2000) {
+      newErrors.description = "About cannot exceed 2000 characters";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -776,19 +780,20 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
           </div>
         )}
 
-        {/* Row 6: About (640px full width, counter 0/500) */}
+        {/* Row 6: About (640px full width, counter 0/2000) */}
         <ProfileEditField
           id="exp_about"
           label="About"
           isTextarea={true}
           rows={1}
-          maxLength={500}
+          maxLength={2000}
           showCounter={true}
           placeholder="Describe your work, impact, or achievements"
           value={formData.description}
           onChange={(val) => setFormData((prev) => ({ ...prev, description: val }))}
           className="w-full max-w-[640px]"
           labelClassName="w-[35px] h-[16px] text-center"
+          error={errors.description}
         />
       </div>
 

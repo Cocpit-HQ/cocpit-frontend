@@ -141,7 +141,11 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
   const sampleLikerUsername =
     localPost.sampleLikerUsername ||
     (localPost.likedUsers && localPost.likedUsers.length > 0
-      ? localPost.likedUsers[0].username
+      ? (localPost.likedUsers.find(
+          (u: any) =>
+            u.username &&
+            u.username.toLowerCase() !== (localPost.authorSlug ?? localPost.author ?? '').toLowerCase()
+        )?.username ?? localPost.likedUsers[0]?.username ?? null)
       : null);
   const likedUsers = localPost.likedUsers || [];
 
