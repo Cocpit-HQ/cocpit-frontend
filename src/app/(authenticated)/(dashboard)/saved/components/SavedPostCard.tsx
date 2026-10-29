@@ -7,6 +7,14 @@ import { RepostIcon, PlayIcon, Icon, BusinessBuildingIcon, UserIcon } from "@/co
 import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyPermissions } from "@/features/businessProfile";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SavedPostCardProps {
   post: Post;
@@ -21,6 +29,9 @@ export function SavedPostCard({
 }: SavedPostCardProps) {
   const [isUnsaving, setIsUnsaving] = useState(false);
   const router = useRouter();
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { checkPermission, isOwner, isAdmin } = useCompanyPermissions(activeProfile);
+  const canInteract = !isCompany || isOwner || isAdmin || checkPermission('CREATE_POST');
 
   const handlePostClick = (postId: string) => {
     saveScrollPosition("saved", postId);
@@ -173,18 +184,46 @@ export function SavedPostCard({
     );
   };
 
-  const BookmarkButton = () => (
-    <div className="flex flex-col items-center justify-center shrink-0">
-      <button
-        type="button"
-        onClick={handleUnsave}
-        className="p-1 hover:opacity-80 transition-opacity cursor-pointer text-ds-accent shrink-0"
-        title="Remove from saved"
-      >
-        <Icon name="save-filled" className="size-5 text-current" />
-      </button>
-    </div>
-  );
+  const BookmarkButton = () => {
+    if (!canInteract) {
+      return (
+        <div className="flex flex-col items-center justify-center shrink-0" onClick={(e) => e.stopPropagation()}>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center justify-center cursor-not-allowed">
+                  <button
+                    type="button"
+                    disabled
+                    aria-label="Remove from saved"
+                    className="p-1 pointer-events-none text-[#EC6229] shrink-0"
+                  >
+                    <Icon name="save-filled" className="size-5 text-[#EC6229]" />
+                  </button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-50">
+                You don't have access to post interactions on the behalf of company
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center shrink-0">
+        <button
+          type="button"
+          onClick={handleUnsave}
+          className="p-1 hover:opacity-80 transition-opacity cursor-pointer text-ds-accent shrink-0"
+          title="Remove from saved"
+        >
+          <Icon name="save-filled" className="size-5 text-current" />
+        </button>
+      </div>
+    );
+  };
 
   if (isArticle) {
     return (
