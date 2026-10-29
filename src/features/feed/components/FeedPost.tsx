@@ -616,7 +616,7 @@ export const FeedPost = (props: FeedPostProps) => {
     if (currentUserHandle) {
       // Check for structured mentions e.g. @[Name](handle)
       const escapeHandle = currentUserHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const structuredMatch = new RegExp(`@\\[[^\\]]+\\]\\(${escapeHandle}\\)`, 'i');
+      const structuredMatch = new RegExp(`@\\[[^\\]]+\\]\\((?:(?:user|org|company):)?${escapeHandle}\\)`, 'i');
       if (structuredMatch.test(targetContent)) isMatch = true;
 
       // Check for legacy mentions e.g. @handle
@@ -642,7 +642,7 @@ export const FeedPost = (props: FeedPostProps) => {
     // 1. Strip structured mentions using the exact handle
     if (currentUserHandle) {
       const escapeHandle = currentUserHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const structuredMatch = new RegExp(`@\\[([^\\]]+)\\]\\(${escapeHandle}\\)`, 'gi');
+      const structuredMatch = new RegExp(`@\\[([^\\]]+)\\]\\((?:(?:user|org|company):)?${escapeHandle}\\)`, 'gi');
       newContent = newContent.replace(structuredMatch, '$1');
     }
 

@@ -71,7 +71,8 @@ export function AppShell({
     pathname?.match(/^\/organization\/[^\/]+\/settings\/?$/)
   );
   const isSettingsSubpage = isSettingsRoute && !isRootSettings;
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage;
+  const isHashtagPage = Boolean(pathname?.startsWith('/hashtag/') || pathname === '/hashtag');
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || isSettingsSubpage || activeModal === 'create-post';
 
   return (
