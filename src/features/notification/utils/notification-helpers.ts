@@ -48,7 +48,7 @@ interface ExtendedNotificationFields {
  * Determines the visual icon/avatar kind for the notification
  */
 export const getNotificationVisualKind = (notification: Notification): NotificationVisualKind => {
-  const type = notification.type || '';
+  const type: string = (notification.type as string) || '';
   const ext = notification as unknown as ExtendedNotificationFields;
 
   // Security events show Lock icon
@@ -77,8 +77,9 @@ export const getNotificationVisualKind = (notification: Notification): Notificat
 
   // Company documents / verification
   if (
-    type === 'doc_verification_success' ||
-    type === 'doc_verification_rejected' ||
+    type === 'org_doc_verification_success' ||
+    type === 'org_doc_verification_rejected' ||
+    type === 'org_doc_verification_submitted' ||
     notification.is_company_actor ||
     ext.isCompanyActor ||
     type.startsWith('company_')
@@ -105,7 +106,7 @@ export const parseNotificationText = (
   notification: Notification,
   activeProfileName?: string
 ): ParsedNotificationText => {
-  const type = notification.type || '';
+  const type: string = (notification.type as string) || '';
   const actorName = notification.actor_name || null;
   let actorSuffix: string | null = null;
   let boldTarget: string | null = null;
@@ -136,16 +137,26 @@ export const parseNotificationText = (
 
   // Document verification success
   if (type === 'doc_verification_success') {
+    const displayName = (activeProfileName && activeProfileName.trim()) || (actorName && actorName.trim()) || 'user';
     if (bodyText.startsWith('Congratulations')) {
+      const match = bodyText.match(/^Congratulations\s+([^,]+),\s*(.*)$/i);
+      if (match && displayName && displayName !== 'user') {
+        return {
+          actorName: null,
+          actorSuffix,
+          boldTarget: null,
+          prefixText: '',
+          bodyText: `Congratulations ${displayName}, ${match[2]}`,
+        };
+      }
       return { actorName: null, actorSuffix, boldTarget: null, prefixText: '', bodyText };
     }
-    const name = actorName || activeProfileName || 'user';
     return {
       actorName: null,
       actorSuffix,
       boldTarget: null,
       prefixText: '',
-      bodyText: `Congratulations ${name}, we have successfully reviewed and verified your documents. Your profile is now verified.`,
+      bodyText: `Congratulations ${displayName}, we have successfully reviewed and verified your documents. Your profile is now verified.`,
     };
   }
 
@@ -170,9 +181,10 @@ export const parseNotificationText = (
 export const getNotificationRoute = (
   notification: Notification,
   activeProfile?: { name?: string; slug?: string } | null,
-  isCompany?: boolean
+  isCompany?: boolean,
+  currentUserId?: string
 ): string | null => {
-  const type = notification.type || '';
+  const type: string = (notification.type as string) || '';
   const ext = notification as unknown as ExtendedNotificationFields;
 
   const postReferenceId =
@@ -264,6 +276,35 @@ export const getNotificationRoute = (
     return isCompany && activeProfile?.slug
       ? `/organization/${activeProfile.slug}`
       : '/profile';
+  }
+
+  if (type === 'company_deactivated') {
+    return '/settings/organizations';
+  }
+
+  if (type === 'company_deleted') {
+    const meta = (notification.metadata as Record<string, unknown>) || {};
+    const canRecover = Boolean(
+      notification.can_recover ??
+      notification.canRecover ??
+      notification.is_owner ??
+      notification.isOwner ??
+      meta.can_recover ??
+      meta.canRecover ??
+      meta.is_owner ??
+      meta.isOwner ??
+      (currentUserId && (meta.owner_id === currentUserId || meta.ownerId === currentUserId))
+    );
+    // Only stakeholders who have the recover option (Owner) are redirected to settings/organizations.
+    // Associated team members cannot recover the deleted company and should NOT be redirected anywhere.
+    return canRecover ? '/settings/organizations' : null;
+  }
+  if (type === 'company_reactivated' || type === 'company_recovered') {
+    const slug =
+      notification.actor_slug ||
+      ((notification.metadata as Record<string, unknown>)?.org_slug as string) ||
+      ((notification.metadata as Record<string, unknown>)?.orgSlug as string);
+    return slug ? `/organization/${slug}` : '/settings/organizations';
   }
 
   return null;

@@ -26,6 +26,7 @@ type Org = {
   joinedOn?: string;
   role?: string;
   pageStatus: PageStatus;
+  isDeactivated?: boolean;
 };
 
 const PAGE_STATUS_CONFIG: Record<
@@ -245,7 +246,17 @@ export function OrganizationsSettingsPage() {
       );
     }
 
-    const statusConfig = PAGE_STATUS_CONFIG[selectedOrg.pageStatus];
+    const isAssociatedDeactivated =
+      selectedOrg.relation === 'associated' &&
+      (selectedOrg.pageStatus === 'deactivated' || selectedOrg.isDeactivated);
+
+    const statusConfig = isAssociatedDeactivated
+      ? {
+          description: PAGE_STATUS_CONFIG.deactivated.description,
+          actionText: 'Leave page',
+          modalTarget: 'leave' as const,
+        }
+      : PAGE_STATUS_CONFIG[selectedOrg.pageStatus];
 
     return (
       <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3">
@@ -275,7 +286,13 @@ export function OrganizationsSettingsPage() {
                 <div className="ds-text-small text-ds-text-secondary truncate">{selectedOrg.type}</div>
               </div>
             </div>
-            {selectedOrg.pageStatus !== 'deactivated' && selectedOrg.pageStatus !== 'scheduled_for_deletion' && (
+            {selectedOrg.pageStatus === 'deactivated' || selectedOrg.isDeactivated ? (
+              <div className="h-[40px] px-4 py-2 bg-ds-surface-1 rounded-[24px] flex justify-center items-center gap-[10px] shrink-0 ml-2 border border-ds-border">
+                <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-accent whitespace-nowrap text-center">
+                  Deactivated
+                </span>
+              </div>
+            ) : selectedOrg.pageStatus !== 'scheduled_for_deletion' ? (
               <button
                 type="button"
                 onClick={handleViewPage}
@@ -285,7 +302,7 @@ export function OrganizationsSettingsPage() {
                   View page
                 </span>
               </button>
-            )}
+            ) : null}
           </div>
 
           {/* Metadata Row */}

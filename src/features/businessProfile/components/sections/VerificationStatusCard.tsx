@@ -2,16 +2,39 @@
 
 import React from "react";
 import { VerifyBadgeIcon } from "@/components/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyPermissions } from "@/features/businessProfile";
 
 interface VerificationStatusCardProps {
   isVerified?: boolean;
   onManageDocumentsClick?: () => void;
+  canVerify?: boolean;
 }
 
 export default function VerificationStatusCard({
   isVerified = false,
   onManageDocumentsClick,
+  canVerify,
 }: VerificationStatusCardProps) {
+  const { activeProfile } = useActiveProfile();
+  const perms = useCompanyPermissions(activeProfile);
+
+  const effectiveCanVerify =
+    canVerify ??
+    Boolean(
+      perms.isOwner ||
+      perms.isAdmin ||
+      perms.canVerify ||
+      perms.checkPermission("MANAGE_VERIFICATION") ||
+      perms.checkPermission("*")
+    );
+
   if (isVerified) return null;
 
   return (
@@ -48,13 +71,34 @@ export default function VerificationStatusCard({
               : "Your profile is unverified. Maintain updated documentation to preserve status."}
           </p>
 
-          <button
-            type="button"
-            onClick={onManageDocumentsClick}
-            className="h-9 px-3 py-1.5 rounded-full bg-transparent border border-ds-border flex justify-center items-center gap-2.5 text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-1 active:bg-ds-surface-2 transition-colors cursor-pointer shrink-0"
-          >
-            Manage Documents
-          </button>
+          {!effectiveCanVerify ? (
+            <TooltipProvider>
+              <Tooltip delayDuration={100} enableTouch>
+                <TooltipTrigger asChild>
+                  <span className="inline-block cursor-not-allowed">
+                    <button
+                      type="button"
+                      onClick={onManageDocumentsClick}
+                      className="h-9 px-3 py-1.5 rounded-full bg-transparent border border-ds-border flex justify-center items-center gap-2.5 text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-1 transition-colors cursor-not-allowed shrink-0"
+                    >
+                      Manage Documents
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-50">
+                  You don't have access to verify on the behalf of company
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <button
+              type="button"
+              onClick={onManageDocumentsClick}
+              className="h-9 px-3 py-1.5 rounded-full bg-transparent border border-ds-border flex justify-center items-center gap-2.5 text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-1 active:bg-ds-surface-2 transition-colors cursor-pointer shrink-0"
+            >
+              Manage Documents
+            </button>
+          )}
         </div>
       </div>
     </div>

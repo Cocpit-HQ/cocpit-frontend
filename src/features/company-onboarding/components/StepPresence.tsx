@@ -1205,7 +1205,8 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
               maxLength={2000}
               value={description}
               onChange={(e) => {
-                updateField("description", e.target.value);
+                const val = e.target.value.slice(0, 2000);
+                updateField("description", val);
                 e.target.style.height = "auto";
                 e.target.style.height = `${Math.max(20, e.target.scrollHeight)}px`;
               }}

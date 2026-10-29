@@ -18,6 +18,7 @@ import {
   getNotificationRoute,
 } from '../utils/notification-helpers';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
 interface NotificationItemProps {
@@ -35,10 +36,11 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 }) => {
   const router = useRouter();
   const { activeProfile, isCompany } = useActiveProfile();
+  const { user } = useAuth();
 
   const visualKind = getNotificationVisualKind(notification);
   
-  const itemUrl = getNotificationRoute(notification, activeProfile, isCompany);
+  const itemUrl = getNotificationRoute(notification, activeProfile, isCompany, user?.id);
 
   const handleItemClick = () => {
     if (!notification.is_read && onRead) {
@@ -64,10 +66,32 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         notification.type === 'company_post' ||
         notification.type === 'organization_job' ||
         notification.type === 'organization_invite' ||
-        notification.type === 'ORGANIZATION_INVITE'
+        notification.type === 'ORGANIZATION_INVITE' ||
+        notification.type === 'company_deactivated' ||
+        notification.type === 'company_reactivated' ||
+        notification.type === 'company_deleted' ||
+        notification.type === 'company_recovered'
     );
 
     if (isCompanyActor) {
+      if (notification.type === 'company_deactivated') {
+        return '/settings/organizations';
+      }
+      if (notification.type === 'company_deleted') {
+        const meta = (notification.metadata as Record<string, unknown>) || {};
+        const canRecover = Boolean(
+          notification.can_recover ??
+          notification.canRecover ??
+          notification.is_owner ??
+          notification.isOwner ??
+          meta.can_recover ??
+          meta.canRecover ??
+          meta.is_owner ??
+          meta.isOwner ??
+          (user?.id && (meta.owner_id === user.id || meta.ownerId === user.id))
+        );
+        return canRecover ? '/settings/organizations' : null;
+      }
       const slug =
         notification.actor_slug ||
         ((notification.metadata as Record<string, unknown>)?.org_slug as string);
@@ -146,16 +170,19 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         (notification as unknown as { isCompanyActor?: boolean }).isCompanyActor
     );
 
-    if (visualKind === 'company' && !notification.actor_avatar) {
+    const isUserDocVerification = notification.type === 'doc_verification_success' || notification.type === 'doc_verification_rejected';
+    const effectiveAvatar = notification.actor_avatar || (isUserDocVerification && !isCompany ? (activeProfile?.avatar_url || (activeProfile as any)?.avatar) : null);
+
+    if (visualKind === 'company' && !effectiveAvatar) {
       return <OrgAvatarFallbackIcon className="w-6 h-6 shrink-0" size={24} />;
     }
 
-    if (notification.actor_avatar) {
+    if (effectiveAvatar) {
       return (
         <div className="w-6 h-6 shrink-0">
           <Avatar
-            url={notification.actor_avatar}
-            name={notification.actor_name || 'User'}
+            url={effectiveAvatar}
+            name={notification.actor_name || activeProfile?.name || 'User'}
             size="xs"
             isCompany={isCompanyActor}
           />
@@ -208,7 +235,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
     <div
       onClick={handleItemClick}
       className={cn(
-        "group flex flex-row items-center w-full font-['DM_Sans'] transition-colors duration-[120ms] h-[48px] p-3 gap-2 cursor-pointer",
+        "group flex flex-row items-center w-full font-['DM_Sans'] transition-colors duration-[120ms] h-[48px] p-3 gap-2",
+        itemUrl ? "cursor-pointer" : "cursor-default",
         isInsideGroup
           ? 'bg-transparent rounded-none'
           : 'bg-transparent rounded-[8px]'

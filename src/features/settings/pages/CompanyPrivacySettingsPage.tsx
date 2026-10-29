@@ -7,7 +7,13 @@ import { SettingToggle } from '../components/SettingToggle';
 import { MobileSettingsHeader } from '../components/MobileSettingsView';
 import { useCompanyPrivacySettings } from '../hooks/useCompanyPrivacySettings';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { businessProfileService } from '@/features/businessProfile';
+import { businessProfileService, useCompanyPermissions } from '@/features/businessProfile';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PrivacySettings } from '@/services/api/settings';
 
 const VISIBILITY_OPTIONS = [
@@ -67,6 +73,15 @@ export function CompanyPrivacySettingsPage() {
 
   const org = profileData?.org || profileData?.organization || profileData || {};
 
+  const companyPerms = useCompanyPermissions(activeProfile?.viewer_role_data ? activeProfile : org);
+  const canVerify = Boolean(
+    companyPerms.isOwner ||
+    companyPerms.isAdmin ||
+    companyPerms.canVerify ||
+    companyPerms.checkPermission('MANAGE_VERIFICATION') ||
+    companyPerms.checkPermission('*')
+  );
+
   const isOrgVerified = Boolean(
     org.isVerified ||
     org.is_verified ||
@@ -101,12 +116,13 @@ export function CompanyPrivacySettingsPage() {
   }, [isOrgVerified, org.verification_status, activeProfile, updateActiveProfile, refreshProfile]);
 
   const handleVerifyClick = useCallback(() => {
+    if (!canVerify) return;
     if (slug) {
       router.push(`/organization/${slug}/verify`);
     } else {
       router.push('/organization');
     }
-  }, [router, slug]);
+  }, [canVerify, router, slug]);
 
   const handleToggle = useCallback(
     (key: 'showEmail' | 'showPhone', nextVal: boolean) => {
@@ -191,6 +207,27 @@ export function CompanyPrivacySettingsPage() {
                 Verified
               </span>
             </div>
+          ) : !canVerify ? (
+            <TooltipProvider>
+              <Tooltip delayDuration={100} enableTouch>
+                <TooltipTrigger asChild>
+                  <span className="inline-block cursor-not-allowed">
+                    <button
+                      type="button"
+                      onClick={handleVerifyClick}
+                      className="w-[68px] h-[36px] rounded-[100px] border border-ds-border text-ds-text-primary flex justify-center items-center transition-colors cursor-not-allowed shrink-0"
+                    >
+                      <span className="justify-start text-base font-medium font-['DM_Sans'] leading-6">
+                        Verify
+                      </span>
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-50">
+                  You don't have access to verify on the behalf of company
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
             <button
               type="button"

@@ -8,6 +8,8 @@ import FeaturedPostsSection from "../sections/FeaturedPostsSection";
 import VerificationStatusCard from "../sections/VerificationStatusCard";
 import KeyOfferingsAndTeamsSection from "../sections/KeyOfferingsAndTeamsSection";
 import GrowthTrendsSection from "../sections/GrowthTrendsSection";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyPermissions } from "../../hooks/useBusinessPermissions";
 
 interface HomeTabProps {
   data: BusinessProfileData;
@@ -32,7 +34,19 @@ export default function HomeTab({
   const params = useParams();
   const rawSlug = (params?.slug as string) || data.slug || "";
 
+  const { activeProfile } = useActiveProfile();
+  const perms = useCompanyPermissions(activeProfile);
+  const canVerify = Boolean(
+    perms.isOwner ||
+    perms.isAdmin ||
+    perms.canVerify ||
+    Boolean(canManageCompany) ||
+    viewerPermissions?.includes("*") ||
+    perms.checkPermission("MANAGE_VERIFICATION")
+  );
+
   const handleManageDocuments = () => {
+    if (!canVerify) return;
     router.push(`/organization/${rawSlug}/verify`);
   };
 
@@ -88,6 +102,7 @@ export default function HomeTab({
         <VerificationStatusCard
           isVerified={data.isVerified}
           onManageDocumentsClick={handleManageDocuments}
+          canVerify={canVerify}
         />
       )}
 

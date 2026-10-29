@@ -212,7 +212,10 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
       formData.append("country", countryOfOperation || hqCountry || "India");
       if (hqCity) formData.append("city", hqCity);
       if (headline) formData.append("headline", headline);
-      if (description) formData.append("description", description);
+      if (description) {
+        const sanitizedDesc = description.replace(/\r\n/g, "\n").trim().slice(0, 2000);
+        formData.append("description", sanitizedDesc);
+      }
       if (incorporationDate) formData.append("incorporation_date", incorporationDate);
 
       if (logoFile) {

@@ -11,6 +11,12 @@ import BusinessEditAboutTab from "../components/edit/BusinessEditAboutTab";
 import { BusinessBuildingIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { AccessDenied } from "@/features/access-denied";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export function BusinessProfileEditPage() {
@@ -46,6 +52,7 @@ export function BusinessProfileEditPage() {
     profileData?.viewer_permissions ||
     [];
   const canEditCompany = isOwner || isAdmin || actingPermissions.includes("*") || actingPermissions.includes("MANAGE_COMPANY_DETAILS");
+  const canVerify = Boolean(isOwner || isAdmin || actingPermissions.includes("*") || actingPermissions.includes("MANAGE_VERIFICATION"));
 
   useEffect(() => {
     if (mounted && canEditCompany) {
@@ -221,20 +228,48 @@ export function BusinessProfileEditPage() {
           </button>
 
           {/* Verification Tab (Mobile only to match Figma mobile, hidden on desktop) */}
-          <button
-            type="button"
-            onClick={() => router.push(`/organization/${rawSlug}/verify`)}
-            className="sm:hidden inline-flex flex-col justify-start items-center cursor-pointer group focus:outline-none bg-transparent border-0 p-0"
-          >
-            <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
-              <div className="inline-flex justify-center items-center gap-1">
-                <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
-                  Verification
-                </span>
+          {!canVerify ? (
+            <TooltipProvider>
+              <Tooltip delayDuration={100} enableTouch>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-not-allowed">
+                    <button
+                      type="button"
+                      onClick={(e) => e.preventDefault()}
+                      className="sm:hidden inline-flex flex-col justify-start items-center cursor-not-allowed group focus:outline-none bg-transparent border-0 p-0"
+                    >
+                      <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
+                        <div className="inline-flex justify-center items-center gap-1">
+                          <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
+                            Verification
+                          </span>
+                        </div>
+                      </div>
+                      <div className="self-stretch h-[2px] bg-transparent" />
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
+                  You don't have access to verify on the behalf of company
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <button
+              type="button"
+              onClick={() => router.push(`/organization/${rawSlug}/verify`)}
+              className="sm:hidden inline-flex flex-col justify-start items-center cursor-pointer group focus:outline-none bg-transparent border-0 p-0"
+            >
+              <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
+                <div className="inline-flex justify-center items-center gap-1">
+                  <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
+                    Verification
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="self-stretch h-[2px] bg-transparent" />
-          </button>
+              <div className="self-stretch h-[2px] bg-transparent" />
+            </button>
+          )}
         </div>
 
         {/* Tab Content Panels */}
