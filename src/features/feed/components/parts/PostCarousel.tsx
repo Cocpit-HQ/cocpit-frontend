@@ -5,12 +5,15 @@ import useEmblaCarousel from "embla-carousel-react";
 // @ts-ignore
 import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Volume2, VolumeX } from "lucide-react";
 import { CarouselDots } from "./CarouselDots";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFeedUIStore } from "@/store/feed.store";
+import { PostMediaItem } from "@/types/entities";
 
 export interface PostCarouselProps {
-  images: string[];
+  images?: string[];
+  media?: PostMediaItem[];
   imageDimensions?: Array<{ width: number; height: number } | null>;
   priority?: boolean;
   aspectRatio?: string | number;
@@ -25,33 +28,23 @@ export interface PostCarouselProps {
   dotsClassName?: string;
 }
 
-// ─── X-style dynamic sizing helpers ────────────────────────────────────────
+// ─── Cocpit-style dynamic sizing helpers (max 442px width × 589px height) ──
 
 const MIN_CONTAINER_H = 200;
-// Derived from X's observed behavior:
-//   landscape/square first-image → X caps at ~412px → we use 416
-//   portrait first-image         → X caps at ~642px → we use 640
-const MAX_CONTAINER_H_LANDSCAPE = 416;
-const MAX_CONTAINER_H_PORTRAIT  = 640;
-const MAX_CONTAINER_W = 416;
-const MIN_SLIDE_W = 36;  // X allows ~42px; 36 is our safe minimum
+const MAX_CONTAINER_H_LANDSCAPE = 442;
+const MAX_CONTAINER_H_PORTRAIT = 589;
+const MAX_CONTAINER_W = 442;
+const MIN_SLIDE_W = 36;
 
-/**
- * Compute the shared carousel container height.
- * - If ANY image in the set is landscape (AR ≥ 1) → use landscape cap (416px).
- *   This matches X: a carousel containing a landscape slide uses the shorter height.
- * - If ALL images are portrait → use portrait cap (640px).
- *   This matches X: a carousel of phone screenshots uses the taller height.
- * Height is further clamped to the natural height of the first image.
- */
 function computeContainerHeight(
   dims: Array<{ width: number; height: number } | null> | undefined
 ): number {
-  const validDims = (dims || []).filter(Boolean) as Array<{ width: number; height: number }>;
-  const first = validDims[0];
+  if (!dims || dims.length === 0) return MAX_CONTAINER_H_LANDSCAPE;
+  // Always prioritize slide 0 to anchor carousel height
+  const first = dims[0] || (dims.filter(Boolean) as Array<{ width: number; height: number }>)[0];
   if (!first || !first.width || !first.height) return MAX_CONTAINER_H_LANDSCAPE;
 
-  // Pick cap based on whether ANY image is landscape (AR > 1.05 to avoid square triggering landscape)
+  const validDims = dims.filter(Boolean) as Array<{ width: number; height: number }>;
   const hasLandscape = validDims.some(d => d.width / d.height > 1.05);
   const maxH = hasLandscape ? MAX_CONTAINER_H_LANDSCAPE : MAX_CONTAINER_H_PORTRAIT;
 
@@ -61,31 +54,161 @@ function computeContainerHeight(
   return Math.max(MIN_CONTAINER_H, Math.min(targetH, maxH));
 }
 
-/**
- * Compute the display width for one slide given its natural dimensions,
- * the shared container height, and the available container width.
- */
 function computeSlideWidth(
   dims: { width: number; height: number } | null | undefined,
   containerH: number,
   maxW: number
 ): number {
-  if (!dims) return Math.round(maxW * 0.8); // fallback: 80% peek
+  if (!dims || !dims.height) return Math.round(maxW * 0.8);
   const ar = dims.width / dims.height;
   const natural = Math.round(containerH * ar);
   return Math.max(MIN_SLIDE_W, Math.min(natural, maxW));
 }
 
+// ─── Single Video Slide Component ──────────────────────────────────────────
+
+interface CarouselVideoSlideProps {
+  item: PostMediaItem;
+  isActive: boolean;
+  imageFit?: 'cover' | 'contain';
+}
+
+function CarouselVideoSlide({
+  item,
+  isActive,
+  imageFit = 'cover',
+}: CarouselVideoSlideProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { isMuted, setIsMuted } = useFeedUIStore();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Sync muted property directly on DOM element
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  // Handle play/pause when isActive changes
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.defaultMuted = true;
+    video.muted = isMuted;
+
+    if (isActive) {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch((err) => {
+            console.warn('[CarouselVideoSlide] Autoplay prevented or interrupted:', err.name);
+            setIsPlaying(false);
+          });
+      }
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  }, [isActive, isMuted, item.url]);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.defaultMuted = true;
+      video.muted = isMuted;
+      video.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMuted(!isMuted);
+  };
+
+  const posterSource = item.thumbnail_url || `${item.url}#t=0.001`;
+
+  return (
+    <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
+      {/* Background static poster if available */}
+      {item.thumbnail_url ? (
+        <img
+          src={item.thumbnail_url}
+          alt="Video thumbnail"
+          className={`absolute inset-0 w-full h-full ${imageFit === 'contain' ? 'object-contain' : 'object-cover'} pointer-events-none ${isLoaded && isPlaying ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200 z-0`}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+      ) : null}
+
+      <video
+        ref={videoRef}
+        src={item.url}
+        poster={posterSource}
+        preload="auto"
+        playsInline
+        loop
+        muted={isMuted}
+        onLoadedData={() => setIsLoaded(true)}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        className={`w-full h-full ${imageFit === 'contain' ? 'object-contain' : 'object-cover'} relative z-10`}
+        onClick={togglePlay}
+      />
+
+      {/* Play/Pause overlay */}
+      {!isPlaying && (
+        <button
+          type="button"
+          onClick={togglePlay}
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 text-white cursor-pointer"
+          aria-label="Play video"
+        >
+          <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white shadow-md">
+            <Play className="w-6 h-6 fill-white ml-0.5" />
+          </div>
+        </button>
+      )}
+
+      {/* Duration badge when not playing */}
+      {!isPlaying && item.duration_seconds ? (
+        <div className="absolute bottom-3 right-12 z-20 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded text-[11px] font-medium text-white select-none pointer-events-none">
+          {Math.floor(item.duration_seconds / 60)}:
+          {String(Math.floor(item.duration_seconds % 60)).padStart(2, '0')}
+        </div>
+      ) : null}
+
+      {/* Mute button */}
+      <button
+        type="button"
+        onClick={toggleMute}
+        className="absolute bottom-3 right-3 z-30 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm flex items-center justify-center text-white transition-transform active:scale-90 cursor-pointer"
+        aria-label={isMuted ? "Unmute" : "Mute"}
+      >
+        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 
 export function PostCarousel({
-  images,
+  images = [],
+  media,
   imageDimensions,
   priority = false,
   onImageLoad,
   imageFit = 'cover',
   showDots = true,
-  viewportHeight,     // legacy prop – ignored when imageDimensions is provided
+  viewportHeight,
   overlay,
   className = '',
   arrowPlacement = 'outside',
@@ -96,6 +219,23 @@ export function PostCarousel({
   const plugins = typeof WheelGesturesPlugin === 'function' && !isMobile ? [WheelGesturesPlugin()] : [];
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rAFRef = useRef<number | null>(null);
+
+  // Normalize into unified slides
+  const slides: PostMediaItem[] = React.useMemo(() => {
+    if (media && media.length > 0) return media;
+    if (images && images.length > 0) {
+      return images.map((url, idx) => ({
+        url,
+        media_type: (url.match(/\.(mp4|webm|mov)(\?|#|$)/i) ? 'video' : 'image') as 'image' | 'video',
+        order_index: idx,
+        width: imageDimensions?.[idx]?.width,
+        height: imageDimensions?.[idx]?.height,
+      }));
+    }
+    return [];
+  }, [media, images, imageDimensions]);
+
+  const slideUrls = React.useMemo(() => slides.map(s => s.thumbnail_url || s.url), [slides]);
 
   const align = useCallback((viewSize: number, snapSize: number, index: number) => {
     if (index === 0) return 0;
@@ -114,55 +254,82 @@ export function PostCarousel({
     duration: 25,
   }, plugins);
 
-  const [loadedDims, setLoadedDims] = useState<Array<{ width: number; height: number } | null>>(
-    imageDimensions || Array(images.length).fill(null)
-  );
+  const initialDims = React.useMemo(() => {
+    return slides.map((s, idx) => {
+      if (s.width && s.height && s.width > 0 && s.height > 0) {
+        return { width: s.width, height: s.height };
+      }
+      if (imageDimensions && imageDimensions[idx] && imageDimensions[idx]!.width > 0) {
+        return imageDimensions[idx];
+      }
+      return null;
+    });
+  }, [slides, imageDimensions]);
+
+  const [loadedDims, setLoadedDims] = useState<Array<{ width: number; height: number } | null>>(initialDims);
 
   useEffect(() => {
-    if (imageDimensions && imageDimensions.some(Boolean)) {
-      setLoadedDims(imageDimensions);
-    } else {
-      setLoadedDims(Array(images.length).fill(null));
-    }
-  }, [imageDimensions, images.length]);
+    setLoadedDims(initialDims);
+  }, [initialDims]);
 
-  // Synchronously measure cached images or probe images when imageDimensions is missing
+  // Synchronously measure cached images or probe images/videos when dimensions are missing
   useEffect(() => {
-    if (imageDimensions && imageDimensions.every(Boolean)) return;
+    if (loadedDims.length > 0 && loadedDims.every(Boolean)) return;
     if (typeof window === "undefined") return;
 
     let isMounted = true;
-    images.forEach((src, index) => {
-      if (!src) return;
-      const probe = new window.Image();
-      probe.src = src;
+    slides.forEach((item, index) => {
+      if (loadedDims[index]) return;
+      const isVideo = item.media_type === 'video' || item.url?.match(/\.(mp4|webm|mov)(\?|#|$)/i);
 
-      const applyDims = () => {
-        if (!isMounted) return;
-        if (probe.naturalWidth && probe.naturalHeight) {
-          setLoadedDims((prev) => {
-            const curr = prev[index];
-            if (!curr || curr.width !== probe.naturalWidth || curr.height !== probe.naturalHeight) {
+      if (isVideo) {
+        if (item.thumbnail_url) {
+          const probe = new window.Image();
+          probe.src = item.thumbnail_url;
+          probe.onload = () => {
+            if (!isMounted || !probe.naturalWidth || !probe.naturalHeight) return;
+            setLoadedDims(prev => {
+              if (prev[index]) return prev;
               const next = [...prev];
               next[index] = { width: probe.naturalWidth, height: probe.naturalHeight };
               return next;
-            }
-            return prev;
-          });
+            });
+          };
+        } else {
+          const v = document.createElement('video');
+          v.preload = 'metadata';
+          v.src = item.url;
+          v.onloadedmetadata = () => {
+            if (!isMounted || !v.videoWidth || !v.videoHeight) return;
+            setLoadedDims(prev => {
+              if (prev[index]) return prev;
+              const next = [...prev];
+              next[index] = { width: v.videoWidth, height: v.videoHeight };
+              return next;
+            });
+          };
         }
-      };
-
-      if (probe.complete) {
-        applyDims();
       } else {
-        probe.onload = applyDims;
+        const probe = new window.Image();
+        probe.src = item.url;
+        const applyDims = () => {
+          if (!isMounted || !probe.naturalWidth || !probe.naturalHeight) return;
+          setLoadedDims(prev => {
+            if (prev[index]) return prev;
+            const next = [...prev];
+            next[index] = { width: probe.naturalWidth, height: probe.naturalHeight };
+            return next;
+          });
+        };
+        if (probe.complete) applyDims();
+        else probe.onload = applyDims;
       }
     });
 
     return () => {
       isMounted = false;
     };
-  }, [images, imageDimensions]);
+  }, [slides, loadedDims]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -226,7 +393,7 @@ export function PostCarousel({
     };
   }, [emblaApi, onScroll, updateActiveState]);
 
-  // Re-initialize Embla when images change, dims load, or mobile changes
+  // Re-initialize Embla when slides change, dims load, or mobile changes
   useEffect(() => {
     if (!emblaApi) return;
     const timer = setTimeout(() => {
@@ -234,7 +401,7 @@ export function PostCarousel({
       updateActiveState();
     }, 50);
     return () => clearTimeout(timer);
-  }, [emblaApi, images, isMobile, loadedDims, updateActiveState]);
+  }, [emblaApi, slides.length, isMobile, loadedDims, updateActiveState]);
 
   const scrollToSlide = useCallback((targetIdx: number) => {
     if (!emblaApi) return;
@@ -253,7 +420,7 @@ export function PostCarousel({
     emblaApi.scrollNext();
   }, [emblaApi]);
 
-  if (!images || images.length === 0) return null;
+  if (!slides || slides.length === 0) return null;
 
   // ── Dynamic sizing (X-style) vs legacy fixed height ──────────────────────
   const hasDimensions = loadedDims && loadedDims.some(Boolean);
@@ -261,22 +428,19 @@ export function PostCarousel({
   // Container height in px
   const containerH = hasDimensions
     ? computeContainerHeight(loadedDims)
-    : null; // null → use legacy viewportHeight class
+    : null;
 
-  // Per-slide widths in px (null → use CSS percentage fallback)
-  const slideWidths: (number | null)[] = images.map((_, i) =>
+  // Per-slide widths in px
+  const slideWidths: (number | null)[] = slides.map((_, i) =>
     hasDimensions
       ? computeSlideWidth(loadedDims?.[i], containerH!, MAX_CONTAINER_W)
       : null
   );
 
-  // Height class for legacy / full-screen mode
   const legacyHeightClass = viewportHeight ?? 'h-[430px]';
   const containerStyle: React.CSSProperties = containerH
     ? { height: `${containerH}px` }
     : {};
-
-  // ────────────────────────────────────────────────────────────────────────
 
   return (
     <div className={`relative w-full flex flex-col items-center select-none ${className}`}>
@@ -288,7 +452,9 @@ export function PostCarousel({
         {/* Embla Viewport */}
         <div className="w-full h-full overflow-hidden" ref={emblaRef}>
           <div className="flex h-full gap-2 touch-pan-y" ref={containerRef}>
-            {images.map((src, index) => {
+            {slides.map((item, index) => {
+              const isVideo = item.media_type === 'video' || item.url.match(/\.(mp4|webm|mov)(\?|#|$)/i);
+              const isActive = selectedIndex === index;
               const sw = slideWidths[index];
               const slideStyle: React.CSSProperties = sw
                 ? { width: `${sw}px`, maxWidth: '100%', flexShrink: 0, flexGrow: 0 }
@@ -298,12 +464,11 @@ export function PostCarousel({
                 : slideWidth === 'full'
                   ? "relative flex-[0_0_100%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2"
                   : "relative flex-[0_0_80%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2";
-              const dim = imageDimensions ? imageDimensions[index] : null;
+              const dim = loadedDims[index];
               let dynamicSizes = "(max-width: 768px) 100vw, 1200px";
               if (dim && dim.height > 0) {
                 const ar = dim.width / dim.height;
-                // For a ~416px container, we need (416 * AR * 2) width to maintain crisp retina height
-                const neededW = Math.min(3840, Math.ceil(416 * Math.max(1, ar) * 2));
+                const neededW = Math.min(3840, Math.ceil(MAX_CONTAINER_W * Math.max(1, ar) * 2));
                 dynamicSizes = `${neededW}px`;
               }
 
@@ -313,35 +478,38 @@ export function PostCarousel({
                   className={slideCls}
                   style={slideStyle}
                 >
-                  <Image
-                    src={src}
-                    alt={`Post image ${index + 1}`}
-                    fill
-                    className={
-                      imageFit === 'contain'
-                        ? "object-contain rounded-[8px] transition-transform duration-300 ease-out"
-                        : "object-cover rounded-[8px] transition-transform duration-300 ease-out"
-                    }
-                    priority={priority && index === 0}
-                    // unoptimized={true}
-                    sizes={dynamicSizes}
-                    quality={90}
-                    onLoad={(e) => {
-                      const img = e.currentTarget;
-                      if (img.naturalWidth && img.naturalHeight) {
-                        setLoadedDims(prev => {
-                          const curr = prev[index];
-                          if (!curr || curr.width !== img.naturalWidth || curr.height !== img.naturalHeight) {
-                            const newDims = [...prev];
-                            newDims[index] = { width: img.naturalWidth, height: img.naturalHeight };
-                            return newDims;
-                          }
-                          return prev;
-                        });
+                  {isVideo ? (
+                    <CarouselVideoSlide item={item} isActive={isActive} imageFit={imageFit} />
+                  ) : (
+                    <Image
+                      src={item.url}
+                      alt={`Post image ${index + 1}`}
+                      fill
+                      className={
+                        imageFit === 'contain'
+                          ? "object-contain rounded-[8px] transition-transform duration-300 ease-out"
+                          : "object-cover rounded-[8px] transition-transform duration-300 ease-out"
                       }
-                      if (index === 0 && onImageLoad) onImageLoad(e);
-                    }}
-                  />
+                      priority={priority && index === 0}
+                      sizes={dynamicSizes}
+                      quality={90}
+                      onLoad={(e) => {
+                        const img = e.currentTarget;
+                        if (img.naturalWidth && img.naturalHeight) {
+                          setLoadedDims(prev => {
+                            const curr = prev[index];
+                            if (!curr || curr.width !== img.naturalWidth || curr.height !== img.naturalHeight) {
+                              const newDims = [...prev];
+                              newDims[index] = { width: img.naturalWidth, height: img.naturalHeight };
+                              return newDims;
+                            }
+                            return prev;
+                          });
+                        }
+                        if (index === 0 && onImageLoad) onImageLoad(e);
+                      }}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -349,7 +517,7 @@ export function PostCarousel({
         </div>
 
         {/* Navigation Arrows */}
-        {images.length > 1 && (
+        {slides.length > 1 && (
           <>
             {canScrollPrev && (
               <button
@@ -360,7 +528,7 @@ export function PostCarousel({
                     ? "absolute left-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm shadow-md transition-all duration-200 cursor-pointer outline-none active:scale-95 opacity-0 group-hover:opacity-100"
                     : "absolute -left-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
                 }
-                aria-label="Previous photo"
+                aria-label="Previous slide"
               >
                 <ChevronLeft className={`w-5 h-5 ${arrowPlacement === 'inside' ? 'text-white' : 'text-ds-text-primary'}`} />
               </button>
@@ -374,7 +542,7 @@ export function PostCarousel({
                     ? "absolute right-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm shadow-md transition-all duration-200 cursor-pointer outline-none active:scale-95 opacity-0 group-hover:opacity-100"
                     : "absolute -right-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
                 }
-                aria-label="Next photo"
+                aria-label="Next slide"
               >
                 <ChevronRight className={`w-5 h-5 ${arrowPlacement === 'inside' ? 'text-white' : 'text-ds-text-primary'}`} />
               </button>
@@ -382,14 +550,14 @@ export function PostCarousel({
           </>
         )}
 
-        {/* Overlay elements (e.g. Tagged people badge) */}
+        {/* Overlay elements */}
         {overlay}
       </div>
 
       {/* Carousel Indicator Dots */}
-      {showDots && images.length > 1 && (
+      {showDots && slides.length > 1 && (
         <CarouselDots
-          total={images.length}
+          total={slides.length}
           activeIndex={selectedIndex}
           imageDimensions={loadedDims}
           onDotClick={(idx) => scrollToSlide(idx)}
@@ -401,4 +569,3 @@ export function PostCarousel({
 }
 
 export default PostCarousel;
-

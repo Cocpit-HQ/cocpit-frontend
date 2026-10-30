@@ -3,7 +3,7 @@ import { Area, MediaSize } from 'react-easy-crop';
 import { MediaItem } from '../types';
 import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
 import { showToast as toast } from '@/shared/commonComponents/GlobalToast';
-import { getImageDimensions, getVideoDimensions } from '@/features/feed/utils/imageBounds';
+import { getImageDimensions, getVideoDimensions, getVideoMetadataAndPoster } from '@/features/feed/utils/imageBounds';
 
 type AspectRatioMode = '1:1' | '4:5' | '16:9';
 
@@ -14,6 +14,20 @@ const getAspectModeFromValue = (aspect: number): AspectRatioMode => {
   if (Math.abs(aspect - 16 / 9) < 0.001) return '16:9';
   return '4:5';
 };
+
+// Media Constraints for Mixed Media Carousels:
+// - Up to 12 attachments total per post
+// - Up to 4 videos max per post
+// - Max 240.0s (4 minutes) video duration
+// - Single Image Limit: 10 MB max per image
+// - Total Image Upload Limit: 120 MB max cumulative across all attached images
+// - Single Video Limit: 100 MB max per video
+export const MAX_TOTAL_MEDIA = 12;
+export const MAX_VIDEOS = 4;
+export const MAX_VIDEO_DURATION = 240.0;
+export const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024;
+export const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024;
+export const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
 
 export const usePostMedia = (
   initialImages: MediaItem[] = [],
@@ -36,17 +50,22 @@ export const usePostMedia = (
   useEffect(() => { uploadedVideosRef.current = uploadedVideos; }, [uploadedVideos]);
   useEffect(() => { previewMediaUrlsRef.current = previewMediaUrls; }, [previewMediaUrls]);
 
-
-
-  const createMediaItem = useCallback((file: File, dims?: { width: number; height: number }): MediaItem => ({
+  const createMediaItem = useCallback((
+    file: File,
+    dims?: { width: number; height: number },
+    videoMeta?: { duration?: number; thumbnailUrl?: string; thumbnailBlob?: Blob }
+  ): MediaItem => ({
     id: `${Date.now()}-${Math.random()}`,
     url: URL.createObjectURL(file),
     file,
-    type: file.type.startsWith('image/') ? 'image' : 'video',
+    type: file.type.startsWith('video/') ? 'video' : 'image',
     crop: { x: 0, y: 0 },
     zoom: 1,
     naturalWidth: dims?.width,
     naturalHeight: dims?.height,
+    duration: videoMeta?.duration,
+    thumbnailUrl: videoMeta?.thumbnailUrl,
+    thumbnailBlob: videoMeta?.thumbnailBlob,
   }), []);
 
   const aspectRatio = selectedAspectRatio;
@@ -56,75 +75,86 @@ export const usePostMedia = (
       if (!img.isExisting) {
         URL.revokeObjectURL(img.url);
         if (img.croppedBlobUrl) URL.revokeObjectURL(img.croppedBlobUrl);
+        if (img.thumbnailUrl && img.thumbnailUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(img.thumbnailUrl);
+        }
       }
     });
     uploadedVideosRef.current.forEach(video => {
-      if (!video.isExisting) URL.revokeObjectURL(video.url);
+      if (!video.isExisting) {
+        URL.revokeObjectURL(video.url);
+        if (video.thumbnailUrl && video.thumbnailUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(video.thumbnailUrl);
+        }
+      }
     });
     previewMediaUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
   }, []);
-
-  // Media Size Constraints for Posts:
-  // - Single Image Limit: 10 MB max per individual image.
-  // - Total Image Upload Limit: 100 MB max cumulative size across all attached images in a post.
-  // - Single Video Limit: 100 MB max for video uploads.
-  const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB per individual image limit
-  const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024; // 100 MB cumulative total limit for all images in post
-  const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB video size limit
 
   const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement> | File, isEdit: boolean) => {
     const file: File | undefined = e instanceof File ? e : e.target.files?.[0];
 
     if (file) {
-      if (file.type.startsWith('video/')) {
+      const isVideo = file.type.startsWith('video/');
+      const currentTotal = uploadedImagesRef.current.length;
+      if (currentTotal >= MAX_TOTAL_MEDIA) {
+        toast.error(`Maximum ${MAX_TOTAL_MEDIA} attachments allowed`);
+        if (!(e instanceof File) && e.target) e.target.value = '';
+        return;
+      }
+
+      if (isVideo) {
         if (file.size > MAX_VIDEO_SIZE) {
           toast.error("Video file size cannot exceed 100MB");
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
-        if (uploadedImagesRef.current.length > 0) {
-          toast.error("Cannot upload video and images together");
+        const currentVideoCount = uploadedImagesRef.current.filter(i => i.type === 'video').length;
+        if (currentVideoCount >= MAX_VIDEOS) {
+          toast.error(`Maximum ${MAX_VIDEOS} videos allowed`);
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
-        if (uploadedVideosRef.current.length >= 1) {
-          toast.error("Only one video file is allowed");
-          if (!(e instanceof File) && e.target) e.target.value = '';
-          return;
-        }
-        let dims;
+
+        let videoMeta;
         try {
-          dims = await getVideoDimensions(file);
+          videoMeta = await getVideoMetadataAndPoster(file);
         } catch (err) {
-          console.error("Failed to load video dimensions", err);
+          console.error("Failed to load video metadata", err);
         }
-        const newVideo = createMediaItem(file, dims);
-        setUploadedVideos([newVideo]);
-        setUploadedImages([]);
-        setActiveImageIndex(0);
-        onTypeChange?.('video');
+
+        if (videoMeta && videoMeta.duration > MAX_VIDEO_DURATION) {
+          toast.error("Video duration cannot exceed 4 minutes (240 seconds)");
+          if (!(e instanceof File) && e.target) e.target.value = '';
+          return;
+        }
+
+        const dims = videoMeta ? { width: videoMeta.width, height: videoMeta.height } : undefined;
+        const newVideo = createMediaItem(file, dims, videoMeta ? {
+          duration: videoMeta.duration,
+          thumbnailUrl: videoMeta.posterUrl,
+          thumbnailBlob: videoMeta.posterBlob,
+        } : undefined);
+
+        setUploadedImages(prev => {
+          const updated = [...prev, newVideo];
+          if (prev.length === 0) setActiveImageIndex(0);
+          return updated;
+        });
+        onTypeChange?.('photo');
       } else {
         if (file.size > MAX_SINGLE_IMAGE_SIZE) {
           toast.error(`Image "${file.name}" exceeds the 10MB limit.`);
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
-        const currentTotalSize = uploadedImagesRef.current.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+        const currentTotalSize = uploadedImagesRef.current.filter(i => i.type === 'image').reduce((sum, img) => sum + (img.file?.size || 0), 0);
         if (currentTotalSize + file.size > MAX_TOTAL_IMAGE_SIZE) {
-          toast.error("Total image upload size cannot exceed 100MB.");
+          toast.error("Total image upload size cannot exceed 120MB.");
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
-        if (uploadedVideosRef.current.length > 0) {
-          toast.error("Cannot upload video and images together");
-          if (!(e instanceof File) && e.target) e.target.value = '';
-          return;
-        }
-        if (uploadedImagesRef.current.length >= 12) {
-          toast.error("Maximum 12 images allowed");
-          if (!(e instanceof File) && e.target) e.target.value = '';
-          return;
-        }
+
         let dims;
         try {
           dims = await getImageDimensions(file);
@@ -132,9 +162,11 @@ export const usePostMedia = (
           console.error("Failed to load image dimensions", err);
         }
         const newImage = createMediaItem(file, dims);
-        setUploadedImages([newImage]);
-        setUploadedVideos([]);
-        setActiveImageIndex(0);
+        setUploadedImages(prev => {
+          const updated = [...prev, newImage];
+          if (prev.length === 0) setActiveImageIndex(0);
+          return updated;
+        });
         onTypeChange?.('photo');
       }
     }
@@ -147,7 +179,7 @@ export const usePostMedia = (
       const videoFiles = files.filter(f => f.type.startsWith('video/'));
       const imageFiles = files.filter(f => !f.type.startsWith('video/'));
 
-      // 1. Size Check (Per image 10MB, total images 100MB, video 100MB)
+      // 1. Size checks
       if (videoFiles.length > 0) {
         const oversizedVideo = videoFiles.find(file => file.size > MAX_VIDEO_SIZE);
         if (oversizedVideo) {
@@ -165,72 +197,67 @@ export const usePostMedia = (
           return;
         }
 
-        const currentTotalSize = uploadedImagesRef.current.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+        const currentTotalSize = uploadedImagesRef.current.filter(i => i.type === 'image').reduce((sum, img) => sum + (img.file?.size || 0), 0);
         const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
         if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
-          toast.error("Total image upload size cannot exceed 100MB.");
+          toast.error("Total image upload size cannot exceed 120MB.");
           e.target.value = '';
           return;
         }
       }
 
-      // 2. Mixed Check in selection
-      if (videoFiles.length > 0 && imageFiles.length > 0) {
-        toast.error("Cannot upload video and images together");
+      // 2. Count limits
+      const currentVideos = uploadedImagesRef.current.filter(i => i.type === 'video').length;
+      if (currentVideos + videoFiles.length > MAX_VIDEOS) {
+        toast.error(`Maximum ${MAX_VIDEOS} videos allowed`);
         e.target.value = '';
         return;
       }
 
-      // 3. Mixed Check against existing state
-      if (videoFiles.length > 0 && uploadedImagesRef.current.length > 0) {
-        toast.error("Cannot upload video and images together");
-        e.target.value = '';
-        return;
-      }
-      if (imageFiles.length > 0 && uploadedVideosRef.current.length > 0) {
-        toast.error("Cannot upload video and images together");
+      if (uploadedImagesRef.current.length + files.length > MAX_TOTAL_MEDIA) {
+        toast.error(`Maximum ${MAX_TOTAL_MEDIA} attachments allowed`);
         e.target.value = '';
         return;
       }
 
-      // 4. Video count limit
-      if (uploadedVideosRef.current.length + videoFiles.length > 1) {
-        toast.error("Only one video file is allowed");
-        e.target.value = '';
-        return;
-      }
-
-      // 5. Image count limit
-      if (uploadedImagesRef.current.length + imageFiles.length > 12) {
-        toast.error("Maximum 12 images allowed");
-        e.target.value = '';
-        return;
-      }
-
-      if (videoFiles.length > 0) {
-        const newVideos = await Promise.all(videoFiles.map(async file => {
+      // 3. Process files
+      const newItems: MediaItem[] = [];
+      for (const file of files) {
+        if (file.type.startsWith('video/')) {
+          let videoMeta;
+          try {
+            videoMeta = await getVideoMetadataAndPoster(file);
+          } catch (err) {
+            console.error("Failed to load video metadata", err);
+          }
+          if (videoMeta && videoMeta.duration > MAX_VIDEO_DURATION) {
+            toast.error(`Video "${file.name}" exceeds 4 minutes (240 seconds)`);
+            e.target.value = '';
+            return;
+          }
+          const dims = videoMeta ? { width: videoMeta.width, height: videoMeta.height } : undefined;
+          newItems.push(createMediaItem(file, dims, videoMeta ? {
+            duration: videoMeta.duration,
+            thumbnailUrl: videoMeta.posterUrl,
+            thumbnailBlob: videoMeta.posterBlob,
+          } : undefined));
+        } else {
           let dims;
-          try { dims = await getVideoDimensions(file); } catch (e) { console.error(e); }
-          return createMediaItem(file, dims);
-        }));
-        setUploadedVideos(newVideos);
-        setUploadedImages([]);
-        setActiveImageIndex(0);
-        onTypeChange?.('video');
-      } else if (imageFiles.length > 0) {
-        const newImages = await Promise.all(imageFiles.map(async file => {
-          let dims;
-          try { dims = await getImageDimensions(file); } catch (e) { console.error(e); }
-          return createMediaItem(file, dims);
-        }));
-        setUploadedImages(prev => {
-          const updated = [...prev, ...newImages];
-          if (prev.length === 0) setActiveImageIndex(0);
-          return updated;
-        });
-        setUploadedVideos([]);
-        onTypeChange?.('photo');
+          try {
+            dims = await getImageDimensions(file);
+          } catch (err) {
+            console.error("Failed to load image dimensions", err);
+          }
+          newItems.push(createMediaItem(file, dims));
+        }
       }
+
+      setUploadedImages(prev => {
+        const updated = [...prev, ...newItems];
+        if (prev.length === 0) setActiveImageIndex(0);
+        return updated;
+      });
+      onTypeChange?.('photo');
     }
     e.target.value = '';
   }, [createMediaItem, onTypeChange]);
@@ -241,6 +268,9 @@ export const usePostMedia = (
       if (itemToRemove && !itemToRemove.isExisting) {
         URL.revokeObjectURL(itemToRemove.url);
         if (itemToRemove.croppedBlobUrl) URL.revokeObjectURL(itemToRemove.croppedBlobUrl);
+        if (itemToRemove.thumbnailUrl && itemToRemove.thumbnailUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(itemToRemove.thumbnailUrl);
+        }
       }
       const remaining = prev.filter(item => item.id !== id);
 
@@ -255,94 +285,18 @@ export const usePostMedia = (
       else if (activeImageIndex >= remaining.length) setActiveImageIndex(remaining.length - 1);
       return remaining;
     });
+    setUploadedImages(prev => prev.filter(item => item.id !== id));
+    setUploadedVideos(prev => prev.filter(item => item.id !== id));
     setPreviewMediaUrls([]);
   }, [activeImageIndex]);
 
-  const handleVideoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files);
-      const videoFiles = files.filter(f => f.type.startsWith('video/'));
-      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+  const handleVideoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    await handleDesktopPhotoUpload(e, isEdit);
+  }, [handleDesktopPhotoUpload]);
 
-      // 1. Size Check (Per image 10MB, total images 100MB, video 100MB)
-      if (videoFiles.length > 0) {
-        const oversizedVideo = videoFiles.find(file => file.size > MAX_VIDEO_SIZE);
-        if (oversizedVideo) {
-          toast.error(`Video "${oversizedVideo.name}" exceeds the 100MB limit.`);
-          e.target.value = '';
-          return;
-        }
-      }
-
-      if (imageFiles.length > 0) {
-        const oversizedImage = imageFiles.find(file => file.size > MAX_SINGLE_IMAGE_SIZE);
-        if (oversizedImage) {
-          toast.error(`Image "${oversizedImage.name}" exceeds the 10MB limit.`);
-          e.target.value = '';
-          return;
-        }
-
-        const currentTotalSize = uploadedImagesRef.current.reduce((sum, img) => sum + (img.file?.size || 0), 0);
-        const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
-        if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
-          toast.error("Total image upload size cannot exceed 100MB.");
-          e.target.value = '';
-          return;
-        }
-      }
-
-      // 2. Mixed Check in selection
-      if (videoFiles.length > 0 && imageFiles.length > 0) {
-        toast.error("Cannot upload video and images together");
-        e.target.value = '';
-        return;
-      }
-
-      // 3. Mixed Check against existing state
-      if (videoFiles.length > 0 && uploadedImagesRef.current.length > 0) {
-        toast.error("Cannot upload video and images together");
-        e.target.value = '';
-        return;
-      }
-      if (imageFiles.length > 0 && uploadedVideosRef.current.length > 0) {
-        toast.error("Cannot upload video and images together");
-        e.target.value = '';
-        return;
-      }
-
-      // 4. Video count limit
-      if (uploadedVideosRef.current.length + videoFiles.length > 1) {
-        toast.error("Only one video file is allowed");
-        e.target.value = '';
-        return;
-      }
-
-      // 5. Image count limit
-      if (uploadedImagesRef.current.length + imageFiles.length > 12) {
-        toast.error("Maximum 12 images allowed");
-        e.target.value = '';
-        return;
-      }
-
-      if (videoFiles.length > 0) {
-        const newVideos = videoFiles.map(file => createMediaItem(file));
-        setUploadedVideos(prev => [...prev, ...newVideos]);
-        setUploadedImages([]);
-        setActiveImageIndex(0);
-        onTypeChange?.('video');
-      } else if (imageFiles.length > 0) {
-        const newImages = imageFiles.map(file => createMediaItem(file));
-        setUploadedImages(prev => {
-          const updated = [...prev, ...newImages];
-          if (prev.length === 0) setActiveImageIndex(0);
-          return updated;
-        });
-        setUploadedVideos([]);
-        onTypeChange?.('photo');
-      }
-    }
-    e.target.value = '';
-  }, [createMediaItem, onTypeChange]);
+  const reorderMediaItems = useCallback((newItems: MediaItem[]) => {
+    setUploadedImages(newItems);
+  }, []);
 
   const handleCropChange = useCallback((crop: { x: number; y: number }) => {
     setUploadedImages(prev => prev.map((img, idx) => {
@@ -370,7 +324,6 @@ export const usePostMedia = (
       return img;
     }));
   }, [activeImageIndex]);
-
 
   const handleCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setUploadedImages(prev => prev.map((img, idx) => {
@@ -528,51 +481,51 @@ export const usePostMedia = (
     });
     const newUrls: string[] = [];
 
-    if (postType === 'photo') {
-      for (const img of uploadedImages) {
-        if (img.isExisting || !hasImageEdits(img, aspectRatio)) {
-          newUrls.push(img.url);
-          continue;
-        }
+    for (const img of uploadedImages) {
+      if (img.type === 'video') {
+        newUrls.push(img.url);
+        continue;
+      }
+      if (img.isExisting || !hasImageEdits(img, aspectRatio)) {
+        newUrls.push(img.url);
+        continue;
+      }
 
-        try {
-          const shouldPad = shouldPadImageToAspect(img, aspectRatio);
+      try {
+        const shouldPad = shouldPadImageToAspect(img, aspectRatio);
 
-          if (shouldPad) {
-            const blob = await getPaddedImg(
-              img.url,
-              aspectRatio,
-              '#000000',
-              img.rotation || 0,
-              { horizontal: !!img.flipH, vertical: !!img.flipV },
-              img.file?.type
-            );
+        if (shouldPad) {
+          const blob = await getPaddedImg(
+            img.url,
+            aspectRatio,
+            '#000000',
+            img.rotation || 0,
+            { horizontal: !!img.flipH, vertical: !!img.flipV },
+            img.file?.type
+          );
+          const blobUrl = URL.createObjectURL(blob);
+          newUrls.push(blobUrl);
+        } else if (img.pixelCrop) {
+          const blob = await getCroppedImg(
+            img.url,
+            img.pixelCrop,
+            img.rotation || 0,
+            { horizontal: !!img.flipH, vertical: !!img.flipV },
+            img.file?.type
+          );
+          if (blob) {
             const blobUrl = URL.createObjectURL(blob);
             newUrls.push(blobUrl);
-          } else if (img.pixelCrop) {
-            const blob = await getCroppedImg(
-              img.url,
-              img.pixelCrop,
-              img.rotation || 0,
-              { horizontal: !!img.flipH, vertical: !!img.flipV },
-              img.file?.type
-            );
-            if (blob) {
-              const blobUrl = URL.createObjectURL(blob);
-              newUrls.push(blobUrl);
-            } else {
-              newUrls.push(img.url);
-            }
           } else {
             newUrls.push(img.url);
           }
-        } catch (e) {
-          console.error("Failed to process image preview", e);
+        } else {
           newUrls.push(img.url);
         }
+      } catch (e) {
+        console.error("Failed to process image preview", e);
+        newUrls.push(img.url);
       }
-    } else if (postType === 'video') {
-      newUrls.push(...uploadedVideos.map(v => v.url));
     }
     setPreviewMediaUrls(newUrls);
     return newUrls;
@@ -589,48 +542,58 @@ export const usePostMedia = (
   }, [revokeAllMediaUrls]);
 
   const prepareFilesToUpload = async (postType: string, currentAspectRatio: number) => {
-    let filesToUpload: File[] = [];
+    const filesToUpload: File[] = [];
 
-    if (postType === 'photo' || postType === 'article') {
-      const processedFiles = await Promise.all(uploadedImages.map(async (item) => {
-        if (item.isExisting) return undefined;
-        if (item.file) {
-          if (!hasImageEdits(item, currentAspectRatio)) {
-            return item.file;
-          }
-
-          if (shouldPadImageToAspect(item, currentAspectRatio)) {
-            try {
-              const blob = await getPaddedImg(
-                item.url,
-                currentAspectRatio,
-                '#000000',
-                item.rotation || 0,
-                { horizontal: !!item.flipH, vertical: !!item.flipV },
-                item.file?.type
-              );
-              if (blob) return new File([blob], item.file.name, { type: item.file.type || 'image/jpeg' });
-            } catch (e) { console.error("Padding failed", e); }
-          } else if (item.pixelCrop) {
-            try {
-              const blob = await getCroppedImg(
-                item.url,
-                item.pixelCrop,
-                item.rotation || 0,
-                { horizontal: !!item.flipH, vertical: !!item.flipV },
-                item.file?.type
-              );
-              if (blob) return new File([blob], item.file.name, { type: item.file.type || 'image/jpeg' });
-            } catch (e) { console.error("Crop failed", e); }
-          }
-          return item.file;
+    for (const item of uploadedImages) {
+      if (item.isExisting) continue;
+      if (item.type === 'video' && item.file) {
+        filesToUpload.push(item.file);
+        continue;
+      }
+      if (item.file) {
+        if (!hasImageEdits(item, currentAspectRatio)) {
+          filesToUpload.push(item.file);
+          continue;
         }
-        return undefined;
-      }));
-      filesToUpload = processedFiles.filter((f): f is File => !!f);
-    } else if (postType === 'video') {
-      uploadedVideos.forEach(v => { if (v.file) filesToUpload.push(v.file) });
+
+        if (shouldPadImageToAspect(item, currentAspectRatio)) {
+          try {
+            const blob = await getPaddedImg(
+              item.url,
+              currentAspectRatio,
+              '#000000',
+              item.rotation || 0,
+              { horizontal: !!item.flipH, vertical: !!item.flipV },
+              item.file?.type
+            );
+            if (blob) {
+              filesToUpload.push(new File([blob], item.file.name, { type: item.file.type || 'image/jpeg' }));
+              continue;
+            }
+          } catch (e) { console.error("Padding failed", e); }
+        } else if (item.pixelCrop) {
+          try {
+            const blob = await getCroppedImg(
+              item.url,
+              item.pixelCrop,
+              item.rotation || 0,
+              { horizontal: !!item.flipH, vertical: !!item.flipV },
+              item.file?.type
+            );
+            if (blob) {
+              filesToUpload.push(new File([blob], item.file.name, { type: item.file.type || 'image/jpeg' }));
+              continue;
+            }
+          } catch (e) { console.error("Crop failed", e); }
+        }
+        filesToUpload.push(item.file);
+      }
     }
+
+    if (filesToUpload.length === 0 && uploadedVideos.length > 0) {
+      uploadedVideos.forEach(v => { if (v.file) filesToUpload.push(v.file); });
+    }
+
     return filesToUpload;
   };
 
@@ -644,6 +607,7 @@ export const usePostMedia = (
     handlePhotoUpload,
     handleDesktopPhotoUpload,
     handleVideoUpload,
+    reorderMediaItems,
     removeMediaItem,
     handleCropChange,
     handleZoomChange,

@@ -140,6 +140,17 @@ export interface SavedFolder {
   cover_image?: string;
 }
 
+export interface PostMediaItem {
+  media_id?: string;
+  url: string;
+  media_type: 'image' | 'video';
+  order_index?: number;
+  thumbnail_url?: string | null;
+  duration_seconds?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+
 export interface Post {
   id: string;
   authorId: string;
@@ -158,7 +169,7 @@ export interface Post {
   mediaHeight?: number;
   videoSrc?: string;
   aspectRatio?: string;
-  media?: any[];
+  media?: PostMediaItem[];
   likes: number;
   isLiked?: boolean;
   isReposted?: boolean;

@@ -115,8 +115,10 @@ export const FeedPost = (props: FeedPostProps) => {
     (targetImageSrc && typeof targetImageSrc === 'string' && targetImageSrc.trim() !== '') ||
     (Array.isArray(targetImages) && targetImages.length > 0)
   );
+  const targetMedia = (interactionTargetProps as any).media;
+  const hasMultipleMedia = Array.isArray(targetMedia) && targetMedia.length > 1;
   const hasVideo = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
-  const hasMedia = hasImages || hasVideo || targetPost_type === 'image' || targetPost_type === 'video' || Boolean(interactionTargetProps.shared_post);
+  const hasMedia = hasImages || hasVideo || hasMultipleMedia || targetPost_type === 'image' || targetPost_type === 'video' || Boolean(interactionTargetProps.shared_post);
 
   const targetIsCompanyPost = Boolean(interactionTargetProps.isCompanyPost || (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId);
   const targetCompanyId = (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId;
@@ -569,7 +571,7 @@ export const FeedPost = (props: FeedPostProps) => {
     setIsShareModalOpen(true);
   };
 
-  const isVideoFeedCard = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
+  const isVideoFeedCard = !hasMultipleMedia && Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
 
   const isVideoPost = Boolean(
     targetPost_type === 'video' ||
@@ -903,6 +905,7 @@ export const FeedPost = (props: FeedPostProps) => {
               />
             ) : hasMedia ? (
               <PostMedia
+                media={targetMedia}
                 imageSrc={targetImageSrc}
                 images={targetImages}
                 imageDimensions={(interactionTargetProps as any).imageDimensions}
@@ -981,6 +984,7 @@ export const FeedPost = (props: FeedPostProps) => {
               />
             ) : (
               <PostMedia
+                media={targetMedia}
                 imageSrc={targetImageSrc}
                 images={targetImages}
                 imageDimensions={(interactionTargetProps as any).imageDimensions}

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Loader2, Image as ImageIcon, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Loader2, Image as ImageIcon, Plus, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Post, PostVisibility } from '@/types/entities';
 import { postApi } from '@/features/feed/api/post.api';
@@ -14,7 +14,7 @@ import { LocationSuggestion, StructuredLocation } from '@/services/api/location'
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { ComposerImagePreview, ComposerImage, MAX_COMPOSER_IMAGES } from '@/features/feed/components/create-post/ComposerImagePreview';
-import { getImageDimensions, getVideoDimensions } from '@/features/feed/utils/imageBounds';
+import { getImageDimensions, getVideoDimensions, getVideoMetadataAndPoster } from '@/features/feed/utils/imageBounds';
 import PostVideoCard from '@/features/feed/components/create-post/post-types/PostVideoCard';
 import SharedPreview from '@/features/feed/components/create-post/SharedPreview';
 import {
@@ -35,7 +35,16 @@ import { useBodyScrollLock } from '@/hooks';
 const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
 const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120MB total images limit (up to 12 images x 10MB)
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024;       // 100MB video limit
+const MAX_VIDEOS = 4;
+const MAX_VIDEO_DURATION = 240.0; // 4 minutes
 const ACCEPTED_MEDIA_TYPES = 'image/png,image/jpeg,image/webp,image/gif,video/mp4,video/quicktime,video/webm';
+
+const formatDuration = (seconds?: number): string => {
+  if (!seconds || isNaN(seconds) || seconds <= 0) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -177,74 +186,143 @@ export function EditPostModal({
       snapPollOpts = post.poll_options?.map((opt: string) => opt.trim()) || [];
       snapPollDur = post.poll_duration || '1 week';
     } else {
-      // Media
-      const postImages = post.images && post.images.length > 0
-        ? post.images
-        : post.imageSrc
-          ? [post.imageSrc]
-          : [];
+      // Media (Prioritize post.media to load all carousel items including videos)
+      if (post.media && post.media.length > 0) {
+        const isSingleVideoOnly = post.media.length === 1 && post.media[0].media_type === 'video';
+        if (isSingleVideoOnly) {
+          setPostType('video');
+          const vItem = post.media[0];
+          setSelectedVideo({
+            file: new File([''], 'existing-video.mp4', { type: 'video/mp4' }),
+            previewUrl: vItem.url,
+            naturalWidth: vItem.width || post.mediaWidth,
+            naturalHeight: vItem.height || post.mediaHeight,
+          });
+          setSelectedImages([]);
+          snapVideo = vItem.url;
+          snapImages = [];
+        } else {
+          setPostType('photo');
+          const initialMedia: ComposerImage[] = post.media.map((item: any, idx: number) => {
+            const isVid = item.media_type === 'video' || item.url?.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/i);
+            const w = item.width || 800;
+            const h = item.height || 600;
+            return {
+              id: `existing-${item.order_index ?? idx}-${encodeURIComponent(item.url.slice(-20))}`,
+              file: new File([''], `existing-media-${idx}`, {
+                type: isVid ? 'video/mp4' : 'image/jpeg'
+              }),
+              previewUrl: item.url,
+              type: isVid ? 'video' : 'image',
+              thumbnailUrl: item.thumbnail_url || undefined,
+              duration: item.duration_seconds || undefined,
+              naturalWidth: w,
+              naturalHeight: h,
+              aspectRatio: w / h,
+            };
+          });
+          setSelectedImages(initialMedia);
+          setSelectedVideo(null);
+          snapImages = post.media.map((m: any) => m.url);
 
-      if (postImages.length > 0) {
-        setPostType('photo');
-        const initialImages: ComposerImage[] = postImages.map((url: string, idx: number) => {
-          const dim = post.imageDimensions?.[idx];
-          const w = dim?.width;
-          const h = dim?.height;
-          return {
-            id: `existing-${idx}-${encodeURIComponent(url.slice(-20))}`,
-            file: new File([''], `existing-image-${idx}.jpg`, { type: 'image/jpeg' }),
-            previewUrl: url,
-            naturalWidth: w,
-            naturalHeight: h,
-            aspectRatio: (w && h) ? w / h : undefined,
-          };
-        });
-        setSelectedImages(initialImages);
-
-        // Probe real image natural dimensions asynchronously:
-        postImages.forEach((url: string) => {
-          const probe = new window.Image();
-          probe.src = url;
-          probe.onload = () => {
-            if (probe.naturalWidth && probe.naturalHeight) {
-              setSelectedImages((prev) => {
-                const targetIdx = prev.findIndex((i) => i.previewUrl === url);
-                if (targetIdx !== -1) {
-                  const curr = prev[targetIdx];
-                  if (!curr.naturalWidth || curr.naturalWidth !== probe.naturalWidth || curr.naturalHeight !== probe.naturalHeight) {
-                    const next = [...prev];
-                    next[targetIdx] = {
-                      ...curr,
-                      naturalWidth: probe.naturalWidth,
-                      naturalHeight: probe.naturalHeight,
-                      aspectRatio: probe.naturalWidth / probe.naturalHeight,
-                    };
-                    return next;
-                  }
+          // Probe real image natural dimensions asynchronously for images missing dimensions:
+          post.media.forEach((item: any) => {
+            if (item.media_type !== 'video' && (!item.width || !item.height)) {
+              const probe = new window.Image();
+              probe.src = item.url;
+              probe.onload = () => {
+                if (probe.naturalWidth && probe.naturalHeight) {
+                  setSelectedImages((prev) => {
+                    const targetIdx = prev.findIndex((i) => i.previewUrl === item.url);
+                    if (targetIdx !== -1) {
+                      const curr = prev[targetIdx];
+                      if (!curr.naturalWidth || curr.naturalWidth !== probe.naturalWidth || curr.naturalHeight !== probe.naturalHeight) {
+                        const next = [...prev];
+                        next[targetIdx] = {
+                          ...curr,
+                          naturalWidth: probe.naturalWidth,
+                          naturalHeight: probe.naturalHeight,
+                          aspectRatio: probe.naturalWidth / probe.naturalHeight,
+                        };
+                        return next;
+                      }
+                    }
+                    return prev;
+                  });
                 }
-                return prev;
-              });
+              };
             }
-          };
-        });
-
-        setSelectedVideo(null);
-        snapImages = postImages;
-      } else if (post.videoSrc || post.video) {
-        setPostType('video');
-        const vUrl = post.videoSrc || post.video;
-        setSelectedVideo({
-          file: new File([''], 'existing-video.mp4', { type: 'video/mp4' }),
-          previewUrl: vUrl,
-          naturalWidth: post.mediaWidth,
-          naturalHeight: post.mediaHeight,
-        });
-        setSelectedImages([]);
-        snapVideo = vUrl;
+          });
+        }
       } else {
-        setPostType(post.post_type || 'text');
-        setSelectedImages([]);
-        setSelectedVideo(null);
+        // Fallback for legacy posts without post.media array
+        const postImages = post.images && post.images.length > 0
+          ? post.images
+          : post.imageSrc
+            ? [post.imageSrc]
+            : [];
+
+        if (postImages.length > 0) {
+          setPostType('photo');
+          const initialImages: ComposerImage[] = postImages.map((url: string, idx: number) => {
+            const dim = post.imageDimensions?.[idx];
+            const w = dim?.width;
+            const h = dim?.height;
+            return {
+              id: `existing-${idx}-${encodeURIComponent(url.slice(-20))}`,
+              file: new File([''], `existing-image-${idx}.jpg`, { type: 'image/jpeg' }),
+              previewUrl: url,
+              naturalWidth: w,
+              naturalHeight: h,
+              aspectRatio: (w && h) ? w / h : undefined,
+            };
+          });
+          setSelectedImages(initialImages);
+
+          postImages.forEach((url: string) => {
+            const probe = new window.Image();
+            probe.src = url;
+            probe.onload = () => {
+              if (probe.naturalWidth && probe.naturalHeight) {
+                setSelectedImages((prev) => {
+                  const targetIdx = prev.findIndex((i) => i.previewUrl === url);
+                  if (targetIdx !== -1) {
+                    const curr = prev[targetIdx];
+                    if (!curr.naturalWidth || curr.naturalWidth !== probe.naturalWidth || curr.naturalHeight !== probe.naturalHeight) {
+                      const next = [...prev];
+                      next[targetIdx] = {
+                        ...curr,
+                        naturalWidth: probe.naturalWidth,
+                        naturalHeight: probe.naturalHeight,
+                        aspectRatio: probe.naturalWidth / probe.naturalHeight,
+                      };
+                      return next;
+                    }
+                  }
+                  return prev;
+                });
+              }
+            };
+          });
+
+          setSelectedVideo(null);
+          snapImages = postImages;
+        } else if (post.videoSrc || post.video) {
+          setPostType('video');
+          const vUrl = post.videoSrc || post.video;
+          setSelectedVideo({
+            file: new File([''], 'existing-video.mp4', { type: 'video/mp4' }),
+            previewUrl: vUrl,
+            naturalWidth: post.mediaWidth,
+            naturalHeight: post.mediaHeight,
+          });
+          setSelectedImages([]);
+          snapVideo = vUrl;
+        } else {
+          setPostType(post.post_type || 'text');
+          setSelectedImages([]);
+          setSelectedVideo(null);
+        }
       }
     }
 
@@ -357,7 +435,7 @@ export function EditPostModal({
     const fileArray = Array.from(files);
 
     const videoFiles = fileArray.filter((f) => f.type.startsWith('video/'));
-    const imageFiles = fileArray.filter((f) => f.type.startsWith('image/'));
+    const imageFiles = fileArray.filter((f) => !f.type.startsWith('image/'));
 
     // Validate video file size limit (100MB)
     if (videoFiles.length > 0) {
@@ -378,20 +456,15 @@ export function EditPostModal({
         return;
       }
 
-      const currentTotalSize = selectedImages.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+      const currentTotalSize = selectedImages
+        .filter((img) => img.type !== 'video')
+        .reduce((sum, img) => sum + (img.file?.size || 0), 0);
       const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
       if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
         toast.error('Total image upload size cannot exceed 120MB.');
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
-    }
-
-    // Mixed check in selection
-    if (videoFiles.length > 0 && imageFiles.length > 0) {
-      toast.error('Cannot upload video and images together');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
     }
 
     // Poll check
@@ -401,87 +474,94 @@ export function EditPostModal({
       return;
     }
 
-    // Video selection
-    if (videoFiles.length > 0) {
-      if (selectedImages.length > 0) {
-        toast.error('Cannot upload video and images together');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      if (videoFiles.length > 1 || selectedVideo !== null) {
-        toast.error('Only one video file is allowed');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      const vidFile = videoFiles[0];
-      try {
-        const dims = await getVideoDimensions(vidFile);
-        setSelectedVideo({
-          file: vidFile,
-          previewUrl: URL.createObjectURL(vidFile),
-          naturalWidth: dims.width,
-          naturalHeight: dims.height,
-        });
-      } catch (e) {
-        setSelectedVideo({
-          file: vidFile,
-          previewUrl: URL.createObjectURL(vidFile),
-        });
-      }
-      setPostType('video');
+    // Count limits
+    const currentVideosCount = selectedImages.filter((img) => img.type === 'video').length + (selectedVideo ? 1 : 0);
+    if (currentVideosCount + videoFiles.length > MAX_VIDEOS) {
+      toast.error(`Maximum ${MAX_VIDEOS} videos allowed per post`);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    // Images selection
-    if (imageFiles.length > 0) {
-      if (selectedVideo) {
-        toast.error('Cannot upload video and images together');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      const remainingSlots = MAX_COMPOSER_IMAGES - selectedImages.length;
-      if (remainingSlots <= 0) {
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
+    const currentTotalItems = selectedImages.length + (selectedVideo ? 1 : 0);
+    const remainingSlots = MAX_COMPOSER_IMAGES - currentTotalItems;
+    if (remainingSlots <= 0) {
+      toast.error(`Maximum ${MAX_COMPOSER_IMAGES} attachments allowed`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
-      const filesToAdd = imageFiles.slice(0, remainingSlots);
+    const filesToProcess = fileArray.slice(0, remainingSlots);
+    const newMediaItems: ComposerImage[] = [];
 
-      const newImages: ComposerImage[] = [];
-      for (const file of filesToAdd) {
+    // If there was a standalone video, convert it into first carousel item
+    if (selectedVideo && selectedImages.length === 0) {
+      const vW = selectedVideo.naturalWidth || 800;
+      const vH = selectedVideo.naturalHeight || 600;
+      newMediaItems.push({
+        id: `existing-video-${Date.now()}`,
+        file: selectedVideo.file,
+        previewUrl: selectedVideo.previewUrl,
+        type: 'video',
+        naturalWidth: vW,
+        naturalHeight: vH,
+        aspectRatio: vW / vH,
+      });
+      setSelectedVideo(null);
+    }
+
+    for (const file of filesToProcess) {
+      if (file.type.startsWith('video/')) {
+        let videoMeta;
+        try {
+          videoMeta = await getVideoMetadataAndPoster(file);
+        } catch (e) {
+          console.error('Failed to load video metadata:', e);
+        }
+
+        if (videoMeta && videoMeta.duration > MAX_VIDEO_DURATION) {
+          toast.error(`Video "${file.name}" exceeds 4 minutes (240 seconds)`);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+
+        newMediaItems.push({
+          id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          file,
+          previewUrl: URL.createObjectURL(file),
+          thumbnailUrl: videoMeta?.posterUrl,
+          thumbnailBlob: videoMeta?.posterBlob,
+          naturalWidth: videoMeta?.width || 800,
+          naturalHeight: videoMeta?.height || 600,
+          aspectRatio: videoMeta?.aspectRatio || 4 / 3,
+          type: 'video',
+          duration: videoMeta?.duration,
+        });
+      } else {
         try {
           const dims = await getImageDimensions(file);
-          newImages.push({
+          newMediaItems.push({
             id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             file,
             previewUrl: URL.createObjectURL(file),
             naturalWidth: dims.width,
             naturalHeight: dims.height,
             aspectRatio: dims.aspectRatio,
+            type: 'image',
           });
-        } catch {
-          newImages.push({
-            id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            file,
-            previewUrl: URL.createObjectURL(file),
-            naturalWidth: 800,
-            naturalHeight: 600,
-            aspectRatio: 800 / 600,
-          });
+        } catch (e) {
+          console.error('Failed to load image dimensions:', e);
         }
-      }
-
-      if (newImages.length > 0) {
-        setSelectedImages((prev) => [...prev, ...newImages]);
-        setPostType('photo');
       }
     }
 
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [selectedImages, selectedVideo, postType]);
+    if (newMediaItems.length > 0) {
+      setSelectedImages((prev) => [...prev, ...newMediaItems]);
+      setPostType('photo');
+    }
 
-  // Handle file choice for media attachment
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [postType, selectedImages, selectedVideo]);
+
   const handleFilesChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
     processFiles(e.target.files);
   };
@@ -522,17 +602,14 @@ export function EditPostModal({
   const isMediaDisabled =
     isSubmitting ||
     selectedImages.length >= MAX_COMPOSER_IMAGES ||
-    selectedVideo !== null ||
     postType === 'poll';
 
   const mediaButtonTitle =
     postType === 'poll'
       ? 'Cannot attach media while editing a poll'
-      : selectedVideo !== null
-        ? 'Cannot add photos while video is attached'
-        : selectedImages.length >= MAX_COMPOSER_IMAGES
-          ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
-          : 'Add photos or video';
+      : selectedImages.length >= MAX_COMPOSER_IMAGES
+        ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
+        : 'Add photos or video';
 
   const handleMediaClick = () => {
     if (isSubmitting) return;
@@ -541,10 +618,6 @@ export function EditPostModal({
       return;
     }
     if (selectedImages.length >= MAX_COMPOSER_IMAGES) {
-      return;
-    }
-    if (selectedVideo) {
-      toast.error('Only one video file is allowed');
       return;
     }
     fileInputRef.current?.click();
@@ -563,61 +636,72 @@ export function EditPostModal({
           : selectedLocation.name
         : null;
 
-      // 1. Identify and upload any newly chosen image files to Cloudinary/storage
-      const newImageFiles: File[] = selectedImages
-        .filter((img) => img.file && img.file.size > 0 && (img.previewUrl.startsWith('blob:') || img.id.startsWith('new-')))
-        .map((img) => img.file as File);
+      // 1. Identify and upload any newly chosen files
+      const newFiles: File[] = [];
+      selectedImages.forEach((img) => {
+        if (img.file && img.file.size > 0 && (img.previewUrl.startsWith('blob:') || img.id.startsWith('new-'))) {
+          newFiles.push(img.file);
+        }
+      });
+      if (selectedVideo && selectedVideo.file && selectedVideo.file.size > 0 && selectedVideo.previewUrl.startsWith('blob:')) {
+        newFiles.push(selectedVideo.file);
+      }
 
-      let uploadedImageUrls: string[] = [];
-      if (newImageFiles.length > 0) {
-        const uploadRes = await uploadMedia(newImageFiles);
-        uploadedImageUrls = (uploadRes || []).map((item: any) =>
+      let uploadedUrls: any[] = [];
+      if (newFiles.length > 0) {
+        const uploadRes = await uploadMedia(newFiles);
+        uploadedUrls = (uploadRes || []).map((item: any) =>
           typeof item === 'object' && item !== null ? item.url : item
         );
       }
 
-      // 2. Identify and upload newly chosen video file if any
-      let uploadedVideoUrl: string | null = null;
-      if (selectedVideo && selectedVideo.file && selectedVideo.file.size > 0 && selectedVideo.previewUrl.startsWith('blob:')) {
-        const uploadRes = await uploadMedia([selectedVideo.file]);
-        if (uploadRes && uploadRes.length > 0) {
-          const item = uploadRes[0];
-          uploadedVideoUrl = typeof item === 'object' && item !== null ? item.url : item;
-        }
-      }
-
-      // 3. Assemble final media URLs in the exact user-arranged order
-      let finalMediaUrls: string[] = [];
-      let finalVideoUrl: string | null = null;
+      // 2. Assemble unified finalMedia items with metadata and order_index
+      let finalMedia: any[] = [];
+      let uploadIdx = 0;
 
       if (selectedImages.length > 0) {
-        let uploadedIdx = 0;
-        finalMediaUrls = selectedImages.map((img) => {
+        finalMedia = selectedImages.map((img, idx) => {
+          let publicUrl = img.previewUrl;
           if (img.file && img.file.size > 0 && (img.previewUrl.startsWith('blob:') || img.id.startsWith('new-'))) {
-            const uploadedUrl = uploadedImageUrls[uploadedIdx++];
-            return uploadedUrl || img.previewUrl;
+            const uploadedItem = uploadedUrls[uploadIdx++];
+            publicUrl = typeof uploadedItem === 'object' && uploadedItem !== null ? uploadedItem.url : (uploadedItem || img.previewUrl);
           }
-          return img.previewUrl;
+          const isVid = img.type === 'video' || publicUrl.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/i);
+          return {
+            url: publicUrl,
+            media_type: isVid ? 'video' : 'image',
+            order_index: idx,
+            thumbnail_url: img.thumbnailUrl || null,
+            duration_seconds: img.duration ? Math.round(img.duration * 100) / 100 : null,
+            width: img.naturalWidth || null,
+            height: img.naturalHeight || null,
+          };
         });
       } else if (selectedVideo) {
-        if (uploadedVideoUrl) {
-          finalVideoUrl = uploadedVideoUrl;
-          finalMediaUrls = [uploadedVideoUrl];
-        } else if (selectedVideo.previewUrl && !selectedVideo.previewUrl.startsWith('blob:')) {
-          finalVideoUrl = selectedVideo.previewUrl;
-          finalMediaUrls = [selectedVideo.previewUrl];
+        let vUrl = selectedVideo.previewUrl;
+        if (selectedVideo.file && selectedVideo.file.size > 0 && selectedVideo.previewUrl.startsWith('blob:')) {
+          const uploadedItem = uploadedUrls[uploadIdx++];
+          vUrl = typeof uploadedItem === 'object' && uploadedItem !== null ? uploadedItem.url : (uploadedItem || vUrl);
         }
+        finalMedia = [{
+          url: vUrl,
+          media_type: 'video',
+          order_index: 0,
+          thumbnail_url: null,
+          duration_seconds: null,
+          width: selectedVideo.naturalWidth || null,
+          height: selectedVideo.naturalHeight || null,
+        }];
       }
 
-      // Determine accurate post_type
       const effectivePostType =
         postType === 'poll'
           ? 'poll'
           : originalPost?.post_type === 'article' || postType === 'article'
             ? 'article'
-            : finalVideoUrl
+            : finalMedia.length === 1 && finalMedia[0].media_type === 'video'
               ? 'video'
-              : finalMediaUrls.length > 0
+              : finalMedia.length > 0
                 ? 'image'
                 : 'text';
 
@@ -629,12 +713,14 @@ export function EditPostModal({
         visibility: originalPost?.visibility || 'public',
         location: locationString,
         companyId: originalPost?.author_org_id || originalPost?.companyId || undefined,
-        media_urls: finalMediaUrls,
-        media_metadata: selectedImages.length > 0
-          ? selectedImages.map(img => ({ width: img.naturalWidth, height: img.naturalHeight }))
-          : selectedVideo && selectedVideo.naturalWidth && selectedVideo.naturalHeight
-            ? [{ width: selectedVideo.naturalWidth, height: selectedVideo.naturalHeight }]
-            : [],
+        media: finalMedia,
+        media_urls: finalMedia.map((m) => m.url),
+        media_metadata: finalMedia.map((m) => ({
+          width: m.width,
+          height: m.height,
+          duration_seconds: m.duration_seconds,
+          thumbnail_url: m.thumbnail_url,
+        })),
       };
 
       if (postType === 'poll') {
@@ -657,9 +743,10 @@ export function EditPostModal({
       const updatedPostObj = freshMappedPost || {
         ...originalPost,
         ...updatePayload,
-        images: finalVideoUrl ? [] : finalMediaUrls,
-        imageSrc: finalVideoUrl ? null : (finalMediaUrls[0] || null),
-        videoSrc: finalVideoUrl || null,
+        images: finalMedia.filter(m => m.media_type === 'image').map(m => m.url),
+        imageSrc: finalMedia.find(m => m.media_type === 'image')?.url || null,
+        videoSrc: finalMedia.find(m => m.media_type === 'video')?.url || null,
+        media: finalMedia,
         post_type: effectivePostType,
         type: effectivePostType,
       };
@@ -670,6 +757,7 @@ export function EditPostModal({
         images: updatedPostObj.images,
         imageSrc: updatedPostObj.imageSrc,
         videoSrc: updatedPostObj.videoSrc,
+        media: finalMedia,
         type: updatedPostObj.type || effectivePostType,
         post_type: effectivePostType,
         location: locationString || undefined,
@@ -1032,7 +1120,7 @@ export function EditPostModal({
                   </div>
                 )}
 
-                {/* Attached Single Image Preview (Figma: 371x332, radius 8px, remove btn 32x32 #1A1A20) */}
+                {/* Attached Single Media Preview */}
                 {selectedImages.length === 1 && (
                   <div
                     className="relative h-[332px] w-[371px] max-w-full shrink-0 overflow-hidden rounded-[8px]"
@@ -1041,15 +1129,50 @@ export function EditPostModal({
                       backgroundColor: 'var(--ds-surface-1)',
                     }}
                   >
-                    <img
-                      src={selectedImages[0].previewUrl}
-                      alt="Post media"
-                      className="block h-full w-full object-cover"
-                    />
+                    {selectedImages[0].type === 'video' ? (
+                      selectedImages[0].thumbnailUrl ? (
+                        <img
+                          src={selectedImages[0].thumbnailUrl}
+                          alt="Post media"
+                          className="block h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <video
+                          src={selectedImages[0].previewUrl.startsWith('blob:') ? selectedImages[0].previewUrl : `${selectedImages[0].previewUrl}#t=0.001`}
+                          preload="metadata"
+                          muted
+                          playsInline
+                          className="block h-full w-full object-cover pointer-events-none"
+                        />
+                      )
+                    ) : (
+                      <img
+                        src={selectedImages[0].previewUrl}
+                        alt="Post media"
+                        className="block h-full w-full object-cover"
+                      />
+                    )}
+                    {selectedImages[0].type === 'video' && (
+                      <>
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center text-white backdrop-blur-sm shadow-md">
+                            <Play className="w-6 h-6 fill-white text-white ml-0.5" />
+                          </div>
+                        </div>
+                        {selectedImages[0].duration ? (
+                          <div className="absolute bottom-3 right-3 bg-black/75 backdrop-blur-sm text-white text-[12px] font-medium px-2 py-0.5 rounded-md pointer-events-none select-none">
+                            {formatDuration(selectedImages[0].duration)}
+                          </div>
+                        ) : null}
+                      </>
+                    )}
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(selectedImages[0].id)}
-                      aria-label="Remove photo"
+                      aria-label={selectedImages[0].type === 'video' ? "Remove video" : "Remove photo"}
                       className="absolute top-[8px] right-[8px] w-[32px] h-[32px] flex items-center justify-center bg-[var(--ds-surface-1)] hover:brightness-110 rounded-full transition-colors z-30 shadow-md cursor-pointer outline-none"
                     >
                       <X className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
@@ -1079,7 +1202,7 @@ export function EditPostModal({
                 )}
 
                 {/* Attached Video Preview (Matching FeedComposerInline) */}
-                {selectedVideo && (
+                {selectedVideo && selectedImages.length === 0 && (
                   <div className="relative w-[371px] max-w-full rounded-[16px] overflow-hidden group">
                     <PostVideoCard
                       videoSrc={selectedVideo.previewUrl}
@@ -1152,11 +1275,7 @@ export function EditPostModal({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept={
-                  selectedImages.length > 0
-                    ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif"
-                    : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
-                }
+                accept="image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
                 multiple
                 onChange={handleFilesChosen}
                 className="hidden"

@@ -1,7 +1,7 @@
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Post, Comment } from "@/types/entities";
+import { Post, Comment, PostMediaItem } from "@/types/entities";
 import { BackendPost } from "@/services/api/feed";
 
 export interface BackendComment {
@@ -42,7 +42,24 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   let mediaWidth: number | undefined;
   let mediaHeight: number | undefined;
 
-  mediaList.forEach((item) => {
+  const sortedMediaList = [...mediaList].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+
+  const postMedia: PostMediaItem[] = sortedMediaList.map((item, idx) => {
+    const isActuallyVideo = item.url?.toLowerCase()?.match(/\.(mp4|webm|mov)(\?|#|$)/);
+    const mediaType: 'image' | 'video' = isActuallyVideo ? "video" : (item.media_type === "video" ? "video" : "image");
+    return {
+      media_id: item.media_id,
+      url: item.url,
+      media_type: mediaType,
+      order_index: typeof item.order_index === 'number' ? item.order_index : idx,
+      thumbnail_url: item.thumbnail_url || null,
+      duration_seconds: item.duration_seconds || null,
+      width: item.width || null,
+      height: item.height || null,
+    };
+  });
+
+  sortedMediaList.forEach((item) => {
     // Robust video/image detection fallback
     const isActuallyVideo = item.url?.toLowerCase()?.match(/\.(mp4|webm|mov)(\?|#|$)/);
     const mediaType = isActuallyVideo ? "video" : item.media_type;
@@ -368,6 +385,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     mediaWidth: mediaWidth,
     mediaHeight: mediaHeight,
     videoSrc: videoSrc,
+    media: postMedia.length > 0 ? postMedia : undefined,
     //aspectRatio: primaryMediaAspectRatio,
     // Backend doesn't return likes/comments/shares counts in the list view provided
     likes: backendPost.like_count,

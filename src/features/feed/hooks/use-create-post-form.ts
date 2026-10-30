@@ -273,9 +273,55 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
               : null
           );
 
-          if (post.images) {
+          if (post.media && post.media.length > 0) {
+            const initialUploaded: MediaItem[] = post.media.map((item, idx) => {
+              const isVid = item.media_type === 'video' || item.url?.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/i);
+              return {
+                id: `existing-${item.order_index ?? idx}`,
+                url: item.url,
+                type: (isVid ? 'video' : 'image') as 'image' | 'video',
+                crop: { x: 0, y: 0 },
+                zoom: 1,
+                isExisting: true,
+                naturalWidth: item.width || undefined,
+                naturalHeight: item.height || undefined,
+                duration: item.duration_seconds || undefined,
+                thumbnailUrl: item.thumbnail_url || undefined,
+              };
+            });
+            media.setUploadedImages(initialUploaded);
+            media.setUploadedVideos([]);
+
+            // Probe actual image natural dimensions to guarantee 100% accuracy:
+            post.media.forEach((item, i) => {
+              if (item.media_type !== 'video' && !item.url?.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/i)) {
+                const probe = new window.Image();
+                probe.src = item.url;
+                probe.onload = () => {
+                  if (probe.naturalWidth && probe.naturalHeight) {
+                    media.setUploadedImages(prev => {
+                      const idx = prev.findIndex(p => p.id === `existing-${item.order_index ?? i}` || p.url === item.url);
+                      if (idx !== -1) {
+                        const curr = prev[idx];
+                        if (!curr.naturalWidth || !curr.naturalHeight || curr.naturalWidth !== probe.naturalWidth || curr.naturalHeight !== probe.naturalHeight) {
+                          const next = [...prev];
+                          next[idx] = {
+                            ...curr,
+                            naturalWidth: probe.naturalWidth,
+                            naturalHeight: probe.naturalHeight,
+                          };
+                          return next;
+                        }
+                      }
+                      return prev;
+                    });
+                  }
+                };
+              }
+            });
+          } else if (post.images && post.images.length > 0) {
             const initialUploaded = post.images.map((url, i) => {
-              const dim = post.imageDimensions?.[i] || (post.media && post.media[i] ? { width: post.media[i].width, height: post.media[i].height } : null);
+              const dim = post.imageDimensions?.[i];
               return {
                 id: `existing-${i}`,
                 url,
@@ -283,8 +329,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
                 crop: { x: 0, y: 0 },
                 zoom: 1,
                 isExisting: true,
-                naturalWidth: dim?.width,
-                naturalHeight: dim?.height,
+                naturalWidth: dim?.width || undefined,
+                naturalHeight: dim?.height || undefined,
               };
             });
             media.setUploadedImages(initialUploaded);
@@ -314,8 +360,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
                 }
               };
             });
-          }
-          if (post.videoSrc) {
+          } else if (post.videoSrc) {
             media.setUploadedVideos([{
               id: 'existing-video',
               url: post.videoSrc,
@@ -383,53 +428,53 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
     try {
       // --- Frontend Media Validations ---
-      // 1. Mutually Exclusive Images and Videos
-      if (media.uploadedImages.length > 0 && media.uploadedVideos.length > 0) {
-        toast.error("Cannot upload video and images together");
+      // 1. Total Media Count Enforcement (Max 12)
+      if (media.uploadedImages.length > 12) {
+        toast.error("Maximum 12 attachments allowed");
         setIsSubmitting(false);
         return;
       }
 
-      // 2. Video Count Enforcement
-      if (media.uploadedVideos.length > 1) {
-        toast.error("Only one video file is allowed");
+      // 2. Video Count Enforcement (Max 4)
+      const totalVideosCount = media.uploadedImages.filter(i => i.type === 'video').length + media.uploadedVideos.length;
+      if (totalVideosCount > 4) {
+        toast.error("Maximum 4 videos allowed");
         setIsSubmitting(false);
         return;
       }
 
-      // 3. Image Count Enforcement
-      if (media.uploadedImages.length > 10) {
-        toast.error("Maximum 10 images allowed");
+      // 3. Video Duration Enforcement (Max 240.0s)
+      const oversizedDurationVideo = media.uploadedImages.find(i => i.type === 'video' && i.duration && i.duration > 240.0);
+      if (oversizedDurationVideo) {
+        toast.error("Video duration cannot exceed 4 minutes (240 seconds)");
         setIsSubmitting(false);
         return;
       }
 
       // 4. File Size Limits & Validations:
-      // - Per image limit: 10MB maximum (reject any individual image > 10MB).
-      // - Total post upload limit: 100MB maximum (reject cumulative image size > 100MB).
-      // - Video limit: 100MB maximum.
       const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB limit per single image
-      const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024; // 100 MB total post images limit
+      const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120 MB total post images limit
       const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB video size limit
 
       // Check per-image limit (10MB max per file)
-      const oversizedImage = media.uploadedImages.find(img => img.file && img.file.size > MAX_SINGLE_IMAGE_SIZE);
+      const oversizedImage = media.uploadedImages.find(img => img.type === 'image' && img.file && img.file.size > MAX_SINGLE_IMAGE_SIZE);
       if (oversizedImage) {
         toast.error(`Image "${oversizedImage.file?.name || 'file'}" exceeds the 10MB limit.`);
         setIsSubmitting(false);
         return;
       }
 
-      // Check total post upload limit (100MB max across all images combined)
-      const totalImageSize = media.uploadedImages.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+      // Check total post upload limit (120MB max across all images combined)
+      const totalImageSize = media.uploadedImages.filter(img => img.type === 'image').reduce((sum, img) => sum + (img.file?.size || 0), 0);
       if (totalImageSize > MAX_TOTAL_IMAGE_SIZE) {
-        toast.error("Total image upload size cannot exceed 100MB.");
+        toast.error("Total image upload size cannot exceed 120MB.");
         setIsSubmitting(false);
         return;
       }
 
       // Check video size limit (100MB max)
-      const oversizedVideo = media.uploadedVideos.find(v => v.file && v.file.size > MAX_VIDEO_SIZE);
+      const oversizedVideo = media.uploadedImages.find(v => v.type === 'video' && v.file && v.file.size > MAX_VIDEO_SIZE) ||
+        media.uploadedVideos.find(v => v.file && v.file.size > MAX_VIDEO_SIZE);
       if (oversizedVideo) {
         toast.error(`Video "${oversizedVideo.file?.name || 'file'}" exceeds the 100MB limit.`);
         setIsSubmitting(false);
@@ -479,12 +524,16 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       if (media.uploadedImages && media.uploadedImages.length > 0) {
         payload.media_metadata = media.uploadedImages.map((img: any) => ({
           width: img.naturalWidth || img.width || undefined,
-          height: img.naturalHeight || img.height || undefined
+          height: img.naturalHeight || img.height || undefined,
+          duration_seconds: img.duration ? Math.round(img.duration * 100) / 100 : undefined,
+          thumbnail_url: img.thumbnailUrl,
         }));
       } else if (media.uploadedVideos && media.uploadedVideos.length > 0) {
         payload.media_metadata = media.uploadedVideos.map((vid: any) => ({
           width: vid.naturalWidth || vid.width || undefined,
-          height: vid.naturalHeight || vid.height || undefined
+          height: vid.naturalHeight || vid.height || undefined,
+          duration_seconds: vid.duration ? Math.round(vid.duration * 100) / 100 : undefined,
+          thumbnail_url: vid.thumbnailUrl,
         })).filter((meta: any) => meta.width && meta.height);
       }
 
@@ -526,44 +575,58 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       if (editPostId) {
         try {
-          // 1. Identify new files that need to be uploaded to Cloudinary
-          const newImageFiles = media.uploadedImages.filter(img => img.file).map(img => img.file as File);
-          const newVideoFiles = media.uploadedVideos.filter(v => v.file).map(v => v.file as File);
+          // 1. Identify new files that need to be uploaded
+          const newFiles: File[] = [];
+          if (postType === 'article') {
+            const coverImg = media.uploadedImages[0];
+            if (coverImg && coverImg.file) {
+              newFiles.push(coverImg.file);
+            }
+          } else if (postType === 'video' && media.uploadedVideos.length > 0 && media.uploadedImages.length === 0) {
+            media.uploadedVideos.forEach(v => { if (v.file) newFiles.push(v.file); });
+          } else {
+            media.uploadedImages.forEach(img => { if (img.file) newFiles.push(img.file); });
+          }
 
           // 2. Upload any new files
-          let uploadedImageUrls: string[] = [];
-          if (newImageFiles.length > 0) {
-            uploadedImageUrls = await uploadMedia(newImageFiles);
-          }
-          let uploadedVideoUrls: string[] = [];
-          if (newVideoFiles.length > 0) {
-            uploadedVideoUrls = await uploadMedia(newVideoFiles);
+          let uploadedUrls: any[] = [];
+          if (newFiles.length > 0) {
+            uploadedUrls = await uploadMedia(newFiles);
           }
 
-          // 3. Re-assemble final media URL list keeping the correct order
+          // 3. Re-assemble final media items keeping the correct order
           let media_urls: string[] | undefined = undefined;
-          if (postType === 'photo') {
+          let finalMedia: any[] | undefined = undefined;
+
+          if (postType === 'photo' || postType === 'video') {
             let uploadedIdx = 0;
-            media_urls = media.uploadedImages.map(img => {
-              if (img.file) {
-                const item = uploadedImageUrls[uploadedIdx++];
-                return typeof item === 'object' && item !== null ? (item as any).url : item;
+            const items = (postType === 'video' && media.uploadedVideos.length > 0 && media.uploadedImages.length === 0)
+              ? media.uploadedVideos
+              : media.uploadedImages;
+
+            finalMedia = items.map((item, idx) => {
+              let url = item.url;
+              if (item.file) {
+                const uploadedItem = uploadedUrls[uploadedIdx++];
+                url = typeof uploadedItem === 'object' && uploadedItem !== null ? (uploadedItem as any).url : uploadedItem;
               }
-              return img.url;
+              const isVid = item.type === 'video' || url?.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/i);
+              return {
+                url,
+                media_type: isVid ? 'video' : 'image',
+                thumbnail_url: item.thumbnailUrl || null,
+                duration_seconds: item.duration ? Math.round(item.duration * 100) / 100 : null,
+                width: item.naturalWidth || null,
+                height: item.naturalHeight || null,
+                order_index: idx
+              };
             });
-          } else if (postType === 'video') {
-            media_urls = media.uploadedVideos.map(v => {
-              if (v.file) {
-                const item = uploadedVideoUrls[0];
-                return typeof item === 'object' && item !== null ? (item as any).url : item;
-              }
-              return v.url;
-            });
+            media_urls = finalMedia.map(m => m.url);
           } else if (postType === 'article') {
             if (media.uploadedImages.length > 0) {
               const coverImg = media.uploadedImages[0];
               if (coverImg.file) {
-                const item = uploadedImageUrls[0];
+                const item = uploadedUrls[0];
                 const resolvedUrl = typeof item === 'object' && item !== null ? (item as any).url : item;
                 if (resolvedUrl) media_urls = [resolvedUrl];
               } else if (coverImg.url) {
@@ -574,27 +637,44 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             }
           }
 
+          const effectivePostType =
+            postType === 'article' || articleData
+              ? 'article'
+              : postType === 'poll'
+                ? 'poll'
+                : finalMedia && finalMedia.length === 1 && finalMedia[0].media_type === 'video'
+                  ? 'video'
+                  : finalMedia && finalMedia.length > 0
+                    ? 'image'
+                    : (postType === 'photo' ? 'image' : postType);
 
           const updatePayload: any = {
             content: finalContent,
             category: postCategory,
             visibility,
             location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
-            post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType)
+            post_type: effectivePostType
           };
           if (postType === 'article') updatePayload.title = articleTitle.trim();
           if (postType === 'poll') updatePayload.title = poll.pollQuestion;
           if (media_urls !== undefined) {
             updatePayload.media_urls = media_urls;
+            if (finalMedia && finalMedia.length > 0) {
+              updatePayload.media = finalMedia;
+            }
             if (media.uploadedImages && media.uploadedImages.length > 0) {
               updatePayload.media_metadata = media.uploadedImages.map((img: any) => ({
                 width: img.naturalWidth || img.width || undefined,
-                height: img.naturalHeight || img.height || undefined
+                height: img.naturalHeight || img.height || undefined,
+                duration_seconds: img.duration ? Math.round(img.duration * 100) / 100 : undefined,
+                thumbnail_url: img.thumbnailUrl
               }));
             } else if (media.uploadedVideos && media.uploadedVideos.length > 0) {
               updatePayload.media_metadata = media.uploadedVideos.map((vid: any) => ({
                 width: vid.naturalWidth || vid.width || undefined,
-                height: vid.naturalHeight || vid.height || undefined
+                height: vid.naturalHeight || vid.height || undefined,
+                duration_seconds: vid.duration ? Math.round(vid.duration * 100) / 100 : undefined,
+                thumbnail_url: vid.thumbnailUrl
               })).filter((meta: any) => meta.width && meta.height);
             }
           }
@@ -613,8 +693,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             ...originalPost,
             ...updatePayload,
             category: postCategory,
-            type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
-            post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
+            type: effectivePostType,
+            post_type: effectivePostType,
             imageDimensions: updatePayload.media_metadata || undefined
           };
 
@@ -624,6 +704,9 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
              updatedPostObj.images = imageList.length > 0 ? imageList : undefined;
              updatedPostObj.imageSrc = imageList.length > 0 ? imageList[0] : undefined;
              updatedPostObj.videoSrc = media_urls.find(url => url.match(/\.(mp4|webm|mov)(\?|#|$)/i));
+             if (finalMedia) {
+               updatedPostObj.media = finalMedia;
+             }
           }
           
           if (postType === 'article' && !freshMappedPost) {

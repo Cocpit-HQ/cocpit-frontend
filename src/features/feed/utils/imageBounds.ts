@@ -117,3 +117,120 @@ export function getVideoDimensions(source: string | File): Promise<ImageDimensio
     }
   });
 }
+
+
+export interface VideoMetadata {
+  width: number;
+  height: number;
+  aspectRatio: number;
+  duration: number;
+  posterBlob?: Blob;
+  posterUrl?: string;
+}
+
+/**
+ * Loads video natural dimensions, duration, and extracts a poster frame thumbnail
+ */
+export function getVideoMetadataAndPoster(source: string | File): Promise<VideoMetadata> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    let objectUrl: string | null = null;
+    let isSettled = false;
+    video.crossOrigin = 'anonymous';
+    video.preload = 'auto';
+    video.muted = true;
+    (video as any).playsInline = true;
+
+    const cleanup = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = null;
+      }
+    };
+
+    // Safety timeout: never hang if browser decodes slowly or blocks canvas
+    const timeoutId = setTimeout(() => {
+      if (isSettled) return;
+      isSettled = true;
+      const duration = video.duration || 0;
+      const width = video.videoWidth || 1280;
+      const height = video.videoHeight || 720;
+      cleanup();
+      resolve({
+        width,
+        height,
+        aspectRatio: width / (height || 1),
+        duration,
+      });
+    }, 3500);
+
+    video.onloadedmetadata = () => {
+      const duration = video.duration || 0;
+      const width = video.videoWidth || 1280;
+      const height = video.videoHeight || 720;
+      const aspectRatio = width / (height || 1);
+
+      // Seek to 0.5s (or halfway if duration < 0.5s) to capture a representative poster frame
+      const seekTime = Math.min(0.5, duration / 2);
+      try {
+        video.currentTime = seekTime;
+      } catch {
+        // If currentTime assignment fails, capture immediately
+        captureFrame();
+      }
+
+      function captureFrame() {
+        if (isSettled) return;
+        isSettled = true;
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              const posterUrl = blob ? URL.createObjectURL(blob) : undefined;
+              cleanup();
+              resolve({
+                width,
+                height,
+                aspectRatio,
+                duration,
+                posterBlob: blob || undefined,
+                posterUrl,
+              });
+            }, 'image/jpeg', 0.85);
+            return;
+          }
+        } catch (e) {
+          console.warn('Canvas poster capture failed', e);
+        }
+        cleanup();
+        resolve({
+          width,
+          height,
+          aspectRatio,
+          duration,
+        });
+      }
+
+      video.onseeked = captureFrame;
+    };
+
+    video.onerror = (err) => {
+      if (isSettled) return;
+      isSettled = true;
+      cleanup();
+      reject(err);
+    };
+
+    if (source instanceof File) {
+      objectUrl = URL.createObjectURL(source);
+      video.src = objectUrl;
+    } else {
+      video.src = source;
+    }
+  });
+}
