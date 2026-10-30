@@ -7,7 +7,9 @@ import { useJobStore } from '@/store/job.store';
 export const useJobDetail = (jobId: string) => {
   const [rawJob, setRawJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const activeJobIdRef = useRef<string | null>(null);
+  const hasSeededFollowRef = useRef(false);
 
   const {
     savedJobIds,
@@ -82,25 +84,23 @@ export const useJobDetail = (jobId: string) => {
     return processed;
   }, [rawJob, savedJobIds, appliedJobIds, respondedOffers, followedCompanies]);
 
-  // Seed the store with initial values from the API
+  // Seed the store with initial values from the API (only once per job load)
   useEffect(() => {
     if (!rawJob) return;
 
-    // Seed store if API says applied but store doesn't have it
     if (rawJob.is_applied && !appliedJobIds.has(rawJob.id)) {
       addAppliedId(rawJob.id);
     }
     
-    // Seed store if API says saved but store doesn't have it
     if (rawJob.is_saved && !savedJobIds.has(rawJob.id)) {
       addSavedId(rawJob.id);
     }
 
-    // Seed store if API says followed but store doesn't have it
-    if (rawJob.is_followed && !followedCompanies.has(rawJob.company)) {
+    if (!hasSeededFollowRef.current && rawJob.is_followed && rawJob.company && !followedCompanies.has(rawJob.company)) {
+      hasSeededFollowRef.current = true;
       toggleFollowCompany(rawJob.company);
     }
-  }, [rawJob, appliedJobIds, savedJobIds, followedCompanies, addAppliedId, addSavedId, toggleFollowCompany]);
+  }, [rawJob?.id]);
 
   const toggleSave = useCallback(async () => {
     if (!job) return;
@@ -152,6 +152,7 @@ export const useJobDetail = (jobId: string) => {
     } catch (error) {
       console.error('Failed to apply to job:', error);
       toast.error('Failed to submit application.');
+      throw error;
     }
   }, [job, appliedJobIds, addAppliedId]);
 
@@ -180,29 +181,50 @@ export const useJobDetail = (jobId: string) => {
   }, [job, setOfferResponse]);
 
   const toggleFollow = useCallback(async () => {
-    if (!job) return;
-    try {
-      const isCurrentlyFollowed = followedCompanies.has(job.company);
+    if (!job || isFollowLoading) return;
 
-      if (job.org_id) {
-        await jobsService.toggleFollowEntity(job.org_id, 'org', isCurrentlyFollowed);
-      } else if (job.recruiter_id) {
-        await jobsService.toggleFollowEntity(job.recruiter_id, 'user', isCurrentlyFollowed);
-      } else {
-        throw new Error("No organization or recruiter ID to follow.");
+    const targetEntityId = job.org_id || job.recruiter_id;
+    if (!targetEntityId) {
+      toast.error("Company or recruiter information is unavailable.");
+      return;
+    }
+
+    const currentlyFollowed = Boolean(job.is_followed);
+    const entityType: 'org' | 'user' = job.org_id ? 'org' : 'user';
+
+    setIsFollowLoading(true);
+    try {
+      await jobsService.toggleFollowEntity(targetEntityId, entityType, currentlyFollowed);
+
+      const nextFollowedState = !currentlyFollowed;
+
+      // 1. Immediately update local job state
+      setRawJob((prev) => (prev ? { ...prev, is_followed: nextFollowedState } : null));
+
+      // 2. Sync with global store
+      const companyKey = job.company;
+      if (companyKey) {
+        const inStore = followedCompanies.has(companyKey);
+        if (nextFollowedState && !inStore) {
+          toggleFollowCompany(companyKey);
+        } else if (!nextFollowedState && inStore) {
+          toggleFollowCompany(companyKey);
+        }
       }
 
-      toggleFollowCompany(job.company);
-      toast.success(!isCurrentlyFollowed ? `Following ${job.company}` : `Unfollowed ${job.company}`);
+      toast.success(nextFollowedState ? `Following ${job.company || 'company'}` : `Unfollowed ${job.company || 'company'}`);
     } catch (error) {
       console.error('Failed to toggle follow:', error);
       toast.error('Failed to update follow status.');
+    } finally {
+      setIsFollowLoading(false);
     }
-  }, [job, followedCompanies, toggleFollowCompany]);
+  }, [job, isFollowLoading, followedCompanies, toggleFollowCompany]);
 
   return {
     job,
     isLoading,
+    isFollowLoading,
     toggleSave,
     applyToJob,
     withdrawJob,

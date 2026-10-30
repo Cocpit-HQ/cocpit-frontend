@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { JobListing } from '../../types/jobs.types';
 import { Icon } from '@iconify/react';
-import { toast } from 'sonner';
-import SendOfferModal, { SelectableCandidate } from './SendOfferModal';
+import { OfferIcon } from '@/components/icons';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
+import SendOfferModal from './SendOfferModal';
 import api from '@/lib/axios';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { useQueryClient } from '@tanstack/react-query';
-import Image from 'next/image';
 
 export interface SentOfferGroup {
   id: string;
@@ -41,7 +40,6 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
 }) => {
   const [isSendOpen, setIsSendOpen] = useState(false);
   const { activeProfile, userCompanies } = useActiveProfile();
-  const queryClient = useQueryClient();
 
   // Sent Offers state
   const [sentOffers, setSentOffers] = useState<SentOfferGroup[]>([]);
@@ -107,7 +105,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
       const mapped: SentOfferGroup[] = (response.data || []).map((item: any) => ({
         id: item.job_id,
         title: item.title,
-        company: item.company_display_name || item.company_name || 'Starlight Technologies',
+        company: item.company_display_name || item.company_name || '',
         sentCount: Number(item.total_offers || 0),
         acceptedCount: Number(item.accepted_count || 0),
         pendingCount: Number(item.pending_count || 0),
@@ -148,122 +146,121 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
 
 
   return (
-    <div className={`w-full flex flex-col gap-[16px] bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} rounded-[24px] p-[16px] min-h-[708px] animate-in fade-in duration-300`}>
+    <div className="w-full max-w-[800px] flex flex-col gap-4 font-dm-sans animate-in fade-in duration-300">
       {/* Header Row */}
       {sentOffers.length > 0 && (
-        <div className="w-full flex flex-col gap-[4px] px-0">
-          <h3 className={`font-['Poppins'] font-medium text-[18px] leading-[26px] text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+        <div className="w-full flex flex-col items-start gap-1">
+          <h3 className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
             Sent offers
           </h3>
-          <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+          <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
             Total offers - {sentOffers.length}
           </span>
         </div>
       )}
 
-      {/* Job Cards list with Scroll */}
-      <div className="w-full flex flex-col gap-[16px] overflow-y-auto max-h-[600px] pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Job Cards list */}
+      <div className="w-full flex flex-col gap-2">
         {isLoadingOffers ? (
           <div className="flex justify-center py-8">
-            <Icon icon="lucide:loader-2" className="w-6 h-6 animate-spin text-indigo-500" />
+            <Icon icon="lucide:loader-2" className="size-6 animate-spin text-ds-accent" />
           </div>
         ) : sentOffers.length === 0 ? (
-          <div className="h-96 flex flex-col justify-center items-center gap-4 w-full mt-4">
-            <Image 
-              src="/images/companyonboarding/offer.png" 
-              alt="No offers sent" 
-              width={112} 
-              height={112} 
-              className="w-28 h-auto flex-shrink-0 animate-in fade-in duration-300" 
-            />
-            <div className="flex flex-col justify-start items-center gap-2">
-              <div className={`text-center justify-center text-black text-base font-semibold font-['Poppins'] leading-6 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>No offers sent yet</div>
-              <div className={`w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>Start reaching out to qualified candidates and manage offer responses from your dashboard.</div>
+          <div className="w-full max-w-[800px] h-[538px] flex flex-col justify-center items-center gap-4 select-none animate-in fade-in duration-200">
+            {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
+            <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
+              <OfferIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
             </div>
-            <button
-              onClick={() => onOpenSendOfferModal ? onOpenSendOfferModal() : setIsSendOpen(true)}
-              type="button"
-              className={`w-48 px-4 py-2 transition-all active:scale-95 rounded-3xl outline outline-1 outline-offset-[-1px] inline-flex justify-center items-center gap-2.5 text-white ${
-                isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] outline-blue-50 dark:outline-[#1A2435]' : 'bg-indigo-500 dark:bg-[#818CF8] outline-indigo-50 dark:outline-[#2E3445]'
-              }`}
+
+            {/* Text Container */}
+            <div className="flex flex-col justify-start items-center gap-2 text-center">
+              <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
+                No offers sent yet
+              </h3>
+              <p className="w-80 max-w-full text-ds-text-secondary text-sm font-normal font-dm-sans leading-5">
+                Start reaching out to qualified candidates and manage offer responses from your dashboard.
+              </p>
+            </div>
+
+            {/* Action Button */}
+            <FeatureDisabledTooltip
+              featureKey="enableJobOffers"
+              disabledMessage="Sending job offers is temporarily disabled by admin."
             >
-              <span className="text-center justify-start text-sm font-semibold font-['Poppins'] leading-5">Send Offer</span>
-            </button>
+              <button
+                onClick={() => onOpenSendOfferModal ? onOpenSendOfferModal() : setIsSendOpen(true)}
+                type="button"
+                className="w-[260px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary rounded-[100px] inline-flex justify-center items-center gap-2.5 ds-text-body-1 font-medium font-dm-sans text-base leading-6 transition-all shadow-sm cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+              >
+                Send offer
+              </button>
+            </FeatureDisabledTooltip>
           </div>
         ) : (
           sentOffers.map((item, index) => (
             <div
               key={`${item.id}-${index}`}
+              role="button"
+              tabIndex={0}
+              aria-label={`Sent offer details for ${item.title}`}
               onClick={() => handleSelectGroup(item)}
-              className={`w-full bg-white ${isCompanyMode ? 'dark:bg-[#0F1115] border-[#EEF2FF]/60 dark:border-[#2A2D35]/60 hover:bg-slate-50 dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] border-[#EEF2FF]/60 dark:border-[#2E3445]/60 hover:bg-slate-50 dark:hover:bg-[#1C2340]'} border-b last:border-b-0 transition-colors cursor-pointer`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectGroup(item);
+                }
+              }}
+              className="w-full max-w-[800px] min-h-[129px] py-3 pr-3 border-b border-ds-border flex flex-col justify-center items-start cursor-pointer select-none transition-colors hover:bg-ds-surface-1/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-xl"
             >
-              {/* Desktop View */}
-              <div className="hidden md:flex flex-row items-center justify-between py-4 px-4 gap-4 h-[88px] w-full">
-                {/* Job Title & Company */}
-                <div className="flex flex-col items-start gap-1 w-[30%] min-w-[200px]">
-                  <span className={`font-['Poppins'] font-semibold text-sm text-black capitalize truncate w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
-                    {item.title}
-                  </span>
-                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 truncate w-full ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
-                    {item.company}
-                  </span>
-                </div>
+              {/* Top Row: Title + Company */}
+              <div className="w-full py-1 flex flex-col justify-center items-start gap-1 self-stretch min-w-0">
+                <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6 line-clamp-1 truncate w-full">
+                  {item.title}
+                </span>
+                <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate w-full">
+                  {item.company}
+                </span>
+              </div>
 
+              {/* Bottom Row: 4 Equal Metric Columns (Responsive CSS Grid) */}
+              <div className="w-full grid grid-cols-4 gap-2 sm:gap-3 py-2 self-stretch min-w-0">
                 {/* Sent candidates */}
-                <div className="flex flex-col items-start gap-1 w-[15%] min-w-[100px]">
-                  <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                <div className="flex flex-col justify-center items-start gap-1 min-w-0">
+                  <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
                     {item.sentCount}
                   </span>
-                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                  <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 sm:whitespace-nowrap truncate sm:overflow-visible">
                     Sent candidates
                   </span>
                 </div>
 
                 {/* Accepted */}
-                <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
-                  <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                <div className="flex flex-col justify-center items-start gap-1 min-w-0">
+                  <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
                     {item.acceptedCount}
                   </span>
-                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                  <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 sm:whitespace-nowrap truncate sm:overflow-visible">
                     Accepted
                   </span>
                 </div>
 
                 {/* Pending */}
-                <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
-                  <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                <div className="flex flex-col justify-center items-start gap-1 min-w-0">
+                  <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
                     {item.pendingCount}
                   </span>
-                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                  <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 sm:whitespace-nowrap truncate sm:overflow-visible">
                     Pending
                   </span>
                 </div>
 
                 {/* Declined */}
-                <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
-                  <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                <div className="flex flex-col justify-center items-start gap-1 min-w-0">
+                  <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
                     {item.declinedCount}
                   </span>
-                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                  <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 sm:whitespace-nowrap truncate sm:overflow-visible">
                     Declined
-                  </span>
-                </div>
-              </div>
-
-              {/* Mobile View */}
-              <div className="flex md:hidden flex-row items-center py-4 px-1 gap-4 w-full">
-                {/* Logo Placeholder */}
-                <div className={`w-14 h-14 rounded-2xl bg-black shrink-0 overflow-hidden relative flex items-center justify-center text-white shadow-sm border border-slate-100 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'}`}>
-                  <Icon icon="lucide:infinity" className="w-8 h-8 text-white" />
-                </div>
-                
-                {/* Info */}
-                <div className="flex-1 flex flex-col justify-center min-w-0">
-                  <span className={`font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} capitalize truncate w-full`}>
-                    {item.title}
-                  </span>
-                  <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} truncate w-full mt-0.5`}>
-                    Sent to {item.sentCount} candidates • {item.acceptedCount} accepted
                   </span>
                 </div>
               </div>

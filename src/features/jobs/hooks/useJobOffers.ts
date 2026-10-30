@@ -13,60 +13,66 @@ export const useJobOffers = () => {
   const isCompanyMode = activeProfile?.type === 'COMPANY';
 
   // ─── 1. QUERY ───────────────────────────────────────────────────────────────
-  // Fetches & caches job offers. staleTime = 2 min means switching tabs and
-  // returning will NOT fire a new API call — the cache is returned instantly.
-  const { data: offers = [], isLoading } = useQuery<JobOffer[]>({
+  const { data: offers = [], isLoading, isError } = useQuery<JobOffer[]>({
     queryKey: JOB_OFFERS_QUERY_KEY,
     queryFn: async () => {
       const res = await jobsService.getJobOffers();
       if (res?.success) return res.data as JobOffer[];
       throw new Error('Failed to load offers');
     },
-    enabled: !isCompanyMode, // skip fetch entirely in company mode
-    staleTime: 1000 * 60 * 2, // 2-minute cache window
+    enabled: !isCompanyMode,
+    staleTime: 1000 * 60 * 2,
   });
 
   // ─── 2. ACCEPT MUTATION ──────────────────────────────────────────────────────
-  // Uses optimistic update: UI changes instantly, then syncs with server.
-  // If server fails, the UI automatically rolls back to the previous state.
   const acceptMutation = useMutation({
     mutationFn: (id: string) => jobsService.acceptJobOffer(id),
-    onMutate: async (id) => {
-      // Cancel any in-flight refetches to avoid overwriting optimistic update
+    onMutate: async (id: string) => {
+      // Optimistically record response in Zustand store for instant runtime update across all tabs
+      useJobStore.getState().setOfferResponse(id, 'accept');
+
+      // Cancel in-flight refetches
       await queryClient.cancelQueries({ queryKey: JOB_OFFERS_QUERY_KEY });
+      await queryClient.cancelQueries({ queryKey: ['jobs'] });
+
       // Snapshot previous value for rollback
       const previousOffers = queryClient.getQueryData<JobOffer[]>(JOB_OFFERS_QUERY_KEY);
+
       // Optimistically update cache
       queryClient.setQueryData<JobOffer[]>(JOB_OFFERS_QUERY_KEY, (old = []) =>
-        old.map(o => o.id === id ? { ...o, status: 'accepted' as const } : o)
+        old.map(o => (o.id === id || (o as any).offer_id === id) ? { ...o, status: 'accepted' as const } : o)
       );
-      return { previousOffers }; // returned as context to onError
+      return { previousOffers, id };
     },
     onError: (_err, _id, context) => {
-      // Rollback to snapshot on failure
       if (context?.previousOffers) {
         queryClient.setQueryData(JOB_OFFERS_QUERY_KEY, context.previousOffers);
       }
       toast.error('Failed to accept offer.');
     },
-    onSuccess: async (_res, id) => {
-      useJobStore.getState().setOfferResponse(id, 'accept');
+    onSuccess: () => {
       toast.success('Offer accepted!');
     },
-    // Always re-sync from server after mutation settles (success or error)
-    onSettled: () => queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
   });
 
   // ─── 3. DECLINE MUTATION ─────────────────────────────────────────────────────
   const declineMutation = useMutation({
     mutationFn: (id: string) => jobsService.declineJobOffer(id),
-    onMutate: async (id) => {
+    onMutate: async (id: string) => {
+      useJobStore.getState().setOfferResponse(id, 'decline');
+
       await queryClient.cancelQueries({ queryKey: JOB_OFFERS_QUERY_KEY });
+      await queryClient.cancelQueries({ queryKey: ['jobs'] });
+
       const previousOffers = queryClient.getQueryData<JobOffer[]>(JOB_OFFERS_QUERY_KEY);
       queryClient.setQueryData<JobOffer[]>(JOB_OFFERS_QUERY_KEY, (old = []) =>
-        old.map(o => o.id === id ? { ...o, status: 'declined' as const } : o)
+        old.map(o => (o.id === id || (o as any).offer_id === id) ? { ...o, status: 'declined' as const } : o)
       );
-      return { previousOffers };
+      return { previousOffers, id };
     },
     onError: (_err, _id, context) => {
       if (context?.previousOffers) {
@@ -74,18 +80,24 @@ export const useJobOffers = () => {
       }
       toast.error('Failed to decline offer.');
     },
-    onSuccess: (_res, id) => {
-      useJobStore.getState().setOfferResponse(id, 'decline');
+    onSuccess: () => {
       toast.success('Offer declined.');
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
   });
 
   return {
     offers,
     isLoading,
+    isError,
     handleAccept: (id: string) => acceptMutation.mutate(id),
     handleDecline: (id: string) => declineMutation.mutate(id),
-    refetch: () => queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY }),
+    refetch: () => {
+      queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
   };
 };

@@ -1,71 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useJobDetail } from '../hooks/useJobDetail';
 import { Icon } from '@iconify/react';
 import { useSmartBack } from '@/hooks/use-smart-back';
 import { getCurrencyIcon } from '../utils/currency.utils';
-import { toast } from 'sonner';
-import { ApplyJobModal } from '../components/ApplyJobModal';
+import { ApplyJobModal } from '../components/modals/ApplyJobModal';
 import { CocpitConfirmBox } from '@/shared/commonComponents/CocpitConfirmBox';
 import CocpitShareModel from '@/shared/commonComponents/cocpitsharemodel';
+import { ExternalLink, Loader2 } from 'lucide-react';
 import JobDetailSkeleton from '../components/skeletons/JobDetailSkeleton';
-import { useJobStore } from '@/store/job.store';
-import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { JobUnavailableScreen } from '../components/states/JobUnavailableScreen';
+import Avatar from '@/components/shared/Avatar';
 import { useFeatureFlags } from '@/context/FeatureFlagContext';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
+import InteractiveLocationMap from '@/features/company-onboarding/components/InteractiveLocationMap';
+import {
+  CalendarIcon,
+  CyphexAIIcon,
+  LocationIcon,
+  GoogleIcon,
+  ShareIcon,
+  SaveIcon,
+  SaveFilledIcon,
+  UserIcon,
+  BusinessBuildingIcon,
+  LeftArrowIcon,
+} from '@/components/icons';
+
+const getGoogleMapsUrl = (
+  locationQuery?: string,
+  latitude?: number | string | null,
+  longitude?: number | string | null,
+  customUrl?: string
+): string | null => {
+  if (customUrl && (customUrl.startsWith('http://') || customUrl.startsWith('https://'))) {
+    return customUrl;
+  }
+  const hasCoords =
+    latitude != null &&
+    longitude != null &&
+    !isNaN(Number(latitude)) &&
+    !isNaN(Number(longitude)) &&
+    Number(latitude) !== 0 &&
+    Number(longitude) !== 0;
+
+  const query =
+    (locationQuery && locationQuery.trim()) ||
+    (hasCoords ? `${latitude},${longitude}` : '');
+
+  if (!query) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
+
+const APPLICATION_STEPS = ['Applied', 'In review', 'Shortlisted', 'Declined'] as const;
 
 interface JobDetailPageProps {
   jobId: string;
 }
 
-const JobDetailMap = ({ location }: { location: string }) => {
-  return (
-    <div className="w-full h-full bg-[#E5E9F0] relative overflow-hidden flex items-center justify-center">
-      {location ? (
-        <>
-          <iframe
-            width="100%"
-            height="100%"
-            className="border-0 relative z-0"
-            loading="lazy"
-            allowFullScreen
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&z=14&output=embed`}
-          />
-          <a
-            href={`https://maps.google.com/maps?q=${encodeURIComponent(location)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute inset-0 z-10 cursor-pointer"
-            aria-label="Open in Google Maps"
-          />
-        </>
-      ) : (
-        <div className="text-gray-400 text-sm font-['Poppins']">No location specified</div>
-      )}
-    </div>
-  );
-};
-
 export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   const {
     job,
     isLoading,
+    isFollowLoading,
     toggleSave,
     applyToJob,
     withdrawJob,
     respondToOffer,
-    toggleFollow
+    toggleFollow,
   } = useJobDetail(jobId);
   const { flags } = useFeatureFlags();
-  const { isCompany, activeProfile } = useActiveProfile();
-  const isCompanyMode = isCompany && activeProfile;
   const { goBack } = useSmartBack();
   const router = useRouter();
   const searchParams = useSearchParams();
-  // If we arrived here from a chat's job context card, "back" should return
-  // to that specific conversation instead of the generic jobs section.
   const returnTo = searchParams.get('returnTo');
+
   const handleBack = () => {
     if (returnTo) {
       router.push(returnTo);
@@ -73,8 +82,10 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     }
     goBack('/jobs');
   };
+
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [recruiterAvatarError, setRecruiterAvatarError] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -90,707 +101,648 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   }
 
   if (!job) {
-    return (
-      <div className={`min-h-screen flex flex-col gap-4 bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'}`}>
-        <div className="w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-500 shadow-sm">
-          <Icon icon="lucide:alert-circle" className="w-8 h-8" />
-        </div>
-        <h2 className={`text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-xl font-bold font-['Poppins']`}>Job Not Found</h2>
-        <p className={`text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-sm font-['Poppins'] max-w-sm`}>
-          The job listing you are looking for does not exist or may have been filled or expired.
-        </p>
-        <button
-          onClick={handleBack}
-          className="mt-2 px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-3xl text-sm font-semibold font-['Poppins'] transition-all flex items-center gap-2"
-        >
-          <Icon icon="lucide:arrow-left" className="w-4 h-4" />
-          <span>Back to Jobs</span>
-        </button>
-      </div>
-    );
+    return <JobUnavailableScreen onBack={handleBack} />;
   }
 
-  const currentStatus = job.application_status || 'Applied';
-  const isDeclined = currentStatus === 'Declined' || currentStatus === 'Rejected';
+  const jobAny = job as any;
+  const jobLat = jobAny?.latitude != null ? Number(jobAny.latitude) : null;
+  const jobLng = jobAny?.longitude != null ? Number(jobAny.longitude) : null;
+  const mapUrl = getGoogleMapsUrl(
+    job.location,
+    jobLat,
+    jobLng,
+    jobAny?.map_url || jobAny?.mapUrl
+  );
 
-  const steps = isDeclined
-    ? ['Applied', 'in-review', 'Declined']
-    : ['Applied', 'in-review', 'Shortlisted'];
-
-  const stepLabels: Record<string, string> = {
-    'Applied': 'Applied',
-    'in-review': 'In review',
-    'Shortlisted': 'Shortlisted',
-    'Declined': 'Declined',
-  };
-
-  let mappedStatus = currentStatus;
-  if (mappedStatus.toLowerCase() === 'in-review') mappedStatus = 'in-review';
-  else if (mappedStatus === 'Rejected') mappedStatus = 'Declined';
-  else if (['Offer', 'Accepted', 'Interview', 'Approved'].includes(mappedStatus)) mappedStatus = 'Shortlisted';
-
-  const currentStepIndex = steps.indexOf(mappedStatus) !== -1 ? steps.indexOf(mappedStatus) : 0;
-
+  const activeStep = useMemo(() => {
+    const normalized = (job.application_status || 'Applied').toLowerCase();
+    if (normalized === 'in-review' || normalized === 'in review') return 1;
+    if (['shortlisted', 'interview', 'offer', 'accepted', 'approved'].includes(normalized)) return 2;
+    if (['declined', 'rejected', 'withdrawn'].includes(normalized)) return 3;
+    return 0;
+  }, [job.application_status]);
   const isJobCompany = Boolean(job.org_id || job.company_id || job.company_type === 'COMPANY' || job.company_type === 'ORGANIZATION');
 
-  return (
-    <div className={`relative w-full bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} flex justify-center px-4 md:px-0`}>
-      <div className={`flex flex-col items-center py-0 gap-6 relative w-full max-w-[998px] bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} pb-8`}>
+  const navigateToChat = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const params = new URLSearchParams();
+    if (job.org_id) params.set('companyId', job.org_id);
+    else if (job.recruiter_id) params.set('userId', job.recruiter_id);
+    if (job.offer_id) params.set('offerContext', job.offer_id);
+    else if (job.id) params.set('jobContext', job.id);
+    router.push(`/messaging?${params.toString()}`);
+  };
 
-        {/* Header chevron and Title block */}
-        <div className="w-full min-h-[48px] self-stretch flex flex-row items-start p-0 gap-[16px]">
+  // Candidate application and offer status flags
+  const isAccepted = job.application_status === 'Accepted' || job.offerStatus === 'accepted';
+  const isDeclined = job.application_status === 'Declined' || job.offerStatus === 'declined';
+  const isWithdrawn = job.application_status === 'Withdrawn' || job.offerStatus === 'withdrawn';
+  const isExpired = job.application_status === 'Expired' || job.offerStatus === 'expired';
+  const isShortlisted = job.application_status?.toLowerCase() === 'shortlisted';
+  const isTerminalOffer = isDeclined || isWithdrawn || isExpired;
+
+  // Share & Bookmark visibility rules based on Figma:
+  // - Share icon: Visible ONLY for standard active jobs (Apply now / Withdraw). Hidden for closed jobs and offers.
+  // - Bookmark/Save icon: Visible for standard active jobs, pending offers (Accept / Decline), and closed jobs (Follow / Unfollow)
+  // - Both icons hidden for chat states (Chat now), terminal offer states (expired/declined), and rejected jobs
+  const showShare = !job.is_offer && !job.is_closed && job.application_status !== 'Rejected' && !isShortlisted && !isAccepted;
+  const showSave = (
+    job.application_status !== 'Rejected' &&
+    !isShortlisted &&
+    !isAccepted &&
+    !isTerminalOffer &&
+    flags?.saved_jobs !== false
+  );
+
+  const renderBottomBarActions = () => {
+    // Closed jobs: Recruitment pipeline is ended.
+    // Display Follow/Unfollow company/recruiter per Figma design and industry standards.
+    if (job.is_closed) {
+      return (
+        <button
+          onClick={toggleFollow}
+          disabled={isFollowLoading}
+          type="button"
+          className="h-9 px-4 min-w-[96px] rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary ds-text-body-1 transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer border-none outline-none disabled:opacity-75 disabled:cursor-not-allowed"
+        >
+          {isFollowLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin shrink-0 text-ds-text-primary" />
+          ) : (
+            job.is_followed ? 'Unfollow' : 'Follow'
+          )}
+        </button>
+      );
+    }
+
+    if (job.is_offer) {
+      if (isAccepted) {
+        return (
           <button
-            onClick={handleBack}
-            className={`w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 dark:hover:bg-transparent transition-colors active:scale-95 flex-shrink-0`}
+            onClick={navigateToChat}
+            type="button"
+            className="h-9 px-4 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary ds-text-body-1 transition-all shadow-sm flex items-center justify-center cursor-pointer border-none outline-none"
           >
-            <Icon icon="lucide:chevron-left" className={`w-6 h-6 text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`} />
+            Chat now
           </button>
-          <div className="flex flex-col items-start p-0 w-full min-h-[42px] gap-0">
-            <div className={`text-left text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[18px] font-medium font-['Poppins'] leading-[26px]`}>Job details</div>
-            <div className={`text-left text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[12px] font-normal font-['Poppins'] leading-[16px]`}>Review the role, requirements, and benefits.</div>
-          </div>
+        );
+      }
+      if (isDeclined) {
+        return (
+          <span className="text-ds-text-muted ds-text-small px-3 py-1.5 text-center flex items-center">
+            Offer declined
+          </span>
+        );
+      }
+      if (isWithdrawn) {
+        return (
+          <span className="text-ds-error ds-text-small px-3 py-1.5 text-center flex items-center">
+            Offer withdrawn
+          </span>
+        );
+      }
+      if (isExpired) {
+        return (
+          <span className="text-ds-error ds-text-small px-3 py-1.5 text-center flex items-center">
+            Offer expired
+          </span>
+        );
+      }
+
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => respondToOffer('accept')}
+            type="button"
+            className="h-9 px-4 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary ds-text-body-1 transition-all shadow-sm flex items-center justify-center cursor-pointer border-none outline-none"
+          >
+            Accept
+          </button>
+          <button
+            onClick={() => setShowDeclineConfirm(true)}
+            type="button"
+            className="h-9 px-4 rounded-full border border-ds-border hover:bg-ds-surface-1/50 active:scale-95 text-ds-text-primary ds-text-body-1 transition-all flex items-center justify-center cursor-pointer outline-none"
+          >
+            Decline
+          </button>
         </div>
+      );
+    }
 
-        {/* Content body wrapper */}
-        <div className="self-stretch p-0 md:p-4 flex flex-col justify-start items-start gap-6 w-full">
+    if (job.application_status === 'Rejected') {
+      return (
+        <span className="text-ds-text-muted ds-text-small px-4 py-1.5 border border-ds-border rounded-full">
+          Application Rejected
+        </span>
+      );
+    }
 
-          {/* Active indicator and Job title card */}
-          <div className="w-full h-auto self-stretch flex flex-col justify-center items-start p-0 gap-2 md:gap-4">
-            {/* Desktop View (md and up) */}
-            <div className="hidden md:flex w-full flex-col md:flex-row md:justify-between md:items-center">
-              <div className="w-full flex flex-row justify-between md:justify-start items-center gap-4">
-                <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-2xl md:text-[32px] font-semibold font-['Poppins'] leading-tight md:leading-[56px] py-1`}>{job.title}</div>
-                {job.is_closed ? (
-                  <div className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[74px] h-8 bg-[#FEF3C7] ${isCompanyMode ? 'dark:bg-[#4A3A10]' : 'dark:bg-[#4A3A10]'} border border-[#FBBF24] ${isCompanyMode ? 'dark:border-[#FBBF24]' : 'dark:border-[#F59E0B]'} rounded-[24px] flex-none order-0 flex-shrink-0`}>
-                    <span className={`w-[42px] h-4 font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#FBBF24] ${isCompanyMode ? 'dark:text-[#FBBF24]' : 'dark:text-[#F59E0B]'} flex-none order-0 flex-grow-0`}>Closed</span>
-                  </div>
-                ) : (
-                  <div className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[74px] h-8 bg-[#EEF2FF] ${isCompanyMode ? 'dark:bg-[#121B2B]' : 'dark:bg-[#1C2340]'} border border-[#6366F1] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'} rounded-[24px] flex-none order-0 flex-shrink-0`}>
-                    <span className={`w-[42px] h-4 font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} flex-none order-0 flex-grow-0`}>Active</span>
-                  </div>
-                )}
-              </div>
-              {job.is_offer && job.offer_days_left !== undefined &&
-                !['Accepted', 'Declined', 'Withdrawn', 'Expired'].includes(job.application_status || '') && (
-                  <div className="flex flex-row items-center gap-2 h-8">
-                    <Icon
-                      icon="solar:calendar-linear"
-                      className="w-6 h-6 flex-shrink-0"
-                      style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
-                    />
-                    <span
-                      className="font-['Poppins'] font-normal text-sm leading-5 text-center py-1.5"
-                      style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
-                    >
-                      Offer ends in {job.offer_days_left} {job.offer_days_left === 1 ? 'day' : 'days'}
-                    </span>
-                  </div>
-                )}
-            </div>
+    if (isShortlisted) {
+      return (
+        <button
+          onClick={navigateToChat}
+          type="button"
+          className="h-9 px-4 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary ds-text-body-1 transition-all shadow-sm flex items-center justify-center cursor-pointer border-none outline-none"
+        >
+          Chat now
+        </button>
+      );
+    }
 
+    if (job.is_applied) {
+      return (
+        <button
+          onClick={() => setShowWithdrawConfirm(true)}
+          type="button"
+          className="h-9 px-4 rounded-full border border-ds-border hover:bg-ds-surface-1/50 active:scale-95 text-ds-text-primary ds-text-body-1 transition-all cursor-pointer outline-none"
+        >
+          Withdraw
+        </button>
+      );
+    }
+
+    return (
+      <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
+        <button
+          onClick={() => setShowApplyModal(true)}
+          type="button"
+          className="h-9 px-4 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary ds-text-body-1 shadow-sm flex items-center justify-center cursor-pointer transition-all border-none outline-none whitespace-nowrap"
+        >
+          Apply now
+        </button>
+      </FeatureDisabledTooltip>
+    );
+  };
+
+  return (
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans relative selection:bg-ds-accent/30 selection:text-ds-text-primary">
+      {/* Fixed Top-Left Back Button (top: 40px, left: 40px matching Figma) */}
+      <button
+        onClick={handleBack}
+        type="button"
+        aria-label="Back"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary text-base font-medium font-dm-sans leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+      >
+        <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
+        <span>Back</span>
+      </button>
+
+      {/* Main 768px Centered Column (Figma: top-[60px], centered w-[768px]) */}
+      <div className="w-full max-w-[768px] mx-auto pt-14 sm:pt-[60px] pb-28 px-4 sm:px-0 flex flex-col gap-5 animate-in fade-in duration-300">
+
+        {/* Job Header & Metadata */}
+        <div className="w-full flex flex-col justify-start items-start gap-3">
+          {/* Job Title */}
+          <h1 className="w-full text-3xl sm:text-4xl font-bold font-dm-sans text-ds-text-primary leading-tight sm:leading-[48px]">
+            {job.title}
+          </h1>
+
+          {/* Posted By & Active Status Badge */}
+          <div className="w-full flex justify-between items-center gap-3">
             <div
-              className="hidden md:flex flex-row items-center justify-start p-0 gap-[12px] flex-grow flex-shrink-0 min-w-0 w-full sm:w-auto mt-2 sm:mt-0 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 cursor-pointer group"
               onClick={() => {
-                if (job.recruiter_id) {
+                if (job.org_id) {
+                  router.push(`/company/${job.org_id}`);
+                } else if (job.recruiter_id) {
                   router.push(`/profile/${job.recruiter_id}`);
                 }
               }}
             >
-              <div className="flex">
-                {isLoading ? (
-                  <div className={`relative w-8 h-8 ${isJobCompany ? 'rounded-md' : 'rounded-full'} border border-[#D1D5DB] flex justify-center items-center flex-shrink-0 animate-pulse bg-indigo-50`}>
-                    <div className={`w-4 h-4 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-indigo-200`} />
-                  </div>
-                ) : job.company_logo === 'sphere' ? (
-                  <div className={`w-8 h-8 bg-slate-100 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center overflow-hidden flex-shrink-0`}>
-                    <div className={`w-4 h-4 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm`} />
-                  </div>
-                ) : (job.company_logo || job.recruiter_avatar) && !avatarError ? (
-                  <img
-                    className={`w-8 h-8 ${isJobCompany ? 'rounded-md' : 'rounded-full'} object-cover flex-shrink-0`}
-                    src={job.company_logo || job.recruiter_avatar}
-                    onError={() => setAvatarError(true)}
-                    alt="Company Logo"
-                  />
-                ) : (
-                  <div className={`w-8 h-8 bg-indigo-50 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center flex-shrink-0`}>
-                    <Icon icon="hugeicons:job-search" className="w-4 h-4 text-indigo-500" />
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-row items-center gap-1">
-                <span className={`text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[14px] font-normal font-['Poppins'] leading-[20px]`}>Posted by</span>
-                <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[14px] font-semibold font-['Poppins'] leading-[20px] truncate max-w-[150px]`}>{job.company}</div>
-              </div>
-            </div>
-
-            {/* Mobile View (logo -> title -> company name -> badges) */}
-            <div className="flex md:hidden flex-col items-start gap-3 w-full">
-              {/* Logo */}
-              <div
-                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => {
-                  if (job.recruiter_id) router.push(`/profile/${job.recruiter_id}`);
-                }}
-              >
-                {isLoading ? (
-                  <div className={`relative w-12 h-12 ${isJobCompany ? 'rounded-md' : 'rounded-full'} border border-[#D1D5DB] flex justify-center items-center flex-shrink-0 animate-pulse bg-indigo-50`}>
-                    <div className={`w-6 h-6 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-indigo-200`} />
-                  </div>
-                ) : job.company_logo === 'sphere' ? (
-                  <div className={`w-12 h-12 bg-slate-100 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center overflow-hidden flex-shrink-0`}>
-                    <div className={`w-6 h-6 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm`} />
-                  </div>
-                ) : (job.company_logo || job.recruiter_avatar) && !avatarError ? (
-                  <img
-                    className={`w-12 h-12 ${isJobCompany ? 'rounded-md' : 'rounded-full'} object-cover flex-shrink-0`}
-                    src={job.company_logo || job.recruiter_avatar}
-                    onError={() => setAvatarError(true)}
-                    alt="Company Logo"
-                  />
-                ) : (
-                  <div className={`w-12 h-12 bg-indigo-50 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center flex-shrink-0`}>
-                    <Icon icon="hugeicons:building-03" className="w-6 h-6 text-indigo-500" />
-                  </div>
-                )}
-              </div>
-
-              {/* Title & Badges */}
-              <div className="flex flex-col gap-1 w-full">
-                <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-2xl font-semibold font-['Poppins'] leading-tight`}>
-                  {job.title}
-                </div>
-                <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[16px] font-medium font-['Poppins'] leading-[24px]`}>
-                  {job.company}
-                </div>
-              </div>
-
-              {/* Status & Offer indicator */}
-              <div className="flex flex-row items-center gap-3 w-full">
-                {job.is_closed ? (
-                  <div className={`box-border flex justify-center items-center px-4 py-1.5 h-8 bg-[#FEF3C7] ${isCompanyMode ? 'dark:bg-[#4A3A10]' : 'dark:bg-[#4A3A10]'} border border-[#FBBF24] ${isCompanyMode ? 'dark:border-[#FBBF24]' : 'dark:border-[#F59E0B]'} rounded-full`}>
-                    <span className={`font-['Poppins'] font-normal text-xs text-[#FBBF24] ${isCompanyMode ? 'dark:text-[#FBBF24]' : 'dark:text-[#F59E0B]'}`}>Closed</span>
-                  </div>
-                ) : (
-                  <div className={`box-border flex justify-center items-center px-4 py-1.5 h-8 bg-[#EEF2FF] ${isCompanyMode ? 'dark:bg-[#121B2B]' : 'dark:bg-[#1C2340]'} border border-[#6366F1] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'} rounded-full`}>
-                    <span className={`font-['Poppins'] font-normal text-xs text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}`}>Active</span>
-                  </div>
-                )}
-
-                {job.is_offer && job.offer_days_left !== undefined &&
-                  !['Accepted', 'Declined', 'Withdrawn', 'Expired'].includes(job.application_status || '') && (
-                    <div className="flex flex-row items-center gap-1.5 h-8">
-                      <Icon
-                        icon="solar:calendar-linear"
-                        className="w-5 h-5 flex-shrink-0"
-                        style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
-                      />
-                      <span
-                        className="font-['Poppins'] font-normal text-xs"
-                        style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
-                      >
-                        Offer ends in {job.offer_days_left}d
-                      </span>
-                    </div>
-                  )}
-              </div>
-            </div>
-          </div>
-
-          {/* Job Specifications specifications card */}
-          <div className={`w-full self-stretch p-4 bg-gray-50 md:bg-white rounded-2xl md:rounded-3xl md:outline md:outline-1 md:outline-offset-[-1px] md:outline-indigo-50 grid grid-cols-2 gap-y-6 gap-x-4 md:flex md:flex-row md:flex-wrap md:gap-4 h-auto mt-2 md:mt-0 ${isCompanyMode ? 'dark:bg-[#16365F] dark:md:bg-[#0F1115] dark:md:outline-[#2A2D35]' : 'dark:bg-[#1C2340] dark:md:bg-[#0B0F19] dark:md:outline-[#2E3445]'}`}>
-            {/* Salary Column */}
-            <div className="flex-grow flex-shrink-0 flex flex-col justify-center items-start p-0 gap-1.5 md:gap-2 min-w-[120px] h-auto order-1 md:order-4">
-              <div className="flex flex-row items-center p-0 gap-1.5 md:gap-2 h-5">
-                <Icon icon={getCurrencyIcon(job.salary_currency)} className="w-4 h-4 md:w-5 md:h-5 text-gray-500 flex-shrink-0" />
-                <div className={`text-left justify-start text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[11px] md:text-[12px] font-normal font-['Poppins'] uppercase leading-[16px]`}>salary</div>
-              </div>
-              <div className={`text-left justify-start text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[15px] md:text-[16px] font-medium md:font-normal font-['Poppins'] leading-[20px] md:leading-[24px]`}>
-                {job.salary_display
-                  ? job.salary_display
-                  : (job.salary_min || job.salary_max)
-                    ? `${job.salary_min || ''} – ${job.salary_max || ''}`.trim()
-                    : 'Salary not disclosed'
-                }
-              </div>
-            </div>
-
-            {/* Experience Column */}
-            <div className="flex-grow flex-shrink-0 flex flex-col justify-center items-start p-0 gap-1.5 md:gap-2 min-w-[120px] h-auto order-2 md:order-1">
-              <div className="flex flex-row items-center p-0 gap-1.5 md:gap-2 h-5">
-                <Icon icon="hugeicons:job-search" className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-                <div className={`justify-start text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[11px] md:text-[12px] font-normal font-['Poppins'] uppercase leading-[16px]`}>Experience</div>
-              </div>
-              <div className={`justify-start text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[15px] md:text-[16px] font-medium md:font-normal font-['Poppins'] leading-[20px] md:leading-[24px]`}>{job.experience || '0-2 Yrs'}</div>
-            </div>
-
-            {/* Work Mode Column */}
-            <div className="flex-grow flex-shrink-0 flex flex-col justify-center items-start p-0 gap-1.5 md:gap-2 min-w-[120px] h-auto order-3 md:order-2">
-              <div className="flex flex-row items-center p-0 gap-1.5 md:gap-2 h-5">
-                <Icon icon="hugeicons:location-05" className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-                <div className={`justify-start text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[11px] md:text-[12px] font-normal font-['Poppins'] uppercase leading-[16px]`}>work mode</div>
-              </div>
-              <div className={`justify-start text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[15px] md:text-[16px] font-medium md:font-normal font-['Poppins'] leading-[20px] md:leading-[24px]`}>{job.work_mode || 'Hybrid'}</div>
-            </div>
-
-            {/* Work Type Column */}
-            <div className="flex-grow flex-shrink-0 flex flex-col justify-center items-start p-0 gap-1.5 md:gap-2 min-w-[120px] h-auto order-4 md:order-3">
-              <div className="flex flex-row items-center p-0 gap-1.5 md:gap-2 h-5">
-                <Icon icon="solar:calendar-linear" className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-                <div className={`text-left justify-start text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[11px] md:text-[12px] font-normal font-['Poppins'] uppercase leading-[16px]`}>Work type</div>
-              </div>
-              <div className={`text-left justify-start text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[15px] md:text-[16px] font-medium md:font-normal font-['Poppins'] leading-[20px] md:leading-[24px]`}>{job.job_type || 'Full Time'}</div>
-            </div>
-          </div>
-
-          {/* AI Matching strength bar */}
-          <div className={`w-full h-auto py-[12px] px-[16px] bg-[#F9FAFF] ${isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]'} rounded-[12px] self-stretch flex flex-row items-center gap-[10px]`}>
-            <img src="/assets/AI 2.svg" className="w-5 h-5 flex-shrink-0" alt="AI Icon" />
-            <div className={`flex-1 flex items-center text-[#6366F1] ${isCompanyMode ? 'dark:text-[#82B8FF]' : 'dark:text-[#818CF8]'} text-[14px] font-normal font-['Poppins'] leading-5`}>
-              You&apos;re stronger than 90% of applicants for this job based on your profile and skills
-            </div>
-          </div>
-
-          {/* Recruiter Note for Offers, Application Status, or Company Analytics Box */}
-          {job.is_offer ? (
-            job.recruiter_message ? (
-              <div className={`box-border w-full max-w-full min-h-[104px] bg-[#F9FAFF] ${isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]'} border-l-2 border-l-[#6366F1] ${isCompanyMode ? 'dark:border-l-[#4D9CFF]' : 'dark:border-l-[#818CF8]'} rounded-tr-[16px] rounded-br-[16px] rounded-bl-[16px] rounded-tl-none py-3 px-4 flex flex-col justify-start items-start gap-2 self-stretch`}>
-                {/* Recruiter / Company Info Row */}
-                <div className="flex flex-row justify-start items-center p-0 gap-2 h-10 w-full">
-                  {job.org_id ? (
-                    job.company_logo === 'sphere' ? (
-                      <div className="w-10 h-10 bg-slate-100 rounded-full flex justify-center items-center overflow-hidden flex-shrink-0">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
-                      </div>
-                    ) : job.company_logo ? (
-                      <img
-                        src={job.company_logo}
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                        alt={job.company || 'Company'}
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#6366F1] flex-shrink-0">
-                        <Icon icon="hugeicons:building-03" className="w-5 h-5" />
-                      </div>
-                    )
-                  ) : job.recruiter_avatar ? (
+              {/* Org (Square / rounded-lg with BusinessBuildingIcon fallback) vs User (Circle / rounded-full with UserIcon fallback) */}
+              {job.org_id ? (
+                <div className="size-8 rounded-lg overflow-hidden shrink-0 bg-ds-surface-2 border border-ds-border flex items-center justify-center">
+                  {job.company_logo && !avatarError ? (
                     <img
-                      src={job.recruiter_avatar}
-                      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      alt={job.recruiter_name || 'Recruiter'}
+                      src={job.company_logo}
+                      alt={job.company || 'Company'}
+                      className="size-full object-cover"
+                      onError={() => setAvatarError(true)}
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#6366F1] flex-shrink-0">
-                      <Icon icon="solar:user-bold" className="w-5 h-5" />
-                    </div>
+                    <BusinessBuildingIcon className="w-[60%] h-[60%] text-ds-text-primary" />
                   )}
-                  <div className="flex flex-col justify-center items-start gap-1">
-                    {job.org_id ? (
-                      <div className="text-left font-['Poppins'] font-semibold text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                        {job.company}
-                      </div>
-                    ) : (
-                      <>
-                        {job.recruiter_name && (
-                          <div className="text-left font-['Poppins'] font-semibold text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                            {job.recruiter_name}
-                          </div>
-                        )}
-                        {job.recruiter_title && (
-                          <div className="text-left font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                            {job.recruiter_title}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Message text row */}
-                <div className={`w-full max-w-full text-left font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
-                  &ldquo;{job.recruiter_message}&rdquo;
-                </div>
-              </div>
-            ) : null
-          ) : job.is_applied ? (
-            <div className={`box-border w-full bg-[#FFFFFF] ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border border-[#EEF2FF] ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} rounded-[28px] self-stretch p-4 flex flex-col items-start gap-4 h-auto`}>
-              <div className={`text-left text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[16px] font-medium font-['Poppins'] leading-6`}>
-                Application status
-              </div>
-              <div className="w-full flex flex-col md:flex-row md:flex-wrap justify-start md:justify-center items-start md:items-center p-0 self-stretch gap-0 h-auto">
-                {steps.map((step, idx) => {
-                  const isCompleted = idx < currentStepIndex;
-                  const isCurrent = idx === currentStepIndex;
-
-                  let circleClass = '';
-                  let textClass = '';
-
-                  if (step === 'Declined' && isCurrent) {
-                    circleClass = 'bg-[#EF4444] border border-[#EF4444]';
-                    textClass = 'text-[#EF4444]';
-                  } else if (isCompleted || isCurrent) {
-                    circleClass = 'bg-[#6366F1] border border-[#6366F1]';
-                    textClass = 'text-[#6366F1]';
-                  } else {
-                    circleClass = 'bg-transparent border border-[#DADADA]';
-                    textClass = 'text-[#6B7280]';
-                  }
-
-                  return (
-                    <div key={step} className="flex flex-col items-start md:items-center w-full md:w-auto">
-                      <div className="flex flex-row items-center gap-0 w-full md:w-auto">
-                        {/* Step Frame */}
-                        <div className="box-border flex flex-row items-center py-2 px-0 md:px-4 gap-[8px] md:gap-[10px] w-auto h-9 rounded-[24px] flex-none">
-                          <div className={`box-border w-4 h-4 rounded-full flex-none ${circleClass}`} />
-                          <span className={`w-fit h-5 font-['Poppins'] font-normal text-sm leading-5 text-center ${textClass}`}>
-                            {stepLabels[step] || step}
-                          </span>
-                        </div>
-
-                        {/* Connector Line Desktop */}
-                        {idx < steps.length - 1 && (
-                          <div
-                            className={`hidden md:block w-[60px] h-[1px] self-center flex-none ${idx < currentStepIndex ? 'bg-[#6366F1]' : 'bg-[#DADADA]'
-                              }`}
-                          />
-                        )}
-                      </div>
-
-                      {/* Connector Line Mobile */}
-                      {idx < steps.length - 1 && (
-                        <div
-                          className={`md:hidden w-[1px] h-6 ml-[7px] ${idx < currentStepIndex ? 'bg-[#6366F1]' : 'bg-[#DADADA]'}`}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className={`box-border w-full bg-[#FFFFFF] ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border border-[#EEF2FF] ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} rounded-[28px] self-stretch p-4 flex flex-col items-start gap-4 h-auto`}>
-              <div className={`text-left text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[16px] font-medium font-['Poppins'] leading-6`}>Company analytics</div>
-
-              {!job.response_rate || !job.avg_reply ? (
-                <div className="flex flex-col items-start p-0 gap-4 w-full h-auto">
-                  <div className="flex flex-row items-center p-0 gap-2 w-fit h-5 flex-none">
-                    <Icon icon="proicons:info" className={`w-5 h-5 text-[#FBBF24] ${isCompanyMode ? 'dark:text-[#FBBF24]' : 'dark:text-[#F59E0B]'} flex-none`} />
-                    <span className={`h-5 font-['Poppins'] font-normal text-sm leading-5 flex items-center text-[#FBBF24] ${isCompanyMode ? 'dark:text-[#FBBF24]' : 'dark:text-[#F59E0B]'} flex-none`}>
-                      Response data unavailable
-                    </span>
-                  </div>
-                  <div className={`w-full font-['Poppins'] font-normal text-sm leading-5 flex items-center text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} self-stretch`}>
-                    We don&apos;t have enough application data to calculate this company&apos;s response or reply rate yet.
-                  </div>
                 </div>
               ) : (
-                <>
-                  {/* Stats/analytics row */}
-                  <div className="w-full flex flex-row flex-wrap items-start py-2 gap-8 md:gap-[340px] h-auto">
-                    {/* Response Rate Column */}
-                    <div className="box-border flex flex-col items-start pb-3 gap-2 w-[120px] h-auto">
-                      <div className={`text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[10px] font-semibold uppercase tracking-wider font-['Poppins'] leading-[14px]`}>RESPONSE RATE</div>
-                      <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[24px] font-bold font-['Poppins'] leading-8`}>{job.response_rate}</div>
-                      {/* Progress Bar */}
-                      <div className="w-full h-[2px] bg-gray-200 mt-1 relative rounded-full overflow-hidden">
-                        <div
-                          className="absolute top-0 left-0 h-full bg-[#22C55E] rounded-full"
-                          style={{ width: job.response_rate || '0%' }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Avg Reply Column */}
-                    <div className="flex flex-col items-start gap-1 h-auto">
-                      <div className={`text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[10px] font-semibold uppercase tracking-wider font-['Poppins'] leading-[14px]`}>AVG. REPLY</div>
-                      <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[24px] font-bold font-['Poppins'] leading-8`}>{job.avg_reply}</div>
-                      <div className={`text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} text-[10px] font-medium font-['Poppins'] leading-[14px]`}>Very fast</div>
-                    </div>
-                  </div>
-
-                  {/* Footer text */}
-                  <div className={`text-left text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-[14px] font-normal font-['Poppins'] leading-[20px] w-full max-w-sm h-auto`}>
-                    {job.company} usually views applications within 24 hours of submission.
-                  </div>
-                </>
+                <div className="size-8 rounded-full overflow-hidden shrink-0 bg-ds-surface-2 flex items-center justify-center">
+                  {(job.recruiter_avatar || job.company_logo) && !avatarError ? (
+                    <img
+                      src={job.recruiter_avatar || job.company_logo}
+                      alt={job.recruiter_name || job.company || 'Recruiter'}
+                      className="size-full object-cover rounded-full"
+                      onError={() => setAvatarError(true)}
+                    />
+                  ) : (
+                    <UserIcon className="w-full h-full p-1.5 text-ds-text-primary" />
+                  )}
+                </div>
               )}
+              <div className="flex items-center gap-1.5 text-xs font-normal font-dm-sans leading-4">
+                <span className="text-ds-text-secondary">Posted by</span>
+                <span className="text-ds-text-primary font-medium text-sm leading-5 group-hover:text-ds-accent transition-colors">
+                  {job.org_id ? (job.company || 'Company') : (job.recruiter_name || job.company || 'Recruiter')}
+                </span>
+              </div>
+            </div>
+
+            {/* Status Badge (Frame 2608515 matching Figma) */}
+            {job.is_closed ? (
+              <div className="w-[66px] h-[32px] px-4 py-2 bg-ds-surface-1 border border-ds-warning rounded-[24px] flex items-center justify-center shrink-0 box-border">
+                <span className="font-dm-sans font-normal text-xs leading-4 text-center text-ds-warning">
+                  Close
+                </span>
+              </div>
+            ) : (
+              <div className="w-[69px] h-[32px] px-4 py-2 bg-ds-surface-1 border border-ds-success rounded-[24px] flex items-center justify-center shrink-0 box-border">
+                <span className="font-dm-sans font-normal text-xs leading-4 text-center text-ds-success">
+                  Active
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 4-Column Specifications Row (seamless without outer border matching Figma) */}
+        <div className="w-full py-2 bg-transparent grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-4">
+          {/* Experience */}
+          <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
+            <div className="flex items-center gap-2 text-ds-text-muted">
+              <Icon icon="solar:case-linear" className="w-5 h-5 text-ds-text-muted shrink-0" />
+              <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Experience</span>
+            </div>
+            <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
+              {job.experience || '0-2 Yrs'}
+            </div>
+          </div>
+
+          <div className="hidden sm:block w-[1px] h-10 bg-ds-border self-center shrink-0" />
+
+          {/* Work mode */}
+          <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
+            <div className="flex items-center gap-2 text-ds-text-muted">
+              <Icon icon="solar:map-point-linear" className="w-5 h-5 text-ds-text-muted shrink-0" />
+              <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Work mode</span>
+            </div>
+            <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
+              {job.work_mode || 'Hybrid'}
+            </div>
+          </div>
+
+          <div className="hidden sm:block w-[1px] h-10 bg-ds-border self-center shrink-0" />
+
+          {/* Work type */}
+          <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
+            <div className="flex items-center gap-2 text-ds-text-muted">
+              <CalendarIcon size={20} className="w-5 h-5 text-ds-text-muted shrink-0 flex-none order-0 grow-0" />
+              <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Work type</span>
+            </div>
+            <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
+              {job.job_type || 'Full Time'}
+            </div>
+          </div>
+
+          <div className="hidden sm:block w-[1px] h-10 bg-ds-border self-center shrink-0" />
+
+          {/* Salary */}
+          <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
+            <div className="flex items-center gap-2 text-ds-text-muted">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 shrink-0 text-ds-text-muted">
+                <path d="M10 1.875C8.39303 1.875 6.82214 2.35152 5.486 3.24431C4.14985 4.1371 3.10844 5.40605 2.49348 6.8907C1.87852 8.37535 1.71762 10.009 2.03112 11.5851C2.34463 13.1612 3.11846 14.6089 4.25476 15.7452C5.39106 16.8815 6.8388 17.6554 8.4149 17.9689C9.99099 18.2824 11.6247 18.1215 13.1093 17.5065C14.594 16.8916 15.8629 15.8502 16.7557 14.514C17.6485 13.1779 18.125 11.607 18.125 10C18.1227 7.84581 17.266 5.78051 15.7427 4.25727C14.2195 2.73403 12.1542 1.87727 10 1.875ZM10 16.875C8.64026 16.875 7.31105 16.4718 6.18046 15.7164C5.04987 14.9609 4.16868 13.8872 3.64833 12.6309C3.12798 11.3747 2.99183 9.99237 3.2571 8.65875C3.52238 7.32513 4.17716 6.10013 5.13864 5.13864C6.10013 4.17716 7.32514 3.52237 8.65876 3.2571C9.99238 2.99183 11.3747 3.12798 12.631 3.64833C13.8872 4.16868 14.9609 5.04987 15.7164 6.18045C16.4718 7.31104 16.875 8.64025 16.875 10C16.8729 11.8227 16.1479 13.5702 14.8591 14.8591C13.5702 16.1479 11.8227 16.8729 10 16.875ZM13.125 11.5625C13.125 12.1427 12.8945 12.6991 12.4843 13.1093C12.0741 13.5195 11.5177 13.75 10.9375 13.75H10.625V14.375C10.625 14.5408 10.5592 14.6997 10.4419 14.8169C10.3247 14.9342 10.1658 15 10 15C9.83424 15 9.67527 14.9342 9.55806 14.8169C9.44085 14.6997 9.375 14.5408 9.375 14.375V13.75H8.125C7.95924 13.75 7.80027 13.6842 7.68306 13.5669C7.56585 13.4497 7.5 13.2908 7.5 13.125C7.5 12.9592 7.56585 12.8003 7.68306 12.6831C7.80027 12.5658 7.95924 12.5 8.125 12.5H10.9375C11.1861 12.5 11.4246 12.4012 11.6004 12.2254C11.7762 12.0496 11.875 11.8111 11.875 11.5625C11.875 11.3139 11.7762 11.0754 11.6004 10.8996C11.4246 10.7238 11.1861 10.625 10.9375 10.625H9.0625C8.48234 10.625 7.92594 10.3945 7.51571 9.9843C7.10547 9.57406 6.875 9.01766 6.875 8.4375C6.875 7.85734 7.10547 7.30094 7.51571 6.8907C7.92594 6.48047 8.48234 6.25 9.0625 6.25H9.375V5.625C9.375 5.45924 9.44085 5.30027 9.55806 5.18306C9.67527 5.06585 9.83424 5 10 5C10.1658 5 10.3247 5.06585 10.4419 5.18306C10.5592 5.30027 10.625 5.45924 10.625 5.625V6.25H11.875C12.0408 6.25 12.1997 6.31585 12.3169 6.43306C12.4342 6.55027 12.5 6.70924 12.5 6.875C12.5 7.04076 12.4342 7.19973 12.3169 7.31694C12.1997 7.43415 12.0408 7.5 11.875 7.5H9.0625C8.81386 7.5 8.57541 7.59877 8.39959 7.77459C8.22378 7.9504 8.125 8.18886 8.125 8.4375C8.125 8.68614 8.22378 8.9246 8.39959 9.10041C8.57541 9.27623 8.81386 9.375 9.0625 9.375H10.9375C11.5177 9.375 12.0741 9.60547 12.4843 10.0157C12.8945 10.4259 13.125 10.9823 13.125 11.5625Z" fill="currentColor"/>
+              </svg>
+              <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Salary</span>
+            </div>
+            <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
+              {job.salary_display || (job.salary_min && job.salary_max ? `$${Number(job.salary_min).toLocaleString()} - $${Number(job.salary_max).toLocaleString()}` : job.salary_min || job.salary_max || 'Undisclosed')}
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Match Banner (Figma tooltip spec: 768px, h:36px, var(--ds-surface-1), var(--ds-border), 20px gap) */}
+        <div className="w-full min-h-9 p-2 bg-ds-surface-1 border border-ds-border rounded-lg flex items-center gap-2.5 self-stretch flex-none box-border">
+          <CyphexAIIcon size={20} className="w-5 h-5 text-ds-accent shrink-0 flex-none order-0 grow-0" />
+          <span className="text-ds-accent ds-text-small flex items-center flex-1 order-1">
+            You&apos;re stronger than {job.match_score ?? 90}% of applicants for this job based on your profile and skills
+          </span>
+        </div>
+
+        {/* Offer Recruiter Note (Figma Frame 2609030: w:700px, min-h:84px, p:12px, gap:8px, bg:var(--ds-surface-1), border-l:2px var(--ds-accent), rounded: 0 16px 16px 16px) */}
+        {job.is_offer && job.recruiter_message && (
+          <div className="w-full max-w-[700px] min-h-[84px] p-3 bg-ds-surface-1 border-l-2 border-ds-accent rounded-r-2xl rounded-bl-2xl rounded-tl-none flex flex-col items-start gap-2 self-stretch flex-none box-border">
+            {/* Frame 2609968: Recruiter Info Header */}
+            <div className="flex items-center gap-2 h-9">
+              {/* Rectangle 29: Avatar (32px x 32px, rounded-full) */}
+              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 flex-none bg-ds-surface-2">
+                {job.recruiter_avatar && !recruiterAvatarError ? (
+                  <img
+                    src={job.recruiter_avatar}
+                    alt={job.recruiter_name || job.company || 'Recruiter'}
+                    className="w-full h-full object-cover rounded-full"
+                    onError={() => setRecruiterAvatarError(true)}
+                  />
+                ) : (
+                  <UserIcon className="w-full h-full p-1.5 text-ds-text-primary" />
+                )}
+              </div>
+              {/* Frame 2609931: Recruiter Name & Title */}
+              <div className="flex flex-col items-start justify-center h-9">
+                <span className="font-dm-sans font-semibold text-base leading-6 text-ds-text-primary">
+                  {job.recruiter_name || job.company}
+                </span>
+                <span className="font-dm-sans font-normal text-[10px] leading-3 text-ds-text-secondary">
+                  {job.recruiter_title || (job.company ? `Recruiter at ${job.company}` : 'Hiring Team')}
+                </span>
+              </div>
+            </div>
+
+            {/* Recruiter Message Body */}
+            <p className="font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary self-stretch m-0">
+              {job.recruiter_message}
+            </p>
+          </div>
+        )}
+
+        {/* Application Status Tracker (if applied) */}
+        {job.is_applied && (
+          <div className="w-full max-w-[768px] rounded-2xl border border-ds-border py-5 px-4 flex flex-col items-start gap-4 self-stretch flex-none box-border">
+            <h3 className="font-dm-sans text-base font-medium leading-6 text-ds-text-primary m-0">
+              Application status
+            </h3>
+
+            {/* Frame 2609079: Steps Track (w: 736px, h: 36px) */}
+            <div className="w-full flex items-center h-9 self-stretch flex-none overflow-x-auto no-scrollbar">
+              {APPLICATION_STEPS.map((step, idx) => {
+                const isCompleted = idx < activeStep || (idx === 0 && activeStep === 0);
+                const isCurrent = idx === activeStep && idx !== 0;
+                const isActive = idx <= activeStep;
+
+                // Ellipse 30 (16px x 16px) using newGlobal.css tokens
+                let dotClass = 'bg-ds-text-primary border border-ds-text-secondary';
+                if (isCompleted) {
+                  dotClass = 'bg-ds-accent border border-ds-accent';
+                } else if (isCurrent) {
+                  dotClass = 'bg-ds-text-primary border border-ds-accent';
+                }
+
+                // Poppins 14px 400 text
+                const textClass = isActive ? 'text-ds-accent' : 'text-ds-text-secondary';
+
+                // Line 164/165/166
+                const lineClass = idx < activeStep ? 'border-ds-accent' : 'border-ds-text-secondary';
+
+                return (
+                  <React.Fragment key={step}>
+                    {/* Step Pill (Frame 2608617 / 2608621 / 2608622 / 2608623) */}
+                    <div className="flex items-center gap-2.5 px-4 py-2 h-9 rounded-[24px] shrink-0 box-border">
+                      <div className={`w-4 h-4 rounded-full shrink-0 box-border ${dotClass}`} />
+                      <span className={`font-poppins text-sm font-normal leading-5 text-center whitespace-nowrap ${textClass}`}>
+                        {step}
+                      </span>
+                    </div>
+
+                    {/* Connecting Line (Line 164, 165, 166) */}
+                    {idx < APPLICATION_STEPS.length - 1 && (
+                      <div className={`flex-1 min-w-6 h-0 border-t ${lineClass}`} />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Company Analytics Card (Figma Frame 2608882: w:768px, p:16px, gap:16px, border: 1px solid var(--ds-border), rounded: 16px) */}
+        <div className="w-full p-4 rounded-2xl border border-ds-border flex flex-col items-start gap-4 self-stretch flex-none box-border">
+          <h3 className="ds-text-body-1 text-ds-text-primary">
+            Company analytics
+          </h3>
+
+          {/* HorizontalBorder (w: 736px, h: 73px, 2-column layout split by 16px gap, Col 2 starts at 376px) */}
+          <div className="w-full h-[73px] grid grid-cols-2 gap-4 self-stretch flex-none box-border">
+            {/* Left Container (w: 108px, h: 73px, pb: 12px, gap: 12px, border-b: 2px solid #22C55E) */}
+            <div className="w-[108px] h-[73px] flex flex-col items-start pb-3 gap-3 border-b-2 border-ds-success box-border flex-none">
+              {/* RESPONSE RATE (w: 108px, h: 16px, DM Sans 12px/16px #B8ADA8) */}
+              <span className="w-[108px] h-4 font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary uppercase flex items-center">
+                RESPONSE RATE
+              </span>
+              {/* Value (w: 108px, h: 26px, Poppins 500 18px/26px #FFECE6) */}
+              <span className="w-[108px] h-[26px] font-poppins font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
+                {job.response_rate || '98%'}
+              </span>
+            </div>
+
+            {/* Right Container (left: 376px, w: 360px, h: 73px, gap: 8px) */}
+            <div className="w-full max-w-[360px] h-[73px] flex flex-col items-start gap-2 box-border flex-none">
+              {/* AVG. REPLY (w: 360px, h: 16px, DM Sans 12px/16px #B8ADA8) */}
+              <span className="w-full h-4 font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary uppercase flex items-center">
+                AVG. REPLY
+              </span>
+              {/* Value (w: 360px, h: 26px, Poppins 500 18px/26px #FFECE6) */}
+              <span className="w-full h-[26px] font-poppins font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
+                {job.avg_reply || '1 day'}
+              </span>
+              {/* Very fast (w: 360px, h: 15px, Poppins 400 10px/15px var(--ds-success)) */}
+              <span className="w-full h-[15px] font-poppins font-normal text-[10px] leading-[15px] text-ds-success flex items-center">
+                Very fast
+              </span>
+            </div>
+          </div>
+
+          {/* Recruiter Note (Figma: width 360px, height 40px, DM Sans 14px/20px #B8ADA8) */}
+          <p className="w-full max-w-[360px] min-h-10 font-dm-sans font-normal text-sm leading-5 text-ds-text-secondary flex items-center flex-none">
+            {job.company || 'The recruiter'} usually views applications within 24 hours of submission.
+          </p>
+        </div>
+
+        {/* Description Section */}
+        <div className="w-full flex flex-col justify-start items-start gap-3">
+          <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
+            Description
+          </h3>
+          <div className={`w-full text-ds-text-primary text-sm font-normal font-dm-sans leading-5 whitespace-pre-line ${!showFullDesc ? 'line-clamp-6' : ''}`}>
+            {job.description}
+          </div>
+
+          {showFullDesc && job.requirements && job.requirements.length > 0 && (
+            <div className="mt-2 w-full flex flex-col gap-2">
+              <h4 className="text-sm font-bold text-ds-text-primary">Key Responsibilities</h4>
+              <ul className="flex flex-col gap-1.5 pl-2">
+                {job.requirements.map((req, i) => (
+                  <li key={i} className="text-sm text-ds-text-secondary flex items-start gap-2">
+                    <span className="text-ds-accent mt-1">•</span>
+                    <span>{req}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
-          {/* Description Section */}
-          <div className="w-full self-stretch flex flex-col items-start p-0 gap-4">
-            <div className={`text-left text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[18px] font-medium font-['Poppins'] leading-[26px]`}>Description</div>
-            <div className="self-stretch flex-1 justify-start">
-              <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[16px] font-normal font-['Poppins'] leading-[24px] whitespace-pre-line ${!showFullDesc ? 'line-clamp-5' : ''}`}>
-                {job.description}
-              </div>
-
-              {showFullDesc && job.requirements && job.requirements.length > 0 && (
-                <div className="mt-4 animate-in fade-in duration-200">
-                  <span className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[16px] font-semibold font-['Poppins'] leading-[24px] block`}>
-                    Key Responsibilities
-                  </span>
-                  <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[16px] font-normal font-['Poppins'] leading-[24px] mt-2 flex flex-col gap-1`}>
-                    {job.requirements.map((req, i) => (
-                      <span key={i} className="block">
-                        • {req}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setShowFullDesc(!showFullDesc)}
-              className={`text-center justify-start text-indigo-500 ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} text-sm font-normal font-['Poppins'] leading-5 hover:underline`}
-            >
-              {showFullDesc ? 'See less' : 'See more'}
-            </button>
-          </div>
-
-          {/* Map Location Section */}
-          <div className="self-stretch flex flex-col justify-start items-start gap-4 mt-4 w-full">
-            <div className={`self-stretch h-60 rounded-3xl border-4 border-indigo-50 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} overflow-hidden relative w-full`}>
-              <JobDetailMap location={job.location || ''} />
-            </div>
-
-            <a
-              href={job.location ? `https://maps.google.com/maps?q=${encodeURIComponent(job.location)}` : '#'}
-              target={job.location ? "_blank" : undefined}
-              rel={job.location ? "noopener noreferrer" : undefined}
-              className="self-stretch inline-flex justify-start items-center gap-2 cursor-pointer group"
-            >
-              <Icon icon="solar:map-point-linear" className={`w-5 h-5 text-gray-400 group-hover:text-indigo-500 ${isCompanyMode ? 'dark:group-hover:text-[#4D9CFF]' : 'dark:group-hover:text-[#818CF8]'} flex-shrink-0 mt-0.5 transition-colors`} />
-              <div className={`flex-1 justify-start text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} group-hover:text-indigo-500 ${isCompanyMode ? 'dark:group-hover:text-[#4D9CFF]' : 'dark:group-hover:text-[#818CF8]'} text-sm font-normal font-['Poppins'] leading-5 transition-colors`}>
-                {job.location || 'Location not specified'}
-              </div>
-            </a>
-          </div>
-
+          <button
+            type="button"
+            onClick={() => setShowFullDesc(!showFullDesc)}
+            className="text-ds-accent text-sm font-normal font-dm-sans leading-5 hover:opacity-90 transition-opacity self-start cursor-pointer bg-transparent border-none outline-none"
+          >
+            {showFullDesc ? 'See less' : 'See more'}
+          </button>
         </div>
 
-        {/* Bottom Floating Bar */}
-        {/* Bottom Floating Bar */}
-        <div className={`sticky bottom-[72px] md:bottom-6 z-50 self-stretch p-4 bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} md:rounded-3xl rounded-[24px] shadow-[0px_4px_16px_rgba(99,102,241,0.08)] outline outline-1 outline-offset-[-1px] outline-indigo-50 ${isCompanyMode ? 'dark:outline-[#2A2D35]' : 'dark:outline-[#2E3445]'} flex flex-row justify-between items-center gap-4 w-full h-auto`}>
-          {/* Left Text Block - Hidden on mobile */}
-          <div className="hidden md:flex flex-1 flex-col justify-center items-start min-w-0">
-            <div className={`text-left text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-base md:text-lg font-medium font-['Poppins'] leading-6 truncate w-full`}>{job.title}</div>
-            <div className="self-stretch inline-flex justify-start items-center gap-2 mt-1">
-              <div className={`justify-start text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-xs font-normal font-['Poppins'] leading-4 truncate`}>{job.company}</div>
-              <div className="size-1.5 bg-gray-500 rounded-full flex-shrink-0" />
-              <div className={`justify-start text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-xs font-normal font-['Poppins'] leading-4 truncate`}>{job.location}</div>
-            </div>
-          </div>
-          <div className="flex flex-row flex-1 md:flex-none items-center justify-between md:justify-end gap-4 md:gap-6 w-full md:w-auto">
-            {!job.is_offer && (
-              <div className="flex justify-start items-center gap-4">
-                {/* Share button */}
-                <button
-                  onClick={() => setShowShareModal(true)}
-                  className={`size-10 rounded-full bg-slate-50 ${isCompanyMode ? 'dark:bg-[#2A2D35]' : 'dark:bg-[#2E3445]'} text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} hover:text-indigo-500 ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'} hover:bg-slate-100 ${isCompanyMode ? 'dark:hover:bg-[#121B2B]' : 'dark:hover:bg-[#1C2340]'} transition-colors flex items-center justify-center flex-shrink-0`}
+        {/* Location & Map Section (Figma Frame 2608887: w:768px, gap:16px) */}
+        <div className="w-full flex flex-col items-start gap-4 self-stretch flex-none box-border">
+          {/* Map Container (h:198px, 24px radius, seamless without border, with floating Google Maps redirect pill identical to Org Profile AboutTab) */}
+          <div className="relative w-full h-[198px] rounded-[24px] overflow-hidden group self-stretch flex-none box-border">
+            <InteractiveLocationMap
+              locationAddress={job.location || ''}
+              latitude={jobLat}
+              longitude={jobLng}
+              readOnly={true}
+              className="!w-full !h-full !rounded-[24px] !border-0 !shadow-none !bg-transparent"
+            />
+
+            {mapUrl && (
+              <div className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 z-30 pointer-events-auto">
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open in Google Maps"
+                  aria-label={`Open ${job.location || 'location'} in Google Maps`}
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-ds-surface-1/90 hover:bg-ds-surface-2 active:scale-95 backdrop-blur-md border border-ds-border shadow-md flex items-center gap-1.5 transition-all hover:scale-[1.02] text-xs font-medium font-dm-sans text-ds-text-primary cursor-pointer no-underline"
                 >
-                  <Icon icon="solar:share-linear" className="w-5 h-5" />
-                </button>
-                {/* Bookmark button */}
-                {flags?.saved_jobs === false ? (
-                  <Tooltip delayDuration={100}>
-                    <TooltipTrigger asChild>
-                      <div tabIndex={0} className="size-10 rounded-full bg-slate-50 opacity-50 cursor-default flex items-center justify-center flex-shrink-0 focus:outline-none">
-                        <Icon icon="solar:bookmark-linear" className="w-5 h-5 text-gray-500" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      align="center"
-                      sideOffset={8}
-                      className="py-2 px-3 bg-gray-900 border-none text-white text-xs font-['Poppins'] z-[9999] shadow-lg rounded-xl"
-                    >
-                      Feature under maintenance
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <button
-                    onClick={toggleSave}
-                    className={`size-10 rounded-full bg-slate-50 ${isCompanyMode ? 'dark:bg-[#2A2D35]' : 'dark:bg-[#2E3445]'} transition-colors flex items-center justify-center flex-shrink-0`}
-                  >
-                    <Icon
-                      icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
-                      className={`w-5 h-5 ${job.is_saved ? (isCompanyMode ? 'text-[#4D9CFF] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]') : `text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} hover:text-indigo-500 ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'}`}`}
-                    />
-                  </button>
-                )}
+                  <GoogleIcon size={14} className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden sm:inline">Open in Google Maps</span>
+                  <span className="sm:hidden">Open Maps</span>
+                  <ExternalLink className="w-3 h-3 text-ds-text-muted shrink-0" />
+                </a>
               </div>
             )}
-            {/* Action buttons section */}
-            <div className="flex-1 sm:flex-none flex justify-end items-center gap-3">
-              {job.is_offer ? (
-                /* Offer state */
-                job.application_status === 'Accepted' ? (
-                  /* Accepted -> Chat */
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const params = new URLSearchParams();
-                      if (job.org_id) {
-                        params.set('companyId', job.org_id);
-                      } else if (job.recruiter_id) {
-                        params.set('userId', job.recruiter_id);
-                      }
-                      if (job.offer_id) {
-                        params.set('offerContext', job.offer_id);
-                      }
-                      router.push(`/messaging?${params.toString()}`);
-                    }}
-                    className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#0F1115]' : 'dark:border-[#0B0F19]'} rounded-[24px] transition-all active:scale-95 cursor-pointer`}
-                  >
-                    <span className="w-[68px] h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">Chat</span>
-                  </button>
-                ) : job.application_status === 'Declined' ? (
-                  /* Declined -> Offer declined */
-                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 rounded-[24px]">
-                    <span className="w-[99px] h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#6B7280]">
-                      Offer declined
-                    </span>
-                  </div>
-                ) : job.application_status === 'Withdrawn' ? (
-                  /* Withdrawn -> Offer withdrawn */
-                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 rounded-[24px]">
-                    <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
-                      Offer withdrawn
-                    </span>
-                  </div>
-                ) : job.application_status === 'Expired' ? (
-                  /* Expired -> Offer expired */
-                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 rounded-[24px]">
-                    <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
-                      Offer expired
-                    </span>
-                  </div>
-                ) : (
-                  /* Pending -> Accept & Decline buttons */
-                  <div className="flex flex-row items-center p-0 gap-2 w-full sm:w-[288px] h-10">
-                    <button
-                      onClick={() => setShowDeclineConfirm(true)}
-                      className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] flex-1 sm:w-[140px] h-10 bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border border-[#818CF8] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'} rounded-[24px] transition-all active:scale-95 cursor-pointer`}
-                    >
-                      <span className={`w-auto h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#818CF8] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}`}>Decline</span>
-                    </button>
-                    <button
-                      onClick={() => respondToOffer('accept')}
-                      className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] flex-1 sm:w-[140px] h-10 bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#0F1115]' : 'dark:border-[#0B0F19]'} rounded-[24px] transition-all active:scale-95 cursor-pointer`}
-                    >
-                      <span className="w-auto h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">Accept</span>
-                    </button>
-                  </div>
-                )
-              ) : job.application_status === 'Rejected' ? (
-                /* Rejected — no further action available */
-                <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[160px] h-10 rounded-[24px]">
-                  <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#6B7280]">
-                    Application Rejected
-                  </span>
-                </div>
-              ) : (
-                <div className="flex-1 md:flex-none flex justify-end items-center gap-3 w-full">
-                  {/* Apply Button */}
-                  {job.application_status?.toLowerCase() === 'shortlisted' ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const params = new URLSearchParams();
-                        if (job.org_id) {
-                          params.set('companyId', job.org_id);
-                        } else if (job.recruiter_id) {
-                          params.set('userId', job.recruiter_id);
-                        }
-                        params.set('jobContext', job.id);
-                        router.push(`/messaging?${params.toString()}`);
-                      }}
-                      className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#0F1115]' : 'dark:border-[#0B0F19]'} rounded-[24px] transition-all active:scale-95 cursor-pointer`}
-                    >
-                      <span className="w-auto h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">Chat</span>
-                    </button>
-                  ) : job.is_closed ? (
-                    <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[160px] h-10 rounded-[24px]">
-                      <span className="font-['Poppins'] font-medium text-sm leading-[20px] text-center text-[#EF4444]">
-                        Job No Longer Available
-                      </span>
-                    </div>
-                  ) : job.is_applied ? (
-                    <button
-                      onClick={() => setShowWithdrawConfirm(true)}
-                      className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border border-[#818CF8] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'} rounded-[24px] transition-all active:scale-95 cursor-pointer`}
-                    >
-                      <span className={`w-[68px] h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#818CF8] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}`}>Withdraw</span>
-                    </button>
-                  ) : (
-                    <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
-                      <button
-                        onClick={() => setShowApplyModal(true)}
-                        className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#0F1115]' : 'dark:border-[#0B0F19]'} rounded-[24px] transition-all active:scale-95 cursor-pointer`}
-                      >
-                        <span className="w-auto h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">
-                          Apply
-                        </span>
-                      </button>
-                    </FeatureDisabledTooltip>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
+
+          {/* Address Row (Frame 2608879: h:40px, gap:8px, items: center) */}
+          {mapUrl ? (
+            <a
+              href={mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open in Google Maps"
+              aria-label={`Open ${job.location} in Google Maps`}
+              className="w-full min-h-10 flex items-center gap-2 self-stretch flex-none group hover:opacity-85 transition-opacity cursor-pointer no-underline"
+            >
+              <LocationIcon className="w-5 h-5 text-ds-text-secondary group-hover:text-ds-accent transition-colors shrink-0 flex-none order-0 grow-0" />
+              <span className="ds-text-secondary text-ds-text-secondary group-hover:text-ds-text-primary transition-colors flex-1 order-1">
+                {job.location}
+              </span>
+            </a>
+          ) : (
+            <div className="w-full min-h-10 flex items-center gap-2 self-stretch flex-none">
+              <LocationIcon className="w-5 h-5 text-ds-text-secondary shrink-0 flex-none order-0 grow-0" />
+              <span className="ds-text-secondary text-ds-text-secondary flex-1 order-1">
+                {job.location || 'Location not specified'}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Apply Job Modal */}
-        <ApplyJobModal
-          isOpen={showApplyModal}
-          onClose={() => setShowApplyModal(false)}
-          onApply={(resumeUrl, uploadedFile, resumeId, coverLetter) => {
-            applyToJob(resumeUrl, uploadedFile, resumeId, coverLetter);
-            setShowApplyModal(false);
-          }}
-          jobTitle={job.title}
-        />
-
-        {/* Withdraw Confirmation Modal */}
-        <CocpitConfirmBox
-          isOpen={showWithdrawConfirm}
-          title="Are you sure you want to withdraw your application?"
-          message="This cannot be undone"
-          confirmText="Withdraw"
-          cancelText="Cancel"
-          onConfirm={() => {
-            withdrawJob();
-            setShowWithdrawConfirm(false);
-          }}
-          onCancel={() => setShowWithdrawConfirm(false)}
-        />
-
-        {/* Share Modal */}
-        <CocpitShareModel
-          isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
-          jobId={jobId}
-          entityType="job"
-          entityId={jobId}
-        />
-
-        {/* Decline Offer Confirmation Modal */}
-        <CocpitConfirmBox
-          isOpen={showDeclineConfirm}
-          title="Are you sure you want to decline this offer?"
-          message="This cannot be undone"
-          confirmText="Decline"
-          cancelText="Cancel"
-          onConfirm={() => {
-            respondToOffer('decline');
-            setShowDeclineConfirm(false);
-          }}
-          onCancel={() => setShowDeclineConfirm(false)}
-        />
-
       </div>
+
+      {/* Floating Bottom Action Bar (Figma: width 800px, height 72px, padding 12px, border-radius 16px, border 1px solid var(--ds-border)) */}
+      <div className="fixed bottom-4 left-0 right-0 z-40 px-4 pointer-events-none">
+        <div className="max-w-[800px] w-full h-[72px] mx-auto p-3 bg-ds-bg/95 backdrop-blur-md border border-ds-border rounded-2xl shadow-2xl flex items-center justify-between gap-3 pointer-events-auto box-border">
+          {/* Frame 2609957: Job Title & Recruiter • Location (h: 48px, gap: 4px) */}
+          <div className="flex flex-col items-start justify-center gap-1 min-w-0 flex-1 h-12">
+            <span className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">
+              {job.title}
+            </span>
+            {/* Frame 2609961: Company • Location (h: 20px, gap: 8px) */}
+            <div className="w-full flex items-center gap-2 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
+              <span className="truncate">{job.company || job.recruiter_name || 'Recruiter'}</span>
+              <span className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
+              <span className="truncate">{job.location || 'Remote'}</span>
+            </div>
+          </div>
+
+          {/* Frame 2609956: Share, Bookmark & Context Action Button (h: 48px, gap: 12px) */}
+          <div className="flex items-center gap-3 shrink-0 h-12">
+            {/* Share icon: Only for active open jobs (Apply now / Withdraw) */}
+            {showShare && (
+              <button
+                onClick={() => setShowShareModal(true)}
+                aria-label="Share Job"
+                type="button"
+                className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none cursor-pointer flex-none p-0"
+              >
+                <ShareIcon size={20} className="w-5 h-5 shrink-0" fill="currentColor" />
+              </button>
+            )}
+
+            {/* Bookmark / Save: Active open jobs AND pending offers (Accept / Decline) */}
+            {showSave && (
+              <button
+                onClick={toggleSave}
+                aria-label={job.is_saved ? 'Unsave job' : 'Save job'}
+                type="button"
+                className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none cursor-pointer flex-none p-0"
+              >
+                {job.is_saved ? (
+                  <SaveFilledIcon size={20} className="w-5 h-5 text-ds-accent shrink-0" fill="currentColor" />
+                ) : (
+                  <SaveIcon size={20} className="w-5 h-5 text-ds-text-primary hover:text-ds-accent shrink-0" fill="currentColor" />
+                )}
+              </button>
+            )}
+
+            {/* Dynamic Contextual Action */}
+            {renderBottomBarActions()}
+          </div>
+        </div>
+      </div>
+
+
+      {/* Apply Job Modal */}
+      <ApplyJobModal
+        isOpen={showApplyModal}
+        onClose={() => setShowApplyModal(false)}
+        onApply={async (resumeUrl, uploadedFile, resumeId, coverLetter) => {
+          await applyToJob(resumeUrl, uploadedFile, resumeId, coverLetter);
+          setShowApplyModal(false);
+        }}
+        jobTitle={job.title}
+      />
+
+      {/* Withdraw Confirmation Modal */}
+      <CocpitConfirmBox
+        isOpen={showWithdrawConfirm}
+        title="Are you sure you want to withdraw your application?"
+        message="This cannot be undone"
+        confirmText="Withdraw"
+        cancelText="Cancel"
+        onConfirm={() => {
+          withdrawJob();
+          setShowWithdrawConfirm(false);
+        }}
+        onCancel={() => setShowWithdrawConfirm(false)}
+      />
+
+      {/* Share Modal */}
+      <CocpitShareModel
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        jobId={jobId}
+        entityType="job"
+        entityId={jobId}
+      />
+
+      {/* Decline Offer Confirmation Modal */}
+      <CocpitConfirmBox
+        isOpen={showDeclineConfirm}
+        title="Are you sure you want to decline this offer?"
+        message="This cannot be undone"
+        confirmText="Decline"
+        cancelText="Cancel"
+        onConfirm={() => {
+          respondToOffer('decline');
+          setShowDeclineConfirm(false);
+        }}
+        onCancel={() => setShowDeclineConfirm(false)}
+      />
+
     </div>
   );
 };

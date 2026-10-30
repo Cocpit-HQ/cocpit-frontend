@@ -46,14 +46,11 @@ export function useCreateJobInit({ initialListing, isVerified }: UseCreateJobIni
       }
 
       let resolvedStep: Step = 'verification';
-      if (urlStep && ['verification', 'role-input', 'details', 'preview'].includes(urlStep)) {
+      if (!isVerified) {
+        resolvedStep = 'verification';
+      } else if (urlStep && ['role-input', 'details', 'preview'].includes(urlStep)) {
         resolvedStep = urlStep;
-      } else if (isVerified) {
-        resolvedStep = 'role-input';
-      }
-
-      // If the company/user is verified, prevent landing on or going back to verification
-      if (isVerified && resolvedStep === 'verification') {
+      } else {
         resolvedStep = 'role-input';
       }
 

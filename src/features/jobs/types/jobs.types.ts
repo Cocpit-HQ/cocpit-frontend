@@ -32,6 +32,8 @@ export interface Job {
   response_rate?: string; // e.g., "98%", "95%", "92%"
   avg_reply?: string; // e.g., "1 day", "2 day", "3 day"
   match_reason?: string; // e.g., "Matches your skills in React and Node.js"
+  match_score?: number;
+  profile_match_text?: string;
 
   // Application details
   application_status?: 'Applied' | 'in-review' | 'Shortlisted' | 'Declined' | string;
@@ -71,6 +73,8 @@ export interface JobsFilter {
   salary_range?: string | string[];
   date_posted?: string;
   industry?: string;
+  company?: string;
+  verified?: string;
 }
 
 export interface JobsState {

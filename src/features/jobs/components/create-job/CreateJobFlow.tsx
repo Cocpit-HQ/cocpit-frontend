@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 import StepIdentityVerification from './StepIdentityVerification';
 import StepRoleInput from './StepRoleInput';
 import StepJobDetails from './StepJobDetails';
@@ -87,7 +87,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
 
   const handleSaveDraft = async (details: Partial<JobListing>) => {
     await onSubmit(details.title || title, 'DRAFT', { ...details, id: jobId || undefined });
-    resetCreateJobFlow();
+    setAccumulatedDetails(details);
   };
 
   const handlePublish = async (details: Partial<JobListing>) => {
@@ -111,10 +111,12 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
     onBack();
   };
 
-  if (step === 'verification') {
+  // Strict gate: If the user/organization is not verified, they must never reach StepRoleInput or StepJobDetails
+  if (!isVerified || step === 'verification') {
     return (
       <StepIdentityVerification
         onBack={handleBack}
+        onClose={handleBack}
         onVerifySuccess={() => setStep('role-input')}
         title={title}
       />
@@ -126,7 +128,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
       return (
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
-          <p className="text-sm text-gray-500 font-['Poppins']">Restoring your draft...</p>
+          <p className="text-sm text-ds-text-secondary font-dm-sans">Restoring your draft...</p>
         </div>
       );
     }
@@ -137,26 +139,22 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
           initialRole={title}
           initialDetails={accumulatedDetails}
           onBack={initialListing ? handleBack : () => setStep('role-input')}
+          onClose={handleBack}
           onSaveDraft={handleSaveDraft}
           onPublish={handlePublish}
           onDeleteDraft={jobId ? () => setShowDeleteConfirm(true) : undefined}
         />
-        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-          <AlertDialogContent className="bg-card border-border text-foreground rounded-[24px]">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Draft?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this job draft? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteDraft} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer">
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ActionConfirmModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteDraft}
+          type="delete_post"
+          title="Delete draft?"
+          description="This action cannot be undone and will permanently remove this draft"
+          confirmText="Delete"
+          confirmColor="accent"
+          cancelText="Cancel"
+        />
       </>
     );
   }
@@ -166,6 +164,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   return (
     <StepRoleInput
       onBack={isVerified ? handleBack : () => setStep('verification')}
+      onClose={handleBack}
       title={title}
       setTitle={setTitle}
       onContinue={handleRoleContinue}

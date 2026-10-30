@@ -48,23 +48,23 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({ onBack, onSubm
         {/* Animated AI Loader */}
         <div className="relative w-24 h-24">
           {/* Inner pulsating glow */}
-          <div className="absolute inset-0 rounded-full bg-[#6366F1]/10 animate-ping" />
+          <div className="absolute inset-0 rounded-full bg-ds-accent/10 animate-ping" />
           {/* Orbiting spinner */}
-          <div className="absolute inset-0 rounded-full border-4 border-indigo-100 border-t-[#6366F1] animate-spin" />
+          <div className="absolute inset-0 rounded-full border-4 border-ds-border border-t-ds-accent animate-spin" />
           {/* Center orb */}
-          <div className="absolute inset-3 rounded-full bg-gradient-to-br from-[#6366F1] to-indigo-700 flex items-center justify-center shadow-lg">
+          <div className="absolute inset-3 rounded-full bg-gradient-to-br from-ds-accent to-ds-accent-hover flex items-center justify-center shadow-lg">
             <Icon icon="solar:magic-stick-bold" className="w-8 h-8 text-white animate-pulse" />
           </div>
         </div>
 
         <div className="flex flex-col items-center gap-2 text-center max-w-sm px-4">
-          <h3 className="text-black text-lg font-bold font-['Poppins'] animate-pulse">
+          <h3 className="text-black text-lg font-bold font-dm-sans animate-pulse">
             AI is drafting your job
           </h3>
-          <p className="text-[#6366F1] text-xs font-semibold font-['Poppins'] transition-all duration-300 h-6">
+          <p className="text-ds-accent text-xs font-semibold font-dm-sans transition-all duration-300 h-6">
             {steps[draftingStep]}
           </p>
-          <p className="text-gray-400 text-[11px] font-['Poppins']">
+          <p className="text-ds-text-muted text-[11px] font-dm-sans">
             This will take just a few seconds.
           </p>
         </div>
@@ -83,8 +83,8 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({ onBack, onSubm
           <Icon icon="lucide:arrow-left" className="w-5 h-5" />
         </button>
         <div className="flex flex-col">
-          <h2 className="text-black text-xl font-bold font-['Poppins'] leading-tight">Create job</h2>
-          <span className="text-gray-400 text-xs font-normal font-['Poppins']">
+          <h2 className="text-black text-xl font-bold font-dm-sans leading-tight">Create job</h2>
+          <span className="text-ds-text-muted text-xs font-normal font-dm-sans">
             Tell us the role, AI will draft the rest
           </span>
         </div>
@@ -93,13 +93,13 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({ onBack, onSubm
       {/* Questionnaire Form Section */}
       <div className="w-full max-w-md mx-auto py-12 flex flex-col items-center justify-center gap-6">
         <div className="flex flex-col items-center text-center gap-1.5">
-          <span className="text-gray-400 text-xs font-semibold font-['Poppins'] tracking-wide">
+          <span className="text-ds-text-muted text-xs font-semibold font-dm-sans tracking-wide">
             Hey, Cocpit
           </span>
-          <h3 className="text-black text-xl md:text-2xl font-bold font-['Poppins'] leading-tight">
+          <h3 className="text-black text-xl md:text-2xl font-bold font-dm-sans leading-tight">
             What role are you hiring for?
           </h3>
-          <p className="text-gray-450 text-xs font-normal font-['Poppins'] max-w-[280px] leading-relaxed text-gray-500">
+          <p className="text-gray-450 text-xs font-normal font-dm-sans max-w-[280px] leading-relaxed text-gray-500">
             Start by defining the position to help us find the perfect match.
           </p>
         </div>
@@ -107,7 +107,7 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({ onBack, onSubm
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
           {/* Job Role Input field */}
           <div className="flex flex-col gap-1.5 w-full">
-            <label className="text-gray-550 text-xs font-semibold font-['Poppins'] text-gray-500">
+            <label className="text-gray-550 text-xs font-semibold font-dm-sans text-gray-500">
               Job Role
             </label>
             <div className="relative w-full">
@@ -117,17 +117,17 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({ onBack, onSubm
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Senior Product Designer"
-                className="w-full pl-4 pr-11 py-3 bg-white border border-slate-200 rounded-2xl text-black text-sm font-semibold font-['Poppins'] focus:outline-none focus:border-indigo-400 transition-colors shadow-sm"
+                className="w-full pl-4 pr-11 py-3 bg-ds-surface-1 border border-ds-border rounded-2xl text-ds-text-primary text-sm font-semibold font-dm-sans focus:outline-none focus:border-ds-accent transition-colors shadow-sm"
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-                <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
+                <Icon icon="lucide:search" className="w-4 h-4 text-ds-text-muted" />
               </div>
             </div>
           </div>
 
           {/* AI Banner Tip Box */}
-          <div className="w-full px-4 py-3 bg-indigo-50/50 border border-indigo-50/100 rounded-2xl flex items-center justify-center">
-            <p className="text-[#6366F1] text-[10px] md:text-[11px] font-semibold font-['Poppins'] text-center leading-relaxed">
+          <div className="w-full px-4 py-3 bg-ds-surface-2 border border-ds-border rounded-2xl flex items-center justify-center">
+            <p className="text-ds-accent text-[10px] md:text-[11px] font-semibold font-dm-sans text-center leading-relaxed">
               Choosing a specific role helps our AI accurately screen candidates for technical skills.
             </p>
           </div>
@@ -137,7 +137,7 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({ onBack, onSubm
             <button
               type="submit"
               disabled={!title.trim()}
-              className="px-12 py-3 bg-[#6366F1] hover:bg-[#6366F1]/90 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-[24px] text-sm font-bold font-['Poppins'] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+              className="px-12 py-3 bg-ds-accent hover:bg-ds-accent/90 disabled:bg-ds-surface-2 disabled:text-ds-text-muted text-white rounded-[24px] text-sm font-bold font-dm-sans transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
             >
               <span>Continue</span>
             </button>

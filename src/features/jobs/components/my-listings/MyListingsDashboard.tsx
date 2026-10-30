@@ -16,6 +16,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useJobStore } from '@/store/job.store';
 import Image from 'next/image';
+import { BriefcaseIcon, LeftArrowIcon } from '@/components/icons';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface MyListingsDashboardProps {
@@ -86,6 +87,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [selectedListing, setSelectedListing] = useState<JobListing | null>(null);
+  const [listingReferrer, setListingReferrer] = useState<'dashboard' | 'applicants'>('dashboard');
   const { selectedOfferGroup, setSelectedOfferGroup } = useJobStore();
 
   // Helper to transition views and update URL query parameters atomically
@@ -150,9 +152,9 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       const newListing = await jobsService.createJobListing(title, status, listingData, actorType, actorId);
       if (newListing) {
         refresh();
-        setActiveSubTabLocal('Job listings');
-        transitionTo('dashboard');
         if (status === 'ACTIVE') {
+          setActiveSubTabLocal('Job listings');
+          transitionTo('dashboard');
           toast.success('Job listing published successfully!');
         } else {
           toast.success('Job draft saved successfully!');
@@ -217,13 +219,24 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   }, []);
 
   const handleSelectListing = useCallback((listing: JobListing) => {
-    const status = listing.status?.toUpperCase();
-    if (status === 'ACTIVE') {
-      transitionTo('applicants', listing.id);
-    } else if (status === 'DRAFT') {
+    setSelectedListing(listing);
+    const isDraft = (listing.status || '').toUpperCase() === 'DRAFT';
+    if (isDraft) {
       transitionTo('create-job', listing.id);
     } else {
-      transitionTo('view-listing', listing.id);
+      setListingReferrer('dashboard');
+      transitionTo('applicants', listing.id);
+    }
+  }, [transitionTo]);
+
+  const handleViewApplicants = useCallback((listing: JobListing) => {
+    setSelectedListing(listing);
+    const isDraft = (listing.status || '').toUpperCase() === 'DRAFT';
+    if (isDraft) {
+      transitionTo('create-job', listing.id);
+    } else {
+      setListingReferrer('dashboard');
+      transitionTo('applicants', listing.id);
     }
   }, [transitionTo]);
 
@@ -243,9 +256,13 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   }
 
   if (view === 'offer-details' && selectedOfferGroup) {
+    const matchingListing = listings.find(
+      (l) => l.id === selectedOfferGroup.id || l.title?.toLowerCase() === selectedOfferGroup.title?.toLowerCase()
+    );
     return (
       <OfferDetailsScreen
         offerGroup={selectedOfferGroup}
+        matchingListing={matchingListing}
         onBack={() => {
           transitionTo('dashboard');
           setSelectedOfferGroup(null);
@@ -260,100 +277,137 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
           if (matchingListing) {
             setSelectedListing(matchingListing);
             transitionTo('view-listing', matchingListing.id);
+          } else if (selectedOfferGroup.job_id || selectedOfferGroup.id) {
+            transitionTo('view-listing', selectedOfferGroup.job_id || selectedOfferGroup.id);
           } else {
-            const mockListing: JobListing = {
-              id: 'list-mock',
-              title: selectedOfferGroup.title,
-              company: selectedOfferGroup.company,
-              status: 'ACTIVE',
-              posted_at: 'Posted 2 hours ago',
-            };
-            setSelectedListing(mockListing);
-            transitionTo('view-listing', 'list-mock');
+            toast.error('Listing details not found.');
           }
         }}
       />
     );
   }
 
-  if (view === 'view-listing' && selectedListing) {
-    return (
-      <ListingDetailsScreen
-        listing={selectedListing}
-        onBack={() => {
-          const fromOffers = typeof window !== 'undefined' && sessionStorage.getItem('coming_from_send_offer_details') === 'true';
-          if (fromOffers) {
-            if (typeof window !== 'undefined') {
-              sessionStorage.removeItem('coming_from_send_offer_details');
+  if (view === 'view-listing') {
+    const listingToUse = selectedListing || (urlJobId ? ({ id: urlJobId, title: 'Job Listing', status: 'ACTIVE' } as JobListing) : null);
+    if (listingToUse) {
+      return (
+        <ListingDetailsScreen
+          listing={listingToUse}
+          onBack={() => {
+            const fromOffers = typeof window !== 'undefined' && sessionStorage.getItem('coming_from_send_offer_details') === 'true';
+            if (fromOffers) {
+              if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('coming_from_send_offer_details');
+              }
+              transitionTo('offer-details');
+            } else if (listingReferrer === 'applicants') {
+              transitionTo('applicants', listingToUse.id);
+            } else {
+              transitionTo('dashboard');
             }
-            transitionTo('offer-details');
-          } else if (selectedListing.status?.toUpperCase() === 'ACTIVE') {
-            transitionTo('applicants', selectedListing.id);
-          } else {
-            transitionTo('dashboard');
-          }
-        }}
-        onCloseListing={handleCloseJob}
-        onDeleteListing={handleDeleteJob}
-      />
-    );
+          }}
+          onCloseListing={handleCloseJob}
+          onDeleteListing={handleDeleteJob}
+        />
+      );
+    }
   }
 
-  if (view === 'applicants' && selectedListing) {
-    return (
-      <ApplicantsDashboard
-        listing={selectedListing}
-        onBack={() => {
-          const fromOffers = typeof window !== 'undefined' && sessionStorage.getItem('coming_from_send_offer_details') === 'true';
-          if (fromOffers) {
-            if (typeof window !== 'undefined') {
-              sessionStorage.removeItem('coming_from_send_offer_details');
+  if (view === 'applicants') {
+    const listingToUse = selectedListing || (urlJobId ? ({ id: urlJobId, title: 'Job Listing', status: 'ACTIVE' } as JobListing) : null);
+    if (listingToUse) {
+      // Guard against opening draft jobs in applicants view
+      if ((listingToUse.status || '').toUpperCase() === 'DRAFT') {
+        transitionTo('create-job', listingToUse.id);
+        return null;
+      }
+
+      return (
+        <ApplicantsDashboard
+          listing={listingToUse}
+          onBack={() => {
+            const fromOffers = typeof window !== 'undefined' && sessionStorage.getItem('coming_from_send_offer_details') === 'true';
+            if (fromOffers) {
+              if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('coming_from_send_offer_details');
+              }
+              transitionTo('offer-details');
+            } else {
+              transitionTo('dashboard');
             }
-            transitionTo('offer-details');
-          } else {
-            transitionTo('dashboard');
-          }
-        }}
-        onViewDetails={() => transitionTo('view-listing', selectedListing.id)}
-      />
-    );
+          }}
+          onViewDetails={() => {
+            setListingReferrer('applicants');
+            transitionTo('view-listing', listingToUse.id);
+          }}
+        />
+      );
+    }
   }
 
   return (
     <>
-      <div className="w-full flex flex-col gap-6 animate-in fade-in duration-300">
-      {/* Header Row */}
-      <div className="flex items-center gap-4">
-        {!isCompanyMode && (
-          <button
-            onClick={onBack}
-            className="size-12 p-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 dark:outline-[#2E3445] backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors active:scale-95 text-gray-500 dark:text-[#9CA3AF]"
-          >
-            <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500 dark:text-[#9CA3AF]" />
-          </button>
-        )}
-        <div className="inline-flex flex-col justify-start items-start">
-          <div className={`text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Posted jobs</div>
-          <div className={`text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>Post, manage, and track all your job listings in one place</div>
-        </div>
-      </div>
+      {/* Top-Left Back Button matching Public Profile and Figma (top: 40px, left: 40px) */}
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Back"
+          className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        >
+          <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
+          <span className="font-dm-sans font-medium text-base leading-6">Back</span>
+        </button>
+      )}
 
-      {/* Hero Banner */}
-      <div className={`w-full rounded-3xl p-8 flex justify-between items-center relative overflow-hidden ${isCompanyMode ? 'bg-[#F0F5FF] dark:bg-[#121B2B]' : 'bg-[#F5F8FF] dark:bg-[#1C2340]'}`}>
-        <div className="flex flex-col justify-start items-start max-w-lg z-10">
-          <h2 className={`text-black text-3xl font-bold font-['Poppins'] mb-2 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
-            {activeSubTab === 'Job listings' ? 'Post jobs & find talent' : 'Send job offers'}
-          </h2>
-          <p className={`text-gray-600 text-sm font-normal font-['Poppins'] mb-6 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
-            {activeSubTab === 'Job listings' 
-              ? 'Manage your core network, track subscriber growth, and publish thought leadership across the Cocpit ecosystem.'
-              : 'Hire top talent faster by sending personalized job offers and tracking candidate responses in one place.'}
-          </p>
+      <div className="w-full max-w-[800px] mx-auto flex flex-col gap-5 font-dm-sans animate-in fade-in duration-300">
+
+        {/* Top Banner Card: Frame 2609959 (w: 800px, h: 96px, p: 24px, bg: #1A1A20, border: #2C2C33, r: 16px) */}
+        <div className="w-full h-auto sm:h-24 p-6 bg-ds-surface-1 rounded-2xl border border-ds-border flex flex-row items-center box-border">
+          <div className="w-full flex flex-col items-start justify-center gap-1">
+            <h2 className="text-ds-text-primary ds-text-body-2 font-semibold text-base leading-6 flex items-center">
+              {activeSubTab === 'Job listings' ? 'Post jobs & find talent' : 'Send job offers'}
+            </h2>
+            <p className="text-ds-text-secondary ds-text-secondary font-normal text-sm leading-5 flex items-center">
+              {activeSubTab === 'Job listings' 
+                ? 'Manage your core network, track subscriber growth, and publish thought leadership across the Cocpit ecosystem.'
+                : 'Hire top talent faster by sending personalized job offers and tracking candidate responses in one place.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Sub-Tabs & Action Row: Frame 2609960 */}
+        <div className="w-full flex justify-between items-center select-none">
+          {/* Left: Job listings & Sent Offers tabs */}
+          <div className="flex items-center gap-3">
+            {(['Job listings', 'Sent offers'] as SubTab[]).map(tab => {
+              const isActive = activeSubTab === tab;
+              const label = tab === 'Sent offers' ? 'Sent Offers' : tab;
+              return (
+                <button
+                  type="button"
+                  key={tab}
+                  onClick={() => setActiveSubTab(tab)}
+                  className={`relative h-9 px-3 py-1.5 flex flex-col justify-center items-center text-base font-medium font-dm-sans transition-colors whitespace-nowrap cursor-pointer shrink-0 focus:outline-none ${
+                    isActive ? 'text-ds-text-primary' : 'text-ds-text-secondary hover:text-ds-text-primary'
+                  }`}
+                >
+                  <span>{label}</span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right: Create job button */}
           <FeatureDisabledTooltip 
             featureKey={activeSubTab === 'Job listings' ? "enableJobCreation" : "enableJobOffers"}
             disabledMessage={activeSubTab === 'Job listings' ? "Job creation is temporarily disabled by admin." : "Sending job offers is temporarily disabled by admin."}
           >
             <button
+              type="button"
               onClick={() => {
                 if (activeSubTab === 'Job listings') {
                   transitionTo('create-job');
@@ -362,75 +416,48 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                   setIsSendOfferModalOpen(true);
                 }
               }}
-              className={`w-full md:w-auto px-6 py-2.5 rounded-[24px] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm ${
-                isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#6366F1] dark:bg-[#818CF8]'
-              }`}
+              className="w-[103px] h-9 px-3 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-primary rounded-[100px] flex items-center justify-center ds-text-body-1 font-medium text-base leading-6 whitespace-nowrap transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 border-none"
             >
               {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
             </button>
           </FeatureDisabledTooltip>
         </div>
-        
-        {/* Illustration */}
-        <div className="hidden md:flex absolute right-0 top-0 h-full w-auto">
-          <Image
-            src={activeSubTab === 'Job listings' ? "/images/companyonboarding/jobpostcompany.png" : "/images/companyonboarding/companyjoboffer.png"}
-            alt="Jobs illustration"
-            width={350}
-            height={200}
-            className="h-full w-auto object-cover object-right"
-            priority
-          />
-        </div>
-      </div>
 
-      {/* Sub-Tabs Row */}
-      <div className="w-full flex justify-start items-center gap-4 overflow-x-auto no-scrollbar pb-1 md:overflow-visible md:pb-0 md:flex-wrap">
-        {(['Job listings', 'Sent offers'] as SubTab[]).map(tab => {
-          const isActive = activeSubTab === tab;
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveSubTab(tab)}
-              className={`h-9 px-4 rounded-full flex justify-center items-center text-sm font-medium font-['Poppins'] transition-all duration-200 active:scale-95 border ${
-                isActive
-                  ? (isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] border-transparent text-white' : 'bg-[#6366F1] dark:bg-[#818CF8] border-transparent text-white')
-                  : `bg-white dark:bg-[#0B0F19] ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 text-[#1A73E8] dark:text-[#4D9CFF] hover:bg-[#1A73E8]/5' : 'border-[#6366F1]/30 dark:border-[#818CF8]/30 text-[#6366F1] dark:text-[#818CF8] hover:bg-[#6366F1]/5'}`
-              }`}
-            >
-              {tab === 'Sent offers' ? 'Sent offer' : tab}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Content state */}
-      <div className="w-full">
-        {activeSubTab === 'Job listings' && (
+        {/* Content state */}
+        <div className="w-full">
+          {activeSubTab === 'Job listings' && (
             counts.all === 0 && !isLoading ? (
-              <div className="h-[693px] flex flex-col justify-center items-center gap-4 w-full">
-                <Image 
-                  src="/images/companyonboarding/Job.png" 
-                  alt="No jobs listing yet" 
-                  width={112} 
-                  height={112} 
-                  className="w-28 h-auto flex-shrink-0 animate-in fade-in duration-300" 
-                />
-                <div className="flex flex-col justify-start items-center">
-                  <div className={`text-center justify-center text-black text-base font-semibold font-['Poppins'] leading-6 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>No jobs listing yet</div>
-                  <div className={`w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>Create your first job posting and begin receiving applications from top talent.</div>
+              <div className="w-full max-w-[800px] h-[538px] flex flex-col justify-center items-center gap-4 select-none animate-in fade-in duration-200">
+                {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
+                <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
+                  <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
                 </div>
-                <button
-                  onClick={() => {
-                    transitionTo('create-job');
-                  }}
-                  type="button"
-                  className={`w-48 px-4 py-2 transition-all active:scale-95 rounded-3xl outline outline-1 outline-offset-[-1px] inline-flex justify-center items-center gap-2.5 text-white ${
-                    isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] outline-blue-50 dark:outline-[#1A2435]' : 'bg-indigo-500 dark:bg-[#818CF8] outline-indigo-50 dark:outline-[#2E3445]'
-                  }`}
+
+                {/* Text Container */}
+                <div className="flex flex-col justify-start items-center gap-2 text-center">
+                  <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
+                    No jobs listing yet
+                  </h3>
+                  <p className="w-80 max-w-full text-ds-text-secondary text-sm font-normal font-dm-sans leading-5">
+                    Create your first job posting and begin receiving applications from top talent.
+                  </p>
+                </div>
+
+                {/* Action Button */}
+                <FeatureDisabledTooltip 
+                  featureKey="enableJobCreation"
+                  disabledMessage="Job creation is temporarily disabled by admin."
                 >
-                  <div className="text-center justify-start text-sm font-semibold font-['Poppins'] leading-5">Create job</div>
-                </button>
+                  <button
+                    onClick={() => {
+                      transitionTo('create-job');
+                    }}
+                    type="button"
+                    className="w-[260px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary rounded-[100px] inline-flex justify-center items-center gap-2.5 ds-text-body-1 font-medium font-dm-sans text-base leading-6 transition-all shadow-sm cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+                  >
+                    Create job
+                  </button>
+                </FeatureDisabledTooltip>
               </div>
             ) : (
               <ListingsTab
@@ -442,6 +469,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
                 onSelectListing={handleSelectListing}
+                onViewApplicants={handleViewApplicants}
                 onSendOffer={handleSendOfferInit}
                 onCloseListing={handleCloseJob}
                 onDeleteListing={handleDeleteJob}
@@ -492,7 +520,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         <button
           onClick={() => transitionTo('create-job')}
           className={`md:hidden fixed bottom-20 right-4 z-[60] w-14 h-14 rounded-full shadow-lg flex justify-center items-center text-white active:scale-95 transition-all ${
-            isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#6366F1] dark:bg-[#818CF8]'
+            'bg-ds-accent hover:opacity-90'
           }`}
         >
           <Icon icon="lucide:plus" className="w-6 h-6" />

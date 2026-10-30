@@ -21,6 +21,7 @@ interface GlobalSearchProps {
 export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalSearchProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const isJobsRoute = Boolean(pathname?.startsWith('/jobs'));
   
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -64,7 +65,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (!debouncedSearch.trim()) {
+      if (!debouncedSearch.trim() || isJobsRoute) {
         setSearchResults([]);
         return;
       }
@@ -109,11 +110,14 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      // Outdated search page navigation commented out:
-      // if (searchQuery.trim()) {
-      //   setIsFocused(false);
-      //   router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      // }
+      if (isJobsRoute) {
+        if (searchQuery.trim()) {
+          setIsFocused(false);
+          inputRef.current?.blur();
+          router.push(`/jobs/search?q=${encodeURIComponent(searchQuery.trim())}`);
+        }
+        return;
+      }
     }
   };
   
@@ -209,7 +213,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
       <input
         ref={inputRef}
         type="text"
-        placeholder="Search"
+        placeholder={isJobsRoute ? "Discover jobs that match your skills..." : "Search"}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         onFocus={() => setIsFocused(true)}
@@ -230,11 +234,11 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
         onClick={() => {
           inputRef.current?.focus();
           setIsFocused(true);
-          // Outdated search page navigation commented out:
-          // if (searchQuery.trim()) {
-          //   setIsFocused(false);
-          //   router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-          // }
+          if (isJobsRoute && searchQuery.trim()) {
+            setIsFocused(false);
+            inputRef.current?.blur();
+            router.push(`/jobs/search?q=${encodeURIComponent(searchQuery.trim())}`);
+          }
         }}
       />
     </>
@@ -245,7 +249,26 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
       {/* Live Search Dropdown */}
       {showLive && (
         <div className={variant === 'mobile' ? "fixed top-[60px] left-0 right-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg border-t border-[#3F3F46] shadow-xl z-[9999] max-h-[80vh] overflow-y-auto" : "absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50"}>
-          {searchResults.length > 0 && (
+          {isJobsRoute ? (
+            <div
+              onClick={() => {
+                setIsFocused(false);
+                inputRef.current?.blur();
+                router.push(`/jobs/search?q=${encodeURIComponent(searchQuery.trim())}`);
+              }}
+              className="w-full px-3 py-2.5 flex items-center gap-3 text-ds-text-primary hover:bg-ds-surface-1 rounded-lg cursor-pointer transition-colors"
+            >
+              <Icon name="search" className="w-5 h-5 text-ds-accent shrink-0" />
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium font-['DM_Sans'] truncate">
+                  Search jobs for &ldquo;{searchQuery.trim()}&rdquo;
+                </span>
+                <span className="text-xs text-ds-text-muted font-normal font-['DM_Sans']">
+                  Press Enter to discover matching jobs
+                </span>
+              </div>
+            </div>
+          ) : searchResults.length > 0 && (
             <div className="w-full flex flex-col gap-3 max-h-[276px] overflow-y-auto overscroll-contain scrollbar-hide">
               {searchResults.map((user) => (
                 <Link
@@ -279,7 +302,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
           {isSearching && (
             <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
           )}
-          {!isSearching && searchResults.length === 0 && (
+          {!isJobsRoute && !isSearching && searchResults.length === 0 && (
             <div className="text-[14px] leading-5 text-ds-text-muted">No results found.</div>
           )}
         </div>

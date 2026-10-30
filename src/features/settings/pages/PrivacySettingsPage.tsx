@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Smartphone, Laptop, Tablet, LogOut, ChevronLeft } from 'lucide-react';
 import { SettingToggle } from '../components/SettingToggle';
 import { VerifyIdentityModal } from '../components/VerifyIdentityModal';
@@ -117,7 +117,16 @@ export function PrivacySettingsPage() {
     )
   );
 
+  const searchParams = useSearchParams();
   const isVerified = activeProfile?.type === 'COMPANY' ? isCompanyVerified : isUserVerified;
+
+  // Auto-open identity verification modal when redirected from Create Job or external links
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'verify-identity' && !isVerified) {
+      setIsVerifyModalOpen(true);
+    }
+  }, [searchParams, isVerified]);
 
   const handleToggle = useCallback(
     (key: 'showEmail' | 'showPhone', nextVal: boolean) => {

@@ -35,10 +35,29 @@ export const getCurrencyMeta = (code?: string | null): CurrencyMeta => {
 };
 
 /**
- * Formats a number cleanly, e.g. 150000 -> "150k", 2000000 -> "2M"
- * This uses the native Intl.NumberFormat which works perfectly in React Native too.
+ * Formats a number cleanly in compact notation (e.g. 150000 -> "150k", 2000000 -> "2M")
+ * Currency symbol is omitted as currencies are not captured during job creation.
  */
-export const formatCompact = (value: number, currency: string = 'USD'): string => {
+export const formatCompactNumber = (value: number): string => {
+  if (value >= 1000000) {
+    const formatted = (value / 1000000).toFixed(1).replace(/\.0$/, '');
+    return `${formatted}M`;
+  }
+  if (value >= 1000) {
+    const formatted = (value / 1000).toFixed(1).replace(/\.0$/, '');
+    return `${formatted}k`;
+  }
+  return `${value}`;
+};
+
+/**
+ * Formats a number cleanly in compact format (e.g. 150000 -> "150k").
+ * Omit dollar ($) signs as currency is not captured yet.
+ */
+export const formatCompact = (value: number, currency?: string): string => {
+  if (!currency || currency === 'USD') {
+    return formatCompactNumber(value);
+  }
   try {
     const formatter = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -47,30 +66,51 @@ export const formatCompact = (value: number, currency: string = 'USD'): string =
       compactDisplay: 'short',
       maximumFractionDigits: 1,
     });
-    return formatter.format(value);
+    return formatter.format(value).replace(/\$/g, '').trim();
   } catch (e) {
-    // Fallback if the currency code is invalid for Intl
     const symbol = getCurrencySymbol(currency);
-    if (value >= 1000000) return `${symbol}${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `${symbol}${(value / 1000).toFixed(1)}k`;
-    return `${symbol}${value}`;
+    const sym = symbol === '$' ? '' : symbol;
+    return `${sym}${formatCompactNumber(value)}`;
   }
 };
 
 /**
- * Given a min and max salary and a currency, produces the standard display string.
- * Example: "$150k - $200k" or "Up to $150k" or "$150k+"
+ * Given a min and max salary and an optional currency, produces the standard display string.
+ * Example: "150k - 200k" or "Up to 150k" or "150k+" (dollar symbol omitted)
  */
 export const formatSalaryRange = (
   min: number | null | undefined, 
   max: number | null | undefined, 
-  currency: string = 'USD'
+  currency?: string
 ): string | undefined => {
   if (min && max) return `${formatCompact(min, currency)} - ${formatCompact(max, currency)}`;
   if (min)        return `${formatCompact(min, currency)}+`;
   if (max)        return `Up to ${formatCompact(max, currency)}`;
 
   return undefined;
+};
+
+/**
+ * Cleans salary display text by removing dollar signs ($) and converting raw number ranges into 'k' notation.
+ */
+export const cleanSalary = (val?: string | number | null): string => {
+  if (!val) return '';
+  const text = String(val).replace(/\$/g, '').trim();
+
+  // Matches "800000-900000" or "800000–900000" or "800000 - 900000"
+  const rangeMatch = text.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+  if (rangeMatch) {
+    const min = Number(rangeMatch[1]);
+    const max = Number(rangeMatch[2]);
+    return `${formatCompactNumber(min)} - ${formatCompactNumber(max)}`;
+  }
+
+  // Matches single large number e.g. "800000"
+  if (/^\d{4,}$/.test(text)) {
+    return formatCompactNumber(Number(text));
+  }
+
+  return text;
 };
 
 /** Returns the Iconify icon name for a given currency code. */

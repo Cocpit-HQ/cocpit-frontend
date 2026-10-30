@@ -72,7 +72,23 @@ export function AppShell({
   );
   const isSettingsSubpage = isSettingsRoute && !isRootSettings;
   const isHashtagPage = Boolean(pathname?.startsWith('/hashtag/') || pathname === '/hashtag');
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage;
+  const jobsTab = searchParams?.get('tab')?.toLowerCase();
+  const isJobsFullScreen = Boolean(
+    pathname === '/jobs' && (
+      jobsTab === 'my listings' ||
+      jobsTab === 'my-listings' ||
+      jobsTab === 'my_listings' ||
+      searchParams?.get('tab') === 'My Listings' ||
+      searchParams?.get('view') === 'create-job' ||
+      searchParams?.get('view') === 'applicants' ||
+      searchParams?.get('view') === 'view-listing' ||
+      searchParams?.get('view') === 'offer-details' ||
+      Boolean(isCompany)
+    )
+  );
+  const isJobDetailPage = Boolean(pathname?.match(/^\/jobs\/[^\/]+\/?$/) && !pathname?.startsWith('/jobs/search'));
+  const isJobSearchPage = Boolean(pathname?.startsWith('/jobs/search'));
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || isSettingsSubpage || activeModal === 'create-post';
 
   return (

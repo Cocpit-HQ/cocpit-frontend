@@ -15,8 +15,8 @@ export const DraftsTab: React.FC<DraftsTabProps> = ({ listings, onSelectListing 
       {/* Tab Sub-Header */}
       <div className="flex justify-between items-center pb-2 border-b border-indigo-50/50">
         <div className="flex flex-col">
-          <h3 className="text-black text-lg font-bold font-['Poppins']">Draft Job Listings</h3>
-          <span className="text-gray-400 text-xs font-normal font-['Poppins']">
+          <h3 className="text-black text-lg font-bold font-dm-sans">Draft Job Listings</h3>
+          <span className="text-gray-400 text-xs font-normal font-dm-sans">
             Total drafts - {drafts.length}
           </span>
         </div>
@@ -25,13 +25,13 @@ export const DraftsTab: React.FC<DraftsTabProps> = ({ listings, onSelectListing 
       {/* Drafts List */}
       <div className="flex flex-col divide-y divide-slate-100">
         {drafts.length === 0 ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-4 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
+          <div className="py-16 flex flex-col items-center justify-center gap-4 text-center bg-ds-surface-2/50 rounded-3xl border border-dashed border-slate-200">
+            <div className="w-12 h-12 rounded-full bg-ds-surface-2 flex items-center justify-center border border-slate-100">
               <Icon icon="solar:document-text-linear" className="w-5 h-5 text-gray-400" />
             </div>
             <div className="flex flex-col gap-1">
-              <h4 className="text-gray-700 text-sm font-semibold font-['Poppins']">No drafts found</h4>
-              <p className="text-gray-400 text-xs font-['Poppins'] max-w-xs mx-auto">
+              <h4 className="text-gray-700 text-sm font-semibold font-dm-sans">No drafts found</h4>
+              <p className="text-gray-400 text-xs font-dm-sans max-w-xs mx-auto">
                 You don't have any job listings saved as drafts. Create a job and save it as a draft to see it here.
               </p>
             </div>
@@ -42,21 +42,21 @@ export const DraftsTab: React.FC<DraftsTabProps> = ({ listings, onSelectListing 
               key={item.id}
               onClick={() => onSelectListing && onSelectListing(item)}
               className={`py-4 flex items-center justify-between gap-4 transition-colors ${
-                onSelectListing ? 'cursor-pointer hover:bg-slate-50/50 rounded-xl px-2' : ''
+                onSelectListing ? 'cursor-pointer hover:bg-ds-surface-2/50 rounded-xl px-2' : ''
               }`}
             >
               {/* Job Info */}
               <div className="flex flex-col gap-0.5">
-                <span className="text-black text-sm font-bold font-['Poppins']">
+                <span className="text-black text-sm font-bold font-dm-sans">
                   {item.title}
                 </span>
-                <span className="text-gray-400 text-xs font-normal font-['Poppins']">
+                <span className="text-gray-400 text-xs font-normal font-dm-sans">
                   {item.last_edited || item.posted_at || 'Last edited recently'}
                 </span>
               </div>
 
               {/* Status Badge */}
-              <span className="px-3 py-1 rounded-full text-[10px] font-bold font-['Poppins'] tracking-wider uppercase bg-slate-50 text-slate-600 border border-slate-200">
+              <span className="px-3 py-1 rounded-full text-[10px] font-bold font-dm-sans tracking-wider uppercase bg-ds-surface-2 text-slate-600 border border-slate-200">
                 {item.status}
               </span>
             </div>
