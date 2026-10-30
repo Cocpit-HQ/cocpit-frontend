@@ -46,8 +46,17 @@ export const CompanyOnboardingFlow: React.FC = () => {
   };
 
   const handleRetry = () => {
+    const errorLower = apiError?.toLowerCase() || "";
+    const isPresenceError = errorLower.includes("description") || errorLower.includes("headline") || errorLower.includes("presence") || errorLower.includes("website") || errorLower.includes("email") || errorLower.includes("phone");
+    const isIdentityError = errorLower.includes("name") || errorLower.includes("slug") || errorLower.includes("industry");
     setApiError(null);
-    setCurrentStage(3);
+    if (isIdentityError) {
+      setCurrentStage(1);
+    } else if (isPresenceError) {
+      setCurrentStage(2);
+    } else {
+      setCurrentStage(3);
+    }
   };
 
   const renderStage = () => {

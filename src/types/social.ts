@@ -32,7 +32,7 @@ export interface Notification {
     notification_id: string;
     user_id: string; // recipient
     sender_id: string; // actor
-    type: 'connection_request' | 'connection_accepted' | 'new_connection' | 'company_connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply' | 'post_tag' | 'advocacy' | 'company_invite' | 'company_job' | 'company_event' | 'company_post' | 'profile_share' | 'share' | 'organization_job' | 'job_offer' | 'community_invite' | 'community_invite_accepted' | 'organization_invite' | 'ORGANIZATION_INVITE' | 'application_submitted' | 'application_under_review' | 'application_shortlisted' | 'offer_expiring' | 'job_application_chat' | 'job_offer_chat' | 'new_application_threshold' | 'offer_accepted' | 'channel_article' | 'company_channel_subscriber' | 'company_channel_milestone' | 'new_device_login' | 'password_changed' | 'email_changed' | 'message_reaction' | 'profile_incomplete_nudge' | 'doc_verification_success' | 'doc_verification_rejected';
+    type: 'connection_request' | 'connection_accepted' | 'new_connection' | 'company_connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply' | 'post_tag' | 'advocacy' | 'company_invite' | 'company_job' | 'company_event' | 'company_post' | 'profile_share' | 'share' | 'organization_job' | 'job_offer' | 'community_invite' | 'community_invite_accepted' | 'organization_invite' | 'ORGANIZATION_INVITE' | 'application_submitted' | 'application_under_review' | 'application_shortlisted' | 'offer_expiring' | 'job_application_chat' | 'job_offer_chat' | 'new_application_threshold' | 'offer_accepted' | 'channel_article' | 'company_channel_subscriber' | 'company_channel_milestone' | 'new_device_login' | 'password_changed' | 'email_changed' | 'message_reaction' | 'profile_incomplete_nudge' | 'doc_verification_success' | 'doc_verification_rejected' | 'org_doc_verification_success' | 'org_doc_verification_rejected' | 'org_doc_verification_submitted' | 'company_deactivated' | 'company_reactivated' | 'company_deleted' | 'company_recovered';
     actor_name: string;
     actor_avatar: string | null;
     actor_slug?: string;
@@ -46,6 +46,10 @@ export interface Notification {
     request_status?: string;
     entity_type?: string;
     entity_id?: string;
+    can_recover?: boolean;
+    canRecover?: boolean;
+    is_owner?: boolean;
+    isOwner?: boolean;
 }
 
 export interface CompanyNotificationPreferences {

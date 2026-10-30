@@ -196,7 +196,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
   const isLongDescription = description.length > 180;
 
   return (
-    <div className="w-full max-w-[800px] px-4 sm:px-0 flex flex-col items-start gap-4 sm:gap-5 pb-16 font-['DM_Sans']">
+    <div className="w-full max-w-[800px] px-4 sm:px-0 sm:pl-5 flex flex-col items-start gap-4 sm:gap-5 pb-16 font-['DM_Sans']">
       {/* ══════════════════════════════════════════════════════
           PART 1: Description & Slogan
           ══════════════════════════════════════════════════════ */}
