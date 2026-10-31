@@ -90,7 +90,10 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    const backendUrl = process.env.INTERNAL_API_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api` : null) || 'http://localhost:5000/api';
+    const backendUrl = process.env.INTERNAL_API_URL || 
+      (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api` : null) || 
+      (process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}/api` : null) || 
+      'http://localhost:5000/api';
     const authPattern = EXPRESS_AUTH_ROUTES.join("|");
     return [
       {
