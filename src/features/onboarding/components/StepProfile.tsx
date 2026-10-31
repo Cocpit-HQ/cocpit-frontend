@@ -319,7 +319,7 @@ export const StepProfile: React.FC<StepProfileProps> = ({
     if (profileImage.startsWith("data:") || profileImage.startsWith("http")) {
       return profileImage;
     }
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5001";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
     return `${baseUrl}/${profileImage}`;
   }, [profileImage]);
 

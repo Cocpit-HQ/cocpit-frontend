@@ -85,7 +85,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    const backendUrl = process.env.INTERNAL_API_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api` : null) || 'http://localhost:5001/api';
+    const backendUrl = process.env.INTERNAL_API_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api` : null) || 'http://localhost:8000/api';
     const authPattern = EXPRESS_AUTH_ROUTES.join("|");
     return [
       {
