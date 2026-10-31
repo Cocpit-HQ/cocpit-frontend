@@ -519,7 +519,7 @@ export const JobSearchPage: React.FC = () => {
 
   // Memoized fetchers for cursor-paginated dropdowns
   const fetchIndustries = useCallback((q?: string, cursor?: string) => {
-    return getPaginatedIndustries(q, cursor, 8);
+    return getPaginatedIndustries(q, cursor, 50);
   }, []);
 
   const fetchCompanies = useCallback((q?: string, cursor?: string) => {

@@ -268,17 +268,37 @@ export interface OnboardingOptionItem {
   slug?: string;
 }
 
+export type OnboardingOptionsResponse = OnboardingOptionItem[] & {
+  nextCursor?: string | null;
+  hasMore?: boolean;
+};
+
 export const getOnboardingOptions = async (
   slug: string,
-  q?: string
-): Promise<OnboardingOptionItem[]> => {
-  const response = await api.get<{ success: boolean; data: OnboardingOptionItem[] }>(
+  q?: string,
+  cursor?: string,
+  limit: number = 50
+): Promise<OnboardingOptionsResponse> => {
+  const params: Record<string, any> = { limit };
+  if (q) params.q = q;
+  if (cursor) params.cursor = cursor;
+
+  const response = await api.get<{
+    success: boolean;
+    data: OnboardingOptionItem[];
+    nextCursor?: string | null;
+    hasMore?: boolean;
+  }>(
     `/onboarding/options/${slug}`,
-    {
-      params: q ? { q } : undefined,
-    }
+    { params }
   );
-  return response.data.data || [];
+
+  const rawData = response.data.data || [];
+  const result = Object.assign(rawData, {
+    nextCursor: response.data.nextCursor ?? null,
+    hasMore: Boolean(response.data.hasMore),
+  });
+  return result;
 };
 
 export interface SaveOnboardingSituationPayload {

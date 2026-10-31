@@ -187,16 +187,22 @@ export function SendOfferDialog({
                         )}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         <Label htmlFor="offer-message">Personal Message (optional)</Label>
                         <Textarea
                             id="offer-message"
                             value={message}
-                            onChange={(e) => setMessage(e.target.value)}
+                            onChange={(e) => setMessage(e.target.value.slice(0, 255))}
+                            maxLength={255}
                             placeholder="Add a personal note about why you'd be a great fit..."
                             rows={3}
                             className="resize-none bg-background text-foreground border-input"
                         />
+                        <div className="flex justify-end">
+                            <span className="text-xs text-muted-foreground">
+                                {message?.length || 0}/255
+                            </span>
+                        </div>
                     </div>
                 </div>
 

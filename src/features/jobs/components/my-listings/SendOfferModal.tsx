@@ -242,7 +242,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
       {/* Centered modal matching Figma exactly per stage */}
       <div
         className={`w-full max-w-[400px] ${
-          stage === 3 ? 'h-[278px]' : stage === 2 ? 'h-[380px]' : 'h-[392px]'
+          stage === 3 ? 'h-[294px]' : stage === 2 ? 'h-[380px]' : 'h-[392px]'
         } max-h-[calc(100dvh-32px)] p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col justify-start items-center gap-3 overflow-hidden font-dm-sans animate-in zoom-in-95 duration-200 select-none overscroll-contain transition-[height]`}
         onWheel={(e) => e.stopPropagation()}
       >
@@ -586,18 +586,24 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               })}
             </div>
 
-            {/* Frame 2609640: Note input with label (376px x 62px, border-bottom 1px solid #2C2C33) */}
-            <div className="w-full max-w-[376px] h-[62px] py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-1 transition-colors shrink-0">
-              <label className="text-xs font-medium font-dm-sans text-ds-text-secondary leading-4">
-                Note
-              </label>
-              <input
-                type="text"
-                value={personalNote}
-                onChange={(e) => setPersonalNote(e.target.value)}
-                placeholder="Add a personal note...."
-                className="w-full bg-transparent border-none p-0 text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:ring-0 leading-5"
-              />
+            {/* Frame 2609640: Note input with label and character counter matching business profile */}
+            <div className="w-full max-w-[376px] flex flex-col justify-start items-end gap-1 shrink-0">
+              <div className="w-full py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-1 transition-colors">
+                <label className="text-xs font-medium font-dm-sans text-ds-text-secondary leading-4">
+                  Note
+                </label>
+                <input
+                  type="text"
+                  value={personalNote}
+                  onChange={(e) => setPersonalNote(e.target.value.slice(0, 255))}
+                  maxLength={255}
+                  placeholder="Add a personal note...."
+                  className="w-full bg-transparent border-none p-0 text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:ring-0 leading-5"
+                />
+              </div>
+              <div className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">
+                {personalNote?.length || 0}/255
+              </div>
             </div>
 
             {/* Frame 2609476: Action Buttons (376px x 36px, gap: 8px) */}

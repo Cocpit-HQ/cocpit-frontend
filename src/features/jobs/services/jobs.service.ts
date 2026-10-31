@@ -215,7 +215,7 @@ export interface CursorPaginatedResult<T> {
   hasMore: boolean;
 }
 
-export const getIndustries = async (query?: string, cursor?: string, limit: number = 8): Promise<{ industry_name: string }[]> => {
+export const getIndustries = async (query?: string, cursor?: string, limit: number = 50): Promise<{ industry_name: string }[]> => {
   try {
     const params: Record<string, any> = { limit };
     if (query) params.q = query;
@@ -234,7 +234,7 @@ export const getIndustries = async (query?: string, cursor?: string, limit: numb
   }
 };
 
-export const getPaginatedIndustries = async (query?: string, cursor?: string, limit: number = 8): Promise<CursorPaginatedResult<string>> => {
+export const getPaginatedIndustries = async (query?: string, cursor?: string, limit: number = 50): Promise<CursorPaginatedResult<string>> => {
   try {
     const params: Record<string, any> = { limit };
     if (query) params.q = query;

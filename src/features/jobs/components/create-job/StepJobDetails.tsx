@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Icon } from '@iconify/react';
-import { ChevronDown, Search, MapPin, Loader2 } from 'lucide-react';
+import { ChevronDown, Search, MapPin, Loader2, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useDebounce } from '@/hooks/use-debounce';
 import {
@@ -119,13 +119,18 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [regenerateCount, setRegenerateCount] = useState(initialDetails?.ai_generation_count || 0);
 
-  // Industry custom dropdown state - exact same as BusinessEditProfileTab
+  // Industry custom dropdown state with cursor-based 50 batch pagination
   const [backendIndustries, setBackendIndustries] = useState<{ id: string; label: string }[]>([]);
+  const [industryCursor, setIndustryCursor] = useState<string | null>(null);
+  const [hasMoreIndustries, setHasMoreIndustries] = useState(false);
   const [isLoadingIndustries, setIsLoadingIndustries] = useState(false);
+  const [isLoadingMoreIndustries, setIsLoadingMoreIndustries] = useState(false);
   const [isIndustryDropdownOpen, setIsIndustryDropdownOpen] = useState(false);
-  const [industrySearchQuery, setIndustrySearchQuery] = useState(initialDetails?.industry || '');
+  const [industrySearchQuery, setIndustrySearchQuery] = useState('');
   const industryDropdownRef = useRef<HTMLDivElement>(null);
-  const industryInputRef = useRef<HTMLInputElement>(null);
+  const industrySearchInputRef = useRef<HTMLInputElement>(null);
+  const industryListboxRef = useRef<HTMLDivElement>(null);
+  const debouncedIndustrySearch = useDebounce(industrySearchQuery, 250);
 
   // Dropdown UI states
   const [isWorkModeOpen, setIsWorkModeOpen] = useState(false);
@@ -150,7 +155,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       setIsLoadingIndustries(true);
       try {
         const [onboardingData, comp] = await Promise.all([
-          getOnboardingOptions('industries').catch(() => []),
+          getOnboardingOptions('industries', undefined, undefined, 50).catch(() => [] as any),
           isCompanyMode && activeProfile?.slug && (!initialDetails?.industry || industry === 'Technology')
             ? companyService.getCompany(activeProfile.slug).catch(() => null)
             : Promise.resolve(null),
@@ -164,11 +169,12 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                 label: item.label,
               }))
             );
+            setIndustryCursor((onboardingData as any).nextCursor || null);
+            setHasMoreIndustries(Boolean((onboardingData as any).hasMore));
           }
           const compInd = comp?.industry || comp?.institution_type;
           if (compInd && !initialDetails?.industry && !industry) {
             setIndustry(compInd);
-            setIndustrySearchQuery(compInd);
           }
         }
       } catch (err) {
@@ -347,15 +353,74 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     []
   );
 
-  const filteredIndustries = useMemo(() => {
-    if (!industrySearchQuery.trim()) return backendIndustries;
-    const q = industrySearchQuery.toLowerCase().trim();
-    return backendIndustries.filter((opt) => opt.label.toLowerCase().includes(q));
-  }, [backendIndustries, industrySearchQuery]);
+  // Live debounced search effect for industry
+  useEffect(() => {
+    if (!isIndustryDropdownOpen) return;
+    let isCurrent = true;
+    setIsLoadingIndustries(true);
+
+    getOnboardingOptions('industries', debouncedIndustrySearch.trim() || undefined, undefined, 50)
+      .then((res) => {
+        if (isCurrent) {
+          setBackendIndustries(
+            res.map((item: any) => ({
+              id: item.slug || item.id || item.label,
+              label: item.label,
+            }))
+          );
+          setIndustryCursor(res.nextCursor || null);
+          setHasMoreIndustries(Boolean(res.hasMore));
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to search industries:', err);
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoadingIndustries(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [debouncedIndustrySearch, isIndustryDropdownOpen]);
+
+  // Load more via cursor when scrolling to bottom of list
+  const handleIndustryScroll = useCallback(async (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (isLoadingMoreIndustries || !hasMoreIndustries || !industryCursor) return;
+
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+      setIsLoadingMoreIndustries(true);
+      try {
+        const res = await getOnboardingOptions(
+          'industries',
+          debouncedIndustrySearch.trim() || undefined,
+          industryCursor,
+          50
+        );
+        setBackendIndustries((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const newItems = res
+            .filter((item: any) => !existingIds.has(item.slug || item.id || item.label))
+            .map((item: any) => ({
+              id: item.slug || item.id || item.label,
+              label: item.label,
+            }));
+          return [...prev, ...newItems];
+        });
+        setIndustryCursor(res.nextCursor || null);
+        setHasMoreIndustries(Boolean(res.hasMore));
+      } catch (err) {
+        console.error('Failed to load more industries:', err);
+      } finally {
+        setIsLoadingMoreIndustries(false);
+      }
+    }
+  }, [isLoadingMoreIndustries, hasMoreIndustries, industryCursor, debouncedIndustrySearch]);
 
   const handleSelectIndustry = useCallback((val: string) => {
     setIndustry(val);
-    setIndustrySearchQuery(val);
+    setIndustrySearchQuery('');
     setIsDirty(true);
     setIsIndustryDropdownOpen(false);
   }, []);
@@ -374,7 +439,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       }
       if (industryDropdownRef.current && !industryDropdownRef.current.contains(event.target as Node)) {
         setIsIndustryDropdownOpen(false);
-        setIndustrySearchQuery(industry || '');
+        setIndustrySearchQuery('');
       }
       if (locationDropdownRef.current && !locationDropdownRef.current.contains(event.target as Node)) {
         setIsLocationDropdownOpen(false);
@@ -382,7 +447,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [industry]);
+  }, []);
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setDescription(e.target.value);
@@ -893,110 +958,112 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
           {/* Row 5: Industry type, Min salary, Max salary */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
-            {/* Industry Selection with inline Search & Custom Dropdown matching BusinessEditProfileTab */}
+            {/* Industry Selection with Cursor-based 50 Batch Pagination & Search */}
             <div
               ref={industryDropdownRef}
-              className="relative border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5 cursor-text"
+              className="relative border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5 cursor-pointer select-none"
               onClick={() => {
-                industryInputRef.current?.focus({ preventScroll: true });
-                setIsIndustryDropdownOpen(true);
+                setIsIndustryDropdownOpen((prev) => !prev);
               }}
             >
-              <label
-                htmlFor="job-industry-search-input"
-                className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4 cursor-pointer"
-              >
+              <span className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
                 Industry type
-              </label>
+              </span>
               <div className="w-full inline-flex justify-between items-center gap-2">
-                <input
-                  id="job-industry-search-input"
-                  ref={industryInputRef}
-                  type="text"
-                  value={industrySearchQuery}
-                  onChange={(e) => {
-                    setIndustrySearchQuery(e.target.value);
-                    setIndustry(e.target.value);
-                    setIsDirty(true);
-                    if (!isIndustryDropdownOpen) setIsIndustryDropdownOpen(true);
-                  }}
-                  onFocus={() => {
-                    setIsIndustryDropdownOpen(true);
-                  }}
-                  placeholder="Select industry"
-                  autoComplete="off"
-                  className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none cursor-text"
+                <span className={cn(
+                  "text-sm font-normal font-dm-sans leading-5 truncate",
+                  industry ? "text-ds-text-primary" : "text-ds-text-muted"
+                )}>
+                  {industry || "Select industry"}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "w-4 h-4 text-ds-text-muted transition-transform duration-200 shrink-0",
+                    isIndustryDropdownOpen ? "rotate-180" : ""
+                  )}
                 />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  aria-label="Toggle industry options"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsIndustryDropdownOpen((prev) => {
-                      const next = !prev;
-                      if (next) {
-                        setTimeout(() => industryInputRef.current?.focus({ preventScroll: true }), 0);
-                      }
-                      return next;
-                    });
-                  }}
-                  className="p-1 -mr-1 flex items-center justify-center cursor-pointer text-ds-text-primary focus:outline-none"
-                >
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 text-ds-text-muted transition-transform duration-200",
-                      isIndustryDropdownOpen ? "rotate-180" : ""
-                    )}
-                  />
-                </button>
               </div>
 
-              {/* Industry Dropdown Menu */}
+              {/* Industry Dropdown Menu with Search & Infinite Scroll */}
               {isIndustryDropdownOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 w-full p-2 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col gap-1 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute top-[calc(100%+8px)] left-0 w-full min-w-[240px] p-2 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col gap-2 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden"
+                >
+                  {/* Search input with search icon & clear button */}
+                  <div className="w-full flex items-center gap-2 border-b border-ds-border pb-2 px-1">
+                    <Search className="w-3.5 h-3.5 text-ds-text-muted shrink-0" />
+                    <input
+                      ref={industrySearchInputRef}
+                      type="text"
+                      value={industrySearchQuery}
+                      onChange={(e) => setIndustrySearchQuery(e.target.value)}
+                      placeholder="Search industries..."
+                      autoFocus
+                      className="w-full bg-transparent text-sm text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-normal py-0.5 outline-none"
+                    />
+                    {industrySearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setIndustrySearchQuery("")}
+                        aria-label="Clear search" className="text-ds-text-secondary hover:text-ds-text-primary p-0.5 bg-transparent border-none cursor-pointer flex items-center justify-center outline-none focus-visible:text-ds-accent"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Scrollable listbox with cursor pagination */}
                   <div
+                    ref={industryListboxRef}
                     role="listbox"
+                    onScroll={handleIndustryScroll}
                     className="self-stretch flex flex-col justify-start items-start gap-1 max-h-48 overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   >
                     {isLoadingIndustries ? (
-                      <div className="w-full py-3 text-center text-ds-text-muted text-sm font-dm-sans">
-                        Loading industries...
+                      <div className="w-full py-4 text-center text-ds-text-muted text-xs font-dm-sans flex items-center justify-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-ds-accent" />
+                        <span>Loading industries...</span>
                       </div>
-                    ) : filteredIndustries.length > 0 ? (
-                      filteredIndustries.map((opt) => {
-                        const isSelected =
-                          (industry || "").toLowerCase() === opt.label.toLowerCase() ||
-                          (industry || "").toLowerCase() === opt.id.toLowerCase();
-                        return (
-                          <div
-                            key={opt.id}
-                            role="option"
-                            aria-selected={isSelected}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectIndustry(opt.label);
-                            }}
-                            className="self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer group select-none hover:bg-ds-surface-1/50"
-                          >
-                            <span
-                              title={opt.label}
-                              className={cn(
-                                "justify-start text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer truncate",
-                                isSelected
-                                  ? "text-ds-accent font-medium"
-                                  : "text-ds-text-secondary group-hover:text-ds-text-primary"
-                              )}
+                    ) : backendIndustries.length > 0 ? (
+                      <>
+                        {backendIndustries.map((opt) => {
+                          const isSelected =
+                            (industry || "").toLowerCase() === opt.label.toLowerCase() ||
+                            (industry || "").toLowerCase() === opt.id.toLowerCase();
+                          return (
+                            <div
+                              key={opt.id}
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => handleSelectIndustry(opt.label)}
+                              className="self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer group select-none hover:bg-ds-surface-1/50 transition-colors"
                             >
-                              {opt.label}
-                            </span>
+                              <span
+                                title={opt.label}
+                                className={cn(
+                                  "justify-start text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer truncate",
+                                  isSelected
+                                    ? "text-ds-accent font-medium"
+                                    : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                                )}
+                              >
+                                {opt.label}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {isLoadingMoreIndustries && (
+                          <div className="w-full py-2 text-center text-xs text-ds-text-muted font-dm-sans flex items-center justify-center gap-1.5">
+                            <Loader2 className="w-3 h-3 animate-spin text-ds-accent" />
+                            <span>Loading more...</span>
                           </div>
-                        );
-                      })
+                        )}
+                      </>
                     ) : (
-                      <div className="w-full py-3 text-center text-ds-text-muted text-sm font-dm-sans">
-                        No options found
+                      <div className="w-full py-4 text-center text-ds-text-muted text-xs font-dm-sans">
+                        No industries found
                       </div>
                     )}
                   </div>
