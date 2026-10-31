@@ -25,6 +25,8 @@ import {
   UserIcon,
   BusinessBuildingIcon,
   LeftArrowIcon,
+  JobExperienceIcon,
+  WorkModeIcon,
 } from '@/components/icons';
 
 const getGoogleMapsUrl = (
@@ -292,7 +294,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
         {/* Job Header & Metadata */}
         <div className="w-full flex flex-col justify-start items-start gap-3">
           {/* Job Title */}
-          <h1 className="w-full text-3xl sm:text-4xl font-bold font-dm-sans text-ds-text-primary leading-tight sm:leading-[48px]">
+          <h1 className="w-full ds-text-title text-[40px] font-bold font-dm-sans text-ds-text-primary leading-[48px]">
             {job.title}
           </h1>
 
@@ -366,7 +368,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           {/* Experience */}
           <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
             <div className="flex items-center gap-2 text-ds-text-muted">
-              <Icon icon="solar:case-linear" className="w-5 h-5 text-ds-text-muted shrink-0" />
+              <JobExperienceIcon size={20} className="w-5 h-5 text-ds-text-muted shrink-0" />
               <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Experience</span>
             </div>
             <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
@@ -379,7 +381,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           {/* Work mode */}
           <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
             <div className="flex items-center gap-2 text-ds-text-muted">
-              <Icon icon="solar:map-point-linear" className="w-5 h-5 text-ds-text-muted shrink-0" />
+              <WorkModeIcon size={20} className="w-5 h-5 text-ds-text-muted shrink-0" />
               <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Work mode</span>
             </div>
             <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
@@ -524,7 +526,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 RESPONSE RATE
               </span>
               {/* Value (w: 108px, h: 26px, Poppins 500 18px/26px #FFECE6) */}
-              <span className="w-[108px] h-[26px] font-poppins font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
+              <span className="w-[108px] h-[26px] font-dm-sans font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
                 {job.response_rate || '98%'}
               </span>
             </div>
@@ -536,7 +538,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 AVG. REPLY
               </span>
               {/* Value (w: 360px, h: 26px, Poppins 500 18px/26px #FFECE6) */}
-              <span className="w-full h-[26px] font-poppins font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
+              <span className="w-full h-[26px] font-dm-sans font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
                 {job.avg_reply || '1 day'}
               </span>
               {/* Very fast (w: 360px, h: 15px, Poppins 400 10px/15px var(--ds-success)) */}
@@ -547,8 +549,9 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           </div>
 
           {/* Recruiter Note (Figma: width 360px, height 40px, DM Sans 14px/20px #B8ADA8) */}
-          <p className="w-full max-w-[360px] min-h-10 font-dm-sans font-normal text-sm leading-5 text-ds-text-secondary flex items-center flex-none">
-            {job.company || 'The recruiter'} usually views applications within 24 hours of submission.
+          <p className="w-full max-w-[360px] min-h-10 font-dm-sans font-normal text-sm leading-5 text-ds-text-secondary flex flex-col justify-center flex-none">
+            <span>{job.company || 'The recruiter'} usually views applications within 24</span>
+            <span>hours of submission.</span>
           </p>
         </div>
 

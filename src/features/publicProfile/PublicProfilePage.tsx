@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
 import { Share2, Flag, ChevronLeft, X } from "lucide-react";
 import { BlockIcon } from "@/components/icons";
@@ -79,6 +79,21 @@ interface PublicProfileProps {
 
 export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const source = searchParams?.get("source");
+  const from = searchParams?.get("from");
+  const isFromJobs = Boolean(
+    source === "job_application_dashboard" ||
+    source === "jobs" ||
+    source?.toLowerCase().includes("job") ||
+    from === "jobs" ||
+    from?.toLowerCase().includes("job") ||
+    (typeof window !== "undefined" && (
+      window.sessionStorage.getItem("coming_from_job_detail") === "true" ||
+      window.sessionStorage.getItem("nav_memory_jobs") ||
+      document.referrer.includes("/jobs")
+    ))
+  );
   const { startChat, blockUser, unblockUser, isBlocked, followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
   const { activeProfile, isCompany } = useActiveProfile();
   const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
@@ -394,12 +409,12 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
-      router.push("/feed");
+      router.push(isFromJobs ? "/jobs" : "/feed");
     }
   };
 
   const handleClose = () => {
-    router.push("/feed");
+    router.push(isFromJobs ? "/jobs" : "/feed");
   };
 
   const renderTopNavigation = () => (
@@ -478,11 +493,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           {/* Primary emphasis button: h: 36px, px: 12px, py: 6px, gap: 10px, bg: #EC6229, rounded: 100px */}
           <button
             type="button"
-            onClick={() => router.push('/feed')}
+            onClick={() => router.push(isFromJobs ? '/jobs' : '/feed')}
             className="h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex items-center justify-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
             <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-              Back to Feed
+              {isFromJobs ? 'Back to Jobs' : 'Back to Feed'}
             </span>
           </button>
         </div>

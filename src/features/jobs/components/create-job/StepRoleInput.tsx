@@ -61,15 +61,15 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
 
   return (
     <div className="w-full min-h-[calc(100vh-80px)] flex flex-col justify-center items-center relative py-12 px-4 font-dm-sans animate-in fade-in duration-200">
-      {/* Top Left: Back Navigation */}
+      {/* Top Left: Back Navigation - use chevron icon and secondary hover color per design system */}
       <button
         onClick={onBack}
         type="button"
         disabled={isDrafting}
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer select-none bg-transparent border-none outline-none group"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer select-none bg-transparent border-none outline-none group"
       >
-        <Icon icon="solar:arrow-left-linear" className="w-5 h-5 shrink-0 text-ds-text-primary group-hover:text-ds-accent transition-colors" />
+        <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors" />
         <span className="font-dm-sans font-medium text-base leading-6">Back</span>
       </button>
 
@@ -88,21 +88,21 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
       <div className="w-full max-w-[592px] flex flex-col justify-center items-center gap-5 my-auto">
         {/* Headings */}
         <div className="self-stretch flex flex-col justify-start items-center gap-3 text-center">
-          <div className="text-ds-accent text-3xl sm:text-4xl font-bold leading-tight sm:leading-[48px]">
+          <div className="text-ds-accent ds-text-title text-[40px] font-bold leading-[48px]">
             Hey, {activeProfile?.name || 'Cocpit'}
           </div>
           <div className="flex flex-col justify-start items-center gap-1">
-            <h1 className="text-ds-text-primary text-3xl sm:text-4xl font-bold leading-tight sm:leading-[48px]">
+            <h1 className="text-ds-text-primary ds-text-title text-[40px] font-bold leading-[48px]">
               What role are you hiring for?
             </h1>
-            <p className="text-ds-text-secondary text-sm sm:text-base font-semibold leading-6 max-w-md">
+            <p className="text-ds-text-secondary text-sm sm:text-base font-semibold leading-6 whitespace-nowrap max-w-none">
               Start by defining the position to help us find the perfect match.
             </p>
           </div>
         </div>
 
         {/* Input Form & Actions */}
-        <form onSubmit={handleSubmit} className="w-full max-w-[320px] sm:w-72 flex flex-col justify-center items-center gap-4">
+        <form onSubmit={handleSubmit} className="w-full max-w-[300px] flex flex-col justify-center items-center gap-4">
           {/* Underline Input: Frame 2609640 style */}
           <div className="self-stretch py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-1 transition-colors relative">
             <label className="text-center text-ds-text-secondary text-xs font-medium leading-4">
@@ -170,9 +170,9 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
           </div>
 
           {/* AI Banner Tip Box */}
-          <div className="self-stretch px-4 py-2 bg-ds-surface-1 rounded-xl inline-flex justify-start items-center gap-2 border border-ds-border/40">
+          <div className="w-[300px] h-[40px] px-3 bg-ds-surface-1 rounded-xl inline-flex justify-center items-center border border-ds-border/40">
             <div className="flex-1 inline-flex flex-col justify-start items-start">
-              <p className="self-stretch text-center text-ds-text-primary text-[10px] font-normal leading-3.5">
+              <p className="self-stretch text-center text-ds-text-primary text-[10px] font-normal leading-tight">
                 Choosing a specific role helps our AI accurately screen candidates for technical skills.
               </p>
             </div>
@@ -182,7 +182,7 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
           <button
             type="submit"
             disabled={!title.trim() || isDrafting}
-            className={`w-64 h-9 px-3 py-1.5 rounded-full inline-flex justify-center items-center gap-2.5 text-base font-medium leading-6 transition-all ${
+            className={`w-[260px] h-[36px] px-3 py-1.5 rounded-full inline-flex justify-center items-center gap-2.5 text-base font-medium leading-6 transition-all ${
               !title.trim() || isDrafting
                 ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
                 : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'

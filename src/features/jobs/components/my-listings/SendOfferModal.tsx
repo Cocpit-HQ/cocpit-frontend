@@ -326,7 +326,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               </div>
 
               {/* Action Buttons (Frame 2609476: 376px x 36px, gap 8px) */}
-              <div className="w-full max-w-[376px] h-9 inline-flex justify-center items-center gap-2 pt-1 shrink-0">
+              <div className="w-full max-w-[376px] h-9 flex justify-center items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={async () => {
@@ -367,7 +367,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     }
                   }}
                   disabled={!selectedJobId || isFetchingRecipients}
-                  className={`w-[94px] h-9 rounded-full text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all ${
+                  className={`w-[94px] h-9 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all select-none whitespace-nowrap ${
                     !selectedJobId || isFetchingRecipients
                       ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
                       : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
@@ -382,7 +382,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCancelClick}
-                  className="w-[94px] h-9 rounded-full border border-ds-border text-ds-text-primary hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer"
+                  className="w-[94px] h-9 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer select-none whitespace-nowrap"
                 >
                   Cancel
                 </button>
@@ -487,7 +487,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Action Buttons: Frame 2609476 (376px x 36px, gap 8px) */}
-            <div className="w-full max-w-[376px] h-9 inline-flex justify-center items-center gap-2 pt-1 shrink-0">
+            <div className="w-full max-w-[376px] h-9 flex justify-center items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -496,7 +496,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   setStage(3);
                 }}
                 disabled={selectedCandidates.length === 0}
-                className={`w-[94px] h-9 rounded-full text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all ${
+                className={`w-[94px] h-9 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all select-none whitespace-nowrap ${
                   selectedCandidates.length === 0
                     ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
                     : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
@@ -516,7 +516,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     setStage(1);
                   }
                 }}
-                className="w-[94px] h-9 rounded-full border border-ds-border text-ds-text-primary hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer"
+                className="w-[94px] h-9 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer select-none whitespace-nowrap"
               >
                 {initialJobId ? 'Cancel' : 'Back'}
               </button>
@@ -607,12 +607,12 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Frame 2609476: Action Buttons (376px x 36px, gap: 8px) */}
-            <div className="w-full max-w-[376px] h-9 inline-flex justify-center items-center gap-2 shrink-0">
+            <div className="w-full max-w-[376px] h-9 flex justify-center items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={handleSendClick}
                 disabled={selectedCandidates.length === 0 || isSending}
-                className={`w-[94px] h-9 rounded-full text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all ${
+                className={`w-[94px] h-9 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all select-none whitespace-nowrap ${
                   selectedCandidates.length === 0 || isSending
                     ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
                     : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
@@ -630,7 +630,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   setPersonalNote('');
                   setStage(2);
                 }}
-                className="w-[94px] h-9 rounded-full border border-ds-border text-ds-text-primary hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer"
+                className="w-[94px] h-9 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer select-none whitespace-nowrap"
               >
                 Cancel
               </button>

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
 import { TrustShieldIcon } from '@/components/icons';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { VerifyIdentityModal } from '@/features/settings';
 
 interface StepIdentityVerificationProps {
   onBack: () => void;
@@ -14,30 +16,33 @@ interface StepIdentityVerificationProps {
 export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> = ({
   onBack,
   onClose,
+  onVerifySuccess,
   title,
 }) => {
   const { activeProfile } = useActiveProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
   const router = useRouter();
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
   const handleVerifyClick = () => {
     if (isCompanyMode) {
       router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`);
     } else {
-      router.push('/settings/privacy?action=verify-identity');
+      // Open verification modal directly within the Create Job flow instead of redirecting to Settings
+      setIsVerifyModalOpen(true);
     }
   };
 
   return (
     <div className="w-full min-h-[calc(100vh-80px)] flex flex-col justify-center items-center relative py-8 sm:py-12 px-4 font-sans animate-in fade-in duration-200">
-      {/* Top Left: Back Navigation */}
+      {/* Top Left: Back Navigation - use chevron icon and secondary hover color per design system */}
       <button
         onClick={onBack}
         type="button"
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer select-none bg-transparent border-none outline-none group"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer select-none bg-transparent border-none outline-none group"
       >
-        <Icon icon="solar:arrow-left-linear" className="w-5 h-5 shrink-0 text-ds-text-primary group-hover:text-ds-accent transition-colors" />
+        <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors" />
         <span className="font-sans font-medium text-base leading-6">Back</span>
       </button>
 
@@ -129,19 +134,30 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
           <span className="text-ds-text-secondary">
             Verification typically takes less than 2 minutes. Need help?{' '}
           </span>
-          <button
-            type="button"
-            onClick={() => router.push('/support')}
-            className="text-ds-accent font-normal cursor-pointer bg-transparent border-none p-0 outline-none focus-visible:ring-1 focus-visible:ring-ds-accent rounded-sm"
+          <Link
+            href="https://cocpit.in/contact"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="!text-ds-accent hover:!text-ds-accent-hover font-normal cursor-pointer bg-transparent border-none p-0 outline-none focus-visible:ring-1 focus-visible:ring-ds-accent rounded-sm transition-colors"
+            style={{ color: 'var(--ds-accent)' }}
           >
             Contact Support
-          </button>
+          </Link>
         </div>
       </div>
+
+      {/* Identity verification modal for in-flow verification */}
+      <VerifyIdentityModal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+        onSuccess={() => {
+          setIsVerifyModalOpen(false);
+          // Advance wizard to role-input step after completing verification
+          onVerifySuccess();
+        }}
+      />
     </div>
   );
 };
 
 export default StepIdentityVerification;
-
-

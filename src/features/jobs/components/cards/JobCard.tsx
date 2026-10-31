@@ -93,7 +93,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             }}
             className="w-[91px] h-[36px] px-3 py-1.5 bg-transparent hover:bg-ds-surface-1 border border-ds-border text-ds-text-primary rounded-[100px] ds-text-body-1 font-medium font-dm-sans flex items-center justify-center transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
           >
-            Declined
+            Decline
           </button>
         </div>
       );
@@ -170,7 +170,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
         <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
           {isSavedTab ? (
             job.is_closed ? (
-              <div className="px-3 py-1 bg-ds-surface-1 border border-ds-warning/40 rounded-full text-ds-warning ds-text-small font-normal">
+              <div className="w-[74px] h-8 px-4 py-2 bg-ds-surface-1 border border-ds-warning rounded-full text-ds-warning ds-text-small font-normal flex items-center justify-center shrink-0">
                 Closed
               </div>
             ) : null

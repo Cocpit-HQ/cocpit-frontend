@@ -350,7 +350,20 @@ export function PrivacySettingsPage() {
 
       </div>
 
-      <VerifyIdentityModal isOpen={isVerifyModalOpen} onClose={() => setIsVerifyModalOpen(false)} />
+      {/* Verify identity modal with redirection support when opened from external flows */}
+      <VerifyIdentityModal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+        onSuccess={() => {
+          // Redirect back to caller if returnUrl/redirect or verify-identity action is present
+          const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl');
+          if (redirectUrl) {
+            router.push(redirectUrl);
+          } else if (searchParams.get('action') === 'verify-identity') {
+            router.push('/jobs?view=create-job&step=role-input');
+          }
+        }}
+      />
       
       <LogoutModal 
         isOpen={isLogoutAllModalOpen} 

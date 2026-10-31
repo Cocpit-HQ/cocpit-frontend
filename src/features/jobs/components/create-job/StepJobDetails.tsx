@@ -620,14 +620,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         }
       `}</style>
 
-      {/* Fixed Back Navigation: Top 40px, Left 40px - Never scrolls */}
+      {/* Fixed Back Navigation: Top 40px, Left 40px - use chevron icon and secondary hover color per design system */}
       <button
         onClick={onBack}
         type="button"
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary text-base font-medium font-dm-sans leading-6 hover:text-ds-accent transition-colors cursor-pointer select-none bg-transparent border-none outline-none"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary text-base font-medium font-dm-sans leading-6 hover:text-ds-text-secondary transition-colors cursor-pointer select-none bg-transparent border-none outline-none"
       >
-        <Icon icon="solar:arrow-left-linear" className="w-5 h-5 shrink-0" />
+        <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0" />
         <span>Back</span>
       </button>
 

@@ -2,8 +2,7 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Job } from '../../types/jobs.types';
 import JobCardSkeleton from '../skeletons/JobCardSkeleton';
-import { Icon } from '@iconify/react';
-import { MenuIcon, BriefcaseIcon } from '@/components/icons';
+import { MenuIcon, UserIcon } from '@/components/icons';
 
 interface MyApplicationsTabProps {
   jobs: Job[];
@@ -110,26 +109,38 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
     );
   };
 
-  if (jobs.length === 0 && selectedStatusFilter === "All" && selectedDateFilter === "All time" && !isLoading) {
-    return (
-      <div className="w-full max-w-[800px] py-28 flex flex-col justify-center items-center gap-2 select-none animate-in fade-in duration-200">
-        {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
-        <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
-          <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
-        </div>
-
-        {/* Text Container */}
-        <div className="flex flex-col justify-start items-center gap-2 text-center">
-          <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
-            No jobs applications yet
-          </h3>
-          <p className="max-w-sm text-ds-text-secondary text-sm font-normal font-dm-sans leading-5">
-            Applied jobs will appear here when you apply for job
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const getEmptyStateContent = () => {
+    const status = selectedStatusFilter.toLowerCase();
+    switch (status) {
+      case 'shortlisted':
+        return {
+          title: 'No shortlisted applications',
+          description: 'Applications shortlisted by recruiters will appear here',
+        };
+      case 'in review':
+      case 'in-review':
+        return {
+          title: 'No applications in review',
+          description: 'Applications currently under recruiter review will appear here.',
+        };
+      case 'declined':
+        return {
+          title: 'No declined applications',
+          description: 'Applications declined by recruiters will appear here.',
+        };
+      case 'applied':
+        return {
+          title: 'No applied applications',
+          description: 'Applications you apply for will appear here',
+        };
+      case 'all':
+      default:
+        return {
+          title: 'No job applications yet',
+          description: 'Applied jobs will appear here when you apply for a job',
+        };
+    }
+  };
 
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-5 font-dm-sans">
@@ -235,8 +246,21 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
               ))}
             </div>
           ) : dateFilteredJobs.length === 0 ? (
-            <div className="w-full py-12 text-center text-ds-text-secondary ds-text-small font-dm-sans bg-ds-surface-1 rounded-2xl border border-ds-border">
-              No applications match this filter.
+            <div className="w-full max-w-[800px] min-h-[324px] pt-[60px] pb-[120px] flex flex-col justify-center items-center gap-2 select-none animate-in fade-in duration-200">
+              {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
+              <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
+                <UserIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
+              </div>
+
+              {/* Text Container: Title + Subtitle */}
+              <div className="flex flex-col justify-start items-center gap-2 text-center">
+                <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6 text-center">
+                  {getEmptyStateContent().title}
+                </h3>
+                <p className="max-w-[340px] text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-center">
+                  {getEmptyStateContent().description}
+                </p>
+              </div>
             </div>
           ) : (
             dateFilteredJobs.map((job) => {

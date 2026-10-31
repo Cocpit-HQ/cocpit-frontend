@@ -20,7 +20,16 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
   const [avatarError, setAvatarError] = useState(false);
 
   const rawOffer = offer as Record<string, any>;
-  const displayCompany = offer.company_name || rawOffer.company || rawOffer.org_name || rawOffer.organization?.name || 'Company';
+  const recruiterName =
+    (offer.recruiter?.name && offer.recruiter.name !== 'Recruiter')
+      ? offer.recruiter.name
+      : (rawOffer.sent_by_name || rawOffer.recruiter_name || rawOffer.full_name || (!offer.org_id ? (offer.company_name || rawOffer.company) : ''));
+
+  const displayName = !offer.org_id
+    ? (recruiterName || offer.company_name || rawOffer.company || offer.recruiter?.name || 'Recruiter')
+    : (offer.company_name || rawOffer.company || rawOffer.org_name || rawOffer.organization?.name || recruiterName || 'Company');
+
+  const displayCompany = displayName;
   const expiryText = rawOffer.offer_expiry_text || (offer.days_remaining ? `Offer ends in ${offer.days_remaining} day${offer.days_remaining === 1 ? '' : 's'}` : 'Offer ends soon');
 
   return (
@@ -168,7 +177,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
                   {offer.recruiter.name || displayCompany}
                 </span>
                 <span className="font-dm-sans font-normal text-[10px] leading-3 text-ds-text-secondary truncate">
-                  {offer.recruiter.headline || (displayCompany ? `Recruiter at ${displayCompany}` : 'Hiring Team')}
+                  {offer.recruiter.headline || (offer.org_id && displayCompany ? `Recruiter at ${displayCompany}` : 'Recruiter')}
                 </span>
               </div>
             </div>

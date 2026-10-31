@@ -362,7 +362,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
           offers={offers}
           isLoading={isOffersLoading}
           onAccept={handleOfferAccept}
-          onDecline={(id) => setDeclineJobId(id)}
+          onDecline={handleOfferDecline}
         />
       </div>
         </>

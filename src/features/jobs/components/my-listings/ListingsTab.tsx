@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { JobListing, ListingsCounts } from '../../types/jobs.types';
 import { useInView } from '@/hooks/use-in-view';
 import { Icon } from '@iconify/react';
-import { MenuIcon, DeleteIcon } from '@/components/icons';
+import { MenuIcon, DeleteIcon, BriefcaseIcon } from '@/components/icons';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 
 interface ListingsTabProps {
@@ -91,25 +91,50 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
     { label: 'Draft', key: 'Draft', count: counts.draft }
   ];
 
-  const currentCount = filterChips.find(
-    c => c.key.toLowerCase() === statusFilter.toLowerCase() ||
-         (c.key === 'Close' && statusFilter.toLowerCase() === 'closed') ||
-         (c.key === 'Draft' && statusFilter.toLowerCase() === 'drafts')
-  )?.count || counts.all || listings.length;
+  const getEmptyStateContent = () => {
+    const s = statusFilter.toLowerCase();
+    if (s === 'active') {
+      return {
+        title: 'No active jobs yet',
+        description: 'Your published and active job listings will appear here.',
+      };
+    }
+    if (s === 'close' || s === 'closed') {
+      return {
+        title: 'No closed jobs',
+        description: 'Jobs that are no longer accepting applications will appear here.',
+      };
+    }
+    if (s === 'in review' || s === 'in_review') {
+      return {
+        title: 'No jobs in review',
+        description: 'Jobs currently undergoing review will appear here.',
+      };
+    }
+    if (s === 'draft' || s === 'drafts') {
+      return {
+        title: 'No draft jobs',
+        description: 'Jobs saved as drafts will appear here.',
+      };
+    }
+    return {
+      title: 'No active jobs yet',
+      description: 'Your published and active job listings will appear here.',
+    };
+  };
+
+  const emptyContent = getEmptyStateContent();
+  const totalJobs = counts?.all ?? listings.length;
 
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-4 font-dm-sans">
       {/* Section Header: All Jobs & Total jobs */}
       <div className="w-full flex flex-col items-start gap-1">
         <h3 className="text-ds-text-primary ds-text-body-1 font-medium">
-          {statusFilter.toLowerCase() === 'all'
-            ? 'All Jobs'
-            : statusFilter.toLowerCase() === 'draft' || statusFilter.toLowerCase() === 'drafts'
-            ? 'Drafts'
-            : `${statusFilter} Jobs`}
+          All Jobs
         </h3>
         <span className="text-ds-text-secondary ds-text-small font-normal">
-          Total jobs - {currentCount}
+          Total jobs - {totalJobs}
         </span>
       </div>
 
@@ -167,16 +192,21 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
             </div>
           ))
         ) : listings.length === 0 && !isFetchingMore ? (
-          <div className="w-full py-16 flex flex-col items-center justify-center gap-3 text-center bg-ds-surface-1 rounded-2xl border border-ds-border my-2">
-            <div className="size-12 rounded-full bg-ds-surface-2 border border-ds-border flex items-center justify-center text-ds-accent">
-              <Icon icon="solar:magnifer-linear" className="size-6" />
+          <div className="w-full max-w-[800px] min-h-[324px] pt-[60px] pb-[120px] flex flex-col justify-center items-center gap-2 select-none self-stretch animate-in fade-in duration-200">
+            {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
+            <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
+              <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
             </div>
-            <div className="flex flex-col items-center gap-1 max-w-sm px-4">
-              <h4 className="text-ds-text-primary ds-text-body-1 font-medium">No listings found</h4>
-              <p className="text-ds-text-secondary ds-text-small font-normal">
-                There are no job listings matching the selected status filter.
-              </p>
-            </div>
+
+            {/* Title: 16px semibold (600), line-height 24px, color #FFECE6 (--ds-text-primary) */}
+            <h3 className="text-ds-text-primary ds-text-body-2 font-semibold font-dm-sans leading-6 text-center">
+              {emptyContent.title}
+            </h3>
+
+            {/* Subtitle: 14px regular (400), line-height 20px, color #B8ADA8 (--ds-text-secondary), max-w-[306px] */}
+            <p className="max-w-[306px] text-ds-text-secondary ds-text-secondary font-normal font-dm-sans leading-5 text-center">
+              {emptyContent.description}
+            </p>
           </div>
         ) : (
           listings.map((item, index) => {

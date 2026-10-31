@@ -63,8 +63,6 @@ interface Candidate {
   } | null;
 }
 
-
-
 type FilterOption = 'Top match' | 'Recent' | 'Shortlisted' | 'Noted' | 'Pending';
 
 const EMPTY_STATE_CONFIG: Record<
@@ -597,11 +595,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                           isCompany={false}
                           className="size-8"
                         />
-
                         {/* Frame 2609105: Candidate Info */}
                         <div className="flex-1 flex flex-col justify-start items-start gap-1 min-w-0">
                           <span className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate flex items-center">
-                            {cand.name}
+                            {cand.name || 'Unknown User'}
                           </span>
                           {/* Frame 2609066 */}
                           <div className="flex flex-row items-center gap-1 h-6">
@@ -657,8 +654,13 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     {/* Frame 2608774 / 2608571: User details */}
                     <div
                       onClick={() => {
-                        if (activeCandidate?.applicationId) {
-                          router.push(`/profile/${activeCandidate.applicationId}?source=job_application_dashboard`);
+                        const targetId = activeCandidate?.applicationId || (activeCandidate as any)?.userId || (activeCandidate as any)?.user_id || activeCandidate?.id;
+                        if (targetId) {
+                          if (typeof window !== "undefined") {
+                            sessionStorage.setItem("coming_from_job_detail", "true");
+                            sessionStorage.setItem("nav_memory_jobs", "/jobs");
+                          }
+                          router.push(`/profile/${targetId}?source=job_application_dashboard`);
                         }
                       }}
                       className="flex flex-row items-center gap-2 h-9 cursor-pointer group"
@@ -672,7 +674,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     {/* Frame 2608568 */}
                     <div className="flex flex-col items-start h-9 justify-center">
                       <span className="text-ds-text-primary group-hover:text-ds-accent text-base font-semibold font-dm-sans leading-6 transition-colors">
-                        {displayName}
+                        {displayName || 'Unknown User'}
                       </span>
                       <span className="text-ds-text-primary text-[10px] font-normal font-dm-sans leading-3">
                         {displayHeadline}
@@ -992,46 +994,67 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         </div>
       </div>
 
-      {/* Modal: Add a note */}
+      {/* Modal: Add a note (Figma Design) */}
       {isNoteModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 px-4">
-          <div className="w-full max-w-md p-6 bg-ds-surface-1 border border-ds-border rounded-2xl flex flex-col gap-4 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center">
-              <h3 className="text-ds-text-primary text-base font-medium font-dm-sans">
-                Add a note
-              </h3>
+          <div className="w-[300px] p-3 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center gap-3 relative shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Frame 2609536: Cancel / Close Button */}
+            <div className="w-full h-5 flex flex-row justify-end items-center">
               <button
                 type="button"
                 onClick={() => setIsNoteModalOpen(false)}
-                className="size-6 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer"
+                aria-label="Close"
+                className="size-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
               >
-                <Icon icon="solar:close-circle-linear" className="size-5" />
+                <Icon icon="lucide:x" className="size-5" />
               </button>
             </div>
-            <p className="text-ds-text-secondary text-xs font-normal font-dm-sans">
-              Include a personal recruiter note for reference.
-            </p>
-            <textarea
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              placeholder="Add a personal note..."
-              rows={4}
-              className="w-full p-3 bg-ds-bg border border-ds-border rounded-xl text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none transition-colors"
-            />
-            <div className="flex justify-end items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsNoteModalOpen(false)}
-                className="px-4 py-2 rounded-full border border-ds-border hover:bg-ds-surface-2 text-ds-text-primary text-sm font-normal font-dm-sans transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
+
+            {/* Title: Add note */}
+            <h3 className="text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center">
+              Add note
+            </h3>
+
+            {/* input field */}
+            <div className="w-full h-9 py-2 flex items-center border-b border-ds-border focus-within:border-ds-accent transition-colors">
+              <input
+                type="text"
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSaveNote();
+                  }
+                }}
+                placeholder="Add a note"
+                autoFocus
+                className="w-full bg-transparent text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none"
+              />
+            </div>
+
+            {/* Frame 2609476: Action Buttons */}
+            <div className="w-[162px] h-9 flex flex-row justify-center items-center gap-2">
+              {/* Primary emphasis button: Save */}
               <button
                 type="button"
                 onClick={handleSaveNote}
-                className="px-5 py-2 rounded-full bg-ds-accent hover:opacity-90 text-ds-text-primary text-sm font-medium font-dm-sans transition-all active:scale-95 cursor-pointer"
+                className="w-[77px] h-9 px-3 py-1.5 flex items-center justify-center rounded-full bg-ds-surface-1 hover:bg-ds-surface-2 transition-all active:scale-95 cursor-pointer focus:outline-none"
               >
-                Save
+                <span className={`text-base font-medium font-dm-sans leading-6 transition-colors ${noteText.trim() ? 'text-ds-text-primary' : 'text-ds-text-muted'}`}>
+                  Save
+                </span>
+              </button>
+
+              {/* Secondary button: Cancel */}
+              <button
+                type="button"
+                onClick={() => setIsNoteModalOpen(false)}
+                className="w-[77px] h-9 px-3 py-1.5 flex items-center justify-center rounded-full border border-ds-border hover:bg-ds-surface-1 transition-all active:scale-95 cursor-pointer focus:outline-none"
+              >
+                <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
+                  Cancel
+                </span>
               </button>
             </div>
           </div>
