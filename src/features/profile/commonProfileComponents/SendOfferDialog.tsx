@@ -126,7 +126,7 @@ export function SendOfferDialog({
         try {
             setLoading(true);
             await sendJobOffer(isCompany ? activeProfile!.id : null, selectedJobId, targetUserId, message || undefined);
-            toast.success(`Offer sent to ${targetUserName}!`);
+            toast.success("Offer sent");
             setOfferedJobIds(prev => [...prev, selectedJobId]);
             handleOpen(false);
         } catch (err: any) {

@@ -61,16 +61,16 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-80px)] flex flex-col justify-center items-center relative py-12 px-4 font-dm-sans animate-in fade-in duration-200">
+    <div className="w-full min-h-screen flex flex-col justify-center items-center relative py-8 px-4 font-dm-sans overflow-y-auto">
       {/* Top Left: Back Navigation - use chevron icon and secondary hover color per design system */}
       <button
         onClick={onBack}
         type="button"
         disabled={isDrafting}
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="fixed top-[40px] left-[40px] z-[60] inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
-        <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors" />
+        <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
         <span className="font-dm-sans font-medium text-base leading-6">Back</span>
       </button>
 

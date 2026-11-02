@@ -68,6 +68,7 @@ export interface JobsUIState {
   // ─── In-memory set checks (maintained for O(1) speed) ────
   savedJobIds: Set<string>;
   appliedJobIds: Set<string>;
+  withdrawnJobIds: Set<string>;
   respondedOffers: Record<string, 'accept' | 'decline'>;
   followedCompanies: Set<string>;
 
@@ -94,6 +95,8 @@ export interface JobsUIState {
   addAppliedId: (id: string) => void;
   addAppliedIds: (ids: string[]) => void;
   removeAppliedId: (id: string) => void;
+  addWithdrawnId: (id: string) => void;
+  removeWithdrawnId: (id: string) => void;
   setOfferResponse: (id: string, action: 'accept' | 'decline') => void;
   toggleFollowCompany: (companyName: string) => void;
 
@@ -177,6 +180,7 @@ export const useJobStore = create<JobsUIState>()(
 
       savedJobIds: new Set<string>(),
       appliedJobIds: new Set<string>(),
+      withdrawnJobIds: new Set<string>(),
       respondedOffers: {},
       followedCompanies: new Set<string>(),
 
@@ -294,20 +298,27 @@ export const useJobStore = create<JobsUIState>()(
         set((state) => {
           const nextApplied = new Set(state.appliedJobIds);
           nextApplied.add(id);
-          return { appliedJobIds: nextApplied };
+          const nextWithdrawn = new Set(state.withdrawnJobIds);
+          nextWithdrawn.delete(id);
+          return { appliedJobIds: nextApplied, withdrawnJobIds: nextWithdrawn };
         }),
 
       addAppliedIds: (ids) =>
         set((state) => {
           const nextApplied = new Set(state.appliedJobIds);
+          const nextWithdrawn = new Set(state.withdrawnJobIds);
           let changed = false;
           ids.forEach((id) => {
             if (!nextApplied.has(id)) {
               nextApplied.add(id);
               changed = true;
             }
+            if (nextWithdrawn.has(id)) {
+              nextWithdrawn.delete(id);
+              changed = true;
+            }
           });
-          return changed ? { appliedJobIds: nextApplied } : {};
+          return changed ? { appliedJobIds: nextApplied, withdrawnJobIds: nextWithdrawn } : {};
         }),
 
       removeAppliedId: (id) =>
@@ -315,6 +326,22 @@ export const useJobStore = create<JobsUIState>()(
           const nextApplied = new Set(state.appliedJobIds);
           nextApplied.delete(id);
           return { appliedJobIds: nextApplied };
+        }),
+
+      addWithdrawnId: (id) =>
+        set((state) => {
+          const nextWithdrawn = new Set(state.withdrawnJobIds);
+          nextWithdrawn.add(id);
+          const nextApplied = new Set(state.appliedJobIds);
+          nextApplied.delete(id);
+          return { withdrawnJobIds: nextWithdrawn, appliedJobIds: nextApplied };
+        }),
+
+      removeWithdrawnId: (id) =>
+        set((state) => {
+          const nextWithdrawn = new Set(state.withdrawnJobIds);
+          nextWithdrawn.delete(id);
+          return { withdrawnJobIds: nextWithdrawn };
         }),
 
       setOfferResponse: (id, action) =>
@@ -398,7 +425,7 @@ export const useJobStore = create<JobsUIState>()(
         }),
 
       // ─── Create Job Flow ───────────────────────────────────────
-      createJobStep: 'verification',
+      createJobStep: 'role-input',
       createJobTitle: '',
       createJobId: null,
       createJobDetails: {},
@@ -414,7 +441,7 @@ export const useJobStore = create<JobsUIState>()(
       setIsDrafting: (isDrafting) => set({ isDrafting }),
       resetCreateJobFlow: () =>
         set({
-          createJobStep: 'verification',
+          createJobStep: 'role-input',
           createJobTitle: '',
           createJobId: null,
           createJobDetails: {},

@@ -125,17 +125,26 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
   };
 
   const emptyContent = getEmptyStateContent();
-  const totalJobs = counts?.all ?? listings.length;
+  const getCurrentTabInfo = () => {
+    const s = statusFilter.toLowerCase();
+    if (s === 'active') return { title: 'Active Jobs', count: counts?.active ?? 0 };
+    if (s === 'close' || s === 'closed') return { title: 'Closed Jobs', count: counts?.closed ?? 0 };
+    if (s === 'in review' || s === 'in_review') return { title: 'In Review Jobs', count: counts?.inReview ?? 0 };
+    if (s === 'draft' || s === 'drafts') return { title: 'Draft Jobs', count: counts?.draft ?? 0 };
+    return { title: 'All Jobs', count: counts?.all ?? listings.length };
+  };
+
+  const { title: tabTitle, count: tabCount } = getCurrentTabInfo();
 
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-4 font-dm-sans">
       {/* Section Header: All Jobs & Total jobs */}
       <div className="w-full flex flex-col items-start gap-1">
         <h3 className="text-ds-text-primary ds-text-body-1 font-medium">
-          All Jobs
+          {tabTitle}
         </h3>
         <span className="text-ds-text-secondary ds-text-small font-normal">
-          Total jobs - {totalJobs}
+          Total jobs - {tabCount}
         </span>
       </div>
 
@@ -252,6 +261,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                             e.stopPropagation();
                             setActiveMenuJobId(isMenuOpen ? null : item.id);
                           }}
+                          onMouseDown={(e) => e.stopPropagation()}
                           className="w-5 h-5 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary focus:outline-none transition-colors shrink-0 cursor-pointer"
                           aria-label="Job actions"
                         >
@@ -264,6 +274,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                             ref={menuRef}
                             className="absolute right-0 top-7 z-50 w-[92px] p-3 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl flex flex-col items-start gap-4 text-left select-none animate-in fade-in zoom-in-95 duration-100"
                             onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
                           >
                             <button
                               type="button"
@@ -272,6 +283,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                                 setActiveMenuJobId(null);
                                 onSendOffer && onSendOffer(item);
                               }}
+                              onMouseDown={(e) => e.stopPropagation()}
                               className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
                             >
                               Send offer

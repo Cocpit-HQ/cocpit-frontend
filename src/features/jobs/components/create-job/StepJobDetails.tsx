@@ -114,7 +114,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const [workMode, setWorkMode] = useState(initialDetails?.work_mode || 'Hybrid');
   const [minSalary, setMinSalary] = useState(initialDetails?.salary_min ? String(initialDetails.salary_min) : '');
   const [maxSalary, setMaxSalary] = useState(initialDetails?.salary_max ? String(initialDetails.salary_max) : '');
-  const [currency] = useState(initialDetails?.salary_currency || 'USD');
+  const [currency] = useState(initialDetails?.salary_currency || 'INR');
   const [industry, setIndustry] = useState(initialDetails?.industry || '');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [regenerateCount, setRegenerateCount] = useState(initialDetails?.ai_generation_count || 0);
@@ -384,6 +384,13 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     };
   }, [debouncedIndustrySearch, isIndustryDropdownOpen]);
 
+  // Focus search input smoothly without causing viewport jump/shake
+  useEffect(() => {
+    if (isIndustryDropdownOpen) {
+      industrySearchInputRef.current?.focus({ preventScroll: true });
+    }
+  }, [isIndustryDropdownOpen]);
+
   // Load more via cursor when scrolling to bottom of list
   const handleIndustryScroll = useCallback(async (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -538,7 +545,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       work_mode: workMode,
       salary_min: minSalary ? parseFloat(minSalary.replace(/,/g, '')) : undefined,
       salary_max: maxSalary ? parseFloat(maxSalary.replace(/,/g, '')) : undefined,
-      salary_currency: currency,
+      salary_currency: currency || 'INR',
       industry,
     };
   };
@@ -566,8 +573,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
   const handlePublishClick = () => {
     setValidationError(null);
-    if (role.trim().length < 5) {
-      setValidationError("Job role/title must be at least 5 characters long");
+    if (role.trim().length < 2) {
+      setValidationError("Job role/title must be at least 2 characters long");
       return;
     }
     if (description.trim().length < 100) {
@@ -592,7 +599,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     (parsedMinSalary !== undefined && parsedMaxSalary !== undefined && parsedMaxSalary >= parsedMinSalary);
 
   const isPublishEnabled =
-    role.trim().length >= 5 &&
+    role.trim().length >= 2 &&
     description.trim().length >= 100 &&
     location.trim().length > 0 &&
     industry.trim().length > 0 &&
@@ -601,7 +608,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     isSalaryValid;
 
   return (
-    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary flex flex-col relative select-none animate-in fade-in duration-300">
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary flex flex-col relative select-none overflow-y-auto">
       {/* Dynamic Keyframes for smooth clockwise Cyphex spin loader */}
       <style jsx global>{`
         @keyframes cyphex-spin {
@@ -625,9 +632,9 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         onClick={onBack}
         type="button"
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary text-base font-medium font-dm-sans leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="fixed top-[40px] left-[40px] z-50 inline-flex items-center gap-2 p-0 text-ds-text-primary text-base font-medium font-dm-sans leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
-        <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0" />
+        <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
         <span>Back</span>
       </button>
 
@@ -636,13 +643,13 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         onClick={onClose || onBack}
         type="button"
         aria-label="Close"
-        className="fixed top-6 right-4 sm:top-10 sm:right-10 z-50 text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer p-1 select-none bg-transparent border-none outline-none"
+        className="fixed top-[40px] right-[40px] z-50 text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer p-1 select-none bg-transparent border-none outline-none"
       >
         <Icon icon="solar:close-linear" className="w-5 h-5 shrink-0" />
       </button>
 
       {/* Main Form Container (Figma: top-[60px], centered w-[640px]) */}
-      <div className="w-full max-w-[640px] mx-auto pt-10 sm:pt-[60px] pb-28 px-4 sm:px-0 flex flex-col items-stretch gap-8 sm:gap-10">
+      <div className="w-full max-w-[640px] mx-auto pt-10 sm:pt-[60px] pb-8 px-4 sm:px-0 flex flex-col items-stretch gap-6 sm:gap-7">
         {/* Title */}
         <div className="flex items-center gap-2">
           <h1 className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
@@ -651,9 +658,9 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         </div>
 
         {/* Form Fields Stack */}
-        <div className="flex flex-col gap-8 sm:gap-10">
+        <div className="flex flex-col gap-6 sm:gap-7">
           {/* Row 1: Job role & Recruiter */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-7">
             {/* Job role */}
             <div className="border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5">
               <label className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
@@ -690,7 +697,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Row 2: Location & Work mode */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-7">
             {/* Location with Google Places autocomplete matching BusinessEditProfileTab */}
             <div
               ref={locationDropdownRef}
@@ -813,7 +820,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Row 3: Experience level & Work type */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-7">
             {/* Experience level */}
             <div
               ref={experienceRef}
@@ -965,7 +972,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             {/* Industry Selection with Cursor-based 50 Batch Pagination & Search */}
             <div
               ref={industryDropdownRef}
-              className="relative border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5 cursor-pointer select-none"
+              className="min-w-0 relative border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5 cursor-pointer select-none"
               onClick={() => {
                 setIsIndustryDropdownOpen((prev) => !prev);
               }}
@@ -992,7 +999,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               {isIndustryDropdownOpen && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-[calc(100%+8px)] left-0 w-full min-w-[240px] p-2 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col gap-2 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden"
+                  className="absolute top-[calc(100%+8px)] left-0 w-full p-2 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col gap-2 z-50 overflow-hidden"
                 >
                   {/* Search input with search icon & clear button */}
                   <div className="w-full flex items-center gap-2 border-b border-ds-border pb-2 px-1">
@@ -1003,7 +1010,6 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                       value={industrySearchQuery}
                       onChange={(e) => setIndustrySearchQuery(e.target.value)}
                       placeholder="Search industries..."
-                      autoFocus
                       className="w-full bg-transparent text-sm text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-normal py-0.5 outline-none"
                     />
                     {industrySearchQuery && (
@@ -1076,37 +1082,43 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             </div>
 
             {/* Min salary */}
-            <div className="border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5">
+            <div className="min-w-0 border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5">
               <label className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
                 Min salary (annual)
               </label>
-              <input
-                type="text"
-                value={minSalary}
-                onChange={(e) => {
-                  setMinSalary(e.target.value);
-                  setIsDirty(true);
-                }}
-                placeholder="e.g. 1,200,000"
-                className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none"
-              />
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-normal text-ds-text-muted font-dm-sans select-none">₹</span>
+                <input
+                  type="text"
+                  value={minSalary}
+                  onChange={(e) => {
+                    setMinSalary(e.target.value.replace(/[^0-9,]/g, ''));
+                    setIsDirty(true);
+                  }}
+                  placeholder="1,200,000"
+                  className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none"
+                />
+              </div>
             </div>
 
             {/* Max salary */}
-            <div className="border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5">
+            <div className="min-w-0 border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5">
               <label className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
                 Max salary (annual)
               </label>
-              <input
-                type="text"
-                value={maxSalary}
-                onChange={(e) => {
-                  setMaxSalary(e.target.value);
-                  setIsDirty(true);
-                }}
-                placeholder="e.g. 1,200,000"
-                className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none"
-              />
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-normal text-ds-text-muted font-dm-sans select-none">₹</span>
+                <input
+                  type="text"
+                  value={maxSalary}
+                  onChange={(e) => {
+                    setMaxSalary(e.target.value.replace(/[^0-9,]/g, ''));
+                    setIsDirty(true);
+                  }}
+                  placeholder="1,200,000"
+                  className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -22,12 +22,15 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     setMultipleFilters,
     savedJobIds,
     appliedJobIds,
+    withdrawnJobIds,
     respondedOffers,
     setApplicationStats,
     addSavedId,
     removeSavedId,
     addAppliedId,
     removeAppliedId,
+    addWithdrawnId,
+    removeWithdrawnId,
     addSavedIds,
     addAppliedIds,
     setOfferResponse,
@@ -41,12 +44,15 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       setMultipleFilters: state.setMultipleFilters,
       savedJobIds: state.savedJobIds,
       appliedJobIds: state.appliedJobIds,
+      withdrawnJobIds: state.withdrawnJobIds,
       respondedOffers: state.respondedOffers,
       setApplicationStats: state.setApplicationStats,
       addSavedId: state.addSavedId,
       removeSavedId: state.removeSavedId,
       addAppliedId: state.addAppliedId,
       removeAppliedId: state.removeAppliedId,
+      addWithdrawnId: state.addWithdrawnId,
+      removeWithdrawnId: state.removeWithdrawnId,
       addSavedIds: state.addSavedIds,
       addAppliedIds: state.addAppliedIds,
       setOfferResponse: state.setOfferResponse,
@@ -176,22 +182,25 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
   // Dynamically enhance lists with O(1) Zustand lookups
   const enhanceJob = useCallback((job: Job) => {
+    const isWithdrawn = withdrawnJobIds.has(job.id);
     const offerResp = (job.offer_id && respondedOffers[job.offer_id]) || (job.id && respondedOffers[job.id]);
     const offerStatus = offerResp
       ? (offerResp === 'accept' ? 'accepted' : 'declined')
       : job.offerStatus;
-    const applicationStatus = offerResp
-      ? (offerResp === 'accept' ? 'Accepted' : 'Declined')
-      : job.application_status;
+    const applicationStatus = isWithdrawn
+      ? 'Withdrawn'
+      : offerResp
+        ? (offerResp === 'accept' ? 'Accepted' : 'Declined')
+        : job.application_status;
 
     return {
       ...job,
       is_saved: job.is_saved || savedJobIds.has(job.id) || savedJobIds.has(job.offer_id || ''),
-      is_applied: job.is_applied || appliedJobIds.has(job.id),
+      is_applied: !isWithdrawn && (appliedJobIds.has(job.id) || job.is_applied),
       offerStatus,
       application_status: applicationStatus,
     };
-  }, [savedJobIds, appliedJobIds, respondedOffers]);
+  }, [savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers]);
 
   const recommendedJobs = useMemo(() => rawRecommendations.map(enhanceJob), [rawRecommendations, enhanceJob]);
 
@@ -281,6 +290,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     },
     onMutate: async ({ jobId }) => {
       addAppliedId(jobId);
+      removeWithdrawnId(jobId);
       if (selectedJob?.id === jobId) {
         setSelectedJob(prev => prev ? { ...prev, is_applied: true, application_status: 'Applied' } : null);
       }
@@ -317,12 +327,37 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     mutationFn: (jobId: string) => jobsService.withdrawApplication(jobId),
     onMutate: async (jobId) => {
       removeAppliedId(jobId);
+      addWithdrawnId(jobId);
       if (selectedJob?.id === jobId) {
         setSelectedJob(prev => prev ? { ...prev, is_applied: false, application_status: 'Withdrawn' } : null);
       }
+      // Optimistically update React Query cache across explore, saved, applied
+      ['explore', 'saved', 'applied'].forEach((subKey) => {
+        queryClient.setQueriesData({ queryKey: ['jobs', subKey] }, (oldData: any) => {
+          if (!oldData) return oldData;
+          if (oldData.pages) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                data: page.data.map((item: Job) =>
+                  item.id === jobId ? { ...item, is_applied: false, application_status: 'Withdrawn' } : item
+                ),
+              })),
+            };
+          }
+          if (Array.isArray(oldData)) {
+            return oldData.map((item: Job) =>
+              item.id === jobId ? { ...item, is_applied: false, application_status: 'Withdrawn' } : item
+            );
+          }
+          return oldData;
+        });
+      });
     },
     onError: (err, jobId) => {
       addAppliedId(jobId);
+      removeWithdrawnId(jobId);
       toast.error('Failed to withdraw application.');
     },
     onSuccess: () => {
@@ -331,6 +366,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
       const stats = await jobsService.getApplicationStats();
       setApplicationStats(stats);
     }

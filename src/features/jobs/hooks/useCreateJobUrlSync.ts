@@ -8,7 +8,12 @@ type Step = 'verification' | 'role-input' | 'details' | 'preview';
  * - Step changes are pushed immediately.
  * - Title changes are debounced (400ms) to avoid flooding the URL during typing.
  */
-export function useCreateJobUrlSync(step: Step, title: string, jobId: string | null) {
+export function useCreateJobUrlSync(
+  step: Step,
+  title: string,
+  jobId: string | null,
+  isVerificationLoading?: boolean
+) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const titleSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -16,7 +21,10 @@ export function useCreateJobUrlSync(step: Step, title: string, jobId: string | n
   useEffect(() => {
     if (!searchParams) return;
     
-    // GUARD: Do not attempt to sync child parameters until the parent's route transition 
+    // GUARD 1: Do not sync URL while verification status is still loading
+    if (isVerificationLoading) return;
+
+    // GUARD 2: Do not attempt to sync child parameters until the parent's route transition 
     // to 'create-job' is fully resolved by Next.js. This prevents race conditions where 
     // the child overwrites the parent's pending URL update.
     if (searchParams.get('view') !== 'create-job') return;
@@ -73,5 +81,5 @@ export function useCreateJobUrlSync(step: Step, title: string, jobId: string | n
     return () => {
       if (titleSyncRef.current) clearTimeout(titleSyncRef.current);
     };
-  }, [step, title, jobId, router, searchParams]);
+  }, [step, title, jobId, isVerificationLoading, router, searchParams]);
 }

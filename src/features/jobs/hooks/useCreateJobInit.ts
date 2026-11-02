@@ -6,7 +6,7 @@ type Step = 'verification' | 'role-input' | 'details' | 'preview';
 
 interface UseCreateJobInitOptions {
   initialListing?: JobListing | null;
-  isVerified: boolean;
+  verificationState: 'loading' | 'verified' | 'unverified' | 'error';
 }
 
 /**
@@ -16,7 +16,7 @@ interface UseCreateJobInitOptions {
  * to the correct state after a page refresh. When editing an existing listing
  * (`initialListing`), it pre-populates the store with the listing data instead.
  */
-export function useCreateJobInit({ initialListing, isVerified }: UseCreateJobInitOptions) {
+export function useCreateJobInit({ initialListing, verificationState }: UseCreateJobInitOptions) {
   const {
     createJobTitle: title,
     setCreateJobStep: setStep,
@@ -28,6 +28,9 @@ export function useCreateJobInit({ initialListing, isVerified }: UseCreateJobIni
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // GUARD: Do not resolve or change steps while verification status is loading or errored
+    if (verificationState === 'loading' || verificationState === 'error') return;
 
     const params = new URLSearchParams(window.location.search);
     const urlStep = params.get('step') as Step | null;
@@ -45,8 +48,8 @@ export function useCreateJobInit({ initialListing, isVerified }: UseCreateJobIni
         useJobStore.getState().resetCreateJobFlow();
       }
 
-      let resolvedStep: Step = 'verification';
-      if (!isVerified) {
+      let resolvedStep: Step = 'role-input';
+      if (verificationState === 'unverified') {
         resolvedStep = 'verification';
       } else if (urlStep && ['role-input', 'details', 'preview'].includes(urlStep)) {
         resolvedStep = urlStep;
@@ -66,5 +69,5 @@ export function useCreateJobInit({ initialListing, isVerified }: UseCreateJobIni
         setJobId(urlJobId);
       }
     }
-  }, [initialListing, isVerified]);
+  }, [initialListing, verificationState]);
 }

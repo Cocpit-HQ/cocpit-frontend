@@ -34,7 +34,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
 
   const formatSalary = (val: number | undefined | null) => {
     if (val === undefined || val === null || isNaN(val)) return 'Not specified';
-    return Number(val).toLocaleString();
+    return `₹${Number(val).toLocaleString()}`;
   };
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -76,7 +76,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+          className="fixed top-[40px] left-[40px] z-[60] inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         >
           <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
           <span className="text-base font-medium leading-6">Back</span>
@@ -89,7 +89,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
           type="button"
           onClick={onBack}
           aria-label="Close"
-          className="fixed top-6 right-4 sm:top-10 sm:right-10 z-[60] flex items-center justify-center size-9 rounded-md text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent group"
+          className="fixed top-[40px] right-[40px] z-[60] flex items-center justify-center size-9 rounded-md text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent group"
         >
           <Icon
             icon="solar:close-linear"
@@ -99,7 +99,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
       )}
 
       {/* Main 640px Centered Column matching Figma Frame */}
-      <div className="w-full max-w-[640px] mx-auto px-4 sm:px-0 pt-16 sm:pt-[60px] pb-16 flex flex-col justify-start items-center gap-5 animate-in fade-in duration-300">
+      <div className="w-full max-w-[640px] mx-auto px-4 sm:px-0 pt-16 sm:pt-[60px] pb-16 flex flex-col justify-start items-center gap-5">
         
         {/* Title Header */}
         <div className="w-full flex justify-start items-center gap-2">

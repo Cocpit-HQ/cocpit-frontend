@@ -17,12 +17,14 @@ export const useJobDetail = (jobId: string) => {
   const {
     savedJobIds,
     appliedJobIds,
+    withdrawnJobIds,
     respondedOffers,
     followedCompanies,
     addSavedId,
     removeSavedId,
     addAppliedId,
     removeAppliedId,
+    addWithdrawnId,
     setOfferResponse,
     toggleFollowCompany
   } = useJobStore();
@@ -68,8 +70,12 @@ export const useJobDetail = (jobId: string) => {
     if (!rawJob) return null;
     
     const processed = { ...rawJob };
+    const isWithdrawn = withdrawnJobIds.has(processed.id);
     processed.is_saved = processed.is_saved || savedJobIds.has(processed.id);
-    processed.is_applied = processed.is_applied || appliedJobIds.has(processed.id);
+    processed.is_applied = !isWithdrawn && (processed.is_applied || appliedJobIds.has(processed.id));
+    if (isWithdrawn) {
+      processed.application_status = 'Withdrawn';
+    }
 
     // Handle offer statuses
     if (processed.is_offer) {
@@ -89,7 +95,7 @@ export const useJobDetail = (jobId: string) => {
     // Handle followed status for company
     processed.is_followed = processed.is_followed || followedCompanies.has(processed.company);
     return processed;
-  }, [rawJob, savedJobIds, appliedJobIds, respondedOffers, followedCompanies]);
+  }, [rawJob, savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers, followedCompanies]);
 
   // Seed the store with initial values from the API (only once per job load)
   useEffect(() => {
@@ -168,6 +174,11 @@ export const useJobDetail = (jobId: string) => {
     try {
       await jobsService.withdrawApplication(job.id);
       removeAppliedId(job.id);
+      addWithdrawnId(job.id);
+      setRawJob(prev => prev ? { ...prev, is_applied: false, application_status: 'Withdrawn' } : prev);
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
       toast.success('Application withdrawn successfully.');
     } catch (error) {
       console.error('Failed to withdraw application:', error);

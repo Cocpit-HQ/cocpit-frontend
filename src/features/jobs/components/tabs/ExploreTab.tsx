@@ -98,6 +98,13 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   );
 
   const handleFilterRedirect = (newFilters: Partial<JobsFilter>) => {
+    const hasAny = Object.values(newFilters).some(
+      (val) => Boolean(val && (Array.isArray(val) ? val.length > 0 : String(val).trim()))
+    );
+    if (!hasAny) {
+      return;
+    }
+
     const params = new URLSearchParams();
     Object.entries(newFilters).forEach(([key, val]) => {
       if (val) {

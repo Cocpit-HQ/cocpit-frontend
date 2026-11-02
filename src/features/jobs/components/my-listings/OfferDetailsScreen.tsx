@@ -209,7 +209,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         type="button"
         onClick={onBack}
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="fixed top-[40px] left-[40px] z-[60] inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
         <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
         <span className="font-dm-sans font-medium text-base leading-6">Back</span>

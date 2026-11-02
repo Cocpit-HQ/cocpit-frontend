@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { LeftArrowIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
@@ -35,15 +34,15 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-80px)] flex flex-col justify-center items-center relative py-8 sm:py-12 px-4 font-sans animate-in fade-in duration-200">
+    <div className="w-full min-h-screen flex flex-col justify-center items-center relative py-8 px-4 font-sans overflow-y-auto">
       {/* Top Left: Back Navigation - use chevron icon and secondary hover color per design system */}
       <button
         onClick={onBack}
         type="button"
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="fixed top-[40px] left-[40px] z-[60] inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
-        <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors" />
+        <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
         <span className="font-sans font-medium text-base leading-6">Back</span>
       </button>
 
@@ -52,7 +51,7 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         onClick={onClose || onBack}
         type="button"
         aria-label="Close"
-        className="fixed top-6 right-4 sm:top-10 sm:right-10 z-[60] text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer p-1 select-none bg-transparent border-none outline-none"
+        className="fixed top-[40px] right-[40px] z-[60] text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer p-1 select-none bg-transparent border-none outline-none"
       >
         <Icon icon="solar:close-linear" className="w-5 h-5 shrink-0" />
       </button>
@@ -84,15 +83,11 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
             </span>
           </button>
           {/* Secondary button: width 203px, height 36px, px-3 py-1.5, border border-ds-border, rounded-full */}
-          <button
-            type="button"
-            onClick={handleVerifyClick}
-            className="w-full max-w-[203px] h-9 px-3 py-1.5 border border-ds-border active:scale-95 text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0"
-          >
-            <span className="w-[179px] h-6 flex justify-center items-center font-sans font-medium text-base leading-6 text-ds-text-primary whitespace-nowrap">
+          <div className="w-full max-w-[203px] h-9 px-3 py-1.5 border border-ds-border text-ds-text-secondary rounded-full flex flex-row justify-center items-center gap-2.5 bg-transparent shrink-0 select-none cursor-default">
+            <span className="w-[179px] h-6 flex justify-center items-center font-sans font-medium text-base leading-6 text-ds-text-secondary whitespace-nowrap">
               Learn about verification
             </span>
-          </button>
+          </div>
         </div>
 
         {/* Frame 2609984: width 600px max, responsive grid/flex */}
@@ -135,15 +130,9 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
           <span className="text-ds-text-secondary">
             Verification typically takes less than 2 minutes. Need help?{' '}
           </span>
-          <Link
-            href="https://cocpit.in/contact"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="!text-ds-accent hover:!text-ds-accent-hover font-normal cursor-pointer bg-transparent border-none p-0 outline-none focus-visible:ring-1 focus-visible:ring-ds-accent rounded-sm transition-colors"
-            style={{ color: 'var(--ds-accent)' }}
-          >
+          <span className="text-ds-accent font-normal select-none cursor-default">
             Contact Support
-          </Link>
+          </span>
         </div>
       </div>
 

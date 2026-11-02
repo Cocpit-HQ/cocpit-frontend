@@ -72,11 +72,13 @@ export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
         <span className="text-indigo-600 text-lg font-bold font-dm-sans flex items-center gap-1.5 md:justify-end">
           {job.salary_display || job.salary_min || job.salary_max ? (
             <>
-              <Icon icon={getCurrencyIcon(job.salary_currency)} className="w-5 h-5 text-ds-accent flex-shrink-0" />
+              <Icon icon="lucide:indian-rupee" className="w-5 h-5 text-ds-accent flex-shrink-0" />
               <span>
                 {job.salary_display
-                  ? job.salary_display
-                  : `${job.salary_min || ''} – ${job.salary_max || ''}`.trim()
+                  ? job.salary_display.replace(/[\$₹]/g, '').trim()
+                  : job.salary_min && job.salary_max
+                    ? `${Number(job.salary_min).toLocaleString()} – ${Number(job.salary_max).toLocaleString()}`
+                    : `${Number(job.salary_min || job.salary_max).toLocaleString()}`
                 }
               </span>
             </>

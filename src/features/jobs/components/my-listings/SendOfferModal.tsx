@@ -5,7 +5,7 @@ import Avatar from '@/components/shared/Avatar';
 import { JobListing } from '../../types/jobs.types';
 import { useSession } from 'next-auth/react';
 import api from '@/lib/axios';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
@@ -35,7 +35,23 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
   const [stage, setStage] = useState<1 | 2 | 3>(initialJobId ? 2 : 1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedJobId, setSelectedJobId] = useState('');
+  const [selectedJobId, setSelectedJobId] = useState(initialJobId || '');
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [prevInitialJobId, setPrevInitialJobId] = useState(initialJobId);
+
+  if (isOpen !== prevIsOpen || initialJobId !== prevInitialJobId) {
+    setPrevIsOpen(isOpen);
+    setPrevInitialJobId(initialJobId);
+    if (isOpen) {
+      if (initialJobId) {
+        setSelectedJobId(initialJobId);
+        setStage(2);
+      } else {
+        setSelectedJobId('');
+        setStage(1);
+      }
+    }
+  }
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]); // Array of candidate IDs
   const [personalNote, setPersonalNote] = useState('');
   const [candidatesList, setCandidatesList] = useState<SelectableCandidate[]>([]);
@@ -210,7 +226,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
       });
 
       await Promise.all(promises);
-      toast.success(`Offers sent successfully to: ${selectedList.map(c => c.name).join(', ')}`);
+      toast.success("Offer sent");
 
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages'] });
@@ -431,7 +447,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 onWheel={(e) => e.stopPropagation()}
               >
                 {(() => {
-                  if (isFetchingRecipients) {
+                  if ((isFetchingRecipients || isLoadingCandidates) && candidatesList.length === 0) {
                     return (
                       <div className="py-8 flex flex-col items-center justify-center gap-2 text-ds-text-muted text-xs font-dm-sans w-full">
                         <Icon icon="lucide:loader-2" className="size-5 animate-spin text-ds-accent" />

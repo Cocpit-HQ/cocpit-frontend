@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { getOnboardingOptions } from "@/services/api/onboarding";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Icon } from "@iconify/react";
 import { Icon as CustomIcon } from "@/components/icons";
 import { JobsFilter } from "../../types/jobs.types";
@@ -46,8 +48,13 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     industry: "",
   });
 
-  const [availableIndustries, setAvailableIndustries] = useState<string[]>([]);
+  const [backendIndustries, setBackendIndustries] = useState<string[]>([]);
+  const [industryCursor, setIndustryCursor] = useState<string | null>(null);
+  const [hasMoreIndustries, setHasMoreIndustries] = useState(false);
+  const [isLoadingIndustries, setIsLoadingIndustries] = useState(false);
+  const [isLoadingMoreIndustries, setIsLoadingMoreIndustries] = useState(false);
   const [industrySearch, setIndustrySearch] = useState("");
+  const debouncedIndustrySearch = useDebounce(industrySearch, 250);
   const [customMinSalary, setCustomMinSalary] = useState("");
   const [customMaxSalary, setCustomMaxSalary] = useState("");
 
@@ -75,15 +82,87 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     }
   }, [isOpen]);
 
+  // Fetch industries from onboarding API matching Create Job (StepJobDetails)
   useEffect(() => {
-    import("../../services/jobs.service")
-      .then(({ getIndustries }) => {
-        getIndustries().then((data) =>
-          setAvailableIndustries(data.map((d) => d.industry_name)),
-        );
+    let isCancelled = false;
+    setIsLoadingIndustries(true);
+    getOnboardingOptions("industries", undefined, undefined, 50)
+      .then((res: any) => {
+        if (!isCancelled && Array.isArray(res)) {
+          setBackendIndustries(res.map((item: any) => item.label));
+          const meta = res as unknown as { nextCursor?: string | null; hasMore?: boolean };
+          setIndustryCursor(meta.nextCursor || null);
+          setHasMoreIndustries(Boolean(meta.hasMore));
+        }
       })
-      .catch((err) => console.error("Failed to load industries", err));
+      .catch((err) => console.error("Failed to load industries", err))
+      .finally(() => {
+        if (!isCancelled) setIsLoadingIndustries(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
   }, []);
+
+  // Live debounced search effect for industry matching Create Job
+  useEffect(() => {
+    let isCurrent = true;
+    setIsLoadingIndustries(true);
+
+    getOnboardingOptions("industries", debouncedIndustrySearch.trim() || undefined, undefined, 50)
+      .then((res: any) => {
+        if (isCurrent && Array.isArray(res)) {
+          setBackendIndustries(res.map((item: any) => item.label));
+          const meta = res as unknown as { nextCursor?: string | null; hasMore?: boolean };
+          setIndustryCursor(meta.nextCursor || null);
+          setHasMoreIndustries(Boolean(meta.hasMore));
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to search industries:", err);
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoadingIndustries(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [debouncedIndustrySearch]);
+
+  // Load more via cursor when scrolling to bottom of list
+  const handleIndustryScroll = useCallback(
+    async (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
+      if (isLoadingMoreIndustries || !hasMoreIndustries || !industryCursor) return;
+
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+        setIsLoadingMoreIndustries(true);
+        try {
+          const res = await getOnboardingOptions(
+            "industries",
+            debouncedIndustrySearch.trim() || undefined,
+            industryCursor,
+            50
+          );
+          setBackendIndustries((prev) => {
+            const existing = new Set(prev);
+            const newItems = res
+              .map((item: any) => item.label)
+              .filter((label: string) => !existing.has(label));
+            return [...prev, ...newItems];
+          });
+          setIndustryCursor((res as any).nextCursor || null);
+          setHasMoreIndustries(Boolean((res as any).hasMore));
+        } catch (err) {
+          console.error("Failed to load more industries:", err);
+        } finally {
+          setIsLoadingMoreIndustries(false);
+        }
+      }
+    },
+    [isLoadingMoreIndustries, hasMoreIndustries, industryCursor, debouncedIndustrySearch]
+  );
 
   const jobTypeOptions = [
     "Full time",
@@ -142,6 +221,15 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     return Object.values(localFilters).some(Boolean);
   }, [localFilters]);
 
+  // Compute if any filter options are selected (controls visibility of Clear button per SCRUM-1560)
+  const hasSelectedFilters = useMemo(() => {
+    return (
+      Object.values(localFilters).some((val) => Boolean(val && (typeof val === 'string' ? val.trim() : val))) ||
+      Boolean(customMinSalary) ||
+      Boolean(customMaxSalary)
+    );
+  }, [localFilters, customMinSalary, customMaxSalary]);
+
   // Handle exclusive selection for the 3 quick tabs (applies to below list only, no relation to popup)
   const handleQuickTabClick = (
     key: "job_type" | "work_mode" | "experience",
@@ -164,6 +252,10 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   };
 
   const handleApply = () => {
+    if (!hasSelectedFilters) {
+      return;
+    }
+
     const finalFilters = { ...localFilters };
     if (
       finalFilters.salary_range?.includes("Other") &&
@@ -194,6 +286,7 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     setLocalFilters(cleared);
     setCustomMinSalary("");
     setCustomMaxSalary("");
+    onClearFilters?.();
   };
 
   const renderAccordionSection = (
@@ -359,13 +452,15 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
               >
                 Apply
               </button>
-              <button
-                type="button"
-                onClick={handleClear}
-                className="h-8 px-3 py-1.5 rounded-lg flex items-center justify-center font-dm-sans font-normal text-sm leading-5 text-ds-error hover:bg-ds-surface-1 transition-colors cursor-pointer shrink-0"
-              >
-                Clear
-              </button>
+              {hasSelectedFilters && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="h-8 px-3 py-1.5 rounded-lg flex items-center justify-center font-dm-sans font-normal text-sm leading-5 text-ds-error hover:bg-ds-surface-1 transition-colors cursor-pointer shrink-0"
+                >
+                  Clear
+                </button>
+              )}
             </div>
 
             {/* Filter Categories in exact Figma order */}
@@ -422,54 +517,33 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                 </button>
                 {expandedSection === "industry" && (
                   <div className="w-[176px] flex flex-col pl-3 pr-1 pt-1 gap-1.5 animate-in fade-in duration-150">
-                    {/* Search box right near the dropdown (gap reduced, fixed outside scroll container) */}
-                    <div className="w-full">
+                    {/* Search box matching Figma: clean underline input with "Search" placeholder */}
+                    <div className="w-full border-b border-ds-border focus-within:border-ds-accent transition-colors pb-1">
                       <input
                         type="text"
-                        placeholder="Search industry"
+                        placeholder="Search"
                         value={industrySearch}
                         onChange={(e) => setIndustrySearch(e.target.value)}
-                        className="w-full h-8 text-xs font-dm-sans text-ds-text-primary bg-ds-surface-1 border border-ds-border rounded-md px-2 py-1 outline-none placeholder:text-ds-text-muted focus:border-ds-accent transition-colors"
+                        className="w-full bg-transparent text-sm font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted outline-none py-1 px-0"
                       />
                     </div>
 
                     {/* Scrollable list with min-w-0 so text is 100% visible with no dots bug */}
-                    <div className="w-full flex flex-col gap-1 max-h-44 overflow-y-auto no-scrollbar">
+                    <div
+                      onScroll={handleIndustryScroll}
+                      className="w-full flex flex-col gap-1 max-h-44 overflow-y-auto no-scrollbar"
+                    >
                       {(() => {
-                        const searchLower = industrySearch.toLowerCase().trim();
                         const selectedValues = getSelectedValues("industry");
-                        const filtered = searchLower
-                          ? availableIndustries.filter((i) =>
-                              i.toLowerCase().includes(searchLower),
-                            )
-                          : availableIndustries;
 
                         return (
                           <>
-                            {!searchLower && (
-                              <div className="w-full min-w-0">
-                                <button
-                                  type="button"
-                                  onClick={() => toggleFilter("industry", "")}
-                                  className={
-                                    "w-full py-1 text-left text-xs font-dm-sans transition-colors cursor-pointer flex items-center " +
-                                    (selectedValues.length === 0
-                                      ? "text-ds-accent font-medium"
-                                      : "text-ds-text-secondary hover:text-ds-text-primary")
-                                  }
-                                >
-                                  <span className="flex-1 min-w-0 truncate text-left">
-                                    All
-                                  </span>
-                                </button>
-                              </div>
-                            )}
-                            {filtered.length === 0 ? (
+                            {backendIndustries.length === 0 && !isLoadingIndustries ? (
                               <div className="py-1 text-xs text-ds-text-muted font-dm-sans">
                                 No industries found
                               </div>
                             ) : (
-                              filtered.map((opt) => {
+                              backendIndustries.map((opt) => {
                                 const isSelected = selectedValues.includes(opt);
                                 return (
                                   <div key={opt} className="w-full min-w-0">
@@ -492,6 +566,11 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                                   </div>
                                 );
                               })
+                            )}
+                            {(isLoadingIndustries || isLoadingMoreIndustries) && (
+                              <div className="py-1 text-xs text-ds-text-muted font-dm-sans">
+                                Loading...
+                              </div>
                             )}
                           </>
                         );
@@ -522,13 +601,15 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                       </span>
                     )}
                   </span>
-                  <button
-                    type="button"
-                    onClick={handleClear}
-                    className="font-dm-sans text-xs text-ds-error hover:opacity-80 cursor-pointer"
-                  >
-                    Clear All
-                  </button>
+                  {hasSelectedFilters && (
+                    <button
+                      type="button"
+                      onClick={handleClear}
+                      className="font-dm-sans text-xs text-ds-error hover:opacity-80 cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex flex-1 overflow-hidden">
@@ -561,21 +642,16 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                   <div className="flex-1 overflow-y-auto px-4 py-2 flex flex-col">
                     {activeMobileTab === "industry" ? (
                       <div className="flex flex-col gap-2 pt-2">
-                        <input
-                          type="text"
-                          placeholder="Search industry..."
-                          value={industrySearch}
-                          onChange={(e) => setIndustrySearch(e.target.value)}
-                          className="w-full text-xs font-dm-sans text-ds-text-primary bg-ds-surface-1 border border-ds-border rounded-lg px-2.5 py-1.5 outline-none placeholder:text-ds-text-muted"
-                        />
-                        {availableIndustries
-                          .filter(
-                            (i) =>
-                              !industrySearch ||
-                              i
-                                .toLowerCase()
-                                .includes(industrySearch.toLowerCase()),
-                          )
+                        <div className="w-full border-b border-ds-border focus-within:border-ds-accent transition-colors pb-1">
+                          <input
+                            type="text"
+                            placeholder="Search"
+                            value={industrySearch}
+                            onChange={(e) => setIndustrySearch(e.target.value)}
+                            className="w-full bg-transparent text-sm font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted outline-none py-1.5 px-0"
+                          />
+                        </div>
+                        {backendIndustries
                           .map((opt) => {
                             const isSel =
                               getSelectedValues("industry").includes(opt);

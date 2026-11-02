@@ -124,6 +124,8 @@ const EMPTY_STATE_CONFIG: Record<
   },
 };
 
+const applicantsCache = new Map<string, Candidate[]>();
+
 export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   listing,
   onBack,
@@ -136,10 +138,17 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const router = useRouter();
   const { toast } = useToast();
 
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
-  const [isLoadingApplicants, setIsLoadingApplicants] = useState<boolean>(true);
   const [filter, setFilter] = useState<FilterOption>('Top match');
+  const cacheKey = `${listing.id}_${filter}`;
+  const cached = applicantsCache.get(cacheKey);
+  const isKnownZero = listing.applicants_count === 0;
+
+  const [candidates, setCandidates] = useState<Candidate[]>(cached || []);
+  const [selectedCandId, setSelectedCandId] = useState<string | null>(() => {
+    if (cached && cached.length > 0) return cached[0].applicationId || cached[0].id;
+    return null;
+  });
+  const [isLoadingApplicants, setIsLoadingApplicants] = useState<boolean>(!isKnownZero && !cached);
   const totalCandidates = candidates.length;
   const selectedIndex = candidates.findIndex(
     (c) => (c.applicationId || c.id) === selectedCandId
@@ -172,23 +181,38 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const [candidateDetail, setCandidateDetail] = useState<any>(null);
   const [candidateAnalysis, setCandidateAnalysis] = useState<any>(null);
 
-  // Fetch applicants from API
+  // Fetch applicants from API with caching and instant resolution for zero applicants
   useEffect(() => {
     let active = true;
+    const currentKey = `${listing.id}_${filter}`;
+
+    if (listing.applicants_count === 0) {
+      applicantsCache.set(currentKey, []);
+      setCandidates([]);
+      setSelectedCandId(null);
+      setIsLoadingApplicants(false);
+      return;
+    }
+
     const fetchList = async () => {
-      setIsLoadingApplicants(true);
+      if (!applicantsCache.has(currentKey)) {
+        setIsLoadingApplicants(true);
+      }
       try {
         let apiStatus: string | undefined;
         if (filter === 'Shortlisted') apiStatus = 'Shortlisted';
         else if (filter === 'Pending') apiStatus = 'Applied';
 
         const list = await getJobApplicants(listing.id, apiStatus);
+        const resolvedList = Array.isArray(list) ? list : [];
+        applicantsCache.set(currentKey, resolvedList);
+
         if (active) {
-          if (Array.isArray(list) && list.length > 0) {
-            setCandidates(list);
-            const firstId = list[0].applicationId || list[0].id;
+          if (resolvedList.length > 0) {
+            setCandidates(resolvedList);
+            const firstId = resolvedList[0].applicationId || resolvedList[0].id;
             setSelectedCandId((prev) => {
-              const exists = list.some((c: Candidate) => (c.applicationId || c.id) === prev);
+              const exists = resolvedList.some((c: Candidate) => (c.applicationId || c.id) === prev);
               return exists ? prev : firstId;
             });
           } else {
@@ -210,7 +234,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     };
     fetchList();
     return () => { active = false; };
-  }, [listing.id, filter]);
+  }, [listing.id, listing.applicants_count, filter]);
 
   // Fetch candidate details and AI analysis when selected candidate changes
   useEffect(() => {
@@ -379,7 +403,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+          className="fixed top-[40px] left-[40px] z-[60] inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         >
           <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
           <span className="font-dm-sans font-medium text-base leading-6">Back</span>
@@ -387,7 +411,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       )}
 
       {/* Main 800px Centered Column matching Figma Frame 2609508 */}
-      <div className="w-full max-w-[800px] mx-auto flex flex-col gap-5 font-dm-sans animate-in fade-in duration-300">
+      <div className="w-full max-w-[800px] mx-auto pt-14 sm:pt-[60px] pb-16 px-4 sm:px-0 flex flex-col gap-5 font-dm-sans">
         
         {/* Header (Title + Subtitle) */}
         <div className="w-full flex flex-col items-start gap-1">
@@ -511,7 +535,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
           {/* Frame 2608633: Candidates Empty State (w: 800px, h: 324px) */}
           {candidates.length === 0 && !isLoadingApplicants ? (
-            <div className="w-full max-w-[800px] h-[324px] pt-[60px] pb-[120px] flex flex-col items-center justify-start gap-2 select-none animate-in fade-in duration-200">
+            <div className="w-full max-w-[800px] h-[324px] pt-[60px] pb-[120px] flex flex-col items-center justify-start gap-2 select-none">
               {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
               <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
                 <UserIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />

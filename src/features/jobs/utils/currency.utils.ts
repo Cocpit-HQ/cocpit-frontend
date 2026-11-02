@@ -55,7 +55,7 @@ export const formatCompactNumber = (value: number): string => {
  * Omit dollar ($) signs as currency is not captured yet.
  */
 export const formatCompact = (value: number, currency?: string): string => {
-  if (!currency || currency === 'USD') {
+  if (!currency || currency === 'USD' || currency === 'INR') {
     return formatCompactNumber(value);
   }
   try {
@@ -95,7 +95,7 @@ export const formatSalaryRange = (
  */
 export const cleanSalary = (val?: string | number | null): string => {
   if (!val) return '';
-  const text = String(val).replace(/\$/g, '').trim();
+  const text = String(val).replace(/[\$₹]/g, '').trim();
 
   // Matches "800000-900000" or "800000–900000" or "800000 - 900000"
   const rangeMatch = text.match(/^(\d+)\s*[-–]\s*(\d+)$/);

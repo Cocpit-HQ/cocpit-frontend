@@ -545,7 +545,7 @@ export const JobSearchPage: React.FC = () => {
       <button
         type="button"
         onClick={() => router.push("/jobs")}
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary font-medium font-dm-sans text-base leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="fixed top-[40px] left-[40px] z-50 inline-flex items-center gap-2 p-0 text-ds-text-primary font-medium font-dm-sans text-base leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         aria-label="Back to Jobs"
       >
         <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
@@ -556,7 +556,7 @@ export const JobSearchPage: React.FC = () => {
       <button
         type="button"
         onClick={() => router.push("/jobs")}
-        className="fixed top-6 right-4 sm:top-10 sm:right-10 z-50 size-6 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="fixed top-[40px] right-[40px] z-50 size-6 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         aria-label="Close search"
       >
         <Icon icon="lucide:x" className="size-5 shrink-0" />

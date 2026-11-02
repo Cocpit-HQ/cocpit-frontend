@@ -16,6 +16,8 @@ import { useCreateJobInit } from '../../hooks/useCreateJobInit';
 import { useCreateJobUrlSync } from '../../hooks/useCreateJobUrlSync';
 import { useCreateJobHydration } from '../../hooks/useCreateJobHydration';
 
+type VerificationState = 'loading' | 'verified' | 'unverified' | 'error';
+
 interface CreateJobFlowProps {
   onBack: () => void;
   onSubmit: (title: string, status: string, details?: Partial<JobListing>) => Promise<void>;
@@ -24,16 +26,57 @@ interface CreateJobFlowProps {
 
 export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, initialListing }) => {
   const router = useRouter();
-  const { activeProfile, userCompanies } = useActiveProfile();
-  const { data: myProfile } = useMyProfile();
+  const { activeProfile, isLoading: isActiveProfileLoading, updateActiveProfile } = useActiveProfile();
+  const {
+    data: myProfile,
+    isLoading: isMyProfileLoading,
+    isError: isMyProfileError,
+    refetch: refetchProfile,
+  } = useMyProfile();
 
-  const isUserVerified = activeProfile?.type === 'USER' && myProfile?.user?.is_identity_verified;
-  
-  // Bugfix ID-572: Companies can post jobs without verification
-  // const isCompanyVerified = activeProfile?.type === 'COMPANY' && activeProfile?.verification_status === 'VERIFIED';
-  const isCompanyVerified = activeProfile?.type === 'COMPANY';
-  
-  const isVerified = Boolean(isUserVerified || isCompanyVerified);
+  // Verification state machine: 'loading' | 'verified' | 'unverified' | 'error'
+  const verificationState = React.useMemo<VerificationState>(() => {
+    // 1. While ActiveProfileContext is initializing, state is loading
+    if (isActiveProfileLoading || !activeProfile) {
+      return 'loading';
+    }
+
+    // 2. Company profile: Bugfix ID-572 — Companies can post jobs without user verification
+    if (activeProfile.type === 'COMPANY') {
+      return 'verified';
+    }
+
+    // 3. Cached activeProfile identity verification
+    if (activeProfile.is_identity_verified) {
+      return 'verified';
+    }
+
+    // 4. USER profile checking myProfile query
+    if (isMyProfileLoading) {
+      return 'loading';
+    }
+
+    if (isMyProfileError) {
+      return 'error';
+    }
+
+    if (myProfile?.user?.is_identity_verified) {
+      return 'verified';
+    }
+
+    if (myProfile?.user && !myProfile.user.is_identity_verified) {
+      return 'unverified';
+    }
+
+    return 'unverified';
+  }, [isActiveProfileLoading, activeProfile, isMyProfileLoading, isMyProfileError, myProfile]);
+
+  // Sync verified status back to activeProfile context so subsequent visits in session are instant
+  React.useEffect(() => {
+    if (activeProfile?.type === 'USER' && myProfile?.user?.is_identity_verified && !activeProfile.is_identity_verified) {
+      updateActiveProfile?.({ is_identity_verified: true });
+    }
+  }, [activeProfile?.type, activeProfile?.is_identity_verified, myProfile?.user?.is_identity_verified, updateActiveProfile]);
 
   const {
     createJobStep: step,
@@ -51,14 +94,14 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
 
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
-  // Hook 1: Initialize step/title/jobId from URL params on mount
-  useCreateJobInit({ initialListing, isVerified });
+  // Hook 1: Initialize step/title/jobId from URL params on mount (waits until verification check finishes)
+  useCreateJobInit({ initialListing, verificationState });
 
   // Hook 2: Hydrate store from API on refresh (details/preview steps with jobId)
   const { isHydrating } = useCreateJobHydration({ initialListing });
 
-  // Hook 3: Sync step + title + jobId changes back to URL atomically
-  useCreateJobUrlSync(step, title, jobId);
+  // Hook 3: Sync step + title + jobId changes back to URL atomically (pauses during loading to prevent wiping params)
+  useCreateJobUrlSync(step, title, jobId, verificationState === 'loading');
 
   const handleBack = () => {
     resetCreateJobFlow();
@@ -68,8 +111,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   const handleRoleContinue = async () => {
     setIsDrafting(true);
     
-    // Fire the API immediately so the draft exists in the DB while they are drafting!
-    // Pass actor type/id so company drafts get org_id set correctly.
+    // Fire the API immediately so the draft exists in the DB while drafting
     try {
       const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
       const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
@@ -112,7 +154,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   };
 
   // Strict gate: If the user/organization is not verified, they must never reach StepRoleInput or StepJobDetails
-  if (!isVerified || step === 'verification') {
+  if (verificationState === 'unverified' || step === 'verification') {
     return (
       <StepIdentityVerification
         onBack={handleBack}
@@ -123,11 +165,12 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
     );
   }
 
+  // State 4: Verified — render details or role input
   if (step === 'details') {
     if (isHydrating) {
       return (
         <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-ds-accent border-t-transparent" />
           <p className="text-sm text-ds-text-secondary font-dm-sans">Restoring your draft...</p>
         </div>
       );
@@ -159,11 +202,9 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
     );
   }
 
-
-
   return (
     <StepRoleInput
-      onBack={isVerified ? handleBack : () => setStep('verification')}
+      onBack={handleBack}
       onClose={handleBack}
       title={title}
       setTitle={setTitle}
