@@ -45,6 +45,7 @@ export function useNavigationTracker() {
       sessionStorage.removeItem('coming_from_job_detail');
       sessionStorage.removeItem('nav_memory_jobs');
       sessionStorage.removeItem('nav_memory_jobs_base');
+      sessionStorage.removeItem('nav_memory_jobs_return');
       useJobStore.getState().setActiveCandidateTab('Explore');
     }
 

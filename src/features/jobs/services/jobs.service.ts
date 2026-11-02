@@ -22,18 +22,35 @@ export const formatExperience = (min?: number, max?: number, level?: string, lab
 // Used for both Publish and Regenerate JD so the two never disagree.
 export const parseExperienceRange = (experience?: string): { min?: number; max?: number } => {
   if (!experience) return {};
-  const match = experience.match(/(\d+)\s*-\s*(\d+)/);
-  if (match) {
-    return { min: parseInt(match[1]), max: parseInt(match[2]) };
+  const cleanExp = experience.trim();
+  const lower = cleanExp.toLowerCase();
+
+  if (lower.includes('fresher') || lower.includes('entry')) {
+    return { min: 0, max: 2 };
   }
-  if (experience.includes('5+')) {
+  const match = cleanExp.match(/(\d+)\s*-\s*(\d+)/);
+  if (match) {
+    return { min: parseInt(match[1], 10), max: parseInt(match[2], 10) };
+  }
+  const plusMatch = cleanExp.match(/(\d+)\s*\+/);
+  if (plusMatch) {
+    const minVal = parseInt(plusMatch[1], 10);
+    return { min: minVal, max: minVal >= 5 ? 10 : minVal + 5 };
+  }
+  if (lower.includes('junior')) {
+    return { min: 1, max: 3 };
+  }
+  if (lower.includes('mid')) {
+    return { min: 3, max: 5 };
+  }
+  if (lower.includes('senior')) {
     return { min: 5, max: 10 };
   }
   return {};
 };
 
 // Canonical dropdown presets the Create Job form offers (excluding 'Other').
-const EXPERIENCE_PRESETS = ['Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)'];
+const EXPERIENCE_PRESETS = ['Fresher', 'Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)'];
 
 // Resolves a persisted experience_min/experience_max back into what the
 // Create Job form should show when reopening a draft: a matching preset
@@ -469,6 +486,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
 
     if (status) {
       status = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+      if (status === 'Rejected') {
+        status = 'Declined';
+      }
     }
 
     const formattedJob: Job = {
@@ -610,7 +630,7 @@ export const getMyApplications = async (status: string = 'all', cursor?: string)
       org_id: job.org_id,
       recruiter_id: job.recruiter_id,
       context_sent: job.context_sent,
-      application_status: job.applicationStatus || job.current_status || 'Applied',
+      application_status: (job.applicationStatus || job.current_status || 'Applied').toLowerCase() === 'rejected' ? 'Declined' : (job.applicationStatus || job.current_status || 'Applied'),
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false
     }));
@@ -941,6 +961,7 @@ export const createJobListing = async (
         experience_min: expMin,
         experience_max: expMax,
         experience_level: details?.experience, // backend column is experience_level
+        experience_label: details?.experience,
         industry: details?.industry
       };
       

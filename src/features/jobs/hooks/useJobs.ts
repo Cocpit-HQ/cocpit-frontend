@@ -317,7 +317,10 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     if (uploadedFile || coverLetter || resumeId) {
       formData = new FormData();
       if (uploadedFile) formData.append('resume', uploadedFile);
-      else if (resumeId) formData.append('resume_url', resumeId);
+      else if (resumeId) {
+        formData.append('resume_url', resumeId);
+        if (resumeUrlOrName) formData.append('resume_file_name', resumeUrlOrName);
+      }
       if (coverLetter) formData.append('cover_note', coverLetter);
     }
     applyMutation.mutate({ jobId, formData });

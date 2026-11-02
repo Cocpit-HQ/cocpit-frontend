@@ -26,6 +26,9 @@ interface ApplicantsDashboardProps {
 interface Candidate {
   id: string;
   applicationId?: string;
+  applicantId?: string;
+  accountName?: string;
+  username?: string;
   name: string;
   headline?: string;
   title?: string;
@@ -376,17 +379,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     activeCandidate?.resumeFileName ||
     activeCandidate?.resume;
 
-  const displayResumeName = (() => {
-    if (rawResume && !rawResume.startsWith('resume-')) return rawResume;
-    const url = candidateDetail?.resumeUrl || activeCandidate?.resumeUrl;
-    if (url) {
-      const fileName = url.split('/').pop() || '';
-      if (!fileName.startsWith('resume-') && fileName.toLowerCase().endsWith('.pdf')) {
-        return fileName;
-      }
-    }
-    return displayName ? `${displayName.replace(/\s+/g, '_')}_Resume.pdf` : 'Resume.pdf';
-  })();
+  const displayResumeName =
+    rawResume ||
+    (candidateDetail?.resumeUrl || activeCandidate?.resumeUrl)?.split('/').pop() ||
+    'Resume.pdf';
   const displayAvatar = candidateDetail?.avatarUrl || activeCandidate?.avatarUrl || activeCandidate?.avatar;
   const displaySummary = candidateAnalysis?.summary || activeCandidate?.summary;
   const displaySkills = candidateAnalysis?.skills || activeCandidate?.skills;
@@ -691,13 +687,24 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     {/* Frame 2608774 / 2608571: User details */}
                     <div
                       onClick={() => {
-                        const targetId = activeCandidate?.applicationId || (activeCandidate as any)?.userId || (activeCandidate as any)?.user_id || activeCandidate?.id;
+                        const targetId =
+                          candidateDetail?.accountName ||
+                          activeCandidate?.accountName ||
+                          candidateDetail?.username ||
+                          activeCandidate?.username ||
+                          candidateDetail?.applicantId ||
+                          activeCandidate?.applicantId ||
+                          (activeCandidate as any)?.userId ||
+                          (activeCandidate as any)?.user_id;
                         if (targetId) {
                           if (typeof window !== "undefined") {
                             sessionStorage.setItem("coming_from_job_detail", "true");
-                            sessionStorage.setItem("nav_memory_jobs", "/jobs");
+                            const returnUrl = (window.location.pathname + window.location.search);
+                            sessionStorage.setItem("nav_memory_jobs", returnUrl);
+                            sessionStorage.setItem("nav_memory_jobs_return", returnUrl);
                           }
-                          router.push(`/profile/${targetId}?source=job_application_dashboard`);
+                          const returnUrl = typeof window !== "undefined" ? (window.location.pathname + window.location.search) : "/jobs";
+                          router.push(`/profile/${targetId}?source=job_application_dashboard&returnTo=${encodeURIComponent(returnUrl)}`);
                         }
                       }}
                       className="flex flex-row items-center gap-2 h-9 cursor-pointer group"
@@ -962,33 +969,39 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       </span>
                       <div className="h-7 px-2 py-1 rounded-full flex items-center justify-center shrink-0">
                         <span className="text-ds-accent text-[10px] font-medium font-dm-sans leading-3 uppercase tracking-wider">
-                          {displayExperience.status}
+                          {displayExperience.status || 'ALIGNED'}
                         </span>
                       </div>
                     </div>
 
                     <div className="w-full py-2 flex justify-between items-center gap-2">
-                      <div className="flex flex-col items-start gap-1 min-w-0">
-                        <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider">
+                      <div className="flex flex-col items-start gap-1 min-w-0 max-w-[105px]">
+                        <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider shrink-0">
                           REQUIRED
                         </span>
-                        <span className="text-ds-text-primary opacity-50 font-dm-sans text-xl sm:text-2xl font-semibold leading-8 whitespace-nowrap">
-                          {displayExperience.required}
+                        <span
+                          className={`text-ds-text-primary opacity-50 font-dm-sans font-semibold ${
+                            (displayExperience.required || 'Not specified').length > 8
+                              ? 'text-sm sm:text-base leading-tight break-words'
+                              : 'text-xl sm:text-2xl leading-8 whitespace-nowrap'
+                          }`}
+                        >
+                          {displayExperience.required || 'Not specified'}
                         </span>
                       </div>
                       <Icon icon="solar:arrow-right-linear" className="size-4 text-ds-text-secondary shrink-0" />
                       <div className="flex flex-col items-start gap-1 min-w-0">
-                        <span className="text-ds-text-primary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider">
+                        <span className="text-ds-text-primary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider shrink-0">
                           ACTUAL
                         </span>
                         <span className="text-ds-text-primary font-dm-sans text-xl sm:text-2xl font-semibold leading-8 whitespace-nowrap">
-                          {displayExperience.actual}
+                          {displayExperience.actual || '0 Yrs'}
                         </span>
                       </div>
                     </div>
 
                     <p className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 break-words">
-                      &ldquo;{displayExperience.summary?.replace(/^[“"']+|[”"']+$/g, '')}&rdquo;
+                      &ldquo;{(displayExperience.summary || 'Candidate experience details provided.').replace(/^[“"']+|[”"']+$/g, '')}&rdquo;
                     </p>
                   </div>
                 )}

@@ -11,6 +11,7 @@ import { Job, JobsFilter } from "../types/jobs.types";
 import { JobCard } from "../components/cards/JobCard";
 import JobCardSkeleton from "../components/skeletons/JobCardSkeleton";
 import { ApplyJobModal } from "../components/modals/ApplyJobModal";
+import NoMatchingJobsState from "../components/states/NoMatchingJobsState";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   getPaginatedIndustries,
@@ -710,29 +711,7 @@ export const JobSearchPage: React.FC = () => {
               ))}
             </div>
           ) : jobs.length === 0 ? (
-            <div className="w-full py-20 flex flex-col items-center justify-center text-center gap-3 bg-ds-surface-1 rounded-2xl border border-ds-border">
-              <div className="size-12 rounded-full bg-ds-surface-2 border border-ds-border flex items-center justify-center text-ds-accent">
-                <Icon icon="lucide:search-slash" className="size-6" />
-              </div>
-              <div className="flex flex-col gap-1 max-w-sm px-4">
-                <h4 className="text-ds-text-primary font-medium text-base font-dm-sans">
-                  No jobs found
-                </h4>
-                <p className="text-ds-text-secondary text-xs font-normal font-dm-sans">
-                  We couldn&apos;t find any job listings matching your selection.
-                  Try adjusting your search query or filters.
-                </p>
-                {hasAnyFilter && (
-                  <button
-                    type="button"
-                    onClick={handleClearAll}
-                    className="mt-3 inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-ds-surface-2 hover:bg-ds-border text-ds-text-primary text-xs font-medium font-dm-sans transition-colors cursor-pointer self-center"
-                  >
-                    Clear all filters
-                  </button>
-                )}
-              </div>
-            </div>
+            <NoMatchingJobsState onClearFilters={handleClearAll} />
           ) : (
             <>
               {jobs.map((job) => (

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { JobsPage } from "@/features/jobs/pages/JobsPage";
 import { MemoryRouter } from "@/components/layout/MemoryRouter";
 import { FeatureGuard } from "@/components/feature-flags";
+import JobsPageSkeleton from "@/features/jobs/components/skeletons/JobsPageSkeleton";
 
 export default function JobsRoute({
   searchParams,
@@ -15,7 +16,7 @@ export default function JobsRoute({
 
   return (
     <FeatureGuard featureKey="enableJobsBoard" moduleName="Jobs & Careers">
-      <Suspense fallback={<div>Loading Jobs...</div>}>
+      <Suspense fallback={<JobsPageSkeleton />}>
         <MemoryRouter section="jobs" />
         <JobsPage searchParams={searchParams} isCompanyMode={isCompany && Boolean(activeProfile?.id)} />
       </Suspense>

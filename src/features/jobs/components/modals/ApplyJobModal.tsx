@@ -345,6 +345,9 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 value={coverLetter}
                 onChange={(e) => setCoverLetter(e.target.value)}
                 placeholder="Tell us what makes you unique..."
+                spellCheck={false}
+                data-ms-editor="false"
+                {...({ writingsuggestions: "false" } as any)}
                 className="w-[276px] h-[80px] p-3 bg-ds-bg border border-ds-border rounded-2xl font-dm-sans text-sm text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none box-border overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               />
 

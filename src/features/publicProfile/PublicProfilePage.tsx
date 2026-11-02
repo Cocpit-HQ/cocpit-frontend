@@ -82,15 +82,18 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const searchParams = useSearchParams();
   const source = searchParams?.get("source");
   const from = searchParams?.get("from");
+  const returnTo = searchParams?.get("returnTo");
   const isFromJobs = Boolean(
     source === "job_application_dashboard" ||
     source === "jobs" ||
     source?.toLowerCase().includes("job") ||
     from === "jobs" ||
     from?.toLowerCase().includes("job") ||
+    returnTo?.includes("/jobs") ||
     (typeof window !== "undefined" && (
       window.sessionStorage.getItem("coming_from_job_detail") === "true" ||
       window.sessionStorage.getItem("nav_memory_jobs") ||
+      window.sessionStorage.getItem("nav_memory_jobs_return") ||
       document.referrer.includes("/jobs")
     ))
   );
@@ -406,6 +409,21 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleBack = () => {
+    const savedJobsReturn = typeof window !== "undefined"
+      ? (sessionStorage.getItem("nav_memory_jobs_return") || sessionStorage.getItem("nav_memory_jobs"))
+      : null;
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("nav_memory_jobs_return");
+      sessionStorage.removeItem("coming_from_job_detail");
+    }
+    if (returnTo) {
+      router.push(returnTo);
+      return;
+    }
+    if (isFromJobs && savedJobsReturn && savedJobsReturn !== "/jobs") {
+      router.push(savedJobsReturn);
+      return;
+    }
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
@@ -465,7 +483,17 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   if (userError || !user) {
     return (
-      <div className="min-h-screen w-full bg-[var(--ds-bg)] flex flex-col items-center justify-center p-5 select-none">
+      <div className="min-h-screen w-full bg-[var(--ds-bg)] flex flex-col items-center justify-center p-5 select-none relative">
+        {/* Top-left Back button */}
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="Back"
+          className="fixed top-6 left-4 sm:top-10 sm:left-10 flex items-center gap-2 h-9 px-2 rounded-md text-[var(--ds-text-primary)] hover:text-[var(--ds-text-secondary)] transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] z-[60] group"
+        >
+          <ChevronLeft className="w-5 h-5 text-[var(--ds-text-primary)] group-hover:text-[var(--ds-text-secondary)] transition-colors shrink-0" />
+          <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px]">Back</span>
+        </button>
         {/* FullPageError: max-w-[800px], flex flex-col items-center justify-center, gap: 24px */}
         <div className="w-full max-w-[800px] flex flex-col items-center justify-center gap-6 text-center animate-in fade-in duration-200">
           {/* IconFrame: 64x64px, rounded-full, bg #1A1A20, p-4 (16px) */}
@@ -493,7 +521,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           {/* Primary emphasis button: h: 36px, px: 12px, py: 6px, gap: 10px, bg: #EC6229, rounded: 100px */}
           <button
             type="button"
-            onClick={() => router.push(isFromJobs ? '/jobs' : '/feed')}
+            onClick={handleBack}
             className="h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex items-center justify-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
             <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">

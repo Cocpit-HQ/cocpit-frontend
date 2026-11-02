@@ -391,6 +391,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     }
   }, [isIndustryDropdownOpen]);
 
+  
+
   // Load more via cursor when scrolling to bottom of list
   const handleIndustryScroll = useCallback(async (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -608,7 +610,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     isSalaryValid;
 
   return (
-    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary flex flex-col relative select-none overflow-y-auto">
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary flex flex-col relative select-none overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* Dynamic Keyframes for smooth clockwise Cyphex spin loader */}
       <style jsx global>{`
         @keyframes cyphex-spin {

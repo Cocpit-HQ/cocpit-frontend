@@ -56,9 +56,6 @@ const getGoogleMapsUrl = (
 };
 
 
-
-const APPLICATION_STEPS = ['Applied', 'In review', 'Shortlisted', 'Declined'] as const;
-
 interface JobDetailPageProps {
   jobId: string;
 }
@@ -119,12 +116,25 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     jobAny?.map_url || jobAny?.mapUrl
   );
 
-  const activeStep = useMemo(() => {
+  const { steps, activeStep } = useMemo(() => {
     const normalized = (job.application_status || 'Applied').toLowerCase();
-    if (normalized === 'in-review' || normalized === 'in review') return 1;
-    if (['shortlisted', 'interview', 'offer', 'accepted', 'approved'].includes(normalized)) return 2;
-    if (['declined', 'rejected', 'withdrawn'].includes(normalized)) return 3;
-    return 0;
+    const isDeclinedStatus = ['declined', 'rejected', 'withdrawn'].includes(normalized);
+
+    if (isDeclinedStatus) {
+      return {
+        steps: ['Applied', 'In review', 'Declined'] as const,
+        activeStep: 2,
+      };
+    }
+
+    let stepIdx = 0;
+    if (normalized === 'in-review' || normalized === 'in review') stepIdx = 1;
+    else if (['shortlisted', 'interview', 'offer', 'accepted', 'approved'].includes(normalized)) stepIdx = 2;
+
+    return {
+      steps: ['Applied', 'In review', 'Shortlisted'] as const,
+      activeStep: stepIdx,
+    };
   }, [job.application_status]);
   const isJobCompany = Boolean(job.org_id || job.company_id || job.company_type === 'COMPANY' || job.company_type === 'ORGANIZATION');
 
@@ -140,11 +150,11 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
   // Candidate application and offer status flags
   const isAccepted = job.application_status === 'Accepted' || job.offerStatus === 'accepted';
-  const isDeclined = job.application_status === 'Declined' || job.offerStatus === 'declined';
+  const isDeclined = job.application_status === 'Declined' || job.application_status === 'Rejected' || job.offerStatus === 'declined';
   const isWithdrawn = job.application_status === 'Withdrawn' || job.offerStatus === 'withdrawn';
   const isExpired = job.application_status === 'Expired' || job.offerStatus === 'expired';
   const isShortlisted = job.application_status?.toLowerCase() === 'shortlisted';
-  const isTerminalOffer = isDeclined || isWithdrawn || isExpired;
+  const isTerminalOffer = Boolean(job.is_offer && (isDeclined || isWithdrawn || isExpired));
 
   // Share & Bookmark visibility rules based on Figma:
   // - Share icon: Visible ONLY for standard active jobs (Apply now / Withdraw). Hidden for closed jobs and offers.
@@ -233,10 +243,10 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
       );
     }
 
-    if (job.application_status === 'Rejected') {
+    if (isDeclined) {
       return (
         <span className="text-ds-text-muted ds-text-small px-4 py-1.5 border border-ds-border rounded-full">
-          Application Rejected
+          Application Declined
         </span>
       );
     }
@@ -309,7 +319,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 if (job.org_id) {
                   router.push(`/company/${job.org_id}`);
                 } else if (job.recruiter_id) {
-                  router.push(`/profile/${job.recruiter_id}`);
+                  const returnUrl = typeof window !== "undefined" ? (window.location.pathname + window.location.search) : "/jobs";
+                  router.push(`/profile/${job.recruiter_id}?source=jobs&returnTo=${encodeURIComponent(returnUrl)}`);
                 }
               }}
             >
@@ -486,7 +497,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
             {/* Frame 2609079: Steps Track (w: 736px, h: 36px) */}
             <div className="w-full flex items-center h-9 self-stretch flex-none overflow-x-auto no-scrollbar">
-              {APPLICATION_STEPS.map((step, idx) => {
+              {steps.map((step, idx) => {
                 const isCompleted = idx < activeStep || (idx === 0 && activeStep === 0);
                 const isCurrent = idx === activeStep && idx !== 0;
                 const isActive = idx <= activeStep;
@@ -516,7 +527,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                     </div>
 
                     {/* Connecting Line (Line 164, 165, 166) */}
-                    {idx < APPLICATION_STEPS.length - 1 && (
+                    {idx < steps.length - 1 && (
                       <div className={`flex-1 min-w-6 h-0 border-t ${lineClass}`} />
                     )}
                   </React.Fragment>
@@ -662,7 +673,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
       {/* Floating Bottom Action Bar (Figma: width 800px, height 72px, padding 12px, border-radius 16px, border 1px solid var(--ds-border)) */}
       <div className="fixed bottom-4 left-0 right-0 z-40 px-4 pointer-events-none">
-        <div className="max-w-[800px] w-full h-[72px] mx-auto p-3 bg-ds-surface-1 border border-ds-border rounded-2xl shadow-2xl flex items-center justify-between gap-3 pointer-events-auto box-border">
+        <div className="max-w-[800px] w-full h-[72px] mx-auto p-3 bg-ds-bg border border-ds-border rounded-2xl shadow-2xl flex items-center justify-between gap-3 pointer-events-auto box-border">
           {/* Frame 2609957: Job Title & Recruiter • Location (h: 48px, gap: 4px) */}
           <div className="flex flex-col items-start justify-center gap-1 min-w-0 flex-1 h-12">
             <span className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">

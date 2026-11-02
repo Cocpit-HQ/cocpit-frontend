@@ -53,3 +53,12 @@ export { default as JobDetailMap } from './components/detail/JobDetailMap';
 
 // Recruiter
 export * from './components/recruiter';
+
+// Skeletons
+export { default as JobsPageSkeleton } from './components/skeletons/JobsPageSkeleton';
+export { default as JobSearchSkeleton } from './components/skeletons/JobSearchSkeleton';
+export { default as JobCardSkeleton } from './components/skeletons/JobCardSkeleton';
+export { default as JobDetailSkeleton } from './components/skeletons/JobDetailSkeleton';
+export { default as RecommendedJobCardSkeleton } from './components/skeletons/RecommendedJobCardSkeleton';
+export { default as ListingsSkeleton } from './components/skeletons/ListingsSkeleton';
+export { default as OfferCardSkeleton } from './components/skeletons/OfferCardSkeleton';

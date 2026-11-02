@@ -36,6 +36,41 @@ function ThemeColorSync() {
   return null;
 }
 
+/**
+ * Suppresses Microsoft Edge's native AI "Help me write" / Writing Assistance blue dot
+ * on focus/click without modifying the DOM during initial SSR hydration.
+ */
+function EdgeWritingAssistanceSync() {
+  useEffect(() => {
+    const disableEdgeWriting = (el: EventTarget | null) => {
+      if (
+        el &&
+        el instanceof HTMLElement &&
+        (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+      ) {
+        if (el.getAttribute('writingsuggestions') !== 'false') {
+          el.setAttribute('writingsuggestions', 'false');
+        }
+        if (el.getAttribute('data-ms-editor') !== 'false') {
+          el.setAttribute('data-ms-editor', 'false');
+        }
+      }
+    };
+
+    const handleEvent = (e: Event) => disableEdgeWriting(e.target);
+
+    document.addEventListener('focusin', handleEvent, true);
+    document.addEventListener('pointerdown', handleEvent, true);
+
+    return () => {
+      document.removeEventListener('focusin', handleEvent, true);
+      document.removeEventListener('pointerdown', handleEvent, true);
+    };
+  }, []);
+
+  return null;
+}
+
 function AxiosAuthSync() {
   const { data: session, status } = useSession();
 
@@ -65,6 +100,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider refetchOnWindowFocus={false}>
       <AxiosAuthSync />
+      <EdgeWritingAssistanceSync />
       <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
         <ThemeProvider
           attribute="data-theme"
