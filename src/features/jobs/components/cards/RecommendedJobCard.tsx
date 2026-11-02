@@ -4,43 +4,13 @@ import { Icon } from '@iconify/react';
 import { Icon as CustomIcon } from '@/components/icons';
 import Avatar from '@/components/shared/Avatar';
 import { formatSalaryRange, cleanSalary } from '../../utils/currency.utils';
+import { formatCardLocation } from '../../utils/location.utils';
 
 interface RecommendedJobCardProps {
   job: Job;
   onClick?: (job: Job) => void;
   onSave?: (jobId: string, e: React.MouseEvent) => void;
 }
-
-const getCityOnly = (loc?: string): string => {
-  if (!loc) return '';
-  if (!loc.includes(',')) return loc.trim();
-
-  const parts = loc.split(',').map((p) => p.trim()).filter(Boolean);
-  if (parts.length === 0) return '';
-  if (parts.length === 1) return parts[0];
-
-  // If first part is not a street address / building number
-  if (!/^\d+/.test(parts[0]) && !/^(suite|ste|apt|flat|unit|floor|fl|room|rm|no\.)\b/i.test(parts[0])) {
-    return parts[0];
-  }
-
-  // If first part is a street/building, look for city candidate
-  const candidates = parts.filter(
-    (p) =>
-      !/^\d+/.test(p) &&
-      !/road|street|rd\b|st\b|ave\b|avenue|blvd|lane|way|drive|dr\b|building|bldg|floor|fl\b|suite|ste\b|apt\b/i.test(p)
-  );
-
-  if (candidates.length > 0) {
-    const nonStateCandidates = candidates.filter((c) => !/^[A-Z]{2}(\s+\d+)?$/i.test(c.trim()));
-    const best = (nonStateCandidates.length > 0 ? nonStateCandidates[0] : candidates[0])
-      .replace(/\b\d{4,}\b/g, '')
-      .trim();
-    if (best) return best;
-  }
-
-  return parts[0];
-};
 
 export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = React.memo(({ job, onClick, onSave }) => {
   // Top % badge calculation temporarily commented out
@@ -52,7 +22,7 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = React.memo(
     (job.salary_min && job.salary_max ? `${job.salary_min}–${job.salary_max}` : job.salary_min || job.salary_max)
   );
   const workMode = job.work_mode || '';
-  const city = getCityOnly(job.location);
+  const locationText = formatCardLocation(job.location, workMode);
 
   return (
     <div
@@ -102,17 +72,17 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = React.memo(
         )}
       </div>
 
-      {/* Frame 2609816: Work mode & City (w: 145px, h: 20px, gap: 8px) */}
-      {(workMode || city) && (
+      {/* Frame 2609816: Work mode & Location (w: 145px, h: 20px, gap: 8px) */}
+      {(workMode || locationText) && (
         <div className="h-5 flex items-center gap-2 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 min-w-0">
           {/* location icon (16px x 16px, #B8ADA8) */}
           <Icon icon="solar:map-point-linear" className="size-4 text-ds-text-secondary shrink-0" />
           {workMode && <span className="shrink-0">{workMode}</span>}
-          {workMode && city && (
+          {workMode && locationText && (
             /* Ellipse 12 (4px x 4px, #726B67, 8px gap left and right) */
             <span className="size-1 rounded-full bg-ds-text-muted shrink-0" />
           )}
-          {city && <span className="truncate">{city}</span>}
+          {locationText && <span className="truncate">{locationText}</span>}
         </div>
       )}
 

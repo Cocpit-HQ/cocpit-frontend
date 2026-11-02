@@ -78,7 +78,7 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({ onBack, onSubm
       <div className="flex items-center gap-4">
         <button
           onClick={onBack}
-          className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center bg-white hover:bg-slate-50 active:scale-95 transition-all text-gray-700 shadow-sm"
+          className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center bg-white active:scale-95 transition-all text-gray-700 shadow-sm"
         >
           <Icon icon="lucide:arrow-left" className="w-5 h-5" />
         </button>

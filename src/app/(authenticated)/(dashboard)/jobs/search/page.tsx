@@ -5,7 +5,11 @@ import { Suspense } from "react";
 import { JobSearchPage } from "@/features/jobs/pages/JobSearchPage";
 import { MemoryRouter } from "@/components/layout/MemoryRouter";
 
-export default function JobSearchRoute({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default function JobSearchRoute({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { isCompany, activeProfile } = useActiveProfile();
 
   if (isCompany && activeProfile?.id) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { JobListing } from '../../types/jobs.types';
 import { Icon } from '@iconify/react';
 import { OfferIcon } from '@/components/icons';
@@ -6,6 +6,7 @@ import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import SendOfferModal from './SendOfferModal';
 import api from '@/lib/axios';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useSocket } from '@/context/SocketContext';
 
 export interface SentOfferGroup {
   id: string;
@@ -40,10 +41,12 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
 }) => {
   const [isSendOpen, setIsSendOpen] = useState(false);
   const { activeProfile, userCompanies } = useActiveProfile();
+  const { socket } = useSocket();
 
   // Sent Offers state
   const [sentOffers, setSentOffers] = useState<SentOfferGroup[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+  const isFirstLoadOffersRef = useRef(true);
 
   // Independently fetch ALL active listings for the Send Offer modal.
   // We CANNOT rely on the parent's `listings` prop because that array is
@@ -90,13 +93,14 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProfile]);
 
-  const fetchSentOffers = useCallback(async () => {
+  const fetchSentOffers = useCallback(async (silent = false) => {
     let companyId = '';
     if (activeProfile && activeProfile.type === 'COMPANY') {
       companyId = activeProfile.id;
     }
-
-    setIsLoadingOffers(true);
+    if (!silent && isFirstLoadOffersRef.current) {
+      setIsLoadingOffers(true);
+    }
     try {
       const endpoint = companyId 
         ? `/jobs/companies/${companyId}/offers/sent` 
@@ -124,13 +128,53 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
     } catch (error) {
       console.error('Failed to fetch sent offers:', error);
     } finally {
-      setIsLoadingOffers(false);
+      if (!silent) {
+        setIsLoadingOffers(false);
+      }
+      isFirstLoadOffersRef.current = false;
     }
   }, [activeProfile, userCompanies]);
 
   useEffect(() => {
     fetchSentOffers();
   }, [fetchSentOffers, refreshTrigger]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchSentOffers(true);
+    };
+    const handleVisibility = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchSentOffers(true);
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+    const interval = setInterval(() => fetchSentOffers(true), 5000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(interval);
+    };
+  }, [fetchSentOffers]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleNotification = (data: Record<string, unknown>) => {
+      if (
+        data?.type === 'job_offer_declined' ||
+        data?.type === 'offer_accepted' ||
+        data?.type === 'job_offer'
+      ) {
+        fetchSentOffers(true);
+      }
+    };
+    socket.on('notification', handleNotification);
+    return () => {
+      socket.off('notification', handleNotification);
+    };
+  }, [socket, fetchSentOffers]);
 
   useEffect(() => {
     if (initialOfferJobId) {

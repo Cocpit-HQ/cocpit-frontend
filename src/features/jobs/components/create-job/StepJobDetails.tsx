@@ -18,7 +18,7 @@ import { generateJobDescription, parseExperienceRange, resolveExperienceSelectio
 import { useJobStore } from '@/store/job.store';
 import { toast } from 'sonner';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { CyphexAIIcon } from '@/components/icons';
+import { CyphexAIIcon, LeftArrowIcon } from '@/components/icons';
 import { companyService } from '@/services/organization.service';
 
 interface StepJobDetailsProps {
@@ -297,7 +297,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   // Google Places Autocomplete search effect matching BusinessEditProfileTab
   useEffect(() => {
     const q = debouncedLocationQuery.trim();
-    if (!q || q.length < 2) {
+    if (!q || q.length < 3) {
       setPlacesSuggestions([]);
       setIsSearchingPlaces(false);
       return;
@@ -625,7 +625,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         onClick={onBack}
         type="button"
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary text-base font-medium font-dm-sans leading-6 hover:text-ds-text-secondary transition-colors cursor-pointer select-none bg-transparent border-none outline-none"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary text-base font-medium font-dm-sans leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
         <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0" />
         <span>Back</span>
@@ -642,12 +642,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       </button>
 
       {/* Main Form Container (Figma: top-[60px], centered w-[640px]) */}
-      <div
-        className={cn(
-          "w-full max-w-[640px] mx-auto pt-10 sm:pt-[60px] px-4 sm:px-0 flex flex-col items-stretch gap-8 sm:gap-10 transition-all duration-200",
-          isIndustryDropdownOpen ? "pb-64" : "pb-16"
-        )}
-      >
+      <div className="w-full max-w-[640px] mx-auto pt-10 sm:pt-[60px] pb-28 px-4 sm:px-0 flex flex-col items-stretch gap-8 sm:gap-10">
         {/* Title */}
         <div className="flex items-center gap-2">
           <h1 className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
@@ -713,12 +708,21 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   type="text"
                   value={locationQuery}
                   onChange={(e) => {
-                    setLocationQuery(e.target.value);
-                    setLocation(e.target.value);
+                    const val = e.target.value;
+                    setLocationQuery(val);
+                    setLocation(val);
                     setIsDirty(true);
-                    if (!isLocationDropdownOpen) setIsLocationDropdownOpen(true);
+                    if (val.trim().length >= 3) {
+                      setIsLocationDropdownOpen(true);
+                    } else {
+                      setIsLocationDropdownOpen(false);
+                    }
                   }}
-                  onFocus={() => setIsLocationDropdownOpen(true)}
+                  onFocus={() => {
+                    if (locationQuery.trim().length >= 3) {
+                      setIsLocationDropdownOpen(true);
+                    }
+                  }}
                   placeholder="e.g. Mumbai, India"
                   autoComplete="off"
                   maxLength={255}
@@ -732,10 +736,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </div>
 
               {/* Places suggestions dropdown */}
-              {isLocationDropdownOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 w-full p-2 bg-ds-bg rounded-xl border border-ds-border shadow-2xl flex flex-col gap-1 z-50 animate-in fade-in duration-150 max-h-56 overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              {isLocationDropdownOpen && locationQuery.trim().length >= 3 && (
+                <div className="absolute top-[calc(100%+8px)] left-0 w-full sm:w-[300px] max-w-[calc(100vw-32px)] p-3 bg-[#030303] rounded-[8px] border border-[#2C2C33] shadow-2xl flex flex-col gap-3 z-50 animate-in fade-in duration-150 max-h-56 overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   {isSearchingPlaces ? (
-                    <div className="w-full py-3 flex items-center justify-center gap-2 text-xs text-ds-text-muted font-dm-sans">
+                    <div className="w-full py-2 flex items-center justify-center gap-2 text-xs text-ds-text-muted font-dm-sans">
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-ds-accent" />
                       <span>Searching Google Places...</span>
                     </div>
@@ -744,7 +748,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                       <div
                         key={place.placeId}
                         onClick={() => handleLocationSelect(place)}
-                        className="w-full px-3 py-2 rounded-lg flex items-center gap-2 text-sm text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1/50 cursor-pointer transition-colors font-dm-sans"
+                        className="w-full flex items-center gap-2 text-sm text-ds-text-secondary hover:text-ds-text-primary cursor-pointer transition-colors font-dm-sans"
                       >
                         <MapPin className="w-4 h-4 text-ds-accent shrink-0" />
                         <span className="truncate">
@@ -752,8 +756,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                         </span>
                       </div>
                     ))
-                  ) : debouncedLocationQuery.trim().length >= 2 ? (
-                    <div className="w-full py-3 text-center text-xs text-ds-text-muted font-dm-sans">
+                  ) : debouncedLocationQuery.trim().length >= 3 ? (
+                    <div className="w-full py-2 text-center text-xs text-ds-text-muted font-dm-sans">
                       No locations found
                     </div>
                   ) : null}
@@ -783,7 +787,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </div>
 
               {isWorkModeOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 min-w-[180px] sm:min-w-full bg-ds-surface-2 border border-ds-border rounded-2xl p-2 flex flex-col gap-1 shadow-2xl z-40 overflow-hidden">
+                <div className="absolute top-[calc(100%+8px)] left-0 w-[300px] h-[116px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex flex-col justify-between shadow-2xl z-40 box-border">
                   {WORK_MODE_OPTIONS.map((mode) => (
                     <button
                       key={mode}
@@ -794,10 +798,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                         setIsDirty(true);
                         setIsWorkModeOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-sm font-dm-sans transition-colors ${
+                      className={`w-full text-left text-sm font-dm-sans transition-colors cursor-pointer ${
                         workMode === mode
                           ? 'text-ds-accent font-medium'
-                          : 'text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1/50'
+                          : 'text-ds-text-secondary hover:text-ds-text-primary'
                       }`}
                     >
                       {mode}
@@ -832,7 +836,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </div>
 
               {isExperienceOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 min-w-[180px] sm:min-w-full bg-ds-surface-2 border border-ds-border rounded-2xl p-2 flex flex-col gap-1 shadow-2xl z-40 overflow-hidden">
+                <div className="absolute top-[calc(100%+8px)] left-0 w-[300px] h-[152px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex flex-col justify-between shadow-2xl z-40 box-border">
                   {EXPERIENCE_OPTIONS.map((exp) => (
                     <button
                       key={exp}
@@ -843,10 +847,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                         setIsDirty(true);
                         setIsExperienceOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-sm font-dm-sans transition-colors ${
+                      className={`w-full text-left text-sm font-dm-sans transition-colors cursor-pointer ${
                         experience === exp
                           ? 'text-ds-accent font-medium'
-                          : 'text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1/50'
+                          : 'text-ds-text-secondary hover:text-ds-text-primary'
                       }`}
                     >
                       {exp}
@@ -878,7 +882,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </div>
 
               {isWorkTypeOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 min-w-[180px] sm:min-w-full bg-ds-surface-2 border border-ds-border rounded-2xl p-2 flex flex-col gap-1 shadow-2xl z-40 overflow-hidden">
+                <div className="absolute top-[calc(100%+8px)] left-0 w-[300px] h-[188px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex flex-col justify-between shadow-2xl z-40 box-border">
                   {WORK_TYPE_OPTIONS.map((type) => (
                     <button
                       key={type}
@@ -889,10 +893,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                         setIsDirty(true);
                         setIsWorkTypeOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-sm font-dm-sans transition-colors ${
+                      className={`w-full text-left text-sm font-dm-sans transition-colors cursor-pointer ${
                         workType === type
                           ? 'text-ds-accent font-medium'
-                          : 'text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1/50'
+                          : 'text-ds-text-secondary hover:text-ds-text-primary'
                       }`}
                     >
                       {type}
@@ -1038,15 +1042,15 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                               role="option"
                               aria-selected={isSelected}
                               onClick={() => handleSelectIndustry(opt.label)}
-                              className="self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer group select-none hover:bg-ds-surface-1/50 transition-colors"
+                              className="self-stretch inline-flex justify-between items-center cursor-pointer select-none transition-colors"
                             >
                               <span
                                 title={opt.label}
                                 className={cn(
-                                  "justify-start text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer truncate",
+                                  "text-sm font-dm-sans leading-5 transition-colors cursor-pointer truncate",
                                   isSelected
                                     ? "text-ds-accent font-medium"
-                                    : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                                    : "text-ds-text-secondary hover:text-ds-text-primary"
                                 )}
                               >
                                 {opt.label}

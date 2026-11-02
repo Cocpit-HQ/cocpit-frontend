@@ -93,6 +93,9 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   // Helper to transition views and update URL query parameters atomically
   const transitionTo = useCallback((nextView: ViewState, nextJobId?: string | null) => {
     setView(nextView);
+    if (nextView === 'dashboard') {
+      setSelectedListing(null);
+    }
     const params = new URLSearchParams(window.location.search);
     if (nextView === 'dashboard') {
       params.delete('view');
@@ -118,7 +121,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         params.delete('title');
       }
     }
-    router.replace(`${window.location.pathname}?${params.toString()}`);
+    router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
   }, [router]);
 
   // Synchronize local view state with URL view parameter (browser navigation)
@@ -133,13 +136,14 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   // Resolve selectedListing if urlJobId is present in URL
   useEffect(() => {
-    if (view === 'view-listing' && !urlJobId) return; // Prevent race condition where stale url clears state
+    // Prevent race condition where stale URL searchParams clears state during view transitions
+    if (view !== 'dashboard' && !urlJobId) return;
     if (urlJobId && listings.length > 0) {
       const matched = listings.find(l => l.id === urlJobId);
       if (matched) {
         setSelectedListing(matched);
       }
-    } else if (!urlJobId) {
+    } else if (!urlJobId && view === 'dashboard') {
       setSelectedListing(null);
     }
   }, [urlJobId, listings, view]);
@@ -263,6 +267,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       <OfferDetailsScreen
         offerGroup={selectedOfferGroup}
         matchingListing={matchingListing}
+        refreshTrigger={refreshTrigger}
         onBack={() => {
           transitionTo('dashboard');
           setSelectedOfferGroup(null);
@@ -288,7 +293,8 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   }
 
   if (view === 'view-listing') {
-    const listingToUse = selectedListing || (urlJobId ? ({ id: urlJobId, title: 'Job Listing', status: 'ACTIVE' } as JobListing) : null);
+    const matchedFromListings = urlJobId ? listings.find(l => l.id === urlJobId) : null;
+    const listingToUse = selectedListing || matchedFromListings || (urlJobId ? ({ id: urlJobId, title: 'Job Listing', status: 'ACTIVE' } as JobListing) : null);
     if (listingToUse) {
       return (
         <ListingDetailsScreen
@@ -299,6 +305,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
               if (typeof window !== 'undefined') {
                 sessionStorage.removeItem('coming_from_send_offer_details');
               }
+              setRefreshTrigger(prev => prev + 1);
               transitionTo('offer-details');
             } else if (listingReferrer === 'applicants') {
               transitionTo('applicants', listingToUse.id);
@@ -311,10 +318,13 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         />
       );
     }
+    // Never fall through to the dashboard while transitioning/resolving listing
+    return null;
   }
 
   if (view === 'applicants') {
-    const listingToUse = selectedListing || (urlJobId ? ({ id: urlJobId, title: 'Job Listing', status: 'ACTIVE' } as JobListing) : null);
+    const matchedFromListings = urlJobId ? listings.find(l => l.id === urlJobId) : null;
+    const listingToUse = selectedListing || matchedFromListings || (urlJobId ? ({ id: urlJobId, title: 'Job Listing', status: 'ACTIVE' } as JobListing) : null);
     if (listingToUse) {
       // Guard against opening draft jobs in applicants view
       if ((listingToUse.status || '').toUpperCase() === 'DRAFT') {
@@ -343,6 +353,8 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         />
       );
     }
+    // Never fall through to the dashboard while transitioning/resolving listing
+    return null;
   }
 
   return (

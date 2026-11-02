@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { JobOffer } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
@@ -11,9 +12,10 @@ export const useJobOffers = () => {
   const queryClient = useQueryClient();
   const { activeProfile } = useActiveProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
+  const respondedOffers = useJobStore((state) => state.respondedOffers);
 
   // ─── 1. QUERY ───────────────────────────────────────────────────────────────
-  const { data: offers = [], isLoading, isError } = useQuery<JobOffer[]>({
+  const { data: rawOffers = [], isLoading, isError } = useQuery<JobOffer[]>({
     queryKey: JOB_OFFERS_QUERY_KEY,
     queryFn: async () => {
       const res = await jobsService.getJobOffers();
@@ -22,7 +24,21 @@ export const useJobOffers = () => {
     },
     enabled: !isCompanyMode,
     staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: true,
   });
+
+  const offers = useMemo(() => {
+    return rawOffers.map((o) => {
+      const raw = o as unknown as Record<string, unknown>;
+      const resp = respondedOffers ? (respondedOffers[o.id] || (raw.offer_id ? respondedOffers[String(raw.offer_id)] : undefined) || (raw.job_id ? respondedOffers[String(raw.job_id)] : undefined)) : undefined;
+      if (resp) {
+        const norm = resp.toLowerCase();
+        const nextStatus = (norm === 'accept' || norm === 'accepted') ? ('accepted' as const) : ('declined' as const);
+        return { ...o, status: nextStatus };
+      }
+      return o;
+    });
+  }, [rawOffers, respondedOffers]);
 
   // ─── 2. ACCEPT MUTATION ──────────────────────────────────────────────────────
   const acceptMutation = useMutation({

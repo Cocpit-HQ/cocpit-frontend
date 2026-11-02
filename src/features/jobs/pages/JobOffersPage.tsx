@@ -15,7 +15,7 @@ export const JobOffersPage: React.FC = () => {
           <button
             onClick={() => router.push('/jobs')}
             aria-label="Back to Jobs"
-            className="size-9 rounded-full border border-ds-border bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-secondary hover:text-ds-text-primary flex items-center justify-center transition-all cursor-pointer"
+            className="size-9 rounded-full border border-ds-border bg-ds-surface-1 text-ds-text-primary flex items-center justify-center cursor-pointer"
           >
             <Icon icon="lucide:chevron-left" className="size-5" />
           </button>

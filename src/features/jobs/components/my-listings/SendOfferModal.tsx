@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { CandidateCheckboxIcon } from '@/components/icons';
+import { CandidateCheckboxIcon, SearchIcon } from '@/components/icons';
 import Avatar from '@/components/shared/Avatar';
 import { JobListing } from '../../types/jobs.types';
 import { useSession } from 'next-auth/react';
@@ -33,7 +33,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   const { isCompany, activeProfile } = useActiveProfile();
   const isCompanyMode = isCompany && !!activeProfile?.id;
 
-  const [stage, setStage] = useState<1 | 2 | 3>(1);
+  const [stage, setStage] = useState<1 | 2 | 3>(initialJobId ? 2 : 1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJobId, setSelectedJobId] = useState('');
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]); // Array of candidate IDs
@@ -69,6 +69,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     const init = async () => {
       if (isOpen && initialJobId) {
         setSelectedJobId(initialJobId);
+        setStage(2);
         setIsFetchingRecipients(true);
         try {
           const job = activeListings.find(l => l.id === initialJobId);
@@ -241,15 +242,13 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     >
       {/* Centered modal matching Figma exactly per stage */}
       <div
-        className={`w-full max-w-[400px] ${
-          stage === 3 ? 'h-[294px]' : stage === 2 ? 'h-[380px]' : 'h-[392px]'
-        } max-h-[calc(100dvh-32px)] p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col justify-start items-center gap-3 overflow-hidden font-dm-sans animate-in zoom-in-95 duration-200 select-none overscroll-contain transition-[height]`}
+        className="w-full max-w-[400px] h-auto max-h-[calc(100dvh-32px)] p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col justify-start items-center gap-3 font-dm-sans animate-in zoom-in-95 duration-200 select-none overscroll-contain"
         onWheel={(e) => e.stopPropagation()}
       >
 
         {/* STAGE 1: Choose Job (Exact Figma Parity) */}
         {stage === 1 && (
-          <div className="w-full h-full flex flex-col justify-between items-center gap-2">
+          <div className="w-full flex flex-col justify-between items-center gap-2">
             {/* Header: Top Close Icon (Frame 2609536) */}
             <div className="w-full max-w-[376px] h-5 flex justify-end items-center">
               <button
@@ -268,7 +267,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </h3>
 
             {/* Content Container (Frame 2609544: 376px x 300px) */}
-            <div className="w-full max-w-[376px] flex-1 flex flex-col justify-between items-center gap-2 overflow-hidden">
+            <div className="w-full max-w-[376px] flex flex-col justify-between items-center gap-2">
               {/* Underline Search bar (Mobile nav bar & search: 344px x 36px) */}
               <div className="w-full px-4 py-1 flex justify-center items-center">
                 <div className="w-full max-w-[344px] h-9 px-3 py-1.5 border-b border-ds-text-primary flex justify-between items-center gap-2.5 transition-colors">
@@ -279,13 +278,13 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1 bg-transparent border-none p-0 text-ds-text-primary text-base font-normal font-dm-sans leading-6 placeholder:text-ds-text-muted placeholder:font-normal focus:outline-none focus:ring-0"
                   />
-                  <Icon icon="solar:magnifer-linear" className="size-5 text-ds-text-primary shrink-0 pointer-events-none" />
+                  <SearchIcon size={20} className="size-5 text-ds-text-primary shrink-0 pointer-events-none" />
                 </div>
               </div>
 
               {/* Job Listings List (Frame 2608872 rows: height 60px each) */}
               <div
-                className="w-full max-w-[376px] flex-1 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
+                className="w-full max-w-[376px] max-h-[190px] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
                 onWheel={(e) => e.stopPropagation()}
               >
                 {filteredListings.length === 0 ? (
@@ -299,11 +298,10 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                       <div
                         key={job.id}
                         onClick={() => setSelectedJobId(job.id)}
-                        className={`w-full h-[60px] py-2 px-2 inline-flex justify-between items-center gap-3 cursor-pointer rounded-xl transition-all select-none ${
-                          isSelected
+                        className={`w-full h-[60px] py-2 px-2 inline-flex justify-between items-center gap-3 cursor-pointer rounded-xl transition-all select-none ${isSelected
                             ? 'bg-ds-surface-2 border border-ds-accent/50 shadow-sm'
                             : 'hover:bg-ds-surface-2/60 border border-transparent'
-                        }`}
+                          }`}
                       >
                         <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0 pointer-events-none">
                           <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate w-full text-left">
@@ -367,11 +365,10 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     }
                   }}
                   disabled={!selectedJobId || isFetchingRecipients}
-                  className={`w-[94px] h-9 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all select-none whitespace-nowrap ${
-                    !selectedJobId || isFetchingRecipients
+                  className={`min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none whitespace-nowrap ${!selectedJobId || isFetchingRecipients
                       ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
                       : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
-                  }`}
+                    }`}
                 >
                   {isFetchingRecipients ? (
                     <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
@@ -382,7 +379,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCancelClick}
-                  className="w-[94px] h-9 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer select-none whitespace-nowrap"
+                  className="min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none whitespace-nowrap"
                 >
                   Cancel
                 </button>
@@ -393,7 +390,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
         {/* STAGE 2: Choose Candidates (Exact Figma Parity) */}
         {stage === 2 && (
-          <div className="w-full h-full flex flex-col justify-between items-center gap-2">
+          <div className="w-full flex flex-col justify-between items-center gap-2">
             {/* Header: Frame 2609688 (56px) */}
             <div className="w-full max-w-[376px] flex flex-col items-center gap-2 shrink-0">
               {/* Top Close Icon: Frame 2609536 */}
@@ -415,7 +412,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Content Container (Frame 2609544: 376px x 212px) */}
-            <div className="w-full max-w-[376px] flex-1 flex flex-col justify-start items-center gap-2 overflow-hidden">
+            <div className="w-full max-w-[376px] flex flex-col justify-start items-center gap-2">
               {/* Component 10: Underline Search bar (376px x 36px) */}
               <div className="w-full h-9 px-1 py-1.5 border-b border-ds-text-primary flex justify-between items-center gap-2 transition-colors shrink-0">
                 <input
@@ -425,15 +422,24 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 bg-transparent border-none p-0 text-ds-text-primary text-sm font-normal font-dm-sans leading-5 placeholder:text-ds-text-muted focus:outline-none focus:ring-0"
                 />
-                <Icon icon="solar:magnifer-linear" className="size-4 text-ds-text-primary shrink-0 pointer-events-none" />
+                <SearchIcon size={20} className="size-5 text-ds-text-primary shrink-0 pointer-events-none" />
               </div>
 
               {/* Candidates selection list (36px rows each: Frame 2609539, 2609540, 2609541, 2609542) */}
               <div
-                className="w-full flex-1 overflow-y-auto select-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
+                className="w-full max-h-[190px] overflow-y-auto select-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
                 onWheel={(e) => e.stopPropagation()}
               >
                 {(() => {
+                  if (isFetchingRecipients) {
+                    return (
+                      <div className="py-8 flex flex-col items-center justify-center gap-2 text-ds-text-muted text-xs font-dm-sans w-full">
+                        <Icon icon="lucide:loader-2" className="size-5 animate-spin text-ds-accent" />
+                        <span>Loading candidates...</span>
+                      </div>
+                    );
+                  }
+
                   const availableCandidates = candidatesList.filter((cand) => {
                     const offerStatus = alreadyOfferedCandidates[cand.id];
                     const isAlreadyOffered = offerStatus && ['pending', 'accepted', 'declined'].includes(offerStatus.toLowerCase());
@@ -472,11 +478,10 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                         </div>
 
                         {/* Right: Checkbox (20px x 20px, radius 4px) */}
-                        <div className={`size-5 rounded-[4px] flex items-center justify-center border transition-all pointer-events-none shrink-0 ${
-                          isChecked
+                        <div className={`size-5 rounded-[4px] flex items-center justify-center border transition-all pointer-events-none shrink-0 ${isChecked
                             ? 'bg-ds-accent border-ds-accent text-ds-text-primary'
                             : 'border-ds-border bg-ds-surface-2'
-                        }`}>
+                          }`}>
                           {isChecked && <Icon icon="lucide:check" className="size-3.5 stroke-[3]" />}
                         </div>
                       </div>
@@ -496,11 +501,10 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   setStage(3);
                 }}
                 disabled={selectedCandidates.length === 0}
-                className={`w-[94px] h-9 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all select-none whitespace-nowrap ${
-                  selectedCandidates.length === 0
+                className={`min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none whitespace-nowrap ${selectedCandidates.length === 0
                     ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
                     : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
-                }`}
+                  }`}
               >
                 Continue
               </button>
@@ -516,7 +520,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     setStage(1);
                   }
                 }}
-                className="w-[94px] h-9 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer select-none whitespace-nowrap"
+                className="min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none whitespace-nowrap"
               >
                 {initialJobId ? 'Cancel' : 'Back'}
               </button>
@@ -526,7 +530,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
         {/* STAGE 3: Personal Note & Send (Exact Figma Parity - 278px height) */}
         {stage === 3 && (
-          <div className="w-full h-full flex flex-col justify-between items-center gap-3">
+          <div className="w-full flex flex-col justify-between items-center gap-3">
             {/* Header: Frame 2609688 (376px x 56px, gap: 12px) */}
             <div className="w-full max-w-[376px] h-14 flex flex-col items-center gap-3 shrink-0">
               {/* Top Close Icon: Frame 2609536 (376px x 20px) */}
@@ -612,11 +616,10 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 type="button"
                 onClick={handleSendClick}
                 disabled={selectedCandidates.length === 0 || isSending}
-                className={`w-[94px] h-9 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all select-none whitespace-nowrap ${
-                  selectedCandidates.length === 0 || isSending
+                className={`min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none whitespace-nowrap ${selectedCandidates.length === 0 || isSending
                     ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
                     : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
-                }`}
+                  }`}
               >
                 {isSending ? (
                   <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
@@ -630,7 +633,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   setPersonalNote('');
                   setStage(2);
                 }}
-                className="w-[94px] h-9 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center transition-all cursor-pointer select-none whitespace-nowrap"
+                className="min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none whitespace-nowrap"
               >
                 Cancel
               </button>

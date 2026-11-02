@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@iconify/react";
+import { LeftArrowIcon } from "@/components/icons";
 import { useInView } from "react-intersection-observer";
 import { useJobs } from "../hooks/useJobs";
 import { useJobStore } from "../store/job.store";
@@ -544,13 +545,10 @@ export const JobSearchPage: React.FC = () => {
       <button
         type="button"
         onClick={() => router.push("/jobs")}
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary hover:text-ds-accent transition-colors font-medium font-dm-sans text-base leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary font-medium font-dm-sans text-base leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         aria-label="Back to Jobs"
       >
-        <Icon
-          icon="solar:alt-arrow-left-linear"
-          className="size-5 shrink-0"
-        />
+        <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
         <span className="hidden sm:inline">Back</span>
       </button>
 

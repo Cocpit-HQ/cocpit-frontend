@@ -1,3 +1,4 @@
+import { formatPostedTime } from '../../utils/jobs.utils';
 import React, { useState, useEffect, useRef } from 'react';
 import { JobListing, ListingsCounts } from '../../types/jobs.types';
 import { useInView } from '@/hooks/use-in-view';
@@ -230,7 +231,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                       {item.title}
                     </h4>
                     <span className="h-5 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate flex items-center">
-                      {item.posted_at || item.last_edited || 'Posted recently'}
+                      {formatPostedTime(item.posted_at || item.last_edited)}
                     </span>
                   </div>
 
@@ -266,7 +267,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                           >
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setActiveMenuJobId(null);
                                 onSendOffer && onSendOffer(item);
                               }}
@@ -276,7 +278,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setActiveMenuJobId(null);
                                 setJobToClose(item.id);
                               }}
@@ -286,7 +289,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setActiveMenuJobId(null);
                                 setJobToDelete(item.id);
                               }}
@@ -370,7 +374,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         )}
 
         {/* Infinite scroll loader trigger */}
-        {hasMore ? (
+        {hasMore && (
           <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center">
             {isFetchingMore ? (
               <div className="flex items-center gap-2 text-ds-accent font-medium ds-text-small font-dm-sans">
@@ -381,13 +385,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
               <div className="h-4 w-full" />
             )}
           </div>
-        ) : listings.length > 0 ? (
-          <div className="w-full py-4 flex justify-center items-center">
-            <span className="text-ds-text-secondary ds-text-meta bg-ds-surface-1 border border-ds-border px-3 py-1 rounded-full">
-              You've reached the end of your listings.
-            </span>
-          </div>
-        ) : null}
+        )}
       </div>
 
       {/* Delete Confirmation Modal using common ActionConfirmModal */}

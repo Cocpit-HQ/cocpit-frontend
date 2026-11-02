@@ -55,7 +55,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
             .getRecentResumes()
             .then((resumes) => {
               const formatted = resumes.map((r: any) => ({
-                id: r.id,
+                id: r.id || r.url || r.name,
                 name: r.name,
                 url: r.url,
                 type: r.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'Document',
@@ -85,10 +85,17 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
     setUploadedFile(null);
   };
 
-  const handleDeleteResume = (id: string) => {
-    setFetchedResumes((prev) => prev.filter((r) => r.id !== id));
+  const handleDeleteResume = async (id: string, name?: string, url?: string) => {
+    setFetchedResumes((prev) => prev.filter((r) => r.id !== id && r.name !== name && r.url !== url));
     if (selectedResumeId === id) setSelectedResumeId(null);
     toast.success('Resume removed');
+
+    try {
+      const service = await import('../../services/jobs.service');
+      await service.deleteRecentResume(url, name, id);
+    } catch (err) {
+      console.error('Failed to delete recent resume:', err);
+    }
   };
 
   const handleSubmit = async () => {
@@ -114,8 +121,8 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[320px] w-full [&>button]:hidden outline-none z-[101]">
-        <div className="w-full p-3 bg-ds-bg rounded-2xl border border-ds-border flex flex-col justify-start items-center gap-3 overflow-hidden box-border shadow-2xl">
+      <DialogContent className="p-0 border-none bg-transparent shadow-none w-[300px] [&>button]:hidden outline-none z-[101]">
+        <div className={`w-[300px] ${step === 2 ? 'h-[276px]' : 'h-[344px]'} p-3 bg-ds-bg rounded-2xl border border-ds-border flex flex-col justify-between items-center overflow-hidden box-border shadow-2xl`}>
           {/* Top Close Row */}
           <div className="self-stretch flex justify-end items-center">
             <button
@@ -124,7 +131,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               aria-label="Close"
               className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none p-0 outline-none"
             >
-              <CloseCrossIcon size={14} className="size-3.5 text-ds-text-primary" fill="currentColor" />
+              <CloseCrossIcon size={20} className="size-5 text-ds-text-primary" fill="currentColor" />
             </button>
           </div>
 
@@ -162,7 +169,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               {/* Upload Box */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="self-stretch px-3 py-2 bg-ds-surface-1 rounded-2xl border border-ds-border flex flex-col justify-start items-center gap-2 cursor-pointer hover:border-ds-accent/60 transition-colors box-border"
+                className="w-[276px] h-[112px] px-3 py-2 bg-ds-surface-1 rounded-2xl border border-ds-border flex flex-col justify-center items-center gap-2 cursor-pointer hover:border-ds-accent/60 transition-colors box-border"
               >
                 <input
                   type="file"
@@ -172,7 +179,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                   onChange={handleFileUpload}
                 />
                 <div className="size-5 flex items-center justify-center">
-                  <UploadIcon size={18} className="size-4 text-ds-text-primary" fill="currentColor" />
+                  <UploadIcon size={20} className="size-5 text-ds-text-primary" fill="currentColor" />
                 </div>
                 <div className="self-stretch flex flex-col justify-start items-center gap-1">
                   <span className="justify-start text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center">
@@ -203,8 +210,8 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                       }`}
                     >
                       <PdfFileIcon
-                        size={16}
-                        className={`size-4 shrink-0 ${!selectedResumeId ? 'text-ds-accent' : 'text-ds-text-primary'}`}
+                        size={20}
+                        className={`size-5 shrink-0 ${!selectedResumeId ? 'text-ds-accent' : 'text-ds-text-primary'}`}
                         fill="currentColor"
                       />
                       <span className="text-center justify-start text-base font-normal font-dm-sans leading-6 truncate">
@@ -217,7 +224,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                       aria-label="Remove uploaded file"
                       className="size-5 flex items-center justify-center text-ds-error hover:text-ds-error/80 transition-colors cursor-pointer p-0 bg-transparent border-none outline-none"
                     >
-                      <DeleteIcon size={16} className="size-4 text-ds-error shrink-0" fill="currentColor" />
+                      <DeleteIcon size={20} className="size-5 text-ds-error shrink-0" fill="currentColor" />
                     </button>
                   </div>
                 )}
@@ -243,8 +250,8 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                         }`}
                       >
                         <PdfFileIcon
-                          size={16}
-                          className={`size-4 shrink-0 ${isSelected ? 'text-ds-accent' : 'text-ds-text-primary'}`}
+                          size={20}
+                          className={`size-5 shrink-0 ${isSelected ? 'text-ds-accent' : 'text-ds-text-primary'}`}
                           fill="currentColor"
                         />
                         <span className="text-center justify-start text-base font-normal font-dm-sans leading-6 truncate">
@@ -254,13 +261,13 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteResume(resume.id);
+                          handleDeleteResume(resume.id, resume.name, resume.url);
                         }}
                         type="button"
                         aria-label={`Delete ${resume.name}`}
                         className="size-5 flex items-center justify-center text-ds-error hover:text-ds-error/80 transition-colors cursor-pointer p-0 bg-transparent border-none outline-none"
                       >
-                        <DeleteIcon size={16} className="size-4 text-ds-error shrink-0" fill="currentColor" />
+                        <DeleteIcon size={20} className="size-5 text-ds-error shrink-0" fill="currentColor" />
                       </button>
                     </div>
                   );
@@ -268,7 +275,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="self-stretch flex justify-center items-start gap-2 pt-1">
+              <div className="self-stretch flex justify-center items-center gap-[10px]">
                 <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
                   <button
                     onClick={() => {
@@ -276,10 +283,10 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                     }}
                     disabled={!selectedResumeId && !uploadedFile}
                     type="button"
-                    className={`flex-1 px-3 py-1.5 rounded-[100px] text-base font-medium font-dm-sans leading-6 transition-all border-none outline-none ${
+                    className={`w-[94px] h-[36px] py-[6px] px-[12px] rounded-full text-base font-medium font-dm-sans leading-6 transition-all border-none outline-none flex items-center justify-center ${
                       selectedResumeId || uploadedFile
                         ? 'bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary cursor-pointer shadow-sm'
-                        : 'bg-zinc-900 text-stone-500 cursor-not-allowed opacity-60'
+                        : 'bg-[#1A1A20] text-[#71717A] cursor-not-allowed'
                     }`}
                   >
                     Continue
@@ -288,7 +295,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 <button
                   onClick={onClose}
                   type="button"
-                  className="w-24 px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex justify-center items-center cursor-pointer transition-colors outline-none bg-transparent"
+                  className="w-[94px] h-[36px] py-[6px] px-[12px] rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex justify-center items-center cursor-pointer transition-colors outline-none bg-transparent"
                 >
                   Cancel
                 </button>
@@ -309,13 +316,17 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 </span>
                 <div className="self-stretch flex justify-between items-center py-0.5">
                   <div className="flex justify-start items-center gap-2 min-w-0 flex-1">
-                    <PdfFileIcon size={16} className="size-4 text-ds-accent shrink-0" fill="currentColor" />
+                    <PdfFileIcon size={20} className="size-5 text-ds-text-primary shrink-0" fill="currentColor" />
                     <span className="text-center justify-start text-ds-text-primary text-base font-normal font-dm-sans leading-6 truncate">
                       {selectedResumeName}
                     </span>
                   </div>
                   <button
                     onClick={() => {
+                      if (selectedResumeId) {
+                        const target = fetchedResumes.find((r) => r.id === selectedResumeId);
+                        handleDeleteResume(selectedResumeId, target?.name, target?.url);
+                      }
                       setSelectedResumeId(null);
                       setUploadedFile(null);
                       setStep(1);
@@ -324,7 +335,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                     aria-label="Remove selected resume"
                     className="size-5 flex items-center justify-center text-ds-error hover:text-ds-error/80 transition-colors cursor-pointer p-0 bg-transparent border-none outline-none"
                   >
-                    <DeleteIcon size={16} className="size-4 text-ds-error shrink-0" fill="currentColor" />
+                    <DeleteIcon size={20} className="size-5 text-ds-error shrink-0" fill="currentColor" />
                   </button>
                 </div>
               </div>
@@ -334,17 +345,17 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 value={coverLetter}
                 onChange={(e) => setCoverLetter(e.target.value)}
                 placeholder="Tell us what makes you unique..."
-                className="w-full h-24 p-3 bg-ds-bg border border-ds-border rounded-xl font-dm-sans text-sm text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none box-border"
+                className="w-[276px] h-[80px] p-3 bg-ds-bg border border-ds-border rounded-2xl font-dm-sans text-sm text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none box-border overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               />
 
               {/* Action Buttons */}
-              <div className="self-stretch flex justify-center items-start gap-2 pt-1">
+              <div className="self-stretch flex justify-center items-center gap-[10px]">
                 <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
                   <button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                     type="button"
-                    className={`flex-1 px-3 py-1.5 rounded-[100px] text-ds-text-primary text-base font-medium font-dm-sans leading-6 shadow-sm transition-all border-none outline-none flex items-center justify-center gap-2 ${
+                    className={`w-[94px] h-[36px] py-[6px] px-[12px] rounded-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 shadow-sm transition-all border-none outline-none flex items-center justify-center gap-2 ${
                       isSubmitting
                         ? 'bg-ds-accent/80 cursor-wait'
                         : 'bg-ds-accent hover:opacity-90 active:scale-95 cursor-pointer'
@@ -352,8 +363,8 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                   >
                     {isSubmitting ? (
                       <>
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
-                        <span>Applying...</span>
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                        <span className="text-xs">Applying...</span>
                       </>
                     ) : (
                       'Continue'
@@ -364,7 +375,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                   onClick={() => setStep(1)}
                   disabled={isSubmitting}
                   type="button"
-                  className="w-24 px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex justify-center items-center cursor-pointer transition-colors outline-none bg-transparent disabled:opacity-50"
+                  className="w-[94px] h-[36px] py-[6px] px-[12px] rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex justify-center items-center cursor-pointer transition-colors outline-none bg-transparent disabled:opacity-50"
                 >
                   Cancel
                 </button>

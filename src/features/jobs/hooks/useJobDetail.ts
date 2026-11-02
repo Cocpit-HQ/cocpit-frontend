@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Job } from '../types/jobs.types';
+import { useQueryClient } from '@tanstack/react-query';
+import { JOB_OFFERS_QUERY_KEY } from './useJobOffers';
+import { Job, JobOffer } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
 import { useJobStore } from '@/store/job.store';
@@ -9,6 +11,7 @@ export const useJobDetail = (jobId: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const activeJobIdRef = useRef<string | null>(null);
+  const queryClient = useQueryClient();
   const hasSeededFollowRef = useRef(false);
 
   const {
@@ -73,9 +76,13 @@ export const useJobDetail = (jobId: string) => {
       if (processed.offerStatus) {
         processed.application_status = processed.offerStatus.charAt(0).toUpperCase() + processed.offerStatus.slice(1);
       }
-      const offerResponse = respondedOffers[processed.id];
+      const offerKey = processed.offer_id;
+      const offerResponse = (offerKey && respondedOffers[offerKey]) || respondedOffers[processed.id];
       if (offerResponse) {
-        processed.application_status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
+        const normAction = offerResponse.toLowerCase();
+        const isAccept = normAction === 'accept' || normAction === 'accepted';
+        processed.offerStatus = isAccept ? 'accepted' : 'declined';
+        processed.application_status = isAccept ? 'Accepted' : 'Declined';
       }
     }
 
@@ -170,15 +177,48 @@ export const useJobDetail = (jobId: string) => {
 
   const respondToOffer = useCallback(async (action: 'accept' | 'decline') => {
     if (!job) return;
+    const offerId = job.offer_id || job.id;
+    const targetStatus = action === 'accept' ? ('accepted' as const) : ('declined' as const);
+    const targetAppStatus = action === 'accept' ? 'Accepted' : 'Declined';
+
+    // 1. Optimistically update local Zustand store for all possible keys
+    setOfferResponse(job.id, action);
+    if (job.offer_id) {
+      setOfferResponse(job.offer_id, action);
+    }
+
+    // 2. Optimistically update local component state
+    setRawJob(prev => prev ? {
+      ...prev,
+      offerStatus: targetStatus,
+      application_status: targetAppStatus
+    } : prev);
+
+    // 3. Optimistically update React Query 'jobOffers' cache
+    queryClient.setQueryData<JobOffer[]>(JOB_OFFERS_QUERY_KEY, (old = []) =>
+      old.map((o) => {
+        const raw = o as unknown as Record<string, unknown>;
+        return (o.id === offerId || raw.offer_id === offerId || o.id === job.id || raw.job_id === job.id)
+          ? { ...o, status: targetStatus }
+          : o;
+      })
+    );
+
     try {
-      await jobsService.respondToOffer(job.offer_id || job.id, action);
-      setOfferResponse(job.offer_id || job.id, action);
+      await jobsService.respondToOffer(offerId, action);
       toast.success(action === 'accept' ? 'Offer accepted!' : 'Offer declined.');
+
+      // Invalidate queries to sync with backend
+      queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['job', jobId] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
     } catch (error) {
       console.error('Failed to respond to offer:', error);
       toast.error('Failed to respond to offer.');
+      fetchJob();
+      queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY });
     }
-  }, [job, setOfferResponse]);
+  }, [job, jobId, setOfferResponse, queryClient, fetchJob]);
 
   const toggleFollow = useCallback(async () => {
     if (!job || isFollowLoading) return;

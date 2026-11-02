@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+import { LeftArrowIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { TrustShieldIcon } from '@/components/icons';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -40,7 +41,7 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         onClick={onBack}
         type="button"
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer select-none bg-transparent border-none outline-none group"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
         <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors" />
         <span className="font-sans font-medium text-base leading-6">Back</span>

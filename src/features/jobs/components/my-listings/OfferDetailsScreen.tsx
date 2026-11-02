@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import { LeftArrowIcon } from '@/components/icons';
 import WithdrawOfferModal from './WithdrawOfferModal';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
@@ -8,6 +9,8 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/businessProfile';
 import { JobListing } from '../../types/jobs.types';
 import Avatar from '@/components/shared/Avatar';
+import { useSocket } from '@/context/SocketContext';
+import { useJobStore } from '@/store/job.store';
 
 interface OfferDetailsScreenProps {
   offerGroup: {
@@ -30,6 +33,7 @@ interface OfferDetailsScreenProps {
     salary_period?: string;
   };
   matchingListing?: JobListing;
+  refreshTrigger?: number;
   onBack: () => void;
   onViewListingDetails: () => void;
 }
@@ -51,6 +55,7 @@ interface OfferCandidate {
 export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   offerGroup,
   matchingListing,
+  refreshTrigger,
   onBack,
   onViewListingDetails,
 }) => {
@@ -60,6 +65,22 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   const offersSentCount = offerGroup.sentCount ?? matchingListing?.offers_count ?? 0;
   const postedDisplay = matchingListing?.posted_at ? `Posted ${matchingListing.posted_at}` : (offerGroup.company || 'Posted recently');
   const [candidates, setCandidates] = useState<OfferCandidate[]>([]);
+  const isFirstLoadRef = useRef(true);
+  const respondedOffers = useJobStore((state) => state.respondedOffers);
+  const { socket } = useSocket();
+
+  const displayCandidates = React.useMemo(() => {
+    return candidates.map((cand) => {
+      const localResp = respondedOffers ? (respondedOffers[cand.id] || (cand.userId ? respondedOffers[cand.userId] : undefined)) : undefined;
+      if (localResp) {
+        return {
+          ...cand,
+          status: (localResp === 'decline' ? 'declined' : 'chat') as OfferCandidate['status'],
+        };
+      }
+      return cand;
+    });
+  }, [candidates, respondedOffers]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -75,10 +96,12 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
     return '';
   }, [activeProfile]);
 
-  const fetchRecipients = useCallback(async () => {
+  const fetchRecipients = useCallback(async (silent = false) => {
     const companyId = getCompanyId();
     if (!offerGroup.id) return;
-    setIsLoading(true);
+    if (!silent && isFirstLoadRef.current) {
+      setIsLoading(true);
+    }
     try {
       const endpoint = companyId
         ? `/jobs/companies/${companyId}/offers/job/${offerGroup.id}/recipients`
@@ -101,13 +124,53 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
     } catch (error) {
       console.error('Failed to fetch offer recipients:', error);
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
+      isFirstLoadRef.current = false;
     }
   }, [offerGroup.id, getCompanyId]);
 
   useEffect(() => {
     fetchRecipients();
+  }, [fetchRecipients, refreshTrigger]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchRecipients(true);
+    };
+    const handleVisibility = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchRecipients(true);
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+    const interval = setInterval(() => fetchRecipients(true), 4000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(interval);
+    };
   }, [fetchRecipients]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleNotification = (data: Record<string, unknown>) => {
+      if (
+        data?.type === 'job_offer_declined' ||
+        data?.type === 'offer_accepted' ||
+        data?.type === 'job_offer'
+      ) {
+        fetchRecipients(true);
+      }
+    };
+    socket.on('notification', handleNotification);
+    return () => {
+      socket.off('notification', handleNotification);
+    };
+  }, [socket, fetchRecipients]);
 
   const handleWithdrawClick = (candId: string) => {
     setSelectedCandId(candId);
@@ -146,9 +209,9 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         type="button"
         onClick={onBack}
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent group"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
-        <Icon icon="solar:arrow-left-linear" className="size-5 text-ds-text-primary group-hover:text-ds-accent transition-colors shrink-0" />
+        <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
         <span className="font-dm-sans font-medium text-base leading-6">Back</span>
       </button>
 
@@ -234,7 +297,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             <div className="w-full flex justify-center py-12">
               <Icon icon="lucide:loader-2" className="size-6 animate-spin text-ds-accent" />
             </div>
-          ) : candidates.length === 0 ? (
+          ) : displayCandidates.length === 0 ? (
             <div className="w-full py-16 flex flex-col justify-center items-center gap-3 bg-ds-surface-1 rounded-2xl border border-ds-border font-dm-sans">
               <div className="size-12 rounded-full bg-ds-surface-2 border border-ds-border flex items-center justify-center text-ds-accent">
                 <Icon icon="solar:users-group-two-rounded-linear" className="size-6" />
@@ -249,7 +312,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
               </div>
             </div>
           ) : (
-            candidates.map((cand) => (
+            displayCandidates.map((cand) => (
               <div key={cand.id} className="w-full flex flex-col justify-center items-start gap-3">
                 {/* Candidate Row */}
                 <div className="w-full py-2 flex flex-row justify-between items-center gap-3">

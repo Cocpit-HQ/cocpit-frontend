@@ -1,10 +1,11 @@
+import { formatPostedTime } from '../../utils/jobs.utils';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/businessProfile';
 import { useToast } from '@/hooks/use-toast';
-import { CyphexAIIcon, PdfFileIcon, EyeIcon, UserIcon } from '@/components/icons';
+import { CyphexAIIcon, PdfFileIcon, EyeIcon, UserIcon, LeftArrowIcon } from '@/components/icons';
 import Avatar from '@/components/shared/Avatar';
 import { JobListing } from '../../types/jobs.types';
 import {
@@ -37,6 +38,8 @@ interface Candidate {
   selfNote?: string;
   note?: string;
   resumeName?: string;
+  resumeFileName?: string;
+  resume_file_name?: string;
   resumeUrl?: string;
   resume?: string;
   summary?: {
@@ -73,9 +76,9 @@ const EMPTY_STATE_CONFIG: Record<
     title: 'No matching candidates yet',
     subtitle: (
       <>
-        Candidates that best match this job&apos;s requirements{' '}
-        <br className="hidden sm:inline" />
-        will appear here when available
+        Candidates that best match this job&apos;s
+        <br />
+        requirements will appear here when available
       </>
     ),
   },
@@ -84,7 +87,7 @@ const EMPTY_STATE_CONFIG: Record<
     subtitle: (
       <>
         New candidates will appear here when they{' '}
-        <br className="hidden sm:inline" />
+        <br />
         apply for this job.
       </>
     ),
@@ -94,7 +97,7 @@ const EMPTY_STATE_CONFIG: Record<
     subtitle: (
       <>
         Shortlist candidates who are a good fit for{' '}
-        <br className="hidden sm:inline" />
+        <br />
         this role to find them here
       </>
     ),
@@ -104,7 +107,7 @@ const EMPTY_STATE_CONFIG: Record<
     subtitle: (
       <>
         Add notes to candidates to keep important{' '}
-        <br className="hidden sm:inline" />
+        <br />
         observations and hiring feedback in one place
       </>
     ),
@@ -114,7 +117,7 @@ const EMPTY_STATE_CONFIG: Record<
     subtitle: (
       <>
         you&apos;re all caught up. Candidates awaiting{' '}
-        <br className="hidden sm:inline" />
+        <br />
         review will appear here
       </>
     ),
@@ -342,7 +345,24 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const displayHeadline = candidateDetail?.headline || activeCandidate?.headline || activeCandidate?.title || '';
   const displayScore = candidateAnalysis?.matchScore ?? activeCandidate?.matchScore ?? activeCandidate?.score;
   const displaySelfNote = candidateDetail?.selfNote || activeCandidate?.selfNote || activeCandidate?.note;
-  const displayResumeName = candidateDetail?.resumeName || activeCandidate?.resumeName || activeCandidate?.resume || (displayName ? `${displayName.toLowerCase().replace(/\s+/g, '.')}.cv.pdf` : 'Resume.pdf');
+  const rawResume =
+    candidateDetail?.resumeName ||
+    activeCandidate?.resumeName ||
+    activeCandidate?.resume_file_name ||
+    activeCandidate?.resumeFileName ||
+    activeCandidate?.resume;
+
+  const displayResumeName = (() => {
+    if (rawResume && !rawResume.startsWith('resume-')) return rawResume;
+    const url = candidateDetail?.resumeUrl || activeCandidate?.resumeUrl;
+    if (url) {
+      const fileName = url.split('/').pop() || '';
+      if (!fileName.startsWith('resume-') && fileName.toLowerCase().endsWith('.pdf')) {
+        return fileName;
+      }
+    }
+    return displayName ? `${displayName.replace(/\s+/g, '_')}_Resume.pdf` : 'Resume.pdf';
+  })();
   const displayAvatar = candidateDetail?.avatarUrl || activeCandidate?.avatarUrl || activeCandidate?.avatar;
   const displaySummary = candidateAnalysis?.summary || activeCandidate?.summary;
   const displaySkills = candidateAnalysis?.skills || activeCandidate?.skills;
@@ -359,12 +379,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent group"
+          className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         >
-          <Icon
-            icon="solar:arrow-left-linear"
-            className="size-5 text-ds-text-primary group-hover:text-ds-accent transition-colors shrink-0"
-          />
+          <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
           <span className="font-dm-sans font-medium text-base leading-6">Back</span>
         </button>
       )}
@@ -392,7 +409,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 {listing.title}
               </h3>
               <span className="h-5 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate flex items-center">
-                {listing.posted_at || listing.last_edited || 'Posted recently'}
+                {formatPostedTime(listing.posted_at || listing.last_edited)}
               </span>
             </div>
 
@@ -492,27 +509,23 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             </div>
           </div>
 
-          {/* Frame 2608633: Candidates Empty State (Figma) / Split View */}
+          {/* Frame 2608633: Candidates Empty State (w: 800px, h: 324px) */}
           {candidates.length === 0 && !isLoadingApplicants ? (
-            <div className="w-full max-w-[800px] flex justify-start items-start gap-4">
-              <div className="flex-1 rounded-3xl flex flex-col justify-start items-start gap-4">
-                <div className="self-stretch pt-14 pb-28 flex flex-col justify-center items-center gap-2 select-none animate-in fade-in duration-200">
-                  {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
-                  <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
-                    <UserIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
-                  </div>
+            <div className="w-full max-w-[800px] h-[324px] pt-[60px] pb-[120px] flex flex-col items-center justify-start gap-2 select-none animate-in fade-in duration-200">
+              {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
+              <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
+                <UserIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
+              </div>
 
-                  {/* Text Container */}
-                  <div className="flex flex-col justify-start items-center gap-2 text-center">
-                    <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
-                      {EMPTY_STATE_CONFIG[filter]?.title ?? 'No applicants found'}
-                    </h3>
-                    <p className="max-w-[400px] text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-center">
-                      {EMPTY_STATE_CONFIG[filter]?.subtitle ??
-                        'Candidates in this category will appear here when available.'}
-                    </p>
-                  </div>
-                </div>
+              {/* Text Container */}
+              <div className="flex flex-col items-center gap-2 text-center">
+                <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
+                  {EMPTY_STATE_CONFIG[filter]?.title ?? 'No applicants found'}
+                </h3>
+                <p className="max-w-[480px] text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-center">
+                  {EMPTY_STATE_CONFIG[filter]?.subtitle ??
+                    'Candidates in this category will appear here when available.'}
+                </p>
               </div>
             </div>
           ) : (
@@ -532,10 +545,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       type="button"
                       onClick={handleSelectPreviousCandidate}
                       disabled={currentCandidateIndex <= 0}
-                      className="size-4 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer focus:outline-none transition-colors"
+                      className="size-4 flex items-center justify-center text-[#B8ADA8] text-ds-text-secondary hover:text-ds-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer focus:outline-none transition-colors"
                       aria-label="Previous candidate"
                     >
-                      <Icon icon="solar:alt-arrow-left-linear" className="size-4" />
+                      <Icon icon="solar:arrow-left-linear" className="size-4 text-[#B8ADA8] text-ds-text-secondary" />
                     </button>
                     <span className="w-4 h-6 font-dm-sans font-normal text-base leading-6 text-ds-text-primary text-center select-none">
                       {String(currentCandidateIndex + 1).padStart(2, '0')}
@@ -544,10 +557,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       type="button"
                       onClick={handleSelectNextCandidate}
                       disabled={currentCandidateIndex >= totalCandidates - 1}
-                      className="size-4 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer focus:outline-none transition-colors"
+                      className="size-4 flex items-center justify-center text-[#B8ADA8] text-ds-text-secondary hover:text-ds-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer focus:outline-none transition-colors"
                       aria-label="Next candidate"
                     >
-                      <Icon icon="solar:alt-arrow-right-linear" className="size-4" />
+                      <Icon icon="solar:arrow-right-linear" className="size-4 text-[#B8ADA8] text-ds-text-secondary" />
                     </button>
                   </div>
                 )}
@@ -604,7 +617,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                           <div className="flex flex-row items-center gap-1 h-6">
                             {score != null ? (
                               <>
-                                <span className="text-ds-accent text-base font-normal font-dm-sans leading-6 flex items-center">
+                                <span className={`${score < 20 ? 'text-ds-error font-medium' : 'text-ds-accent'} text-base font-normal font-dm-sans leading-6 flex items-center`}>
                                   {score}%
                                 </span>
                                 <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 flex items-center">
@@ -684,7 +697,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                   {/* Frame 2609066: AI Match Score */}
                   <div className="flex flex-col justify-center items-end h-[52px] gap-1">
-                    <span className="text-ds-accent font-dm-sans font-semibold text-2xl leading-8 flex items-center">
+                    <span className={`${(displayScore ?? 0) < 20 ? 'text-ds-error' : 'text-ds-accent'} font-dm-sans font-semibold text-2xl leading-8 flex items-center`}>
                       {displayScore != null ? `${displayScore}%` : '--'}
                     </span>
                     <span className="text-ds-text-secondary font-dm-sans font-normal text-xs leading-4 flex items-center">
@@ -881,7 +894,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       Skills
                     </span>
                     <div className="h-7 px-2 py-1 rounded-full flex items-center justify-center">
-                      <span className="text-ds-success text-[10px] font-medium font-dm-sans leading-3 uppercase tracking-wider">
+                      <span className={`${displaySkills.match < 20 ? 'text-ds-error' : 'text-ds-success'} text-[10px] font-medium font-dm-sans leading-3 uppercase tracking-wider`}>
                         {displaySkills.match}% MATCH
                       </span>
                     </div>
@@ -914,11 +927,11 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               {/* Line 167: Divider */}
               <div className="w-full h-0 border-t border-ds-border" />
 
-              {/* Frame 2609110: Experience & Qualification Side-by-Side Cards */}
-              <div className={`w-full grid ${displayExperience && displayQualification ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} items-stretch gap-4`}>
+              {/* Frame 2609110: Experience & Qualification Side-by-Side Cards (249x192px each) */}
+              <div className="w-full flex flex-col sm:flex-row items-center gap-4">
                 {/* Experience Match Card */}
                 {displayExperience && (
-                  <div className="w-full h-full min-h-[192px] p-3 bg-ds-surface-1 rounded-2xl flex flex-col justify-between gap-4 min-w-0">
+                  <div className="w-full sm:w-[249px] h-[192px] p-3 bg-ds-surface-1 rounded-2xl flex flex-col justify-between box-border shrink-0">
                     <div className="w-full h-7 flex justify-between items-center gap-2">
                       <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6 shrink-0">
                         Experience
@@ -939,7 +952,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                           {displayExperience.required}
                         </span>
                       </div>
-                      <Icon icon="solar:arrow-right-linear" className="size-5 text-ds-text-secondary shrink-0" />
+                      <Icon icon="solar:arrow-right-linear" className="size-4 text-ds-text-secondary shrink-0" />
                       <div className="flex flex-col items-start gap-1 min-w-0">
                         <span className="text-ds-text-primary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider">
                           ACTUAL
@@ -951,14 +964,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     </div>
 
                     <p className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 break-words">
-                      {displayExperience.summary}
+                      &ldquo;{displayExperience.summary?.replace(/^[“"']+|[”"']+$/g, '')}&rdquo;
                     </p>
                   </div>
                 )}
 
                 {/* Education Match Card */}
                 {displayQualification && (
-                  <div className="w-full h-full min-h-[192px] p-3 bg-ds-surface-1 rounded-2xl flex flex-col justify-between gap-4 min-w-0">
+                  <div className="w-full sm:w-[249px] h-[192px] p-3 bg-ds-surface-1 rounded-2xl flex flex-col justify-between box-border shrink-0">
                     <div className="w-full h-7 flex justify-between items-center gap-2">
                       <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6 shrink-0">
                         Qualification
@@ -974,7 +987,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       <span className="text-ds-text-primary text-base font-normal font-dm-sans leading-6 break-words">
                         {displayQualification.degree}
                       </span>
-                      {displayQualification.class && (
+                      {displayQualification.class && displayQualification.degree !== 'Not specified' && (
                         <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider">
                           {displayQualification.class}
                         </span>
@@ -982,7 +995,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     </div>
 
                     <p className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 break-words">
-                      {displayQualification.summary}
+                      &ldquo;{displayQualification.summary?.replace(/^[“"']+|[”"']+$/g, '')}&rdquo;
                     </p>
                   </div>
                 )}

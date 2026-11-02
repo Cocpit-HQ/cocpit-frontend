@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import api from '@/lib/axios';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { LeftArrowIcon } from '@/components/icons';
 
 interface StepRoleInputProps {
   onBack: () => void;
@@ -67,21 +68,10 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
         type="button"
         disabled={isDrafting}
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer select-none bg-transparent border-none outline-none group"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] inline-flex items-center gap-2 text-ds-text-primary cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
         <Icon icon="solar:alt-arrow-left-linear" className="w-5 h-5 shrink-0 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors" />
         <span className="font-dm-sans font-medium text-base leading-6">Back</span>
-      </button>
-
-      {/* Top Right: Close Navigation */}
-      <button
-        onClick={onClose || onBack}
-        type="button"
-        disabled={isDrafting}
-        aria-label="Close"
-        className="fixed top-6 right-4 sm:top-10 sm:right-10 z-[60] text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer p-1 select-none bg-transparent border-none outline-none"
-      >
-        <Icon icon="solar:close-linear" className="w-5 h-5 shrink-0" />
       </button>
 
       {/* Main Centered Questionnaire Section */}
@@ -136,9 +126,9 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-ds-bg border border-ds-border rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#030303] border border-[#2C2C33] rounded-[8px] shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
                 <div
-                  className="max-h-48 overflow-y-auto flex flex-col gap-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+                  className="max-h-48 overflow-y-auto flex flex-col gap-4 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                   {suggestions.map((role, idx) => {
@@ -150,13 +140,13 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
                           e.preventDefault();
                           handleSelectRole(role);
                         }}
-                        className="self-stretch h-9 px-3 rounded-lg inline-flex items-center cursor-pointer group select-none hover:bg-ds-surface-1/50 transition-colors"
+                        className="self-stretch inline-flex items-center cursor-pointer select-none"
                       >
                         <span
                           className={`text-sm font-dm-sans leading-5 truncate transition-colors cursor-pointer ${
                             isSelected
                               ? 'text-ds-accent font-medium'
-                              : 'text-ds-text-secondary group-hover:text-ds-text-primary font-normal'
+                              : 'text-ds-text-secondary hover:text-ds-text-primary font-normal'
                           }`}
                         >
                           {role}

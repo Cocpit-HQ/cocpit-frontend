@@ -6,7 +6,11 @@ import { JobsPage } from "@/features/jobs/pages/JobsPage";
 import { MemoryRouter } from "@/components/layout/MemoryRouter";
 import { FeatureGuard } from "@/components/feature-flags";
 
-export default function JobsRoute({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default function JobsRoute({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { isCompany, activeProfile } = useActiveProfile();
 
   return (

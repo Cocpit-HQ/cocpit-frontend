@@ -437,7 +437,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
     if (!job) return null;
 
     const respondedOffers = useJobStore.getState().respondedOffers;
-    const offerResponse = respondedOffers[job.job_id] || respondedOffers[job.offer_id];
+    const offerResponse = respondedOffers[job.job_id] || respondedOffers[job.offer_id] || respondedOffers[job.id];
     let status = (job.is_offer ? job.offerStatus : undefined) || job.applicationStatus;
     if (job.is_offer && offerResponse) {
       status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
@@ -499,6 +499,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       recruiter_id: job.recruiter_id || job.recruiterId || undefined,
       application_status: status,
       offer_id: job.offer_id,
+      offerStatus: job.is_offer ? (offerResponse === 'accept' ? 'accepted' : offerResponse === 'decline' ? 'declined' : (job.offerStatus || (status ? status.toLowerCase() : undefined))) : undefined,
       offer_days_left,
       offer_expiry_text,
       recruiter_name: job.recruiter_name || job.recruiterName || undefined,
@@ -552,6 +553,15 @@ export const applyJob = async (jobId: string, formData?: FormData, jsonBody?: an
     return response.data;
   } catch (error) {
     console.error("Failed to apply for job:", error);
+    throw error;
+  }
+};
+
+export const deleteRecentResume = async (resumeUrl?: string, name?: string, id?: string): Promise<void> => {
+  try {
+    await api.delete('/jobs/applications/me/resumes', { data: { resume_url: resumeUrl, name, id } });
+  } catch (error) {
+    console.error('Error deleting recent resume:', error);
     throw error;
   }
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
+import { LeftArrowIcon } from '@/components/icons';
 import { JobListing } from '../../types/jobs.types';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 
@@ -75,12 +76,9 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent group"
+          className="fixed top-6 left-4 sm:top-10 sm:left-10 z-[60] flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         >
-          <Icon
-            icon="solar:arrow-left-linear"
-            className="size-5 text-ds-text-primary group-hover:text-ds-accent transition-colors shrink-0"
-          />
+          <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
           <span className="text-base font-medium leading-6">Back</span>
         </button>
       )}
