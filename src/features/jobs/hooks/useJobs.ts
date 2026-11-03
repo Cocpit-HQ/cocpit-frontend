@@ -169,7 +169,19 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     enabled: !isCompanyMode && !!token && activeTab === 'Offers',
   });
 
-  // 5. Recommendations Query
+  // 5. Explore Sections Query (Aggregated 4 Categories)
+  const {
+    data: exploreSectionsData = { featured: [], best_matches: [], from_network: [], recently_viewed: [] },
+    isLoading: isExploreSectionsLoading
+  } = useQuery({
+    queryKey: ['jobs', 'explore-sections'],
+    queryFn: () => jobsService.getExploreSections(),
+    staleTime: 1000 * 60 * 2,
+    refetchOnMount: true,
+    enabled: !isCompanyMode && activeTab === 'Explore',
+  });
+
+  // 5b. Recommendations Query
   const {
     data: rawRecommendations = [],
     isLoading: isRecommendationsLoading
@@ -203,6 +215,13 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   }, [savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers]);
 
   const recommendedJobs = useMemo(() => rawRecommendations.map(enhanceJob), [rawRecommendations, enhanceJob]);
+
+  const exploreSections = useMemo(() => ({
+    featured: (exploreSectionsData.featured || []).map(enhanceJob),
+    best_matches: (exploreSectionsData.best_matches || []).map(enhanceJob),
+    from_network: (exploreSectionsData.from_network || []).map(enhanceJob),
+    recently_viewed: (exploreSectionsData.recently_viewed || []).map(enhanceJob),
+  }), [exploreSectionsData, enhanceJob]);
 
   const activeJobs = useMemo(() => {
     let jobs: Job[] = [];
@@ -305,6 +324,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-sections'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-section'] });
     }
   });
 
@@ -369,6 +390,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-sections'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-section'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
       const stats = await jobsService.getApplicationStats();
       setApplicationStats(stats);
@@ -397,7 +420,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     jobs: activeJobs,
     recommendedJobs,
     isLoading,
-    isRecommendationsLoading,
+    isRecommendationsLoading: isRecommendationsLoading || isExploreSectionsLoading,
+    exploreSections,
     isFetchingMore,
     hasMore,
     loadMore,

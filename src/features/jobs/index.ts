@@ -3,6 +3,7 @@ export { default as JobsPage } from './pages/JobsPage';
 export { default as JobDetailPage } from './pages/JobDetailPage';
 export { default as JobSearchPage } from './pages/JobSearchPage';
 export { default as JobOffersPage } from './pages/JobOffersPage';
+export { default as ExploreCategoryPage } from './pages/ExploreCategoryPage';
 
 // Types, Services, Store, Constants & Utils
 export * from './types/jobs.types';

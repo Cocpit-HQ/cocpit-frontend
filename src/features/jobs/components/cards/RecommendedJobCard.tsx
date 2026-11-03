@@ -1,7 +1,7 @@
 import React from 'react';
 import { Job } from '../../types/jobs.types';
 import { Icon } from '@iconify/react';
-import { Icon as CustomIcon } from '@/components/icons';
+import { Icon as CustomIcon, BriefcaseIcon } from '@/components/icons';
 import Avatar from '@/components/shared/Avatar';
 import { formatSalaryRange, cleanSalary } from '../../utils/currency.utils';
 import { formatCardLocation } from '../../utils/location.utils';
@@ -23,6 +23,9 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = React.memo(
   );
   const workMode = job.work_mode || '';
   const locationText = formatCardLocation(job.location, workMode);
+  const companyOrPosterName = job.org_id
+    ? (job.company || job.recruiter_name)
+    : (job.recruiter_name || job.company);
 
   return (
     <div
@@ -33,10 +36,11 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = React.memo(
       <div className="w-full h-10 flex items-start justify-between gap-3">
         {/* Frame 2609815: Company Logo (40px x 40px, rounded: 8px, bg: #1A1A20) */}
         <Avatar
-          src={job.company_logo}
-          name={job.company}
-          isCompany={true}
+          src={job.org_id ? job.company_logo : (job.recruiter_avatar || job.company_logo)}
+          name={companyOrPosterName}
+          isCompany={Boolean(job.org_id)}
           className="size-10"
+          fallbackIcon={<BriefcaseIcon className="w-[60%] h-[60%] text-ds-text-primary shrink-0" />}
         />
 
         {/* Right side: Save icon (Frame 2609818 order 1) */}
@@ -65,9 +69,9 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = React.memo(
         <h3 className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">
           {job.title}
         </h3>
-        {job.company && (
+        {companyOrPosterName && (
           <span className="w-full text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
-            {job.company}
+            {companyOrPosterName}
           </span>
         )}
       </div>

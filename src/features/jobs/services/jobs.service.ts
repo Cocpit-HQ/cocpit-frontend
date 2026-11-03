@@ -346,6 +346,115 @@ export const getRecommendations = async (): Promise<Job[]> => {
   }
 };
 
+export interface ExploreSectionsData {
+  featured: Job[];
+  best_matches: Job[];
+  from_network: Job[];
+  recently_viewed: Job[];
+}
+
+export interface PaginatedExploreCategoryResult {
+  category: string;
+  title: string;
+  description: string;
+  items: Job[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  requiresAuth?: boolean;
+}
+
+const mapExploreJobItem = (job: any): Job => ({
+  id: job.id || job.job_id,
+  title: job.title,
+  company: job.company || job.company_name || '',
+  company_logo: job.company_logo || job.companyLogo || undefined,
+  company_slug: job.company_slug || undefined,
+  recruiter_name: job.recruiter_name || job.recruiterName || undefined,
+  recruiter_avatar: job.recruiter_avatar || job.recruiterAvatar || undefined,
+  location: job.location || '',
+  job_type: job.job_type || 'Full time',
+  work_type: job.job_type || 'Full time',
+  work_mode: job.work_mode,
+  salary_min: job.salary_min,
+  salary_max: job.salary_max,
+  salary_currency: job.salary_currency,
+  salary_display: job.salary_display || formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
+  posted_at: job.posted_at || getRelativeTime(job.created_at),
+  created_at: job.created_at,
+  description: job.description || '',
+  experience: job.experience || ((job.experience_min != null && job.experience_max != null)
+    ? `${job.experience_min}-${job.experience_max}Yrs`
+    : (job.experience_label || job.experience_level || '0-2Yrs')),
+  is_saved: Boolean(job.is_saved ?? job.isSaved),
+  is_applied: Boolean(job.is_applied ?? job.hasApplied),
+  is_offer: Boolean(job.is_offer),
+  application_status: job.application_status || job.applicationStatus || job.current_status || null,
+  tags: job.tags || [],
+  org_id: job.org_id,
+  recruiter_id: job.recruiter_id,
+  is_recommended: Boolean(job.is_recommended),
+  recommended_badge: job.recommended_badge || '',
+  match_score: job.match_score || null,
+  quality_score: job.quality_score,
+  network_badge: job.network_badge || null,
+  last_viewed_at: job.last_viewed_at,
+});
+
+export const getExploreSections = async (): Promise<ExploreSectionsData> => {
+  try {
+    const response = await api.get('/jobs/explore/sections');
+    const sections = response.data?.data || response.data || {};
+    return {
+      featured: (sections.featured || []).map(mapExploreJobItem),
+      best_matches: (sections.best_matches || []).map(mapExploreJobItem),
+      from_network: (sections.from_network || []).map(mapExploreJobItem),
+      recently_viewed: (sections.recently_viewed || []).map(mapExploreJobItem),
+    };
+  } catch (error) {
+    console.error("Failed to fetch explore sections:", error);
+    return {
+      featured: [],
+      best_matches: [],
+      from_network: [],
+      recently_viewed: [],
+    };
+  }
+};
+
+export const getExploreSectionPaginated = async (
+  category: string,
+  cursor?: string,
+  limit: number = 10
+): Promise<PaginatedExploreCategoryResult> => {
+  try {
+    const params: Record<string, any> = { limit };
+    if (cursor) params.cursor = cursor;
+
+    const response = await api.get(`/jobs/explore/sections/${category}`, { params });
+    const payload = response.data?.data || response.data || {};
+
+    return {
+      category: payload.category || category,
+      title: payload.title || '',
+      description: payload.description || '',
+      items: (payload.items || []).map(mapExploreJobItem),
+      nextCursor: payload.nextCursor || null,
+      hasMore: Boolean(payload.hasMore),
+      requiresAuth: Boolean(payload.requiresAuth),
+    };
+  } catch (error) {
+    console.error(`Failed to fetch explore section '${category}':`, error);
+    return {
+      category,
+      title: '',
+      description: '',
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    };
+  }
+};
+
 export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
   try {
     const params: Record<string, any> = { limit: 10 };

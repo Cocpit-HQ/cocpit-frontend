@@ -62,6 +62,13 @@ export interface Job {
   company_type?: string;
   industry?: string;
   skills?: string[];
+  quality_score?: number;
+  network_badge?: {
+    connection_count: number;
+    primary_name: string;
+    text: string;
+  } | null;
+  last_viewed_at?: string;
 }
 
 export interface JobsFilter {

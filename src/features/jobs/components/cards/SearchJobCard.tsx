@@ -2,6 +2,7 @@ import React from 'react';
 import { Job } from '../../types/jobs.types';
 import { Icon } from '@iconify/react';
 import Avatar from '@/components/shared/Avatar';
+import { BriefcaseIcon } from '@/components/icons';
 import { formatJobLocation } from '../../utils/location.utils';
 import { cleanSalary } from '../../utils/currency.utils';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -25,6 +26,9 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
   const strongerThanPercent = 100 - percentNum;
 
   const salaryText = cleanSalary(job.salary_display || (job.salary_min && job.salary_max ? `${job.salary_min}–${job.salary_max}` : job.salary_min || job.salary_max));
+  const companyOrPosterName = job.org_id
+    ? (job.company || job.recruiter_name)
+    : (job.recruiter_name || job.company);
 
   return (
     <div
@@ -35,17 +39,18 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
       <div className="w-full flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
           <Avatar
-            src={job.company_logo}
-            name={job.company}
-            isCompany={true}
+            src={job.org_id ? job.company_logo : (job.recruiter_avatar || job.company_logo)}
+            name={companyOrPosterName}
+            isCompany={Boolean(job.org_id)}
             className="size-10 mt-0.5"
+            fallbackIcon={<BriefcaseIcon className="w-[60%] h-[60%] text-ds-text-primary shrink-0" />}
           />
           <div className="flex flex-col min-w-0">
             <h3 className="text-ds-text-primary text-base font-medium font-dm-sans leading-snug line-clamp-1 group-hover:text-ds-accent transition-colors">
               {job.title}
             </h3>
             <span className="text-ds-text-secondary text-sm font-normal font-dm-sans truncate">
-              {job.company}
+              {companyOrPosterName}
             </span>
           </div>
         </div>

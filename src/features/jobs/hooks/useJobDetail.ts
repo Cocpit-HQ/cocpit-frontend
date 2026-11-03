@@ -101,6 +101,10 @@ export const useJobDetail = (jobId: string) => {
   useEffect(() => {
     if (!rawJob) return;
 
+    // Invalidate explore sections & recently-viewed so returning to them reflects this view
+    queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-sections'] });
+    queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-section', 'recently-viewed'] });
+
     if (rawJob.is_applied && !appliedJobIds.has(rawJob.id)) {
       addAppliedId(rawJob.id);
     }
@@ -162,12 +166,15 @@ export const useJobDetail = (jobId: string) => {
       const res = await jobsService.applyJob(job.id, formData, jsonBody);
       addAppliedId(job.id);
       toast.success(res?.message || 'Successfully applied to the job!');
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-sections'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-section'] });
     } catch (error) {
       console.error('Failed to apply to job:', error);
       toast.error('Failed to submit application.');
       throw error;
     }
-  }, [job, appliedJobIds, addAppliedId]);
+  }, [job, appliedJobIds, addAppliedId, queryClient]);
 
   const withdrawJob = useCallback(async () => {
     if (!job) return;
@@ -180,6 +187,9 @@ export const useJobDetail = (jobId: string) => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
       toast.success('Application withdrawn successfully.');
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-sections'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-section'] });
     } catch (error) {
       console.error('Failed to withdraw application:', error);
       toast.error('Failed to withdraw application.');

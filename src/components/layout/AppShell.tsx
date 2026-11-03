@@ -88,7 +88,8 @@ export function AppShell({
   );
   const isJobDetailPage = Boolean(pathname?.match(/^\/jobs\/[^\/]+\/?$/) && !pathname?.startsWith('/jobs/search'));
   const isJobSearchPage = Boolean(pathname?.startsWith('/jobs/search'));
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage;
+  const isJobExplorePage = Boolean(pathname?.startsWith('/jobs/explore'));
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage || isJobExplorePage;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || isSettingsSubpage || activeModal === 'create-post';
 
   return (

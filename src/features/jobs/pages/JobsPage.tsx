@@ -53,6 +53,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   const {
     jobs,
     recommendedJobs,
+    exploreSections,
     isLoading,
     isRecommendationsLoading,
     isFetchingMore,
@@ -305,6 +306,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
         <ExploreTab
           jobs={jobs}
           recommendedJobs={recommendedJobs}
+          exploreSections={exploreSections}
 
           isLoading={isLoading}
           isRecommendationsLoading={isRecommendationsLoading}

@@ -19,6 +19,7 @@ export interface AvatarProps {
   showOnlineStatus?: boolean;
   fallbackGradient?: string;
   isUnknown?: boolean;
+  fallbackIcon?: React.ReactNode;
 }
 
 export const getAvatarGradient = (avatar: string) => {
@@ -40,6 +41,7 @@ export default function Avatar({
   showOnlineStatus = false,
   fallbackGradient = "gradient-1",
   isUnknown = false,
+  fallbackIcon,
 }: AvatarProps) {
   const [error, setError] = useState(false);
 
@@ -113,6 +115,8 @@ export default function Avatar({
             className={`w-full h-full object-cover aspect-square ${roundedClass} ${imgClassName}`}
             onError={() => setError(true)}
           />
+        ) : fallbackIcon ? (
+          fallbackIcon
         ) : isOrg ? (
           <BusinessBuildingIcon
             className={`w-[65%] h-[65%] text-ds-text-primary shrink-0 ${iconClassName}`}

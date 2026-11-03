@@ -11,6 +11,12 @@ import { DragScrollContainer } from '@/shared/commonComponents/DragScrollContain
 interface ExploreTabProps {
   jobs: Job[];
   recommendedJobs: Job[];
+  exploreSections?: {
+    featured: Job[];
+    best_matches: Job[];
+    from_network: Job[];
+    recently_viewed: Job[];
+  };
   isLoading: boolean;
   isRecommendationsLoading: boolean;
   isFetchingMore: boolean;
@@ -29,6 +35,7 @@ interface ExploreTabProps {
 export const ExploreTab: React.FC<ExploreTabProps> = ({
   jobs,
   recommendedJobs,
+  exploreSections,
   isLoading,
   isRecommendationsLoading,
   isFetchingMore,
@@ -73,28 +80,22 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     );
   }
 
-    const featuredJobs = useMemo(() => allAvailable.slice(0, 4), [allAvailable]);
+  const featuredJobs = useMemo(
+    () => (exploreSections?.featured ?? allAvailable).slice(0, 5),
+    [exploreSections?.featured, allAvailable]
+  );
   const bestMatches = useMemo(
-    () => (allAvailable.length > 4 ? allAvailable.slice(4, 8) : allAvailable.slice(0, 3)),
-    [allAvailable]
+    () => (exploreSections?.best_matches ?? (allAvailable.length > 5 ? allAvailable.slice(5, 10) : allAvailable)).slice(0, 5),
+    [exploreSections?.best_matches, allAvailable]
   );
   const fromNetwork = useMemo(
-    () =>
-      allAvailable.length > 8
-        ? allAvailable.slice(8, 12)
-        : allAvailable.length > 2
-        ? allAvailable.slice(1, 4)
-        : allAvailable.slice(0, 2),
-    [allAvailable]
+    () => (exploreSections?.from_network ?? (allAvailable.length > 10 ? allAvailable.slice(10, 15) : allAvailable)).slice(0, 5),
+    [exploreSections?.from_network, allAvailable]
   );
+
   const recentlyViewed = useMemo(
-    () =>
-      allAvailable.length > 12
-        ? allAvailable.slice(12, 16)
-        : allAvailable.length > 3
-        ? allAvailable.slice(2, 5)
-        : allAvailable.slice(0, 2),
-    [allAvailable]
+    () => (exploreSections?.recently_viewed ?? (allAvailable.length > 15 ? allAvailable.slice(15, 20) : allAvailable)).slice(0, 5),
+    [exploreSections?.recently_viewed, allAvailable]
   );
 
   const handleFilterRedirect = (newFilters: Partial<JobsFilter>) => {
@@ -126,7 +127,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     router.push(`/jobs/search?${params.toString()}`);
   };
 
-  const renderSection = (title: string, sectionJobs: Job[]) => {
+  const renderSection = (
+    title: string,
+    categoryKey: 'featured' | 'best-matches' | 'from-network' | 'recently-viewed',
+    sectionJobs: Job[]
+  ) => {
     if (!isRecommendationsLoading && sectionJobs.length === 0) return null;
 
     return (
@@ -139,8 +144,8 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
           <button
             type="button"
             onClick={() => {
-              const el = document.getElementById('job-feed-list');
-              el?.scrollIntoView({ behavior: 'smooth' });
+              sessionStorage.setItem('jobs_scroll_page_Explore', window.scrollY.toString());
+              router.push(`/jobs/explore/${categoryKey}`);
             }}
             className="text-ds-accent hover:underline text-xs font-medium font-dm-sans leading-4 transition-colors cursor-pointer"
           >
@@ -149,13 +154,13 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
         </div>
 
         {/* Frame 2609820 Horizontal Carousel: gap-5 (20px), h-[192px] */}
-        <DragScrollContainer className="w-full flex items-center gap-5 overflow-x-auto no-scrollbar pb-1">
+        <DragScrollContainer className="w-full">
           {isRecommendationsLoading ? (
             [1, 2, 3].map((n) => <RecommendedJobCardSkeleton key={n} />)
           ) : (
             sectionJobs.map((job) => (
               <RecommendedJobCard
-                key={`${title}-${job.id}`}
+                key={`${categoryKey}-${job.id}`}
                 job={job}
                 onClick={(j) => router.push(`/jobs/${j.id}`)}
                 onSave={toggleSave}
@@ -170,10 +175,10 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-10">
       {/* Frame 2609821: 4 Horizontal Carousels from Figma Image */}
-      {renderSection('Featured opportunities', featuredJobs)}
-      {renderSection('Best matches for you', bestMatches)}
-      {renderSection('From your network', fromNetwork)}
-      {renderSection('Recently viewed', recentlyViewed)}
+      {renderSection('Featured opportunities', 'featured', featuredJobs)}
+      {renderSection('Best matches for you', 'best-matches', bestMatches)}
+      {renderSection('From your network', 'from-network', fromNetwork)}
+      {renderSection('Recently viewed', 'recently-viewed', recentlyViewed)}
 
       {/* Sub-filters & Vertical Job Feed List (20px gap from tab box to first item) */}
       <div id="job-feed-list" className="w-full flex flex-col gap-5">

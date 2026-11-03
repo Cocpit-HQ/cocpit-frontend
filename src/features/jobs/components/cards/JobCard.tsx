@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Job } from '../../types/jobs.types';
 import { Icon } from '@iconify/react';
-import { Icon as CustomIcon } from '@/components/icons';
+import { Icon as CustomIcon, BriefcaseIcon } from '@/components/icons';
 import Avatar from '@/components/shared/Avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -39,6 +39,9 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
   const percentMatch = badgeText.match(/\d+/);
   const strongerThanPercent = 100 - (percentMatch ? parseInt(percentMatch[0], 10) : 15);
   const salaryText = job.salary_display || (job.salary_min && job.salary_max ? `${job.salary_min}–${job.salary_max}` : job.salary_min || job.salary_max);
+  const companyOrPosterName = job.org_id
+    ? (job.company || job.recruiter_name)
+    : (job.recruiter_name || job.company);
 
   const navigateToChat = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -161,7 +164,8 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
       <div className="w-full h-10 flex items-center justify-between">
         <Avatar
           src={job.org_id ? job.company_logo : (job.recruiter_avatar || job.company_logo)}
-          name={job.org_id ? job.company : (job.recruiter_name || job.company)}
+          name={companyOrPosterName}
+          fallbackIcon={<BriefcaseIcon className="w-[60%] h-[60%] text-ds-text-primary shrink-0" />}
           isCompany={Boolean(job.org_id)}
           className="size-10"
         />
@@ -182,6 +186,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
                     <span className="text-ds-accent ds-text-meta font-medium">
                       {badgeText}
                     </span>
+
                   </div>
                 </TooltipTrigger>
                 <TooltipContent
@@ -226,9 +231,11 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             <h3 className="text-ds-text-primary ds-text-body-1 font-medium truncate">
               {job.title}
             </h3>
-            <span className="text-ds-text-secondary ds-text-secondary font-normal truncate">
-              {job.company}
-            </span>
+            {companyOrPosterName && (
+              <span className="text-ds-text-secondary ds-text-secondary font-normal truncate">
+                {companyOrPosterName}
+              </span>
+            )}
           </div>
 
           {/* Frame 2609816 & Frame 2609961: Experience & Location */}
@@ -264,6 +271,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             <span className="w-[150px] h-[16px] text-ds-error text-xs font-normal font-dm-sans leading-4 text-right whitespace-nowrap">
               This job no longer available
             </span>
+
           </div>
         ) : (
           <div className="flex flex-col justify-end items-end gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>

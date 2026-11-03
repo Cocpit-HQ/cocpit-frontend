@@ -27,6 +27,7 @@ import {
   LeftArrowIcon,
   JobExperienceIcon,
   WorkModeIcon,
+  BriefcaseIcon,
   IndianRupeeIcon,
 } from '@/components/icons';
 
@@ -79,7 +80,11 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
   const handleBack = () => {
     if (returnTo) {
-      router.push(returnTo);
+      if (typeof window !== 'undefined' && window.history.length > 1) {
+        router.back();
+      } else {
+        router.push(returnTo);
+      }
       return;
     }
     goBack('/jobs');
@@ -335,7 +340,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                       onError={() => setAvatarError(true)}
                     />
                   ) : (
-                    <BusinessBuildingIcon className="w-[60%] h-[60%] text-ds-text-primary" />
+                    <BriefcaseIcon className="w-[60%] h-[60%] text-ds-text-primary" />
                   )}
                 </div>
               ) : (
@@ -348,7 +353,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                       onError={() => setAvatarError(true)}
                     />
                   ) : (
-                    <UserIcon className="w-full h-full p-1.5 text-ds-text-primary" />
+                    <BriefcaseIcon className="w-[60%] h-[60%] text-ds-text-primary" />
                   )}
                 </div>
               )}
