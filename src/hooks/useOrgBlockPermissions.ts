@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 
 export const NO_BLOCK_ACCESS_MESSAGE = "You don't have access to block/unblock on the behalf of company";
+export const CANNOT_BLOCK_OWNER_OR_ADMIN_MESSAGE = "An organization cannot block its own owner or administrator";
 export const NO_REPORT_ACCESS_MESSAGE = "You don't have access to report on the behalf of company";
 
 export function useOrgBlockPermissions(targetUserId?: string | null) {
@@ -69,8 +70,8 @@ export function useOrgBlockPermissions(targetUserId?: string | null) {
         isTargetAdminOrOwner: targetProtected,
         canBlockTarget,
         canReportTarget,
-        message: NO_BLOCK_ACCESS_MESSAGE,
-        noBlockMessage: NO_BLOCK_ACCESS_MESSAGE,
+        message: targetProtected ? CANNOT_BLOCK_OWNER_OR_ADMIN_MESSAGE : NO_BLOCK_ACCESS_MESSAGE,
+        noBlockMessage: targetProtected ? CANNOT_BLOCK_OWNER_OR_ADMIN_MESSAGE : NO_BLOCK_ACCESS_MESSAGE,
         noReportMessage: NO_REPORT_ACCESS_MESSAGE,
     };
 }

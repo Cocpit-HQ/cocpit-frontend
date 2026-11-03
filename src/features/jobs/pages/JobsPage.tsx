@@ -214,7 +214,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
     { id: "Explore", label: "Explore" },
     { id: "My Applications", label: "My applications", featureKey: "enableApplicationTracking" },
     { id: "Offers", label: "Offers", featureKey: "enableJobOffers" },
-    { id: "Saved", label: "Save", featureKey: "saved_jobs" },
+    { id: "Saved", label: "Saved", featureKey: "saved_jobs" },
   ];
 
   if (activeTab === "My Listings" || isCompanyMode || isFullScreenView) {
@@ -240,7 +240,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
       <div className="w-full max-w-[800px] mx-auto flex flex-col items-center">
         {/* Sticky Top Navigation Bar matching Figma Frame 2609735 (w: 800px, h: 36px, gap: 20px, NO bottom divider) */}
         <div className="sticky top-[64px] z-30 w-full max-w-[800px] bg-ds-bg/95 backdrop-blur-md h-9 flex items-center justify-between gap-5 mb-5">
-          {/* Left Tabs: Explore, My applications, Offers, Save (Frame 2609925 w:392px h:36px gap:12px) */}
+          {/* Left Tabs: Explore, My applications, Offers, Saved (Frame 2609925 w:392px h:36px gap:12px) */}
           <div className="flex items-center gap-3 overflow-x-auto no-scrollbar h-9">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;

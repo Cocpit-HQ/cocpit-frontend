@@ -75,7 +75,10 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <BareDialogContent className="w-[400px] h-[348px] flex flex-col items-center p-3 gap-3 bg-ds-bg border border-ds-border rounded-[16px] shadow-xl outline-none">
+      <BareDialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="w-[400px] h-[348px] flex flex-col items-center p-3 gap-3 bg-ds-bg border border-ds-border rounded-[16px] shadow-xl outline-none"
+      >
         <DialogTitle className="sr-only">Likes</DialogTitle>
         
         {/* Header */}
@@ -84,7 +87,7 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
             <button 
               onClick={onClose}
               aria-label="Close likes modal"
-              className="w-5 h-5 flex items-center justify-center z-10 text-ds-text-primary hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded ds-focus-ring"
+              className="w-5 h-5 flex items-center justify-center z-10 text-ds-text-primary hover:opacity-80 transition-opacity focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded ds-focus-ring"
             >
               <X className="w-5 h-5" strokeWidth={1.5} />
             </button>
