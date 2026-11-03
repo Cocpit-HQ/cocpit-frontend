@@ -27,7 +27,18 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   const router = useRouter();
   const { isCompany, activeProfile } = useActiveProfile();
   const { isFeatureActive } = useFeatureFlags();
-  const isCompanyMode = propIsCompanyMode || (isCompany && !!activeProfile?.id);
+
+  const isCompanyStored = typeof window !== "undefined" && (() => {
+    try {
+      const stored = sessionStorage.getItem("cocpit_active_profile");
+      if (stored) {
+        return JSON.parse(stored)?.type === "COMPANY";
+      }
+    } catch (e) {}
+    return false;
+  })();
+
+  const isCompanyMode = Boolean(propIsCompanyMode || isCompany || isCompanyStored || activeProfile?.type === 'COMPANY');
 
   // Reactive URL search params
   const urlParams = useSearchParams();
@@ -217,7 +228,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
     { id: "Saved", label: "Saved", featureKey: "saved_jobs" },
   ];
 
-  if (activeTab === "My Listings" || isCompanyMode || isFullScreenView) {
+  const effectiveTab = urlTab || activeTab;
+  if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView) {
     return (
       <div className={`w-full min-h-screen bg-ds-bg flex flex-col items-center ${isFullScreenView ? 'pt-0 pb-0 px-0' : 'pt-14 sm:pt-[60px] pb-16 px-4 sm:px-6 md:px-0'} relative select-text`}>
         <MyListingsDashboard

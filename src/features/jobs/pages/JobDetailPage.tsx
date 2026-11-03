@@ -321,10 +321,11 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             <div
               className="flex items-center gap-2 cursor-pointer group"
               onClick={() => {
-                if (job.org_id) {
-                  router.push(`/company/${job.org_id}`);
+                const orgTarget = job.company_slug || job.org_id || (job as any).company_id;
+                const returnUrl = typeof window !== "undefined" ? (window.location.pathname + window.location.search) : "/jobs";
+                if (orgTarget) {
+                  router.push(`/organization/${orgTarget}?source=jobs&returnTo=${encodeURIComponent(returnUrl)}`);
                 } else if (job.recruiter_id) {
-                  const returnUrl = typeof window !== "undefined" ? (window.location.pathname + window.location.search) : "/jobs";
                   router.push(`/profile/${job.recruiter_id}?source=jobs&returnTo=${encodeURIComponent(returnUrl)}`);
                 }
               }}
@@ -586,10 +587,10 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           </p>
         </div>
 
-        {/* Description Section */}
+        {/* Job Overview Section */}
         <div className="w-full flex flex-col justify-start items-start gap-3">
           <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
-            Description
+            Job overview
           </h3>
           <div className={`w-full text-ds-text-primary text-sm font-normal font-dm-sans leading-5 whitespace-pre-line ${!showFullDesc ? 'line-clamp-6' : ''}`}>
             {job.description}

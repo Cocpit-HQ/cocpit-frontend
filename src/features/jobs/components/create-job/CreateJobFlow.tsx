@@ -9,6 +9,7 @@ import StepJobDetails from './StepJobDetails';
 import { JobListing } from '../../types/jobs.types';
 import * as jobsService from '../../services/jobs.service';
 import { useJobStore } from '@/store/job.store';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useMyProfile } from '@/hooks/use-my-profile';
@@ -22,9 +23,11 @@ interface CreateJobFlowProps {
   onBack: () => void;
   onSubmit: (title: string, status: string, details?: Partial<JobListing>) => Promise<void>;
   initialListing?: JobListing | null;
+  onDelete?: (jobId: string) => void;
 }
 
-export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, initialListing }) => {
+export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, initialListing, onDelete }) => {
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { activeProfile, isLoading: isActiveProfileLoading, updateActiveProfile } = useActiveProfile();
   const {
@@ -143,6 +146,23 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
       const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
       const success = await jobsService.deleteJobListing(jobId, orgId);
       if (success) {
+        queryClient.setQueriesData({ queryKey: ['myListings'] }, (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              data: page.data?.filter((item: any) => item.id !== jobId),
+              counts: page.counts ? {
+                ...page.counts,
+                all: Math.max(0, (page.counts.all || 1) - 1),
+                draft: Math.max(0, (page.counts.draft || 1) - 1),
+              } : page.counts
+            }))
+          };
+        });
+        queryClient.invalidateQueries({ queryKey: ['myListings'] });
+        onDelete?.(jobId);
         toast.success("Draft deleted successfully");
       } else {
         toast.error("Failed to delete draft");

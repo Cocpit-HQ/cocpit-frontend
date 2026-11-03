@@ -187,7 +187,15 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     isLoading: isRecommendationsLoading
   } = useQuery({
     queryKey: ['jobs', 'recommendations'],
-    queryFn: () => jobsService.getRecommendations(),
+    queryFn: async () => {
+      const res = await jobsService.getRecommendations();
+      const savedSync: string[] = [];
+      res.forEach((j: Job) => {
+        if (j.is_saved) savedSync.push(j.id);
+      });
+      if (savedSync.length > 0) addSavedIds(savedSync);
+      return res;
+    },
     staleTime: 1000 * 60 * 10,
     enabled: !isCompanyMode && !!token && activeTab === 'Explore',
   });
@@ -207,7 +215,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
     return {
       ...job,
-      is_saved: job.is_saved || savedJobIds.has(job.id) || savedJobIds.has(job.offer_id || ''),
+      is_saved: savedJobIds.has(job.id) || savedJobIds.has(job.offer_id || ''),
       is_applied: !isWithdrawn && (appliedJobIds.has(job.id) || job.is_applied),
       offerStatus,
       application_status: applicationStatus,
@@ -286,6 +294,31 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       if (selectedJob?.id === jobId) {
         setSelectedJob(prev => prev ? { ...prev, is_saved: shouldSave } : null);
       }
+
+      // Optimistically update React Query cache across explore, saved, recommendations
+      ['explore', 'saved', 'recommendations'].forEach((subKey) => {
+        queryClient.setQueriesData({ queryKey: ['jobs', subKey] }, (oldData: any) => {
+          if (!oldData) return oldData;
+          if (oldData.pages) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                data: page.data?.map((item: Job) =>
+                  item.id === jobId ? { ...item, is_saved: shouldSave } : item
+                ),
+              })),
+            };
+          }
+          if (Array.isArray(oldData)) {
+            return oldData.map((item: Job) =>
+              item.id === jobId ? { ...item, is_saved: shouldSave } : item
+            );
+          }
+          return oldData;
+        });
+      });
+
       return { wasSaved: !shouldSave };
     },
     onError: (err, { jobId }, context) => {
@@ -299,6 +332,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'recommendations'] });
     }
   });
 

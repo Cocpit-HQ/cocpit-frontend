@@ -35,6 +35,17 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const source = searchParams?.get("source");
+  const returnTo = searchParams?.get("returnTo");
+  const isFromJobs = Boolean(
+    source === "jobs" ||
+    source === "job_application_dashboard" ||
+    returnTo?.includes("/jobs") ||
+    (typeof window !== "undefined" && (
+      window.sessionStorage.getItem("coming_from_job_detail") === "true" ||
+      window.sessionStorage.getItem("nav_memory_jobs")
+    ))
+  );
   const isExplicitPublic = searchParams?.get("view") === "public" || searchParams?.get("mode") === "public" || searchParams?.get("preview") === "true";
   const rawSlug = (params?.slug as string) || "";
   const slug = decodeURIComponent(rawSlug);
@@ -187,15 +198,19 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   }
 
   const handleBack = () => {
+    if (returnTo) {
+      router.push(returnTo);
+      return;
+    }
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
-      router.push("/feed");
+      router.push(isFromJobs ? "/jobs" : "/feed");
     }
   };
 
   const handleClose = () => {
-    router.push("/feed");
+    router.push(isFromJobs ? "/jobs" : "/feed");
   };
   const isBlockedByTarget = Boolean(
     profileResponse?.relationship?.is_blocked && 

@@ -40,6 +40,11 @@ export const useJobDetail = (jobId: string) => {
       const res = await jobsService.getJobById(jobId);
       if (activeJobIdRef.current === jobId) {
         setRawJob(res);
+        if (res?.is_saved) {
+          addSavedId(res.id);
+        } else if (res?.id) {
+          removeSavedId(res.id);
+        }
       }
     } catch (err) {
       console.error('Failed to load job details:', err);
@@ -71,7 +76,7 @@ export const useJobDetail = (jobId: string) => {
     
     const processed = { ...rawJob };
     const isWithdrawn = withdrawnJobIds.has(processed.id);
-    processed.is_saved = processed.is_saved || savedJobIds.has(processed.id);
+    processed.is_saved = savedJobIds.has(processed.id);
     processed.is_applied = !isWithdrawn && (processed.is_applied || appliedJobIds.has(processed.id));
     if (isWithdrawn) {
       processed.application_status = 'Withdrawn';
@@ -121,21 +126,36 @@ export const useJobDetail = (jobId: string) => {
 
   const toggleSave = useCallback(async () => {
     if (!job) return;
+    const isCurrentlySaved = savedJobIds.has(job.id);
+    const nextSavedState = !isCurrentlySaved;
+
+    // Optimistically update local state & global store
+    if (nextSavedState) {
+      addSavedId(job.id);
+    } else {
+      removeSavedId(job.id);
+    }
+    setRawJob(prev => (prev ? { ...prev, is_saved: nextSavedState } : null));
+
     try {
-      const isCurrentlySaved = savedJobIds.has(job.id);
-      await jobsService.saveJob(job.id, !isCurrentlySaved);
-      
-      if (isCurrentlySaved) {
-        removeSavedId(job.id);
-      } else {
-        addSavedId(job.id);
-      }
-      toast.success(!isCurrentlySaved ? 'Job saved successfully' : 'Job removed from saved list');
+      await jobsService.saveJob(job.id, nextSavedState);
+      toast.success(nextSavedState ? 'Job saved successfully' : 'Job removed from saved list');
     } catch (error) {
+      // Rollback on failure
+      if (isCurrentlySaved) {
+        addSavedId(job.id);
+      } else {
+        removeSavedId(job.id);
+      }
+      setRawJob(prev => (prev ? { ...prev, is_saved: isCurrentlySaved } : null));
       console.error('Failed to save job:', error);
       toast.error('Failed to update save status.');
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'recommendations'] });
     }
-  }, [job, savedJobIds, addSavedId, removeSavedId]);
+  }, [job, savedJobIds, addSavedId, removeSavedId, queryClient]);
 
   const applyToJob = useCallback(async (resumeUrlOrName?: string, uploadedFile?: File | null, resumeId?: string | null, coverLetter?: string) => {
     if (!job) return;

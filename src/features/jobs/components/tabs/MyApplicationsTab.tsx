@@ -273,48 +273,48 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                 <div
                   key={job.id}
                   onClick={() => router.push(`/jobs/${job.id}`)}
-                  className="w-full p-4 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none font-dm-sans"
+                  className="w-full max-w-[800px] sm:h-[84px] p-4 rounded-[24px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 self-stretch cursor-pointer select-none font-dm-sans"
                 >
-                  {/* Column 1: Role & Company (Figma w-52, gap-2) */}
-                  <div className="w-full sm:w-52 flex flex-col items-start gap-1 sm:gap-2 min-w-0 shrink-0">
-                    <h3 className="w-full text-ds-text-primary ds-text-body-1 font-medium truncate">
+                  {/* Section 1: Job Details */}
+                  <div className="w-full sm:w-[230px] sm:h-[52px] flex flex-col items-start gap-2 shrink-0 min-w-0">
+                    <h3 className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">
                       {job.title}
                     </h3>
-                    <span className="w-full text-ds-text-secondary ds-text-secondary font-normal truncate">
+                    <span className="w-full text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
                       {job.company}
                     </span>
                   </div>
 
-                  {/* Column 2: Applied Time (Figma w-52, center aligned) */}
-                  <div className="w-full sm:w-52 flex items-center sm:justify-center">
-                    <span className="text-ds-text-secondary ds-text-secondary font-normal truncate">
+                  {/* Section 2: Application Date */}
+                  <div className="w-full sm:w-[180px] sm:h-[52px] flex flex-row items-center justify-start gap-2.5 shrink-0 min-w-0">
+                    <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate text-left">
                       {job.applied_date_display || `Applied ${job.posted_at || 'recently'}`}
                     </span>
                   </div>
 
-                  {/* Column 3: Status Text (Figma w-52, center aligned) */}
-                  <div className="w-full sm:w-52 flex items-center sm:justify-center">
+                  {/* Section 3: Application Status */}
+                  <div className="w-full sm:w-[130px] sm:h-[52px] flex flex-row items-center justify-start gap-2.5 shrink-0 min-w-0">
                     {isShortlisted ? (
-                      <span className="text-ds-success ds-text-secondary font-normal">
+                      <span className="text-ds-success text-sm font-normal font-dm-sans leading-5 text-left">
                         Shortlisted
                       </span>
                     ) : isDeclined ? (
-                      <span className="text-ds-error ds-text-secondary font-normal">
+                      <span className="text-ds-error text-sm font-normal font-dm-sans leading-5 text-left">
                         Declined
                       </span>
                     ) : isInReview ? (
-                      <span className="text-ds-text-primary ds-text-secondary font-normal">
+                      <span className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 text-left">
                         In review
                       </span>
                     ) : (
-                      <span className="text-ds-text-secondary ds-text-secondary font-normal">
+                      <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-left">
                         Applied
                       </span>
                     )}
                   </div>
 
-                  {/* Column 4: Action Button (Figma Chat: bg-orange-500, Withdraw: outline outline-zinc-800) */}
-                  <div className="flex items-center justify-end shrink-0" onClick={(e) => e.stopPropagation()}>
+                  {/* Section 4: Secondary Button (Figma: 99px x 36px, px-3 py-1.5, gap 10px, rounded-[100px]) */}
+                  <div className="w-full sm:w-[99px] sm:h-9 flex items-center justify-start sm:justify-center shrink-0" onClick={(e) => e.stopPropagation()}>
                     {isShortlisted ? (
                       <button
                         type="button"
@@ -326,7 +326,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                           params.set('jobContext', job.id);
                           router.push(`/messaging?${params.toString()}`);
                         }}
-                        className="h-9 px-4 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary ds-text-body-1 transition-all shadow-sm flex items-center justify-center cursor-pointer border-none outline-none shrink-0"
+                        className="w-[99px] h-9 px-3 py-1.5 rounded-[100px] bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex flex-row justify-center items-center gap-2.5 transition-all shadow-sm cursor-pointer border-none outline-none shrink-0"
                       >
                         Chat
                       </button>
@@ -337,12 +337,12 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                           e.stopPropagation();
                           onWithdrawClick(job.id);
                         }}
-                        className="px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary flex justify-center items-center ds-text-body-1 font-medium focus:outline-none transition-all active:scale-95 cursor-pointer"
+                        className="w-[99px] h-9 px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex flex-row justify-center items-center gap-2.5 focus:outline-none transition-all active:scale-95 cursor-pointer shrink-0"
                       >
                         Withdraw
                       </button>
                     ) : (
-                      <div className="w-24" />
+                      <div className="w-[99px] h-9" />
                     )}
                   </div>
                 </div>

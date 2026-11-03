@@ -459,8 +459,13 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   }, []);
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setDescription(e.target.value);
+    let val = e.target.value;
+    if (val.length > 10000) {
+      val = val.slice(0, 10000);
+    }
+    setDescription(val);
     setIsDirty(true);
+    if (validationError) setValidationError(null);
     e.target.style.height = 'auto';
     e.target.style.height = `${Math.max(140, e.target.scrollHeight)}px`;
   };
@@ -558,7 +563,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       const min = parseFloat(minSalary.replace(/,/g, ''));
       const max = parseFloat(maxSalary.replace(/,/g, ''));
       if (max < min) {
-        setValidationError("Maximum salary cannot be less than minimum salary");
+        setValidationError("Maximum salary must be greater than or equal to minimum salary");
         return;
       }
     }
@@ -579,15 +584,19 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       setValidationError("Job role/title must be at least 2 characters long");
       return;
     }
-    if (description.trim().length < 100) {
-      setValidationError("Job description must be at least 100 characters long");
+    if (description.trim().length < 200) {
+      setValidationError("Job description must contain at least 200 characters");
+      return;
+    }
+    if (description.length >= 10000) {
+      setValidationError("Job description cannot exceed 10,000 characters");
       return;
     }
     if (minSalary && maxSalary) {
       const min = parseFloat(minSalary.replace(/,/g, ''));
       const max = parseFloat(maxSalary.replace(/,/g, ''));
       if (max < min) {
-        setValidationError("Maximum salary cannot be less than minimum salary");
+        setValidationError("Maximum salary must be greater than or equal to minimum salary");
         return;
       }
     }
@@ -596,13 +605,17 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
   const parsedMinSalary = minSalary ? parseFloat(minSalary.replace(/,/g, '')) : undefined;
   const parsedMaxSalary = maxSalary ? parseFloat(maxSalary.replace(/,/g, '')) : undefined;
-  const isSalaryValid =
-    (!parsedMinSalary && !parsedMaxSalary) ||
-    (parsedMinSalary !== undefined && parsedMaxSalary !== undefined && parsedMaxSalary >= parsedMinSalary);
+  const isSalaryRangeInvalid =
+    parsedMinSalary !== undefined &&
+    parsedMaxSalary !== undefined &&
+    parsedMaxSalary < parsedMinSalary;
+  const isSalaryValid = !isSalaryRangeInvalid;
+  const isDescriptionError = (description.trim().length > 0 && description.trim().length < 200) || description.length >= 10000;
 
   const isPublishEnabled =
     role.trim().length >= 2 &&
-    description.trim().length >= 100 &&
+    description.trim().length >= 200 &&
+    description.length <= 10000 &&
     location.trim().length > 0 &&
     industry.trim().length > 0 &&
     workType.trim().length > 0 &&
@@ -664,7 +677,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           {/* Row 1: Job role & Recruiter */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-7">
             {/* Job role */}
-            <div className="border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5">
+            <div
+              className={cn(
+                "min-w-0 relative border-b transition-colors pb-2 flex flex-col justify-center gap-1.5",
+                role.trim().length > 0 && role.trim().length < 2
+                  ? "border-ds-error"
+                  : "border-ds-border focus-within:border-ds-accent"
+              )}
+            >
               <label className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
                 Job role
               </label>
@@ -674,10 +694,16 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                 onChange={(e) => {
                   setRole(e.target.value);
                   setIsDirty(true);
+                  if (validationError) setValidationError(null);
                 }}
                 placeholder="e.g. Website Redesign"
                 className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none"
               />
+              {role.trim().length > 0 && role.trim().length < 2 && (
+                <span className="absolute top-[calc(100%+4px)] left-0 w-full text-ds-error text-xs font-dm-sans leading-4">
+                  Job role must be at least 2 characters
+                </span>
+              )}
             </div>
 
             {/* Recruiter */}
@@ -917,7 +943,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Row 4: AI Rewrite Header & Job Description */}
-          <div className="flex flex-col gap-2.5">
+          <div className={cn("flex flex-col gap-2.5", isDescriptionError && "mb-3")}>
             {/* Header row with Cyphex AI Regenerate button */}
             <div className="flex items-center justify-between">
               <span className="text-ds-text-primary text-base font-normal sm:font-medium font-dm-sans leading-6">
@@ -943,7 +969,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             </div>
 
             {/* Description Textarea or Skeleton while generating */}
-            <div className="border-b border-ds-border focus-within:border-ds-accent transition-colors pb-3 flex flex-col gap-1.5">
+            <div
+              className={cn(
+                "relative border-b transition-colors pb-3 flex flex-col gap-1.5",
+                isDescriptionError
+                  ? "border-ds-error"
+                  : "border-ds-border focus-within:border-ds-accent"
+              )}
+            >
               <label className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
                 Job description
               </label>
@@ -960,11 +993,29 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   ref={textareaRef}
                   value={description}
                   onChange={handleDescriptionChange}
+                  maxLength={10000}
                   placeholder="Write a job description, including the role overview, key responsibilities, required skills, and qualifications..."
                   rows={5}
                   style={{ fieldSizing: 'content' } as React.CSSProperties}
                   className="w-full min-h-[140px] bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-relaxed outline-none resize-none"
                 />
+              )}
+              <div className="flex items-center justify-end w-full">
+                <span
+                  className={cn(
+                    "text-[11px] font-medium font-dm-sans transition-colors",
+                    description.length >= 10000 ? "text-ds-error" : "text-ds-text-muted"
+                  )}
+                >
+                  {description.length}/10000
+                </span>
+              </div>
+              {isDescriptionError && (
+                <span className="absolute top-[calc(100%+4px)] left-0 w-full text-ds-error text-xs font-dm-sans leading-4">
+                  {description.length >= 10000
+                    ? "Job description cannot exceed 10,000 characters"
+                    : "Job description must contain at least 200 characters"}
+                </span>
               )}
             </div>
           </div>
@@ -1096,6 +1147,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   onChange={(e) => {
                     setMinSalary(e.target.value.replace(/[^0-9,]/g, ''));
                     setIsDirty(true);
+                    if (validationError) setValidationError(null);
                   }}
                   placeholder="1,200,000"
                   className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none"
@@ -1104,7 +1156,12 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             </div>
 
             {/* Max salary */}
-            <div className="min-w-0 border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5">
+            <div
+              className={cn(
+                "min-w-0 relative border-b transition-colors pb-2 flex flex-col justify-center gap-1.5",
+                isSalaryRangeInvalid ? "border-ds-error" : "border-ds-border focus-within:border-ds-accent"
+              )}
+            >
               <label className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
                 Max salary (annual)
               </label>
@@ -1116,18 +1173,24 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   onChange={(e) => {
                     setMaxSalary(e.target.value.replace(/[^0-9,]/g, ''));
                     setIsDirty(true);
+                    if (validationError) setValidationError(null);
                   }}
                   placeholder="1,200,000"
                   className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none"
                 />
               </div>
+              {isSalaryRangeInvalid && (
+                <span className="absolute top-[calc(100%+4px)] left-0 w-full text-ds-error text-xs font-dm-sans leading-4">
+                  Maximum salary must be greater than or equal to minimum salary
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         {/* Validation Error */}
         {validationError && (
-          <div className="text-rose-400 text-xs text-center font-dm-sans py-1">
+          <div className="text-ds-error text-xs text-center font-dm-sans py-1">
             {validationError}
           </div>
         )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@iconify/react';
 import * as jobsService from '../../services/jobs.service';
 import { JobListing } from '../../types/jobs.types';
@@ -29,6 +30,7 @@ type ViewState = 'dashboard' | 'create-job' | 'view-listing' | 'applicants' | 'o
 
 export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack, isCompanyMode = false }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const urlView = searchParams?.get('view') as ViewState | null;
   const urlJobId = searchParams?.get('jobId') || null;
@@ -199,6 +201,16 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     try {
       const success = await jobsService.deleteJobListing(id, orgId);
       if (success) {
+       queryClient.setQueriesData({ queryKey: ['myListings'] }, (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              data: page.data?.filter((item: any) => item.id !== id),
+            }))
+          };
+        }); 
         refresh();
         transitionTo('dashboard');
         toast.success('Job listing deleted.');
@@ -209,7 +221,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       console.error('Error deleting job listing:', error);
       toast.error('Failed to delete job listing.');
     }
-  }, [refresh, transitionTo, orgId]);
+  }, [refresh, transitionTo, orgId, queryClient]);
 
   // Memoize stable callbacks for child components
   // Memoize stable callbacks for child components
@@ -254,6 +266,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       <CreateJobFlow
         onBack={handleCreateJobBack}
         onSubmit={handleCreateJob}
+        onDelete={() => refresh()}
         initialListing={selectedListing}
       />
     );

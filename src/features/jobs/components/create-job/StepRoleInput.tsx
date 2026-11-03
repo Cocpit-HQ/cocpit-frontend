@@ -126,7 +126,7 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#030303] border border-[#2C2C33] rounded-[8px] shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
                 <div
                   className="max-h-48 overflow-y-auto flex flex-col gap-4 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
@@ -191,4 +191,3 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
 };
 
 export default StepRoleInput;
-
