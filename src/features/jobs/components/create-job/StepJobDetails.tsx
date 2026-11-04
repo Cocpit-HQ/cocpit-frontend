@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { CyphexAIIcon, LeftArrowIcon } from '@/components/icons';
 import { companyService } from '@/services/organization.service';
+import { JobOptionDrawer } from '../drawers/JobOptionDrawer';
 
 interface StepJobDetailsProps {
   jobId?: string | null;
@@ -437,6 +438,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (target?.closest && target.closest('[data-job-drawer]')) {
+        return;
+      }
       if (workModeRef.current && !workModeRef.current.contains(event.target as Node)) {
         setIsWorkModeOpen(false);
       }
@@ -822,7 +827,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </div>
 
               {isWorkModeOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 w-[300px] h-[116px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex flex-col justify-between shadow-2xl z-40 box-border">
+                <div className="hidden sm:flex absolute top-[calc(100%+8px)] left-0 w-[300px] h-[116px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex-col justify-between shadow-2xl z-40 box-border">
                   {WORK_MODE_OPTIONS.map((mode) => (
                     <button
                       key={mode}
@@ -871,7 +876,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </div>
 
               {isExperienceOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 w-[300px] h-[152px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex flex-col justify-between shadow-2xl z-40 box-border">
+                <div className="hidden sm:flex absolute top-[calc(100%+8px)] left-0 w-[300px] h-[152px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex-col justify-between shadow-2xl z-40 box-border">
                   {EXPERIENCE_OPTIONS.map((exp) => (
                     <button
                       key={exp}
@@ -917,7 +922,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </div>
 
               {isWorkTypeOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 w-[300px] h-[188px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex flex-col justify-between shadow-2xl z-40 box-border">
+                <div className="hidden sm:flex absolute top-[calc(100%+8px)] left-0 w-[300px] h-[188px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex-col justify-between shadow-2xl z-40 box-border">
                   {WORK_TYPE_OPTIONS.map((type) => (
                     <button
                       key={type}
@@ -1232,8 +1237,49 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Mobile Selection Drawers (Figma CSS Specs) */}
+      <JobOptionDrawer
+        isOpen={isWorkTypeOpen}
+        onClose={() => setIsWorkTypeOpen(false)}
+        options={WORK_TYPE_OPTIONS}
+        selectedValue={workType}
+        onSelect={(val) => {
+          setWorkType(val);
+          setIsDirty(true);
+        }}
+        heightClass="h-[232px]"
+        ariaLabel="Select work type"
+      />
+
+      <JobOptionDrawer
+        isOpen={isExperienceOpen}
+        onClose={() => setIsExperienceOpen(false)}
+        options={EXPERIENCE_OPTIONS}
+        selectedValue={experience}
+        onSelect={(val) => {
+          setExperience(val);
+          setIsDirty(true);
+        }}
+        heightClass="h-[196px]"
+        ariaLabel="Select experience level"
+      />
+
+      <JobOptionDrawer
+        isOpen={isWorkModeOpen}
+        onClose={() => setIsWorkModeOpen(false)}
+        options={WORK_MODE_OPTIONS}
+        selectedValue={workMode}
+        onSelect={(val) => {
+          setWorkMode(val);
+          setIsDirty(true);
+        }}
+        heightClass="h-[160px]"
+        ariaLabel="Select work mode"
+      />
     </div>
   );
 };
 
 export default StepJobDetails;
+

@@ -194,8 +194,9 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
       {/* Header Row */}
       {sentOffers.length > 0 && (
         <div className="w-full flex flex-col items-start gap-1">
-          <h3 className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
-            Sent offers
+          <h3 className="text-ds-text-primary text-base font-normal sm:font-medium font-dm-sans leading-6">
+            <span className="sm:hidden">Sent offer</span>
+            <span className="hidden sm:inline">Sent offers</span>
           </h3>
           <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
             Total offers - {sentOffers.length}
@@ -204,7 +205,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
       )}
 
       {/* Job Cards list */}
-      <div className="w-full flex flex-col gap-2">
+      <div className="w-full flex flex-col gap-0 sm:gap-2">
         {isLoadingOffers ? (
           <div className="flex justify-center py-8">
             <Icon icon="lucide:loader-2" className="size-6 animate-spin text-ds-accent" />
@@ -254,7 +255,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
                   handleSelectGroup(item);
                 }
               }}
-              className="w-full max-w-[800px] min-h-[129px] py-3 pr-3 border-b border-ds-border flex flex-col justify-center items-start cursor-pointer select-none transition-colors hover:bg-ds-surface-1/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-xl"
+              className="w-full max-w-[800px] min-h-[68px] sm:min-h-[129px] py-2 sm:py-3 pr-0 sm:pr-3 border-b-0 sm:border-b border-ds-border flex flex-col justify-center items-start cursor-pointer select-none transition-colors hover:bg-ds-surface-1/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-none sm:rounded-xl"
             >
               {/* Top Row: Title + Company */}
               <div className="w-full py-1 flex flex-col justify-center items-start gap-1 self-stretch min-w-0">
@@ -266,8 +267,8 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
                 </span>
               </div>
 
-              {/* Bottom Row: 4 Equal Metric Columns (Responsive CSS Grid) */}
-              <div className="w-full grid grid-cols-4 gap-2 sm:gap-3 py-2 self-stretch min-w-0">
+              {/* Bottom Row: 4 Equal Metric Columns (desktop only — hidden on mobile per Figma) */}
+              <div className="hidden sm:grid w-full grid-cols-4 gap-2 sm:gap-3 py-2 self-stretch min-w-0">
                 {/* Sent candidates */}
                 <div className="flex flex-col justify-center items-start gap-1 min-w-0">
                   <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">

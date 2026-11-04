@@ -31,6 +31,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
 
   const displayCompany = displayName;
   const expiryText = rawOffer.offer_expiry_text || (offer.days_remaining ? `Offer ends in ${offer.days_remaining} day${offer.days_remaining === 1 ? '' : 's'}` : 'Offer ends soon');
+  const offerNote = (offer.note || rawOffer.message || rawOffer.note)?.trim();
 
   return (
     <div className="w-full max-w-[801px] flex flex-col items-center select-none font-dm-sans">
@@ -147,7 +148,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
       </div>
 
       {/* Recruiter Speech Card below Offer Card with Vector 9 Elbow Branch Connector (Frame 2609970 / Group 21) */}
-      {offer.note && (
+      {offerNote && (
         <div className="w-full relative flex justify-end pl-[68px] sm:pr-[33px] pr-2">
           {/* Vector 9: Elbow Branch Connector (starts at left: 33px under job card, drops 67px, curves into note box at left: 68px) */}
           <div
@@ -183,7 +184,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
             </div>
 
             <p className="font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary self-stretch m-0 whitespace-pre-line break-words">
-              {offer.note}
+              {offerNote}
             </p>
           </div>
         </div>

@@ -2,7 +2,8 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Job } from '../../types/jobs.types';
 import JobCardSkeleton from '../skeletons/JobCardSkeleton';
-import { MenuIcon, UserIcon } from '@/components/icons';
+import { MenuIcon, UserIcon, BriefcaseIcon, Icon as CustomIcon } from '@/components/icons';
+import MyApplicationsMobileDrawer from '../drawers/MyApplicationsMobileDrawer';
 
 interface MyApplicationsTabProps {
   jobs: Job[];
@@ -50,6 +51,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
 }) => {
   const router = useRouter();
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -136,42 +138,89 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
       case 'all':
       default:
         return {
-          title: 'No job applications yet',
-          description: 'Applied jobs will appear here when you apply for a job',
+          title: 'No jobs applications yet',
+          description: 'Applied jobs will appear here when you apply for job',
         };
     }
   };
 
+  // Full empty state when user has not applied for any jobs
+  if (jobs.length === 0 && !isLoading) {
+    return (
+      <div className="w-full max-w-[800px] py-28 flex flex-col justify-center items-center gap-2 select-none animate-in fade-in duration-200 font-dm-sans">
+        <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
+          <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
+        </div>
+        <div className="flex flex-col justify-start items-center gap-2 text-center">
+          <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6 text-center">
+            No jobs applications yet
+          </h3>
+          <p className="max-w-sm text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-center">
+            Applied jobs will appear here when you apply for job
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-5 font-dm-sans">
-      {/* Stats Cards Row (Figma gap-6, bg-black, border-zinc-800, 3xl bold) */}
-      <div className="w-full flex items-start gap-6">
-        <div className="flex-1 p-4 bg-ds-bg rounded-2xl border border-ds-border flex flex-col justify-center items-start gap-2">
-          <div className="w-full text-ds-text-primary text-3xl font-bold font-dm-sans leading-10">
+      {/* Stats Cards Row (Desktop gap-6 & 3xl bold, Mobile gap-3 & compact h-[74px]) */}
+      <div className="w-full flex items-start gap-3 sm:gap-6">
+        <div className="flex-1 p-2 sm:p-4 h-[74px] sm:h-auto bg-ds-bg rounded-2xl border border-ds-border flex flex-col justify-center items-start gap-1 sm:gap-2">
+          <div className="w-full text-ds-text-primary text-base sm:text-3xl font-semibold sm:font-bold font-dm-sans leading-6 sm:leading-10">
             {selectedDateFilter !== "All time"
               ? dateFilteredJobs.length
               : applicationStats.totalApplied || jobs.length}
           </div>
-          <div className="w-full text-ds-text-primary ds-text-body font-normal">
+          <div className="w-full text-ds-text-primary text-sm sm:text-base font-normal leading-5 sm:leading-6">
             Total Applied
           </div>
         </div>
 
-        <div className="flex-1 p-4 bg-ds-bg rounded-2xl border border-ds-border flex flex-col justify-center items-start gap-2">
-          <div className="w-full text-ds-text-primary text-3xl font-bold font-dm-sans leading-10">
+        <div className="flex-1 p-2 sm:p-4 h-[74px] sm:h-auto bg-ds-bg rounded-2xl border border-ds-border flex flex-col justify-center items-start gap-1 sm:gap-2">
+          <div className="w-full text-ds-text-primary text-base sm:text-3xl font-semibold sm:font-bold font-dm-sans leading-6 sm:leading-10">
             {selectedDateFilter !== "All time"
               ? dateFilteredJobs.filter(j => (j.application_status || '').toLowerCase() === "shortlisted").length
               : applicationStats.shortlisted || 0}
           </div>
-          <div className="w-full text-ds-text-primary ds-text-body font-normal">
+          <div className="w-full text-ds-text-primary text-sm sm:text-base font-normal leading-5 sm:leading-6">
             Shortlisted
           </div>
         </div>
       </div>
 
-      {/* Filter Section Container (Status Tabs + 3-dots menu, NO full bottom divider) */}
+      {/* Filter Section Container */}
       <div className="w-full flex flex-col gap-5">
-        <div className="w-full pr-4 flex justify-between items-center relative select-none">
+        {/* Mobile Filter Header (Figma Frame 2608535): Active X applications + Filter icon */}
+        <div className="flex md:hidden w-full justify-between items-center h-6 select-none">
+          <span className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
+            Active {dateFilteredJobs.length} applications
+          </span>
+
+          {/* Filter icon button with drawer trigger (Same CustomIcon filter as Explore tab) */}
+          <button
+            type="button"
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="size-8 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none outline-none"
+            aria-label="Filter applications"
+          >
+            <CustomIcon name="filter" size={20} className="w-5 h-5 text-ds-text-primary" />
+          </button>
+        </div>
+
+        {/* Mobile Filter Drawer (Figma more 1 spec) */}
+        <MyApplicationsMobileDrawer
+          isOpen={isMobileDrawerOpen}
+          onClose={() => setIsMobileDrawerOpen(false)}
+          selectedStatus={selectedStatusFilter}
+          setSelectedStatus={setSelectedStatusFilter}
+          selectedDate={selectedDateFilter}
+          setSelectedDate={setSelectedDateFilter}
+        />
+
+        {/* Desktop Filter Row (Status Tabs + 3-dots menu) */}
+        <div className="hidden md:flex w-full pr-4 justify-between items-center relative select-none">
           {/* Status Filter Tabs (Figma: All, Applied, Shortlisted, In Review, Declined) */}
           <div className="flex items-center gap-3 overflow-x-auto no-scrollbar h-9">
             {["All", "Applied", "Shortlisted", "In Review", "Declined"].map((chip) => {
@@ -194,7 +243,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
             })}
           </div>
 
-          {/* Right side: 3-dots Date Filter Dropdown (horizontal without background) */}
+          {/* Right side: 3-dots Date Filter Dropdown */}
           <div ref={dropdownRef} className="relative shrink-0 flex items-center">
             <button
               type="button"
@@ -218,7 +267,6 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                       type="button"
                       key={item.val}
                       onClick={() => {
-                        // Toggle: clicking active filter resets to 'All time'
                         setSelectedDateFilter(isActive ? "All time" : item.val);
                         setIsFilterDropdownOpen(false);
                       }}
@@ -237,7 +285,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
           </div>
         </div>
 
-        {/* Applications List (Figma gap-4, rounded-3xl p-4 row layout) */}
+        {/* Applications List */}
         <div className="w-full flex flex-col gap-4">
           {isLoading ? (
             <div className="w-full flex flex-col gap-4 py-4">
@@ -249,7 +297,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
             <div className="w-full max-w-[800px] min-h-[324px] pt-[60px] pb-[120px] flex flex-col justify-center items-center gap-2 select-none animate-in fade-in duration-200">
               {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
               <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
-                <UserIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
+                <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
               </div>
 
               {/* Text Container: Title + Subtitle */}
@@ -270,82 +318,146 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
               const isInReview = statusLower === 'in-review' || statusLower === 'in review';
 
               return (
-                <div
-                  key={job.id}
-                  onClick={() => router.push(`/jobs/${job.id}`)}
-                  className="w-full max-w-[800px] sm:h-[84px] p-4 rounded-[24px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 self-stretch cursor-pointer select-none font-dm-sans"
-                >
-                  {/* Section 1: Job Details */}
-                  <div className="w-full sm:w-[230px] sm:h-[52px] flex flex-col items-start gap-2 shrink-0 min-w-0">
-                    <h3 className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">
-                      {job.title}
-                    </h3>
-                    <span className="w-full text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
-                      {job.company}
-                    </span>
+                <React.Fragment key={job.id}>
+                  {/* Mobile Application Card (Figma Frame 2609975) */}
+                  <div
+                    onClick={() => router.push(`/jobs/${job.id}`)}
+                    className="w-full flex sm:hidden flex-col gap-2 py-3 cursor-pointer select-none font-dm-sans"
+                  >
+                    {/* Frame 2610012: Status text at the top left */}
+                    <div className="w-full flex items-center justify-start">
+                      <span className="text-sm font-normal text-ds-text-primary">
+                        {isShortlisted ? "Shortlisted" : isInReview ? "In Review" : isDeclined ? "Declined" : "Applied"}
+                      </span>
+                    </div>
+
+                    {/* Frame 2610014: Row with Left Info & Right Action Button */}
+                    <div className="w-full flex items-center justify-between gap-3">
+                      {/* Frame 2610013: Left Info */}
+                      <div className="flex flex-col items-start gap-0.5 min-w-0 flex-1">
+                        <h3 className="w-full text-ds-text-primary text-base font-medium leading-6 truncate">
+                          {job.title}
+                        </h3>
+                        <span className="w-full text-ds-text-secondary text-sm font-normal leading-5 truncate">
+                          {job.company}
+                        </span>
+                        {job.applied_date_display || job.posted_at ? (
+                          <span className="w-full text-ds-text-secondary text-sm font-normal leading-5 truncate">
+                            {job.applied_date_display || `Applied ${job.posted_at}`}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Right Action Button */}
+                      <div className="shrink-0 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                        {isShortlisted ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const params = new URLSearchParams();
+                              if (job.org_id) params.set('companyId', job.org_id);
+                              else if (job.recruiter_id) params.set('userId', job.recruiter_id);
+                              params.set('jobContext', job.id);
+                              router.push(`/messaging?${params.toString()}`);
+                            }}
+                            className="w-[98px] h-9 px-3 py-1.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium flex items-center justify-center cursor-pointer border-none outline-none shadow-sm"
+                          >
+                            Chat
+                          </button>
+                        ) : !isDeclined ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onWithdrawClick(job.id);
+                            }}
+                            className="w-[98px] h-9 px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary flex justify-center items-center text-base font-medium focus:outline-none transition-all active:scale-95 cursor-pointer"
+                          >
+                            Withdraw
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Section 2: Application Date */}
-                  <div className="w-full sm:w-[180px] sm:h-[52px] flex flex-row items-center justify-start gap-2.5 shrink-0 min-w-0">
-                    <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate text-left">
-                      {job.applied_date_display || `Applied ${job.posted_at || 'recently'}`}
-                    </span>
-                  </div>
+                  {/* Desktop Application Card (Incoming New Design: 800px max, 84px height, 24px radius, 4 sections) */}
+                  <div
+                    onClick={() => router.push(`/jobs/${job.id}`)}
+                    className="w-full max-w-[800px] sm:h-[84px] p-4 rounded-[24px] hidden sm:flex sm:flex-row sm:items-center justify-between gap-3 self-stretch cursor-pointer select-none font-dm-sans"
+                  >
+                    {/* Section 1: Job Details (w-[230px], h-[52px]) */}
+                    <div className="w-full sm:w-[230px] sm:h-[52px] flex flex-col items-start gap-2 shrink-0 min-w-0">
+                      <h3 className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">
+                        {job.title}
+                      </h3>
+                      <span className="w-full text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
+                        {job.company}
+                      </span>
+                    </div>
 
-                  {/* Section 3: Application Status */}
-                  <div className="w-full sm:w-[130px] sm:h-[52px] flex flex-row items-center justify-start gap-2.5 shrink-0 min-w-0">
-                    {isShortlisted ? (
-                      <span className="text-ds-success text-sm font-normal font-dm-sans leading-5 text-left">
-                        Shortlisted
+                    {/* Section 2: Application Date (w-[180px], h-[52px]) */}
+                    <div className="w-full sm:w-[180px] sm:h-[52px] flex flex-row items-center justify-start gap-2.5 shrink-0 min-w-0">
+                      <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate text-left">
+                        {job.applied_date_display || `Applied ${job.posted_at || 'recently'}`}
                       </span>
-                    ) : isDeclined ? (
-                      <span className="text-ds-error text-sm font-normal font-dm-sans leading-5 text-left">
-                        Declined
-                      </span>
-                    ) : isInReview ? (
-                      <span className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 text-left">
-                        In review
-                      </span>
-                    ) : (
-                      <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-left">
-                        Applied
-                      </span>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Section 4: Secondary Button (Figma: 99px x 36px, px-3 py-1.5, gap 10px, rounded-[100px]) */}
-                  <div className="w-full sm:w-[99px] sm:h-9 flex items-center justify-start sm:justify-center shrink-0" onClick={(e) => e.stopPropagation()}>
-                    {isShortlisted ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const params = new URLSearchParams();
-                          if (job.org_id) params.set('companyId', job.org_id);
-                          else if (job.recruiter_id) params.set('userId', job.recruiter_id);
-                          params.set('jobContext', job.id);
-                          router.push(`/messaging?${params.toString()}`);
-                        }}
-                        className="w-[99px] h-9 px-3 py-1.5 rounded-[100px] bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex flex-row justify-center items-center gap-2.5 transition-all shadow-sm cursor-pointer border-none outline-none shrink-0"
-                      >
-                        Chat
-                      </button>
-                    ) : !isDeclined ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onWithdrawClick(job.id);
-                        }}
-                        className="w-[99px] h-9 px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex flex-row justify-center items-center gap-2.5 focus:outline-none transition-all active:scale-95 cursor-pointer shrink-0"
-                      >
-                        Withdraw
-                      </button>
-                    ) : (
-                      <div className="w-[99px] h-9" />
-                    )}
+                    {/* Section 3: Application Status (w-[130px], h-[52px]) */}
+                    <div className="w-full sm:w-[130px] sm:h-[52px] flex flex-row items-center justify-start gap-2.5 shrink-0 min-w-0">
+                      {isShortlisted ? (
+                        <span className="text-ds-success text-sm font-normal font-dm-sans leading-5 text-left">
+                          Shortlisted
+                        </span>
+                      ) : isDeclined ? (
+                        <span className="text-ds-error text-sm font-normal font-dm-sans leading-5 text-left">
+                          Declined
+                        </span>
+                      ) : isInReview ? (
+                        <span className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 text-left">
+                          In review
+                        </span>
+                      ) : (
+                        <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-left">
+                          Applied
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Section 4: Action Button (Figma: 99px x 36px, px-3 py-1.5, gap 10px, rounded-[100px]) */}
+                    <div className="w-full sm:w-[99px] sm:h-9 flex items-center justify-start sm:justify-center shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {isShortlisted ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const params = new URLSearchParams();
+                            if (job.org_id) params.set('companyId', job.org_id);
+                            else if (job.recruiter_id) params.set('userId', job.recruiter_id);
+                            params.set('jobContext', job.id);
+                            router.push(`/messaging?${params.toString()}`);
+                          }}
+                          className="w-[99px] h-9 px-3 py-1.5 rounded-[100px] bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex flex-row justify-center items-center gap-2.5 transition-all shadow-sm cursor-pointer border-none outline-none shrink-0"
+                        >
+                          Chat
+                        </button>
+                      ) : !isDeclined ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onWithdrawClick(job.id);
+                          }}
+                          className="w-[99px] h-9 px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex flex-row justify-center items-center gap-2.5 focus:outline-none transition-all active:scale-95 cursor-pointer shrink-0"
+                        >
+                          Withdraw
+                        </button>
+                      ) : (
+                        <div className="w-[99px] h-9" />
+                      )}
+                    </div>
                   </div>
-                </div>
+                </React.Fragment>
               );
             })
           )}

@@ -226,8 +226,10 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   // Memoize stable callbacks for child components
   // Memoize stable callbacks for child components
   const handleCreateJobBack = useCallback(() => {
+    setSelectedListing(null);
+    refresh();
     transitionTo('dashboard');
-  }, [transitionTo]);
+  }, [refresh, transitionTo]);
 
   const handleSendOfferInit = useCallback((listing: JobListing) => {
     setInitialOfferJobId(listing.id);
@@ -372,13 +374,13 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   return (
     <>
-      {/* Top-Left Back Button matching Public Profile and Figma (top: 40px, left: 40px) */}
+      {/* Desktop Back Button (Preserved 100%) */}
       {onBack && (
         <button
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="fixed top-[40px] left-[40px] z-[60] inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+          className="hidden md:inline-flex fixed top-[40px] left-[40px] z-[60] items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         >
           <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
           <span className="font-dm-sans font-medium text-base leading-6">Back</span>
@@ -386,18 +388,63 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       )}
 
       <div className="w-full max-w-[800px] mx-auto flex flex-col gap-5 font-dm-sans animate-in fade-in duration-300">
+        {/* Mobile In-flow Back Button (Figma Frame 2609713) */}
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back"
+            className="flex md:hidden items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none self-start"
+          >
+            <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
+            <span className="font-dm-sans font-medium text-base leading-6">Back</span>
+          </button>
+        )}
 
-        {/* Top Banner Card: Frame 2609959 (w: 800px, h: 96px, p: 24px, bg: #1A1A20, border: #2C2C33, r: 16px) */}
-        <div className="w-full h-auto sm:h-24 p-6 bg-ds-surface-1 rounded-2xl border border-ds-border flex flex-row items-center box-border">
+        {/* Top Banner Card: Frame 2609959 (mobile: transparent bg, desktop: #1A1A20; border: #2C2C33, r: 16px) */}
+        <div className="w-full h-auto sm:h-24 p-4 sm:p-6 bg-transparent sm:bg-ds-surface-1 rounded-2xl border border-ds-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 box-border">
           <div className="w-full flex flex-col items-start justify-center gap-1">
             <h2 className="text-ds-text-primary ds-text-body-2 font-semibold text-base leading-6 flex items-center">
-              {activeSubTab === 'Job listings' ? 'Post jobs & find talent' : 'Send job offers'}
+              <span className="md:hidden">{activeSubTab === 'Sent offers' ? 'Send job offers' : 'Posted jobs'}</span>
+              <span className="hidden md:inline">
+                {activeSubTab === 'Job listings' ? 'Post jobs & find talent' : 'Send job offers'}
+              </span>
             </h2>
             <p className="text-ds-text-secondary ds-text-secondary font-normal text-sm leading-5 flex items-center">
-              {activeSubTab === 'Job listings' 
-                ? 'Manage your core network, track subscriber growth, and publish thought leadership across the Cocpit ecosystem.'
-                : 'Hire top talent faster by sending personalized job offers and tracking candidate responses in one place.'}
+              <span className="md:hidden">
+                {activeSubTab === 'Sent offers'
+                  ? 'Send and track personalized job offers and candidate responses'
+                  : 'Manage and track your personalized job offers and candidate responses'}
+              </span>
+              <span className="hidden md:inline">
+                {activeSubTab === 'Job listings' 
+                  ? 'Manage your core network, track subscriber growth, and publish thought leadership across the Cocpit ecosystem.'
+                  : 'Hire top talent faster by sending personalized job offers and tracking candidate responses in one place.'}
+              </span>
             </p>
+          </div>
+
+          {/* Mobile Action Button inside banner (Figma Frame 2609971 spec: w-103px, h-36px, bg-#1A1A20) */}
+          <div className="flex md:hidden self-start shrink-0">
+            <FeatureDisabledTooltip 
+              featureKey={activeSubTab === 'Job listings' ? "enableJobCreation" : "enableJobOffers"}
+              disabledMessage={activeSubTab === 'Job listings' ? "Job creation is temporarily disabled by admin." : "Sending job offers is temporarily disabled by admin."}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeSubTab === 'Job listings') {
+                    transitionTo('create-job');
+                  } else {
+                    setInitialOfferJobId(undefined);
+                    setIsSendOfferModalOpen(true);
+                  }
+                }}
+                className="w-[103px] h-9 px-3 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-primary rounded-full flex items-center justify-center font-dm-sans font-medium text-base leading-6 whitespace-nowrap transition-all active:scale-95 cursor-pointer outline-none border border-ds-border shrink-0"
+              >
+                {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
+              </button>
+            </FeatureDisabledTooltip>
           </div>
         </div>
 
@@ -426,26 +473,28 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
             })}
           </div>
 
-          {/* Right: Create job button */}
-          <FeatureDisabledTooltip 
-            featureKey={activeSubTab === 'Job listings' ? "enableJobCreation" : "enableJobOffers"}
-            disabledMessage={activeSubTab === 'Job listings' ? "Job creation is temporarily disabled by admin." : "Sending job offers is temporarily disabled by admin."}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                if (activeSubTab === 'Job listings') {
-                  transitionTo('create-job');
-                } else {
-                  setInitialOfferJobId(undefined);
-                  setIsSendOfferModalOpen(true);
-                }
-              }}
-              className="w-[103px] h-9 px-3 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-primary rounded-[100px] flex items-center justify-center ds-text-body-1 font-medium text-base leading-6 whitespace-nowrap transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 border-none"
+          {/* Right: Create job button (Desktop only, on mobile it is inside the banner card per Figma) */}
+          <div className="hidden md:flex">
+            <FeatureDisabledTooltip 
+              featureKey={activeSubTab === 'Job listings' ? "enableJobCreation" : "enableJobOffers"}
+              disabledMessage={activeSubTab === 'Job listings' ? "Job creation is temporarily disabled by admin." : "Sending job offers is temporarily disabled by admin."}
             >
-              {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
-            </button>
-          </FeatureDisabledTooltip>
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeSubTab === 'Job listings') {
+                    transitionTo('create-job');
+                  } else {
+                    setInitialOfferJobId(undefined);
+                    setIsSendOfferModalOpen(true);
+                  }
+                }}
+                className="w-[103px] h-9 px-3 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-primary rounded-[100px] flex items-center justify-center ds-text-body-1 font-medium text-base leading-6 whitespace-nowrap transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 border-none"
+              >
+                {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
+              </button>
+            </FeatureDisabledTooltip>
+          </div>
         </div>
 
         {/* Content state */}
@@ -540,17 +589,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         initialJobId={initialOfferJobId}
       />
       
-      {/* Mobile FAB for Create Job */}
-      {view === 'dashboard' && activeSubTab === 'Job listings' && (
-        <button
-          onClick={() => transitionTo('create-job')}
-          className={`md:hidden fixed bottom-20 right-4 z-[60] w-14 h-14 rounded-full shadow-lg flex justify-center items-center text-white active:scale-95 transition-all ${
-            'bg-ds-accent hover:opacity-90'
-          }`}
-        >
-          <Icon icon="lucide:plus" className="w-6 h-6" />
-        </button>
-      )}
+
     </>
   );
 };

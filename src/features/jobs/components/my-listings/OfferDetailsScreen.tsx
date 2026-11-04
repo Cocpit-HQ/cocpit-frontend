@@ -49,6 +49,7 @@ interface OfferCandidate {
   note?: string;
   sentByName?: string;
   sentByHeadline?: string;
+  sentByAvatar?: string;
   orgId?: string;
 }
 
@@ -118,6 +119,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         note: item.message || undefined,
         sentByName: item.sent_by_name,
         sentByHeadline: item.sent_by_headline || undefined,
+        sentByAvatar: item.sent_by_avatar || item.sent_by_avatar_url || (item.org_id && activeProfile && activeProfile.id === item.org_id ? (activeProfile as any)?.avatar_url : undefined),
         orgId: item.org_id || undefined,
       }));
       setCandidates(mapped);
@@ -204,20 +206,33 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
   return (
     <>
-      {/* Fixed top-left Back button matching design system */}
+      {/* Fixed top-left Back button matching design system on desktop */}
       <button
         type="button"
         onClick={onBack}
         aria-label="Back"
-        className="fixed top-[40px] left-[40px] z-[60] inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="hidden md:inline-flex fixed top-[40px] left-[40px] z-[60] items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
         <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
         <span className="font-dm-sans font-medium text-base leading-6">Back</span>
       </button>
 
-      <div className="w-full max-w-[800px] mx-auto flex flex-col gap-5 font-dm-sans animate-in fade-in duration-300 px-4 sm:px-0">
-        {/* Page Title & Subtitle */}
-        <div className="w-full flex flex-col items-start gap-1">
+      <div className="w-full max-w-[800px] mx-auto flex flex-col gap-4 md:gap-5 font-dm-sans animate-in fade-in duration-300 px-4 pt-3 pb-8 md:px-0 md:pt-0 md:pb-0">
+        {/* Mobile Back Button: In-flow at top (Frame 2609713 / 2609475) */}
+        <div className="flex md:hidden w-full items-center justify-between h-6">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back"
+            className="inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+          >
+            <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
+            <span className="font-dm-sans font-medium text-base leading-6 text-ds-text-primary">Back</span>
+          </button>
+        </div>
+
+        {/* Page Title & Subtitle - Desktop Only */}
+        <div className="hidden md:flex w-full flex-col items-start gap-1">
           <h2 className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
             Offer details
           </h2>
@@ -227,9 +242,9 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         </div>
 
         {/* Job Summary Banner Row with Divider */}
-        <div className="w-full pr-3 border-b border-ds-border pb-3 flex flex-col justify-center items-start gap-2">
+        <div className="w-full pr-0 md:pr-3 border-b-0 md:border-b md:border-ds-border md:pb-3 flex flex-col justify-center items-start gap-2">
           {/* Top Row: Frame 2609981 (Job Title + Posted time / Company) */}
-          <div className="w-full min-h-[68px] py-2 flex flex-row items-center gap-4 self-stretch min-w-0">
+          <div className="w-full min-h-[52px] md:min-h-[68px] pt-1 md:py-2 flex flex-row items-center gap-4 self-stretch min-w-0">
             {/* Frame 2609064 */}
             <div className="flex-1 w-full min-h-[52px] flex flex-col justify-center items-start gap-2 self-stretch min-w-0">
               <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6 h-6 flex items-center line-clamp-1 truncate w-full">
@@ -241,12 +256,12 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             </div>
           </div>
 
-          {/* Bottom Row: Frame 2609982 (3 Metric Columns on Left + View job details Button on Right) */}
-          <div className="w-full h-auto sm:h-[60px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 self-stretch">
-            {/* Frame 2609980: 3 Metric Columns */}
-            <div className="w-full sm:flex-1 h-auto sm:h-[60px] flex flex-row items-center gap-3">
+          {/* Mobile Metrics & Button Block (Frame 2609980 + Button) */}
+          <div className="flex md:hidden w-full flex-col items-start gap-3 self-stretch">
+            {/* Frame 2609980: 3 Metric Columns with border-b */}
+            <div className="w-full h-[61px] flex flex-row items-center gap-3 border-b border-ds-border box-border">
               {/* Frame 2608617: Applications */}
-              <div className="flex-1 sm:w-[203px] h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
+              <div className="flex-1 h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
                 <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
                   {applicationsCount}
                 </span>
@@ -256,7 +271,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
               </div>
 
               {/* Frame 2609065: Shortlisted */}
-              <div className="flex-1 sm:w-[203px] h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
+              <div className="flex-1 h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
                 <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
                   {shortlistedCount}
                 </span>
@@ -266,7 +281,52 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
               </div>
 
               {/* Frame 2609240: Offer sent */}
-              <div className="flex-1 sm:w-[203px] h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
+              <div className="flex-1 h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
+                <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                  {offersSentCount}
+                </span>
+                <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 whitespace-nowrap">
+                  Offer sent
+                </span>
+              </div>
+            </div>
+
+            {/* secondary button: View job details (placed below the border-b on mobile) */}
+            <button
+              type="button"
+              onClick={onViewListingDetails}
+              className="w-[143px] h-9 px-3 py-1.5 rounded-full border border-ds-border text-ds-text-primary transition-all active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center gap-2.5 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0"
+            >
+              <span className="whitespace-nowrap">View job details</span>
+            </button>
+          </div>
+
+          {/* Desktop Row: Frame 2609982 (3 Metric Columns on Left + View job details Button on Right) - PRESERVED 100% */}
+          <div className="hidden md:flex w-full h-[60px] flex-row items-center justify-between gap-3 self-stretch">
+            {/* Frame 2609980: 3 Metric Columns */}
+            <div className="flex-1 h-[60px] flex flex-row items-center gap-3">
+              {/* Frame 2608617: Applications */}
+              <div className="w-[203px] h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
+                <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                  {applicationsCount}
+                </span>
+                <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 whitespace-nowrap">
+                  Applications
+                </span>
+              </div>
+
+              {/* Frame 2609065: Shortlisted */}
+              <div className="w-[203px] h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
+                <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                  {shortlistedCount}
+                </span>
+                <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 whitespace-nowrap">
+                  Shortlisted
+                </span>
+              </div>
+
+              {/* Frame 2609240: Offer sent */}
+              <div className="w-[203px] h-[60px] py-2 rounded-3xl flex flex-col justify-center items-start gap-2 min-w-0">
                 <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
                   {offersSentCount}
                 </span>
@@ -280,7 +340,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             <button
               type="button"
               onClick={onViewListingDetails}
-              className="w-auto sm:w-[143px] h-9 px-3 py-1.5 rounded-full border border-ds-border text-ds-text-primary transition-all active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center gap-2.5 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0"
+              className="w-[143px] h-9 px-3 py-1.5 rounded-full border border-ds-border text-ds-text-primary transition-all active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center gap-2.5 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0"
             >
               <span className="whitespace-nowrap">View job details</span>
             </button>
@@ -314,21 +374,21 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
           ) : (
             displayCandidates.map((cand) => (
               <div key={cand.id} className="w-full flex flex-col justify-center items-start gap-3">
-                {/* Candidate Row */}
-                <div className="w-full py-2 flex flex-row justify-between items-center gap-3">
-                  {/* Left: Avatar + Name & Headline */}
-                  <div className="flex flex-row items-center gap-3 min-w-0">
+                {/* Candidate Row (Frame 2609180) */}
+                <div className="w-full py-1 md:py-2 flex flex-row justify-between items-center gap-3">
+                  {/* Left: Avatar + Name & Headline (Frame 2608774) */}
+                  <div className="flex-1 flex flex-row items-center gap-2 md:gap-3 min-w-0 pr-2">
                     <Avatar
                       src={cand.avatar}
                       name={cand.name}
                       isCompany={false}
-                      className="size-8"
+                      className="size-8 shrink-0"
                     />
-                    <div className="flex flex-col justify-center items-start min-w-0">
-                      <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">
+                    <div className="flex-1 flex flex-col justify-center items-start min-w-0">
+                      <span className="w-full block text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">
                         {cand.name}
                       </span>
-                      <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 truncate">
+                      <span className="w-full block text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 truncate">
                         {cand.role}{cand.companyName ? ` at ${cand.companyName}` : ''}
                       </span>
                     </div>
@@ -382,26 +442,27 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                   </div>
                 </div>
 
-                {/* Note Bubble (if note is present) */}
+                {/* Note Bubble (if note is present) - Frame 2609030 */}
                 {cand.note && (
-                  <div className="w-full flex flex-col justify-start items-start gap-1">
+                  <div className="w-full flex flex-col justify-start items-start gap-2">
                     <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
                       Note
                     </span>
-                    <div className="w-full p-3 bg-ds-surface-1 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl border-l-2 border-ds-accent flex flex-col justify-start items-start gap-2">
-                      <div className="flex flex-row items-center gap-2">
+                    <div className="w-full p-3 bg-ds-surface-1 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl rounded-tl-none border-l-2 border-ds-accent flex flex-col justify-start items-start gap-2 box-border">
+                      {/* Note Sender: Frame 2609968 */}
+                      <div className="w-full flex flex-row items-center gap-2 min-w-0">
                         <Avatar
-                          src={null}
+                          src={cand.sentByAvatar || null}
                           name={cand.sentByName}
                           isCompany={Boolean(cand.orgId)}
-                          className="size-8"
+                          className="size-8 shrink-0"
                         />
-                        <div className="flex flex-col justify-center items-start">
-                          <span className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
+                        <div className="flex-1 flex flex-col justify-center items-start min-w-0">
+                          <span className="w-full block text-ds-text-primary text-base font-semibold font-dm-sans leading-6 truncate">
                             {cand.sentByName || 'Recruiter'}
                           </span>
                           {cand.sentByHeadline && (
-                            <span className="text-ds-text-secondary text-[10px] font-normal font-dm-sans leading-3">
+                            <span className="w-full block text-ds-text-secondary text-[10px] font-normal font-dm-sans leading-3 truncate">
                               {cand.sentByHeadline}
                             </span>
                           )}

@@ -147,9 +147,10 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             e.stopPropagation();
             onApply?.(job.id, e);
           }}
-          className="w-[104px] h-9 px-3 py-1.5 bg-ds-accent hover:bg-ds-accent/90 text-ds-text-primary rounded-full inline-flex items-center justify-center ds-text-body-1 font-medium focus:outline-none transition-all duration-150 active:scale-95 shadow-sm cursor-pointer"
+          className="w-[69px] md:w-[104px] h-9 px-3 py-1.5 bg-ds-accent hover:bg-ds-accent/90 text-ds-text-primary rounded-full inline-flex items-center justify-center ds-text-body-1 font-medium focus:outline-none transition-all duration-150 active:scale-95 shadow-sm cursor-pointer"
         >
-          Apply now
+          <span className="md:hidden">Apply</span>
+          <span className="hidden md:inline">Apply now</span>
         </button>
       </FeatureDisabledTooltip>
     );
@@ -158,7 +159,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
   return (
     <div
       onClick={() => onClick?.(job)}
-      className="w-full max-w-[800px] min-h-[188px] p-3 bg-ds-bg rounded-2xl border border-ds-border flex flex-col justify-between gap-3 cursor-pointer font-dm-sans"
+      className="w-full max-w-[800px] min-h-[188px] p-[12px_0px] md:p-3 bg-transparent md:bg-ds-bg rounded-none md:rounded-2xl border-0 md:border md:border-ds-border flex flex-col justify-between gap-3 cursor-pointer font-dm-sans"
     >
       {/* Top Section (Frame 2609818 w:776px h:40px): Logo left, Bookmark right */}
       <div className="w-full h-10 flex items-center justify-between">
@@ -239,7 +240,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
           </div>
 
           {/* Frame 2609816 & Frame 2609961: Experience & Location */}
-          <div className="flex flex-wrap items-center gap-2 text-ds-text-secondary ds-text-secondary font-normal min-w-0">
+          <div className="flex flex-col items-start gap-1 md:flex-row md:flex-wrap md:items-center md:gap-2 text-ds-text-secondary ds-text-secondary font-normal min-w-0">
             {/* Experience: jobs briefcase icon (16x16) + experience text */}
             <div className="flex items-center gap-2 shrink-0">
               <CustomIcon name="job-experience" size={16} className="w-4 h-4 text-ds-text-secondary shrink-0" />
@@ -259,8 +260,8 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             )}
           </div>
 
-          {/* Posted time */}
-          <span className="text-ds-text-secondary ds-text-secondary font-normal">
+          {/* Posted time - Desktop only inside left column */}
+          <span className="hidden md:inline text-ds-text-secondary ds-text-secondary font-normal">
             {job.posted_at}
           </span>
         </div>
@@ -274,7 +275,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
 
           </div>
         ) : (
-          <div className="flex flex-col justify-end items-end gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-col justify-end items-end gap-4 md:gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
             {salaryText && (
               <div className="text-ds-text-primary text-[18px] font-bold leading-6 text-right">
                 {salaryText}
@@ -285,6 +286,13 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
           </div>
         )}
       </div>
+
+      {/* Posted time - Mobile only below middle content */}
+      {job.posted_at && (
+        <span className="md:hidden text-ds-text-secondary ds-text-secondary font-normal">
+          {job.posted_at}
+        </span>
+      )}
     </div>
   );
 });

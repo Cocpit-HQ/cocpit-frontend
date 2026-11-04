@@ -30,7 +30,7 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = React.memo(
   return (
     <div
       onClick={() => onClick?.(job)}
-      className="w-[300px] h-[192px] p-3 bg-ds-bg rounded-2xl border border-ds-border flex flex-col items-start gap-3 shrink-0 cursor-pointer select-none"
+      className="w-64 sm:w-[300px] h-[192px] p-3 bg-ds-bg rounded-2xl border border-ds-border flex flex-col items-start gap-3 shrink-0 cursor-pointer select-none"
     >
       {/* Frame 2609818: Top row (w: 276px, h: 40px, gap: 12px) */}
       <div className="w-full h-10 flex items-start justify-between gap-3">

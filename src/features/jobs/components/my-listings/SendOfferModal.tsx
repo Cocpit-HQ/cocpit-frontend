@@ -253,20 +253,32 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4 overscroll-contain"
+      className="fixed inset-0 z-[100] flex flex-col justify-end md:justify-center md:items-center bg-ds-bg/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 md:p-4 overscroll-contain"
       onWheel={(e) => e.stopPropagation()}
+      onClick={handleCancelClick}
     >
-      {/* Centered modal matching Figma exactly per stage */}
+      {/* Centered modal on desktop, bottom sheet drawer on mobile */}
       <div
-        className="w-full max-w-[400px] h-auto max-h-[calc(100dvh-32px)] p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col justify-start items-center gap-3 font-dm-sans animate-in zoom-in-95 duration-200 select-none overscroll-contain"
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-[393px] md:max-w-[400px] mx-auto bg-ds-bg border-t border-x md:border border-ds-border rounded-t-[8px] md:rounded-2xl p-[8px_12px_24px] md:p-4 shadow-2xl flex flex-col justify-between md:justify-start items-center gap-4 font-dm-sans animate-in slide-in-from-bottom md:zoom-in-95 duration-200 select-none overscroll-contain box-border ${
+          stage === 1
+            ? 'h-[440px] md:h-auto'
+            : stage === 2
+            ? 'h-[420px] md:h-auto'
+            : 'h-[320px] md:h-auto'
+        }`}
         onWheel={(e) => e.stopPropagation()}
       >
+        {/* Mobile Drag Handle */}
+        <div className="w-full h-5 flex md:hidden flex-col items-center justify-center shrink-0">
+          <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
+        </div>
 
         {/* STAGE 1: Choose Job (Exact Figma Parity) */}
         {stage === 1 && (
-          <div className="w-full flex flex-col justify-between items-center gap-2">
-            {/* Header: Top Close Icon (Frame 2609536) */}
-            <div className="w-full max-w-[376px] h-5 flex justify-end items-center">
+          <div className="w-full flex-1 flex flex-col justify-between items-center gap-3">
+            {/* Header: Desktop Close Icon */}
+            <div className="w-full max-w-[376px] h-5 hidden md:flex justify-end items-center shrink-0">
               <button
                 onClick={handleCancelClick}
                 type="button"
@@ -278,237 +290,235 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Title: Send offer */}
-            <h3 className="w-full max-w-[376px] h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center">
+            <h3 className="w-full max-w-[369px] h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center shrink-0">
               Send offer
             </h3>
 
-            {/* Content Container (Frame 2609544: 376px x 300px) */}
-            <div className="w-full max-w-[376px] flex flex-col justify-between items-center gap-2">
-              {/* Underline Search bar (Mobile nav bar & search: 344px x 36px) */}
-              <div className="w-full px-4 py-1 flex justify-center items-center">
-                <div className="w-full max-w-[344px] h-9 px-3 py-1.5 border-b border-ds-text-primary flex justify-between items-center gap-2.5 transition-colors">
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent border-none p-0 text-ds-text-primary text-base font-normal font-dm-sans leading-6 placeholder:text-ds-text-muted placeholder:font-normal focus:outline-none focus:ring-0"
-                  />
-                  <SearchIcon size={20} className="size-5 text-ds-text-primary shrink-0 pointer-events-none" />
+            {/* Underline Search bar */}
+            <div className="w-full max-w-[369px] px-2 py-1 flex justify-center items-center shrink-0">
+              <div className="w-full max-w-[337px] h-9 px-3 py-1.5 border-b border-ds-text-primary flex justify-between items-center gap-2.5 transition-colors">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent border-none p-0 text-ds-text-primary text-base font-normal font-dm-sans leading-6 placeholder:text-ds-text-muted placeholder:font-normal focus:outline-none focus:ring-0"
+                />
+                <SearchIcon size={20} className="size-5 text-ds-text-primary shrink-0 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Job Listings List (Frame 2608872 rows: height 60px each) */}
+            <div
+              className="w-full max-w-[369px] flex-1 max-h-[200px] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              {filteredListings.length === 0 ? (
+                <div className="py-8 text-center text-ds-text-muted text-xs font-dm-sans w-full">
+                  No active job listings found.
                 </div>
-              </div>
-
-              {/* Job Listings List (Frame 2608872 rows: height 60px each) */}
-              <div
-                className="w-full max-w-[376px] max-h-[190px] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
-                onWheel={(e) => e.stopPropagation()}
-              >
-                {filteredListings.length === 0 ? (
-                  <div className="py-8 text-center text-ds-text-muted text-xs font-dm-sans w-full">
-                    No active job listings found.
-                  </div>
-                ) : (
-                  filteredListings.map((job) => {
-                    const isSelected = job.id === selectedJobId;
-                    return (
-                      <div
-                        key={job.id}
-                        onClick={() => setSelectedJobId(job.id)}
-                        className={`w-full h-[60px] py-2 px-2 inline-flex justify-between items-center gap-3 cursor-pointer rounded-xl transition-all select-none ${isSelected
-                            ? 'bg-ds-surface-2 border border-ds-accent/50 shadow-sm'
-                            : 'hover:bg-ds-surface-2/60 border border-transparent'
-                          }`}
-                      >
-                        <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0 pointer-events-none">
-                          <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate w-full text-left">
-                            {job.title}
-                          </span>
-                          <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 text-left">
-                            {job.posted_at || 'Posted recently'}
-                          </span>
-                        </div>
-                        {/* Active Badge (Frame 2608515: 69px x 32px, radius 24px) */}
-                        <div className="w-[69px] h-8 px-4 py-2 bg-ds-surface-2 rounded-full border border-ds-success flex justify-center items-center shrink-0 pointer-events-none">
-                          <span className="text-ds-success text-xs font-normal font-dm-sans leading-4 text-center">
-                            Active
-                          </span>
-                        </div>
+              ) : (
+                filteredListings.map((job) => {
+                  const isSelected = job.id === selectedJobId;
+                  return (
+                    <div
+                      key={job.id}
+                      onClick={() => setSelectedJobId(job.id)}
+                      className={`w-full h-[60px] py-2 px-2 inline-flex justify-between items-center gap-3 cursor-pointer rounded-xl transition-all select-none ${
+                        isSelected
+                          ? 'bg-ds-surface-1 border border-ds-accent/50 shadow-sm'
+                          : 'hover:bg-ds-surface-1/60 border border-transparent'
+                      }`}
+                    >
+                      <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0 pointer-events-none">
+                        <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate w-full text-left">
+                          {job.title}
+                        </span>
+                        <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 text-left">
+                          {job.posted_at || 'Posted recently'}
+                        </span>
                       </div>
-                    );
-                  })
+                      {/* Active Badge (Frame 2608515: 69px x 32px, radius 24px) */}
+                      <div className="w-[69px] h-8 px-4 py-2 bg-ds-surface-1 rounded-full border border-ds-success flex justify-center items-center shrink-0 pointer-events-none">
+                        <span className="text-ds-success text-xs font-normal font-dm-sans leading-4 text-center">
+                          Active
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Action Buttons (Frame 2609476: 369px x 36px, gap 8px) */}
+            <div className="w-full max-w-[369px] h-9 flex justify-center items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!selectedJob) return;
+                  setIsFetchingRecipients(true);
+                  try {
+                    const companyId = selectedJob.org_id || (selectedJob as any).company_id;
+                    const endpoint = companyId
+                      ? `/jobs/companies/${companyId}/offers/job/${selectedJobId}/recipients`
+                      : `/jobs/offers/job/${selectedJobId}/recipients`;
+
+                    const [res, applicantsRes] = await Promise.all([
+                      api.get(endpoint),
+                      api.get(`/jobs/${selectedJobId}/applicants`).catch(() => ({ data: [] }))
+                    ]);
+
+                    const offeredMap: Record<string, string> = {};
+                    res.data.forEach((r: any) => {
+                      offeredMap[r.user_id] = r.status;
+                    });
+
+                    const appliedSet = new Set<string>(applicantsRes.data.map((a: any) => a.applicantId));
+
+                    setAlreadyOfferedCandidates(offeredMap);
+                    setAppliedCandidates(appliedSet);
+                    setSelectedCandidates([]);
+                    setPersonalNote('');
+                    setSearchQuery('');
+                    setStage(2);
+                  } catch (err) {
+                    console.error("Failed to fetch recipients or applicants", err);
+                    setSelectedCandidates([]);
+                    setPersonalNote('');
+                    setSearchQuery('');
+                    setStage(2);
+                  } finally {
+                    setIsFetchingRecipients(false);
+                  }
+                }}
+                disabled={!selectedJobId || isFetchingRecipients}
+                className={`w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none ${
+                  !selectedJobId || isFetchingRecipients
+                    ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
+                    : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
+                }`}
+              >
+                {isFetchingRecipients ? (
+                  <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
+                ) : (
+                  "Continue"
                 )}
-              </div>
-
-              {/* Action Buttons (Frame 2609476: 376px x 36px, gap 8px) */}
-              <div className="w-full max-w-[376px] h-9 flex justify-center items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!selectedJob) return;
-                    setIsFetchingRecipients(true);
-                    try {
-                      const companyId = selectedJob.org_id || (selectedJob as any).company_id;
-                      const endpoint = companyId
-                        ? `/jobs/companies/${companyId}/offers/job/${selectedJobId}/recipients`
-                        : `/jobs/offers/job/${selectedJobId}/recipients`;
-
-                      const [res, applicantsRes] = await Promise.all([
-                        api.get(endpoint),
-                        api.get(`/jobs/${selectedJobId}/applicants`).catch(() => ({ data: [] }))
-                      ]);
-
-                      const offeredMap: Record<string, string> = {};
-                      res.data.forEach((r: any) => {
-                        offeredMap[r.user_id] = r.status;
-                      });
-
-                      const appliedSet = new Set<string>(applicantsRes.data.map((a: any) => a.applicantId));
-
-                      setAlreadyOfferedCandidates(offeredMap);
-                      setAppliedCandidates(appliedSet);
-                      setSelectedCandidates([]);
-                      setPersonalNote('');
-                      setSearchQuery('');
-                      setStage(2);
-                    } catch (err) {
-                      console.error("Failed to fetch recipients or applicants", err);
-                      setSelectedCandidates([]);
-                      setPersonalNote('');
-                      setSearchQuery('');
-                      setStage(2);
-                    } finally {
-                      setIsFetchingRecipients(false);
-                    }
-                  }}
-                  disabled={!selectedJobId || isFetchingRecipients}
-                  className={`min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none whitespace-nowrap ${!selectedJobId || isFetchingRecipients
-                      ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
-                      : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
-                    }`}
-                >
-                  {isFetchingRecipients ? (
-                    <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
-                  ) : (
-                    "Continue"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancelClick}
-                  className="min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none whitespace-nowrap"
-                >
-                  Cancel
-                </button>
-              </div>
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelClick}
+                className="w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
 
         {/* STAGE 2: Choose Candidates (Exact Figma Parity) */}
         {stage === 2 && (
-          <div className="w-full flex flex-col justify-between items-center gap-2">
-            {/* Header: Frame 2609688 (56px) */}
-            <div className="w-full max-w-[376px] flex flex-col items-center gap-2 shrink-0">
-              {/* Top Close Icon: Frame 2609536 */}
-              <div className="w-full h-5 flex justify-end items-center">
-                <button
-                  onClick={handleCancelClick}
-                  type="button"
-                  aria-label="Close"
-                  className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none p-0 outline-none"
-                >
-                  <Icon icon="lucide:x" className="size-5" />
-                </button>
-              </div>
-
-              {/* Title: Send offer */}
-              <h3 className="w-full h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center">
-                Send offer
-              </h3>
+          <div className="w-full flex-1 flex flex-col justify-between items-center gap-3">
+            {/* Header: Desktop Close Icon */}
+            <div className="w-full max-w-[376px] h-5 hidden md:flex justify-end items-center shrink-0">
+              <button
+                onClick={handleCancelClick}
+                type="button"
+                aria-label="Close"
+                className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none p-0 outline-none"
+              >
+                <Icon icon="lucide:x" className="size-5" />
+              </button>
             </div>
 
-            {/* Content Container (Frame 2609544: 376px x 212px) */}
-            <div className="w-full max-w-[376px] flex flex-col justify-start items-center gap-2">
-              {/* Component 10: Underline Search bar (376px x 36px) */}
-              <div className="w-full h-9 px-1 py-1.5 border-b border-ds-text-primary flex justify-between items-center gap-2 transition-colors shrink-0">
+            {/* Title: Send offer */}
+            <h3 className="w-full max-w-[369px] h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center shrink-0">
+              Send offer
+            </h3>
+
+            {/* Underline Search bar */}
+            <div className="w-full max-w-[369px] px-2 py-1 flex justify-center items-center shrink-0">
+              <div className="w-full max-w-[337px] h-9 px-3 py-1.5 border-b border-ds-text-primary flex justify-between items-center gap-2.5 transition-colors">
                 <input
                   type="text"
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-none p-0 text-ds-text-primary text-sm font-normal font-dm-sans leading-5 placeholder:text-ds-text-muted focus:outline-none focus:ring-0"
+                  className="flex-1 bg-transparent border-none p-0 text-ds-text-primary text-base font-normal font-dm-sans leading-6 placeholder:text-ds-text-muted focus:outline-none focus:ring-0"
                 />
                 <SearchIcon size={20} className="size-5 text-ds-text-primary shrink-0 pointer-events-none" />
               </div>
-
-              {/* Candidates selection list (36px rows each: Frame 2609539, 2609540, 2609541, 2609542) */}
-              <div
-                className="w-full max-h-[190px] overflow-y-auto select-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
-                onWheel={(e) => e.stopPropagation()}
-              >
-                {(() => {
-                  if ((isFetchingRecipients || isLoadingCandidates) && candidatesList.length === 0) {
-                    return (
-                      <div className="py-8 flex flex-col items-center justify-center gap-2 text-ds-text-muted text-xs font-dm-sans w-full">
-                        <Icon icon="lucide:loader-2" className="size-5 animate-spin text-ds-accent" />
-                        <span>Loading candidates...</span>
-                      </div>
-                    );
-                  }
-
-                  const availableCandidates = candidatesList.filter((cand) => {
-                    const offerStatus = alreadyOfferedCandidates[cand.id];
-                    const isAlreadyOffered = offerStatus && ['pending', 'accepted', 'declined'].includes(offerStatus.toLowerCase());
-                    const hasApplied = appliedCandidates.has(cand.id);
-                    return !isAlreadyOffered && !hasApplied;
-                  });
-
-                  if (availableCandidates.length === 0) {
-                    return (
-                      <div className="py-8 text-center text-ds-text-muted text-xs font-dm-sans w-full">
-                        No candidates available.
-                      </div>
-                    );
-                  }
-
-                  return availableCandidates.map((cand) => {
-                    const isChecked = selectedCandidates.includes(cand.id);
-
-                    return (
-                      <div
-                        key={cand.id}
-                        onClick={() => toggleCandidateSelection(cand.id)}
-                        className="w-full h-9 px-2 inline-flex justify-between items-center rounded-lg transition-colors cursor-pointer select-none shrink-0 hover:bg-ds-surface-2/60"
-                      >
-                        {/* Left: 20px avatar + candidate name */}
-                        <div className="flex items-center gap-2 min-w-0 pointer-events-none">
-                          <Avatar
-                            src={cand.avatar}
-                            name={cand.name}
-                            isCompany={false}
-                            className="size-5 rounded-full shrink-0"
-                          />
-                          <span className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 truncate">
-                            {cand.name}
-                          </span>
-                        </div>
-
-                        {/* Right: Checkbox (20px x 20px, radius 4px) */}
-                        <div className={`size-5 rounded-[4px] flex items-center justify-center border transition-all pointer-events-none shrink-0 ${isChecked
-                            ? 'bg-ds-accent border-ds-accent text-ds-text-primary'
-                            : 'border-ds-border bg-ds-surface-2'
-                          }`}>
-                          {isChecked && <Icon icon="lucide:check" className="size-3.5 stroke-[3]" />}
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
             </div>
 
-            {/* Action Buttons: Frame 2609476 (376px x 36px, gap 8px) */}
-            <div className="w-full max-w-[376px] h-9 flex justify-center items-center gap-2 shrink-0">
+            {/* Candidates selection list (36px rows each) */}
+            <div
+              className="w-full max-w-[369px] flex-1 max-h-[190px] overflow-y-auto select-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              {(() => {
+                if ((isFetchingRecipients || isLoadingCandidates) && candidatesList.length === 0) {
+                  return (
+                    <div className="py-8 flex flex-col items-center justify-center gap-2 text-ds-text-muted text-xs font-dm-sans w-full">
+                      <Icon icon="lucide:loader-2" className="size-5 animate-spin text-ds-accent" />
+                      <span>Loading candidates...</span>
+                    </div>
+                  );
+                }
+
+                const availableCandidates = candidatesList.filter((cand) => {
+                  const offerStatus = alreadyOfferedCandidates[cand.id];
+                  const isAlreadyOffered = offerStatus && ['pending', 'accepted', 'declined'].includes(offerStatus.toLowerCase());
+                  const hasApplied = appliedCandidates.has(cand.id);
+                  return !isAlreadyOffered && !hasApplied;
+                });
+
+                if (availableCandidates.length === 0) {
+                  return (
+                    <div className="py-8 text-center text-ds-text-muted text-xs font-dm-sans w-full">
+                      No candidates available.
+                    </div>
+                  );
+                }
+
+                return availableCandidates.map((cand) => {
+                  const isChecked = selectedCandidates.includes(cand.id);
+
+                  return (
+                    <div
+                      key={cand.id}
+                      onClick={() => toggleCandidateSelection(cand.id)}
+                      className="w-full h-9 px-2 inline-flex justify-between items-center rounded-lg transition-colors cursor-pointer select-none shrink-0 hover:bg-ds-surface-1/60"
+                    >
+                      {/* Left: 20px avatar + candidate name */}
+                      <div className="flex items-center gap-2 min-w-0 pointer-events-none">
+                        <Avatar
+                          src={cand.avatar}
+                          name={cand.name}
+                          isCompany={false}
+                          className="size-5 rounded-full shrink-0"
+                        />
+                        <span className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 truncate">
+                          {cand.name}
+                        </span>
+                      </div>
+
+                      {/* Right: Checkbox (20px x 20px, radius 4px) */}
+                      <div
+                        className={`size-5 rounded-[4px] flex items-center justify-center border transition-all pointer-events-none shrink-0 ${
+                          isChecked
+                            ? 'bg-ds-accent border-ds-accent text-ds-text-primary'
+                            : 'border-ds-border bg-ds-surface-1'
+                        }`}
+                      >
+                        {isChecked && <Icon icon="lucide:check" className="size-3.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Action Buttons: Frame 2609476 (369px x 36px, gap 8px) */}
+            <div className="w-full max-w-[369px] h-9 flex justify-center items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -517,10 +527,11 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   setStage(3);
                 }}
                 disabled={selectedCandidates.length === 0}
-                className={`min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none whitespace-nowrap ${selectedCandidates.length === 0
-                    ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
+                className={`w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none ${
+                  selectedCandidates.length === 0
+                    ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
                     : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
-                  }`}
+                }`}
               >
                 Continue
               </button>
@@ -536,7 +547,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     setStage(1);
                   }
                 }}
-                className="min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none whitespace-nowrap"
+                className="w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none"
               >
                 {initialJobId ? 'Cancel' : 'Back'}
               </button>
@@ -544,31 +555,28 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
           </div>
         )}
 
-        {/* STAGE 3: Personal Note & Send (Exact Figma Parity - 278px height) */}
+        {/* STAGE 3: Personal Note & Send (Exact Figma Parity - 320px height) */}
         {stage === 3 && (
-          <div className="w-full flex flex-col justify-between items-center gap-3">
-            {/* Header: Frame 2609688 (376px x 56px, gap: 12px) */}
-            <div className="w-full max-w-[376px] h-14 flex flex-col items-center gap-3 shrink-0">
-              {/* Top Close Icon: Frame 2609536 (376px x 20px) */}
-              <div className="w-full h-5 flex justify-end items-center">
-                <button
-                  onClick={handleCancelClick}
-                  type="button"
-                  aria-label="Close"
-                  className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none p-0 outline-none"
-                >
-                  <Icon icon="lucide:x" className="size-5" />
-                </button>
-              </div>
-
-              {/* Title: Send offer (79px x 24px, 16px DM Sans font-medium leading-6) */}
-              <h3 className="w-full h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center">
-                Send offer
-              </h3>
+          <div className="w-full flex-1 flex flex-col justify-between items-center gap-3">
+            {/* Header: Desktop Close Icon */}
+            <div className="w-full max-w-[376px] h-5 hidden md:flex justify-end items-center shrink-0">
+              <button
+                onClick={handleCancelClick}
+                type="button"
+                aria-label="Close"
+                className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none p-0 outline-none"
+              >
+                <Icon icon="lucide:x" className="size-5" />
+              </button>
             </div>
 
-            {/* Frame 2609544 / Frame 2609983: Selected Candidates Row (376px x 64px, gap: 8px) */}
-            <div className="w-full max-w-[376px] h-16 flex items-center justify-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0">
+            {/* Title: Send offer (16px DM Sans font-medium leading-6) */}
+            <h3 className="w-full max-w-[369px] h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center shrink-0">
+              Send offer
+            </h3>
+
+            {/* Frame 2609544 / Frame 2609983: Selected Candidates Row (369px x 64px, gap: 8px) */}
+            <div className="w-full max-w-[369px] h-16 flex items-center justify-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0">
               {selectedCandidates.map((id) => {
                 const c = allFetchedCandidates[id];
                 if (!c) return null;
@@ -606,41 +614,33 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               })}
             </div>
 
-            {/* Frame 2609640: Note input with label and character counter matching business profile */}
-            <div className="w-full max-w-[376px] flex flex-col justify-start items-end gap-1 shrink-0">
-              <div className="w-full py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-1 transition-colors">
-                <label className="text-xs font-medium font-dm-sans text-ds-text-secondary leading-4">
-                  Note
-                </label>
-                <input
-                  type="text"
-                  value={personalNote}
-                  onChange={(e) => setPersonalNote(e.target.value.slice(0, 255))}
-                  maxLength={255}
-                  placeholder="Add a personal note...."
-                  className="w-full bg-transparent border-none p-0 text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:ring-0 leading-5"
-                />
-              </div>
-              <div className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">
-                {personalNote?.length || 0}/255
-              </div>
+            {/* Frame 2609596: Note textarea with border-radius 16px and border */}
+            <div className="w-full max-w-[369px] h-20 p-2.5 rounded-2xl border border-ds-border box-border flex flex-col items-start gap-3 shrink-0">
+              <textarea
+                value={personalNote}
+                onChange={(e) => setPersonalNote(e.target.value.slice(0, 255))}
+                maxLength={255}
+                placeholder="Tell us what makes you unique..."
+                className="w-full h-full bg-transparent border-none p-0 text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-secondary focus:outline-none focus:ring-0 resize-none leading-5"
+              />
             </div>
 
-            {/* Frame 2609476: Action Buttons (376px x 36px, gap: 8px) */}
-            <div className="w-full max-w-[376px] h-9 flex justify-center items-center gap-2 shrink-0">
+            {/* Frame 2609476: Action Buttons (369px x 36px, gap: 8px) */}
+            <div className="w-full max-w-[369px] h-9 flex justify-center items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={handleSendClick}
                 disabled={selectedCandidates.length === 0 || isSending}
-                className={`min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none whitespace-nowrap ${selectedCandidates.length === 0 || isSending
+                className={`w-[77px] h-9 px-3 py-1.5 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none ${
+                  selectedCandidates.length === 0 || isSending
                     ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
                     : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
-                  }`}
+                }`}
               >
                 {isSending ? (
                   <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
                 ) : (
-                  "Continue"
+                  "Send"
                 )}
               </button>
               <button
@@ -649,7 +649,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   setPersonalNote('');
                   setStage(2);
                 }}
-                className="min-w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 hover:border-ds-text-muted active:scale-95 text-sm font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none whitespace-nowrap"
+                className="w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none"
               >
                 Cancel
               </button>

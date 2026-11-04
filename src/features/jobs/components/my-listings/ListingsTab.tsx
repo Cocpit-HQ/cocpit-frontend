@@ -22,6 +22,22 @@ interface ListingsTabProps {
   isLoading?: boolean;
 }
 
+const getMobileStatusColor = (status?: string) => {
+  switch ((status || '').toUpperCase()) {
+    case 'ACTIVE':
+      return 'text-ds-success';
+    case 'IN REVIEW':
+    case 'IN_REVIEW':
+      return 'text-ds-accent';
+    case 'CLOSED':
+    case 'CLOSE':
+      return 'text-ds-warning';
+    case 'DRAFT':
+    default:
+      return 'text-ds-text-muted';
+  }
+};
+
 const getStatusColor = (status?: string) => {
   switch ((status || '').toUpperCase()) {
     case 'ACTIVE':
@@ -56,6 +72,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [jobToClose, setJobToClose] = useState<string | null>(null);
   const [activeMenuJobId, setActiveMenuJobId] = useState<string | null>(null);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [mobileMenuJob, setMobileMenuJob] = useState<JobListing | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { ref: loadMoreRef, inView } = useInView({
@@ -138,8 +156,31 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
 
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-4 font-dm-sans">
-      {/* Section Header: All Jobs & Total jobs */}
-      <div className="w-full flex flex-col items-start gap-1">
+      {/* Mobile Section Header & Filter Row (Figma: All jobs + filter icon) */}
+      <div className="flex md:hidden w-full h-10 justify-between items-center relative select-none">
+        <span className="font-dm-sans font-normal text-base leading-6 text-ds-text-primary">
+          {statusFilter.toLowerCase() === 'all'
+            ? 'All jobs'
+            : statusFilter.toLowerCase() === 'draft' || statusFilter.toLowerCase() === 'drafts'
+            ? 'Draft jobs'
+            : statusFilter.toLowerCase() === 'in review' || statusFilter.toLowerCase() === 'in_review'
+            ? 'In review jobs'
+            : `${statusFilter} jobs`}
+        </span>
+        <button
+          type="button"
+          onClick={() => setIsFilterDrawerOpen(true)}
+          aria-label="Filter jobs"
+          className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer outline-none"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6H16M6 10H14M8 14H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Desktop Section Header: All Jobs & Total jobs (Desktop only) */}
+      <div className="hidden md:flex w-full flex-col items-start gap-1">
         <h3 className="text-ds-text-primary ds-text-body-1 font-medium">
           {tabTitle}
         </h3>
@@ -148,8 +189,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         </span>
       </div>
 
-      {/* Sub-filter tabs row (Figma: All, Active, Close, In Review, Draft) */}
-      <div className="w-full flex items-center justify-between select-none">
+      {/* Desktop Sub-filter tabs row (Desktop only) */}
+      <div className="hidden md:flex w-full items-center justify-between select-none">
         <div className="flex items-center gap-3 overflow-x-auto no-scrollbar h-9">
           {filterChips.map((chip) => {
             const isSelected =
@@ -177,7 +218,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
       </div>
 
       {/* Job Card List */}
-      <div className="w-full flex flex-col gap-3">
+      <div className="w-full flex flex-col gap-0 md:gap-3">
         {isLoading ? (
           [1, 2, 3].map((n) => (
             <div
@@ -227,11 +268,54 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
             const isMenuOpen = activeMenuJobId === item.id;
 
             return (
-              <div
-                key={item.id || `listing-${index}`}
-                onClick={() => onSelectListing && onSelectListing(item)}
-                className="w-full max-w-[800px] min-h-[129px] pr-3 border-b border-ds-border flex flex-col justify-center items-start cursor-pointer select-none"
-              >
+              <React.Fragment key={item.id || `listing-${index}`}>
+                {/* Mobile Job Row (Figma Frame 2609981: 360px x 64px, py-2 px-0 border-b border-ds-border) */}
+                <div
+                  onClick={() => onSelectListing && onSelectListing(item)}
+                  className="flex md:hidden w-full h-16 py-2 px-0 justify-between items-center gap-4 cursor-pointer select-none"
+                >
+                  {/* Frame 2609064: Title + Date (gap: 4px) */}
+                  <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0">
+                    <h4 className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 line-clamp-1 truncate m-0">
+                      {item.title}
+                    </h4>
+                    <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
+                      {formatPostedTime(item.posted_at || item.last_edited)}
+                    </span>
+                  </div>
+
+                  {/* Frame 2609239: Status (top) + 3-dots menu (bottom) */}
+                  <div
+                    className="flex flex-col justify-center items-end gap-2 shrink-0 h-10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase ${getMobileStatusColor(item.status)}`}>
+                      {statusUpper === 'CLOSED' ? 'CLOSE' : statusUpper === 'IN_REVIEW' ? 'IN REVIEW' : statusUpper}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMobileMenuJob(item);
+                      }}
+                      className="w-5 h-5 flex items-center justify-end text-ds-text-secondary hover:text-ds-text-primary focus:outline-none transition-colors shrink-0 cursor-pointer bg-transparent border-none p-0"
+                      aria-label="Job actions"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="5" cy="10" r="1.5" fill="currentColor" />
+                        <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                        <circle cx="15" cy="10" r="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Desktop Job Card: Preserved 100% Unchanged */}
+                <div
+                  onClick={() => onSelectListing && onSelectListing(item)}
+                  className="hidden md:flex w-full max-w-[800px] min-h-[129px] pr-3 border-b border-ds-border flex-col justify-center items-start cursor-pointer select-none"
+                >
                 {/* Frame 2609981: Top Row */}
                 <div className="w-full h-[68px] py-2 flex flex-row items-center justify-between gap-4 self-stretch">
                   {/* Frame 2609064: Title + Date */}
@@ -381,6 +465,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                   </button>
                 </div>
               </div>
+              </React.Fragment>
             );
           })
         )}
@@ -399,6 +484,121 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
           </div>
         )}
       </div>
+
+      {/* Mobile Filter Bottom Sheet Drawer: Exact Figma (393px x 232px, bg var(--ds-bg), r: 8px 8px 0 0) */}
+      {isFilterDrawerOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden">
+          {/* Overlay backdrop */}
+          <div
+            onClick={() => setIsFilterDrawerOpen(false)}
+            className="fixed inset-0 bg-ds-bg/80 backdrop-blur-sm animate-in fade-in duration-200"
+          />
+
+          {/* Drawer Sheet */}
+          <div className="fixed bottom-0 left-0 right-0 z-[101] flex justify-center">
+            <div className="w-full max-w-[393px] h-[232px] bg-ds-bg border-t border-x border-ds-border rounded-t-[8px] p-[8px_12px_24px] flex flex-col items-start gap-4 box-border shadow-2xl animate-in slide-in-from-bottom duration-200">
+              {/* Drag Handle (pepicons-pop:line-x 50px x 3px var(--ds-text-muted)) */}
+              <div className="w-full h-5 flex flex-col items-center justify-center shrink-0">
+                <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
+              </div>
+
+              {/* Filter Options List */}
+              <div className="self-stretch flex flex-col items-start gap-4">
+                {[
+                  { label: 'All jobs', key: 'All' },
+                  { label: 'Active', key: 'Active' },
+                  { label: 'In review', key: 'In Review' },
+                  { label: 'Closed', key: 'Close' },
+                  { label: 'Draft', key: 'Draft' },
+                ].map((option) => {
+                  const isSelected =
+                    statusFilter.toLowerCase() === option.key.toLowerCase() ||
+                    (option.key === 'Close' && statusFilter.toLowerCase() === 'closed') ||
+                    (option.key === 'Draft' && statusFilter.toLowerCase() === 'drafts');
+
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => {
+                        onStatusFilterChange(option.key);
+                        setIsFilterDrawerOpen(false);
+                      }}
+                      className={`h-5 p-0 bg-transparent border-0 outline-none cursor-pointer font-dm-sans font-normal text-sm leading-5 transition-colors text-left flex items-center ${
+                        isSelected ? 'text-ds-accent' : 'text-ds-text-primary hover:text-ds-accent'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile 3-Dot More Actions Drawer: Exact Figma (393px x 160px, bg var(--ds-bg), r: 8px 8px 0 0) */}
+      {mobileMenuJob && (
+        <div className="fixed inset-0 z-[100] md:hidden">
+          {/* Overlay backdrop */}
+          <div
+            onClick={() => setMobileMenuJob(null)}
+            className="fixed inset-0 bg-ds-bg/80 backdrop-blur-sm animate-in fade-in duration-200"
+          />
+
+          {/* Drawer Sheet */}
+          <div className="fixed bottom-0 left-0 right-0 z-[101] flex justify-center">
+            <div className="w-full max-w-[393px] h-[160px] bg-ds-bg border-t border-x border-ds-border rounded-t-[8px] p-[8px_12px_24px] flex flex-col items-start gap-4 box-border shadow-2xl animate-in slide-in-from-bottom duration-200">
+              {/* Drag Handle (pepicons-pop:line-x 50px x 3px var(--ds-text-muted)) */}
+              <div className="w-full h-5 flex flex-col items-center justify-center shrink-0">
+                <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
+              </div>
+
+              {/* Action Buttons List */}
+              <div className="self-stretch flex flex-col items-start gap-4">
+                {(mobileMenuJob.status || '').toUpperCase() === 'ACTIVE' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const job = mobileMenuJob;
+                        setMobileMenuJob(null);
+                        onSendOffer && onSendOffer(job);
+                      }}
+                      className="h-5 p-0 bg-transparent border-0 outline-none cursor-pointer font-dm-sans font-normal text-sm leading-5 text-ds-text-primary hover:text-ds-accent transition-colors text-left flex items-center"
+                    >
+                      Send offer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const jobId = mobileMenuJob.id;
+                        setMobileMenuJob(null);
+                        setJobToClose(jobId);
+                      }}
+                      className="h-5 p-0 bg-transparent border-0 outline-none cursor-pointer font-dm-sans font-normal text-sm leading-5 text-ds-text-primary hover:text-ds-accent transition-colors text-left flex items-center"
+                    >
+                      Close job
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const jobId = mobileMenuJob.id;
+                    setMobileMenuJob(null);
+                    setJobToDelete(jobId);
+                  }}
+                  className="h-5 p-0 bg-transparent border-0 outline-none cursor-pointer font-dm-sans font-normal text-sm leading-5 text-ds-text-primary hover:text-ds-error transition-colors text-left flex items-center"
+                >
+                  Delete job
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal using common ActionConfirmModal */}
       <ActionConfirmModal

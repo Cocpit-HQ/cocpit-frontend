@@ -5,6 +5,7 @@ import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal
 import StepIdentityVerification from './StepIdentityVerification';
 import StepRoleInput from './StepRoleInput';
 import StepJobDetails from './StepJobDetails';
+import CreateJobMobileWizard from './CreateJobMobileWizard';
 
 import { JobListing } from '../../types/jobs.types';
 import * as jobsService from '../../services/jobs.service';
@@ -12,6 +13,7 @@ import { useJobStore } from '@/store/job.store';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useMyProfile } from '@/hooks/use-my-profile';
 import { useCreateJobInit } from '../../hooks/useCreateJobInit';
 import { useCreateJobUrlSync } from '../../hooks/useCreateJobUrlSync';
@@ -29,6 +31,7 @@ interface CreateJobFlowProps {
 export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, initialListing, onDelete }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const isMobile = useIsMobile();
   const { activeProfile, isLoading: isActiveProfileLoading, updateActiveProfile } = useActiveProfile();
   const {
     data: myProfile,
@@ -112,9 +115,15 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   };
 
   const handleRoleContinue = async () => {
+    if (isMobile) {
+      // On mobile, collect details step-by-step first; do NOT initialize draft yet!
+      setStep('details');
+      return;
+    }
+
     setIsDrafting(true);
     
-    // Fire the API immediately so the draft exists in the DB while drafting
+    // Desktop: Fire the API immediately so the draft exists in the DB while drafting
     try {
       const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
       const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
@@ -142,9 +151,10 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
 
   const handleDeleteDraft = async () => {
     setShowDeleteConfirm(false);
-    if (jobId) {
+    const targetJobId = jobId || initialListing?.id;
+    if (targetJobId) {
       const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-      const success = await jobsService.deleteJobListing(jobId, orgId);
+      const success = await jobsService.deleteJobListing(targetJobId, orgId);
       if (success) {
         queryClient.setQueriesData({ queryKey: ['myListings'] }, (oldData: any) => {
           if (!oldData?.pages) return oldData;
@@ -152,7 +162,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
             ...oldData,
             pages: oldData.pages.map((page: any) => ({
               ...page,
-              data: page.data?.filter((item: any) => item.id !== jobId),
+              data: page.data?.filter((item: any) => item.id !== targetJobId),
               counts: page.counts ? {
                 ...page.counts,
                 all: Math.max(0, (page.counts.all || 1) - 1),
@@ -162,7 +172,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
           };
         });
         queryClient.invalidateQueries({ queryKey: ['myListings'] });
-        onDelete?.(jobId);
+        onDelete?.(targetJobId);
         toast.success("Draft deleted successfully");
       } else {
         toast.error("Failed to delete draft");
@@ -187,6 +197,34 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
 
   // State 4: Verified — render details or role input
   if (step === 'details') {
+    if (isMobile) {
+      return (
+        <>
+          <CreateJobMobileWizard
+            jobId={jobId}
+            initialRole={title}
+            initialDetails={accumulatedDetails}
+            onBack={initialListing ? handleBack : () => setStep('role-input')}
+            onClose={handleBack}
+            onSaveDraft={handleSaveDraft}
+            onPublish={handlePublish}
+            onDeleteDraft={jobId || initialListing?.id ? () => setShowDeleteConfirm(true) : undefined}
+          />
+          <ActionConfirmModal
+            isOpen={showDeleteConfirm}
+            onClose={() => setShowDeleteConfirm(false)}
+            onConfirm={handleDeleteDraft}
+            type="delete_post"
+            title="Delete draft?"
+            description="This action cannot be undone and will permanently remove this draft"
+            confirmText="Delete"
+            confirmColor="accent"
+            cancelText="Cancel"
+          />
+        </>
+      );
+    }
+
     if (isHydrating) {
       return (
         <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -205,7 +243,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
           onClose={handleBack}
           onSaveDraft={handleSaveDraft}
           onPublish={handlePublish}
-          onDeleteDraft={jobId ? () => setShowDeleteConfirm(true) : undefined}
+          onDeleteDraft={jobId || initialListing?.id ? () => setShowDeleteConfirm(true) : undefined}
         />
         <ActionConfirmModal
           isOpen={showDeleteConfirm}

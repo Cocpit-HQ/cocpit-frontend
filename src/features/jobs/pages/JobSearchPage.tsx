@@ -546,7 +546,7 @@ export const JobSearchPage: React.FC = () => {
       <button
         type="button"
         onClick={() => router.push("/jobs")}
-        className="fixed top-[40px] left-[40px] z-50 inline-flex items-center gap-2 p-0 text-ds-text-primary font-medium font-dm-sans text-base leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="hidden md:inline-flex fixed top-[40px] left-[40px] z-50 items-center gap-2 p-0 text-ds-text-primary font-medium font-dm-sans text-base leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         aria-label="Back to Jobs"
       >
         <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
@@ -557,15 +557,49 @@ export const JobSearchPage: React.FC = () => {
       <button
         type="button"
         onClick={() => router.push("/jobs")}
-        className="fixed top-[40px] right-[40px] z-50 size-6 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="hidden md:flex fixed top-[40px] right-[40px] z-50 size-6 items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         aria-label="Close search"
       >
         <Icon icon="lucide:x" className="size-5 shrink-0" />
       </button>
 
-      {/* Top Header Bar with Centered Search */}
-      <header className="w-full px-4 sm:px-10 pt-6 sm:pt-10 flex items-center justify-center relative">
-        {/* Center: Underline Search Input */}
+      {/* Mobile Header: back + search + search icon */}
+      <header className="md:hidden w-full px-4 pt-6 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => router.push("/jobs")}
+          className="flex items-center justify-center text-ds-text-primary cursor-pointer shrink-0 bg-transparent border-none outline-none"
+          aria-label="Back to Jobs"
+        >
+          <Icon icon="solar:alt-arrow-left-linear" className="size-5 shrink-0" />
+        </button>
+        <div className="flex-1 h-10 px-3 py-1.5 border-b border-ds-border focus-within:border-ds-text-primary flex items-center gap-2 transition-colors">
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearchSubmit(searchInput);
+              }
+            }}
+            placeholder="Discover jobs that match your skills..."
+            className="w-full bg-transparent outline-none font-dm-sans text-base font-normal text-ds-text-primary placeholder:text-ds-text-muted leading-6 truncate"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => handleSearchSubmit(searchInput)}
+          className="flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer shrink-0 bg-transparent border-none outline-none"
+          aria-label="Search"
+        >
+          <Icon icon="solar:magnifer-linear" className="size-5 shrink-0" />
+        </button>
+      </header>
+
+      {/* Desktop Header: Centered Search */}
+      <header className="hidden md:flex w-full px-4 sm:px-10 pt-6 sm:pt-10 items-center justify-center relative">
         <div className="w-full max-w-[384px] h-10 px-3 py-1.5 border-b border-ds-border focus-within:border-ds-text-primary flex items-center justify-between gap-2 transition-colors">
           <input
             type="text"
@@ -592,12 +626,12 @@ export const JobSearchPage: React.FC = () => {
       </header>
 
       {/* Main Content (800px Width Centered) */}
-      <main className="w-full max-w-[800px] flex flex-col items-center gap-10 mt-8 sm:mt-10 px-4 sm:px-0">
+      <main className="w-full max-w-[800px] flex flex-col items-center gap-0 md:gap-10 mt-4 md:mt-8 lg:mt-10 px-4 md:px-0">
         {/* Filter Section */}
         <section className="self-stretch flex flex-col justify-start items-start gap-5">
           <div className="self-stretch flex flex-col justify-center items-start gap-3">
-            {/* Filter Row 1 */}
-            <div className="w-full flex flex-wrap items-center gap-3">
+            {/* Filter Row 1 — Desktop only */}
+            <div className="hidden md:flex w-full flex-wrap items-center gap-3">
               {/* Scope Dropdown: Coming from /jobs route -> Only show Jobs option */}
               <Popover open={isScopeOpen} onOpenChange={setIsScopeOpen}>
                 <PopoverTrigger asChild>
@@ -665,8 +699,8 @@ export const JobSearchPage: React.FC = () => {
               />
             </div>
 
-            {/* Filter Row 2 (Indented to align under Job type on desktop) */}
-            <div className="w-full pl-0 sm:pl-[96px] flex flex-wrap items-center gap-3">
+            {/* Filter Row 2 — Desktop only */}
+            <div className="hidden md:flex w-full pl-0 sm:pl-[96px] flex-wrap items-center gap-3">
               <StandardFilterChip
                 title="Date posted"
                 paramKey="date_posted"
@@ -700,10 +734,102 @@ export const JobSearchPage: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Mobile Filter Bar — horizontal scroll, single row */}
+          <div className="flex md:hidden w-full items-center gap-2 overflow-x-auto no-scrollbar flex-nowrap py-1 select-none shrink-0">
+            {/* Scope chip — always active/accent */}
+            <Popover open={isScopeOpen} onOpenChange={setIsScopeOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-[10px] bg-ds-surface-1 border border-ds-accent text-base font-dm-sans font-medium leading-6 text-ds-text-primary select-none shrink-0 cursor-pointer"
+                >
+                  <Icon
+                    icon="solar:alt-arrow-down-linear"
+                    className={`size-4 text-ds-text-primary shrink-0 transition-transform duration-200 ${isScopeOpen ? "rotate-180" : "rotate-0"}`}
+                  />
+                  <span>Jobs</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                sideOffset={8}
+                className="w-auto min-w-[142px] p-4 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl flex flex-col gap-3.5 z-[120]"
+              >
+                <button
+                  type="button"
+                  onClick={() => setIsScopeOpen(false)}
+                  className="w-full flex items-center min-h-[28px] text-left font-dm-sans text-sm leading-normal font-normal text-ds-accent cursor-pointer"
+                >
+                  <span>Jobs</span>
+                </button>
+              </PopoverContent>
+            </Popover>
+            <StandardFilterChip
+              title="Job type"
+              paramKey="job_type"
+              options={jobTypeOptions}
+              selectedValues={getParamValues("job_type")}
+              onToggle={handleMultiFilterToggle}
+            />
+            <StandardFilterChip
+              title="Experience"
+              paramKey="experience"
+              options={experienceOptions}
+              selectedValues={getParamValues("experience")}
+              onToggle={handleMultiFilterToggle}
+            />
+            <StandardFilterChip
+              title="Work mode"
+              paramKey="work_mode"
+              options={workModeOptions}
+              selectedValues={getParamValues("work_mode")}
+              onToggle={handleMultiFilterToggle}
+            />
+            <SalaryFilterChip
+              selectedValues={getParamValues("salary_range")}
+              onToggle={handleMultiFilterToggle}
+              onCustomApply={handleCustomSalaryApply}
+            />
+            <SearchableCursorFilterChip
+              title="Industry"
+              paramKey="industry"
+              selectedValues={getParamValues("industry")}
+              fetchData={fetchIndustries}
+              onToggle={handleMultiFilterToggle}
+            />
+            <StandardFilterChip
+              title="Date posted"
+              paramKey="date_posted"
+              options={datePostedOptions}
+              selectedValues={getParamValues("date_posted")}
+              onToggle={handleMultiFilterToggle}
+            />
+            <SearchableCursorFilterChip
+              title="Company"
+              paramKey="company"
+              selectedValues={getParamValues("company")}
+              fetchData={fetchCompanies}
+              onToggle={handleMultiFilterToggle}
+            />
+            <button
+              type="button"
+              onClick={() => updateUrl({ verified: isVerifiedActive ? null : "true" })}
+              className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center transition-all cursor-pointer ${
+                isVerifiedActive
+                  ? "bg-ds-surface-1 border border-ds-accent"
+                  : "bg-transparent border border-ds-border"
+              } text-base font-dm-sans font-medium leading-6 text-ds-text-primary select-none shrink-0`}
+            >
+              <span>Verified</span>
+            </button>
+          </div>
         </section>
 
         {/* Results List */}
-        <section className="self-stretch flex flex-col justify-start items-start gap-5">
+        {/* Mobile "Jobs" section title (20px from top filter bar, 20px below to cards) */}
+        <h2 className="md:hidden w-full font-dm-sans font-medium text-base leading-6 text-ds-text-primary mt-5 mb-2">Jobs</h2>
+        <section className="self-stretch flex flex-col justify-start items-start gap-4 md:gap-5">
           {isLoading ? (
             <div className="w-full flex flex-col gap-4">
               {[1, 2, 3, 4].map((n) => (

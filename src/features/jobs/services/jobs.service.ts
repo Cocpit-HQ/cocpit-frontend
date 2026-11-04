@@ -648,7 +648,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       recruiter_name: job.recruiter_name || job.recruiterName || undefined,
       recruiter_title: job.recruiter_title || 'HR Manager',
       recruiter_avatar: job.recruiter_avatar || job.recruiterAvatar || job.avatar_url || undefined,
-      recruiter_message: job.recruiter_message || undefined,
+      recruiter_message: job.recruiter_message || job.message || job.note || undefined,
       response_rate: job.response_rate,
       avg_reply: job.avg_reply,
       is_recommended: job.is_recommended || false,
@@ -1000,27 +1000,37 @@ export const getMyListings = async (
   }
 };
 
-export const initializeJobDraft = async (
+export const initializeJobDraftWithDetails = async (
   title: string,
   actorType?: string,
-  actorId?: string
-): Promise<string | null> => {
+  actorId?: string,
+  details?: Record<string, any>
+): Promise<{ id: string | null; job: any }> => {
   try {
     const currentActorType = actorType || api.defaults.headers.common["x-actor-type"];
     const currentActorId = actorId || api.defaults.headers.common["x-actor-id"];
 
-    const payload: any = { title, status: 'DRAFT' };
+    const payload: any = { title, status: 'DRAFT', ...(details || {}) };
     if (currentActorType === "ORGANIZATION" && currentActorId) {
       payload.org_id = currentActorId;
     }
 
     const response = await api.post('/jobs', payload);
     const newJob = response.data.job || response.data;
-    return newJob.job_id || newJob.id;
+    return { id: newJob.job_id || newJob.id || null, job: newJob };
   } catch (error) {
-    console.error("Failed to initialize job draft:", error);
-    return null;
+    console.error("Failed to initialize job draft with details:", error);
+    return { id: null, job: null };
   }
+};
+
+export const initializeJobDraft = async (
+  title: string,
+  actorType?: string,
+  actorId?: string
+): Promise<string | null> => {
+  const result = await initializeJobDraftWithDetails(title, actorType, actorId);
+  return result.id;
 };
 
 export const generateJobDescription = async (

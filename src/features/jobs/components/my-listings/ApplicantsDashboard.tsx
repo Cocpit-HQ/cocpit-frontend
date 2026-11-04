@@ -5,7 +5,8 @@ import { Icon } from '@iconify/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/businessProfile';
 import { useToast } from '@/hooks/use-toast';
-import { CyphexAIIcon, PdfFileIcon, EyeIcon, UserIcon, LeftArrowIcon } from '@/components/icons';
+import { CyphexAIIcon, PdfFileIcon, EyeIcon, UserIcon, LeftArrowIcon, BriefcaseIcon, Icon as CustomIcon } from '@/components/icons';
+import { ApplicantsMobileDrawer } from '../drawers/ApplicantsMobileDrawer';
 import Avatar from '@/components/shared/Avatar';
 import { JobListing } from '../../types/jobs.types';
 import {
@@ -142,6 +143,8 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const { toast } = useToast();
 
   const [filter, setFilter] = useState<FilterOption>('Top match');
+  const [isMobileFilterDrawerOpen, setIsMobileFilterDrawerOpen] = useState(false);
+  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const cacheKey = `${listing.id}_${filter}`;
   const cached = applicantsCache.get(cacheKey);
   const isKnownZero = listing.applicants_count === 0;
@@ -429,24 +432,53 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
   return (
     <>
-      {/* Top-Left Back Button matching Public Profile and MyListingsDashboard (top: 40px, left: 40px) */}
+      {/* Top-Left Back Button matching Public Profile and MyListingsDashboard */}
       {onBack && (
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="Back"
-          className="fixed top-[40px] left-[40px] z-[60] inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
-        >
-          <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
-          <span className="font-dm-sans font-medium text-base leading-6">Back</span>
-        </button>
+        <>
+          {/* Desktop back button: fixed top-left */}
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back"
+            className="hidden md:inline-flex fixed top-[40px] left-[40px] z-[60] items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+          >
+            <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
+            <span className="font-dm-sans font-medium text-base leading-6">Back</span>
+          </button>
+          {/* Mobile back button: in-flow at top */}
+          <button
+            type="button"
+            onClick={() => {
+              if (isMobileDetailOpen) {
+                setIsMobileDetailOpen(false);
+              } else if (onBack) {
+                onBack();
+              }
+            }}
+            aria-label="Back"
+            className="flex md:hidden items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent self-start mb-2"
+          >
+            <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
+            <span className="font-dm-sans font-medium text-base leading-6">Back</span>
+          </button>
+        </>
       )}
 
       {/* Main 960px Centered Column matching Figma Frame 2609508 */}
-      <div className="w-full max-w-[960px] mx-auto pt-14 sm:pt-[60px] pb-16 px-4 sm:px-0 flex flex-col gap-5 font-dm-sans">
+      <div className="w-full max-w-[800px] md:max-w-[960px] mx-auto pt-4 md:pt-[60px] pb-16 px-4 md:px-0 flex flex-col gap-4 md:gap-5 font-dm-sans">
+
+        {/* Header (Title + Subtitle) — desktop only, hidden on mobile per Figma */}
+        <div className="hidden md:flex w-full flex-col items-start gap-1">
+          <h2 className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
+            Applicants
+          </h2>
+          <p className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+            Review and shortlist candidates with AI-powered insights
+          </p>
+        </div>
 
         {/* Job Listing Summary Card / Row: Job Item Close */}
-        <div className="w-full max-w-[960px] min-h-[121px] pr-3 border-b border-ds-border flex flex-col justify-center items-start self-stretch">
+        <div className={`${isMobileDetailOpen ? "hidden md:flex" : "flex"} w-full max-w-[960px] min-h-0 md:min-h-[121px] pr-0 md:pr-3 border-b-0 md:border-b border-ds-border flex-col justify-center items-start self-stretch`}>
           {/* Frame 2609981: Top Row */}
           <div className="w-full h-[60px] py-2 flex flex-row items-center justify-between gap-4 self-stretch">
             {/* Frame 2609064: Role + Time */}
@@ -460,7 +492,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             </div>
 
             {/* Frame 2609239: Status badge on right */}
-            <div className="h-3 flex flex-row items-center justify-end shrink-0 gap-2">
+            <div className="hidden md:flex h-3 flex-row items-center justify-end shrink-0 gap-2">
               <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase flex items-center ${statusUpper === 'ACTIVE'
                   ? 'text-ds-success'
                   : statusUpper === 'IN REVIEW' || statusUpper === 'IN_REVIEW'
@@ -475,9 +507,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           </div>
 
           {/* Frame 2609980: Bottom Row */}
-          <div className="w-full h-[60px] flex flex-row justify-center items-center gap-3 self-stretch">
+          <div className="w-full flex flex-col md:flex-row md:justify-center md:items-center md:gap-3 self-stretch gap-3 mt-1 md:mt-0">
             {/* 3 metric columns */}
-            <div className="flex-1 h-[60px] flex flex-row items-center gap-3 min-w-0">
+            <div className="w-full md:flex-1 h-[61px] flex flex-row items-center gap-3 min-w-0 border-b border-ds-border md:border-b-0 pb-2 md:pb-0">
               {/* Frame 2608617: Applications */}
               <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
                 <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
@@ -523,7 +555,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         {/* Frame 2609962: Subtabs and Candidates Content */}
         <div className="w-full max-w-[960px] flex flex-col gap-5">
           {/* Frame 2609735: Subtabs Bar */}
-          <div className="w-full max-w-[960px] h-9 flex items-center justify-between">
+          <div className="hidden md:flex w-full max-w-[960px] h-9 items-center justify-between">
             {/* Frame 2609925: Subtabs Container */}
             <div className="flex flex-row items-center gap-3 h-9">
               {([
@@ -558,17 +590,16 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             <div className="w-full max-w-[960px] h-[324px] pt-[60px] pb-[120px] flex flex-col items-center justify-start gap-2 select-none">
               {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
               <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
-                <UserIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
+                <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
               </div>
 
               {/* Text Container */}
               <div className="flex flex-col items-center gap-2 text-center">
                 <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
-                  {EMPTY_STATE_CONFIG[filter]?.title ?? 'No applicants found'}
+                  {listing.applicants_count === 0 || totalCandidates === 0 ? 'No applicants yet' : (EMPTY_STATE_CONFIG[filter]?.title ?? 'No applicants found')}
                 </h3>
                 <p className="max-w-[480px] text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-center">
-                  {EMPTY_STATE_CONFIG[filter]?.subtitle ??
-                    'Candidates in this category will appear here when available.'}
+                  {listing.applicants_count === 0 || totalCandidates === 0 ? 'Candidates will appear here when they apply for this job' : (EMPTY_STATE_CONFIG[filter]?.subtitle ?? 'Candidates in this category will appear here when available.')}
                 </p>
               </div>
             </div>
@@ -576,15 +607,24 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             <div className="w-full max-w-[960px] flex flex-col md:flex-row items-start justify-center gap-5 self-stretch">
 
               {/* Frame 2609067: Left Column - Candidates Sidebar */}
-              <div className="w-full md:w-[270px] py-3 rounded-3xl flex flex-col gap-4 shrink-0">
+              <div className={`${isMobileDetailOpen ? "hidden md:flex" : "flex"} w-full md:w-[270px] py-3 rounded-3xl flex flex-col gap-4 shrink-0`}>
                 {/* Header: Container + Frame 2609111 */}
                 <div className="w-full flex flex-row justify-between items-center h-6 px-1">
                   <span className="w-[86px] h-5 font-dm-sans font-normal text-sm leading-5 text-ds-text-primary uppercase tracking-wider flex items-center">
                     CANDIDATES
                   </span>
-                  {/* Candidate Stepper: only show if candidates are present */}
+                  {/* Mobile Filter Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileFilterDrawerOpen(true)}
+                    className="flex md:hidden size-6 items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none outline-none"
+                    aria-label="Filter candidates"
+                  >
+                    <CustomIcon name="filter" size={20} className="size-5 text-ds-text-primary" />
+                  </button>
+                  {/* Candidate Stepper: only show on desktop if candidates are present */}
                   {totalCandidates > 0 && (
-                    <div className="w-16 h-6 flex flex-row justify-end items-center gap-2 rounded-lg">
+                    <div className="hidden md:flex w-16 h-6 flex-row justify-end items-center gap-2 rounded-lg">
                       <button
                         type="button"
                         onClick={handleSelectPreviousCandidate}
@@ -638,7 +678,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       return (
                         <div
                           key={candId}
-                          onClick={() => setSelectedCandId(candId)}
+                          onClick={() => { setSelectedCandId(candId); setIsMobileDetailOpen(true); }}
                           className={`w-full md:w-[270px] px-3 py-2 rounded-xl flex flex-row items-center gap-2 cursor-pointer transition-all select-none ${isSelected
                               ? 'bg-ds-surface-2'
                               : 'hover:bg-ds-surface-1/40'
@@ -684,12 +724,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Frame 2609089: Right Column - Candidate Detail Pane */}
               {isLoadingApplicants ? (
-                <div className="flex-1 w-full md:w-[670px] max-w-[670px] p-8 rounded-3xl border border-ds-border bg-ds-surface-1/20 flex flex-col items-center justify-center gap-3 min-h-[360px]">
+                <div className={`${isMobileDetailOpen ? 'flex' : 'hidden md:flex'} flex-1 w-full md:w-[670px] max-w-[670px] p-8 rounded-3xl border border-ds-border bg-ds-surface-1/20 flex-col items-center justify-center gap-3 min-h-[360px]`}>
                   <div className="size-6 border-2 border-ds-accent border-t-transparent rounded-full animate-spin" />
                   <span className="text-xs text-ds-text-secondary font-dm-sans">Loading applicant details...</span>
                 </div>
               ) : !activeCandidate || candidates.length === 0 ? (
-                <div className="flex-1 w-full md:w-[670px] max-w-[670px] p-8 rounded-3xl border border-ds-border bg-ds-surface-1/20 flex flex-col items-center justify-center text-center gap-3 min-h-[360px]">
+                <div className={`${isMobileDetailOpen ? 'flex' : 'hidden md:flex'} flex-1 w-full md:w-[670px] max-w-[670px] p-8 rounded-3xl border border-ds-border bg-ds-surface-1/20 flex-col items-center justify-center text-center gap-3 min-h-[360px]`}>
                   <div className="size-12 rounded-full bg-ds-surface-2 flex items-center justify-center text-ds-text-muted">
                     <Icon icon="solar:users-group-two-rounded-linear" className="size-6" />
                   </div>
@@ -703,7 +743,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 w-full md:w-[670px] max-w-[670px] rounded-3xl flex flex-col gap-5 min-w-0">
+                <div className={`${isMobileDetailOpen ? 'flex' : 'hidden md:flex'} flex-1 w-full md:w-[670px] max-w-[670px] rounded-3xl flex flex-col gap-5 min-w-0`}>
                   {/* Frame 2609088: Candidate Header & Actions */}
                   <div className="w-full flex flex-col gap-2">
                     {/* Frame 2608732: Top row */}
@@ -1150,6 +1190,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Mobile Filters Drawer */}
+      <ApplicantsMobileDrawer
+        isOpen={isMobileFilterDrawerOpen}
+        onClose={() => setIsMobileFilterDrawerOpen(false)}
+        selectedFilter={filter}
+        setSelectedFilter={(f: FilterOption) => setFilter(f)}
+      />
     </>
   );
 };

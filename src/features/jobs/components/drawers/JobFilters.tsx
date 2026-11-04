@@ -6,6 +6,7 @@ import { Icon as CustomIcon } from "@/components/icons";
 import { JobsFilter } from "../../types/jobs.types";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import JobFiltersMobileDrawer from "./JobFiltersMobileDrawer";
 
 interface JobFiltersProps {
   filters: JobsFilter;
@@ -252,7 +253,7 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   };
 
   const handleApply = () => {
-    if (!hasSelectedFilters) {
+    if (false && !hasSelectedFilters) {
       return;
     }
 
@@ -583,193 +584,26 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
           </div>
         )}
 
-        {/* Mobile Drawer */}
-        {isMobile && (
-          <div className="md:hidden">
-            <Drawer open={isOpen} onOpenChange={setIsOpen}>
-              <DrawerContent className="h-[80vh] bg-ds-bg border-t border-ds-border rounded-t-2xl z-[80] flex flex-col overflow-hidden text-ds-text-primary">
-                <DrawerTitle className="sr-only">Filters</DrawerTitle>
-                <div className="flex justify-between items-center w-full px-5 py-4 border-b border-ds-border shrink-0">
-                  <span className="font-dm-sans font-medium text-lg text-ds-text-primary flex items-center gap-2">
-                    Filters
-                    {Object.values(localFilters).some(Boolean) && (
-                      <span className="bg-ds-accent text-ds-text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        {
-                          Object.values(localFilters).filter((v) => v !== "")
-                            .length
-                        }
-                      </span>
-                    )}
-                  </span>
-                  {hasSelectedFilters && (
-                    <button
-                      type="button"
-                      onClick={handleClear}
-                      className="font-dm-sans text-xs text-ds-error hover:opacity-80 cursor-pointer"
-                    >
-                      Clear All
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex flex-1 overflow-hidden">
-                  {/* Category list on the left (matches desktop sequence) */}
-                  <div className="w-32 border-r border-ds-border overflow-y-auto pt-2">
-                    {[
-                      { id: "job_type" as const, label: "Job Type" },
-                      { id: "experience" as const, label: "Experience" },
-                      { id: "work_mode" as const, label: "Work Mode" },
-                      { id: "salary_range" as const, label: "Salary" },
-                      { id: "date_posted" as const, label: "Date Posted" },
-                      { id: "industry" as const, label: "Industry" },
-                    ].map((cat) => (
-                      <button
-                        type="button"
-                        key={cat.id}
-                        onClick={() => setActiveMobileTab(cat.id)}
-                        className={`w-full text-left py-3 px-3.5 text-xs font-dm-sans transition-colors cursor-pointer ${
-                          activeMobileTab === cat.id
-                            ? "border-l-2 border-ds-accent text-ds-accent bg-ds-surface-1 font-medium"
-                            : "text-ds-text-secondary border-l-2 border-transparent"
-                        }`}
-                      >
-                        {cat.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Options list on the right */}
-                  <div className="flex-1 overflow-y-auto px-4 py-2 flex flex-col">
-                    {activeMobileTab === "industry" ? (
-                      <div className="flex flex-col gap-2 pt-2">
-                        <div className="w-full border-b border-ds-border focus-within:border-ds-accent transition-colors pb-1">
-                          <input
-                            type="text"
-                            placeholder="Search"
-                            value={industrySearch}
-                            onChange={(e) => setIndustrySearch(e.target.value)}
-                            className="w-full bg-transparent text-sm font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted outline-none py-1.5 px-0"
-                          />
-                        </div>
-                        {backendIndustries
-                          .map((opt) => {
-                            const isSel =
-                              getSelectedValues("industry").includes(opt);
-                            return (
-                              <button
-                                type="button"
-                                key={opt}
-                                onClick={() => toggleFilter("industry", opt)}
-                                className="flex justify-between items-center py-2.5 text-sm font-dm-sans transition-colors w-full cursor-pointer"
-                              >
-                                <span
-                                  className={
-                                    isSel
-                                      ? "text-ds-accent font-medium"
-                                      : "text-ds-text-primary"
-                                  }
-                                >
-                                  {opt}
-                                </span>
-                                {isSel && (
-                                  <Icon
-                                    icon="lucide:check"
-                                    className="w-4 h-4 text-ds-accent"
-                                  />
-                                )}
-                              </button>
-                            );
-                          })}
-                      </div>
-                    ) : (
-                      (mobileCategoryOptions[activeMobileTab] || []).map(
-                        (opt) => {
-                          const currentVals =
-                            getSelectedValues(activeMobileTab);
-                          const isSel =
-                            opt === ""
-                              ? currentVals.length === 0
-                              : currentVals.includes(opt);
-                          return (
-                            <div key={opt} className="flex flex-col">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  toggleFilter(activeMobileTab, opt)
-                                }
-                                className="flex justify-between items-center py-3 text-sm font-dm-sans transition-colors w-full cursor-pointer"
-                              >
-                                <span
-                                  className={
-                                    isSel
-                                      ? "text-ds-accent font-medium"
-                                      : "text-ds-text-primary"
-                                  }
-                                >
-                                  {opt === "" ? "All" : opt}
-                                </span>
-                                {isSel && (
-                                  <Icon
-                                    icon="lucide:check"
-                                    className="w-4 h-4 text-ds-accent"
-                                  />
-                                )}
-                              </button>
-                              {activeMobileTab === "salary_range" &&
-                                opt === "Other" &&
-                                isSel && (
-                                  <div className="flex flex-col gap-2 pb-3 px-1 animate-in fade-in duration-150">
-                                    <div className="flex items-center justify-between gap-3">
-                                      <span className="text-xs text-ds-text-secondary font-dm-sans">
-                                        Min
-                                      </span>
-                                      <input
-                                        type="number"
-                                        placeholder="0"
-                                        value={customMinSalary}
-                                        onChange={(e) =>
-                                          setCustomMinSalary(e.target.value)
-                                        }
-                                        className="w-24 h-8 px-2 text-xs text-right bg-ds-surface-1 border border-ds-border rounded text-ds-text-primary outline-none focus:border-ds-accent"
-                                      />
-                                    </div>
-                                    <div className="flex items-center justify-between gap-3">
-                                      <span className="text-xs text-ds-text-secondary font-dm-sans">
-                                        Max
-                                      </span>
-                                      <input
-                                        type="number"
-                                        placeholder="0"
-                                        value={customMaxSalary}
-                                        onChange={(e) =>
-                                          setCustomMaxSalary(e.target.value)
-                                        }
-                                        className="w-24 h-8 px-2 text-xs text-right bg-ds-surface-1 border border-ds-border rounded text-ds-text-primary outline-none focus:border-ds-accent"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                            </div>
-                          );
-                        },
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <div className="px-5 py-3.5 bg-ds-bg border-t border-ds-border flex justify-end shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleApply}
-                    className="w-full sm:w-auto px-6 py-2 rounded-full bg-ds-accent hover:bg-ds-accent/90 text-ds-text-primary font-medium font-dm-sans text-sm cursor-pointer shadow-md"
-                  >
-                    Apply Filters
-                  </button>
-                </div>
-              </DrawerContent>
-            </Drawer>
-          </div>
-        )}
+        {/* Mobile Filter Drawer (Figma post pop up spec) */}
+        <JobFiltersMobileDrawer
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          localFilters={localFilters}
+          activeMobileTab={activeMobileTab}
+          setActiveMobileTab={setActiveMobileTab}
+          toggleFilter={toggleFilter}
+          getSelectedValues={getSelectedValues}
+          handleClear={handleClear}
+          handleApply={handleApply}
+          backendIndustries={backendIndustries}
+          industrySearch={industrySearch}
+          setIndustrySearch={setIndustrySearch}
+          customMinSalary={customMinSalary}
+          setCustomMinSalary={setCustomMinSalary}
+          customMaxSalary={customMaxSalary}
+          setCustomMaxSalary={setCustomMaxSalary}
+          mobileCategoryOptions={mobileCategoryOptions}
+        />
       </div>
     </div>
   );

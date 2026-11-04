@@ -121,10 +121,14 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="p-0 border-none bg-transparent shadow-none w-[300px] [&>button]:hidden outline-none z-[101]">
-        <div className={`w-[300px] ${step === 2 ? 'h-[276px]' : 'h-[344px]'} p-3 bg-ds-bg rounded-2xl border border-ds-border flex flex-col justify-between items-center overflow-hidden box-border shadow-2xl`}>
+      <DialogContent className="p-0 border-none bg-transparent shadow-none w-full outline-none z-[101] [&>button]:hidden max-md:fixed max-md:bottom-0 max-md:top-auto max-md:left-0 max-md:right-0 max-md:translate-x-0 max-md:translate-y-0 max-md:max-w-none max-md:flex max-md:justify-center md:max-w-[320px]">
+        <div className={`w-full max-w-[393px] md:w-[300px] ${step === 2 ? 'md:h-[276px]' : 'md:h-[344px]'} p-[8px_12px_24px] md:p-3 bg-ds-bg rounded-t-[8px] md:rounded-2xl rounded-b-none md:rounded-b-2xl border-t md:border border-ds-border flex flex-col justify-between items-center overflow-hidden box-border shadow-2xl gap-4 md:gap-0`}>
+          {/* Mobile Drag Handle */}
+          <div className="w-full flex md:hidden flex-col items-center justify-center shrink-0 h-5">
+            <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
+          </div>
           {/* Top Close Row */}
-          <div className="self-stretch flex justify-end items-center">
+          <div className="hidden md:flex self-stretch justify-end items-center">
             <button
               onClick={onClose}
               type="button"
@@ -169,7 +173,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               {/* Upload Box */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="w-[276px] h-[112px] px-3 py-2 bg-ds-surface-1 rounded-2xl border border-ds-border flex flex-col justify-center items-center gap-2 cursor-pointer hover:border-ds-accent/60 transition-colors box-border"
+                className="w-full max-w-[369px] md:w-[276px] h-[112px] px-3 py-2 bg-ds-surface-1 rounded-2xl border border-ds-border flex flex-col justify-center items-center gap-2 cursor-pointer hover:border-ds-accent/60 transition-colors box-border"
               >
                 <input
                   type="file"
@@ -348,7 +352,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 spellCheck={false}
                 data-ms-editor="false"
                 {...({ writingsuggestions: "false" } as any)}
-                className="w-[276px] h-[80px] p-3 bg-ds-bg border border-ds-border rounded-2xl font-dm-sans text-sm text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none box-border overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                className="w-full max-w-[369px] md:w-[276px] h-[80px] p-3 bg-ds-bg border border-ds-border rounded-2xl font-dm-sans text-sm text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none box-border overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               />
 
               {/* Action Buttons */}

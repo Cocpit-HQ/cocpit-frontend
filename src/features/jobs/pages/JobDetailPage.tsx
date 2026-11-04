@@ -56,7 +56,6 @@ const getGoogleMapsUrl = (
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
 
-
 interface JobDetailPageProps {
   jobId: string;
 }
@@ -103,25 +102,20 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     window.scrollTo(0, 0);
   }, [jobId]);
 
-  if (isLoading) {
-    return <JobDetailSkeleton />;
-  }
-
-  if (!job) {
-    return <JobUnavailableScreen onBack={handleBack} />;
-  }
-
   const jobAny = job as any;
   const jobLat = jobAny?.latitude != null ? Number(jobAny.latitude) : null;
   const jobLng = jobAny?.longitude != null ? Number(jobAny.longitude) : null;
-  const mapUrl = getGoogleMapsUrl(
-    job.location,
-    jobLat,
-    jobLng,
-    jobAny?.map_url || jobAny?.mapUrl
-  );
+  const mapUrl = job
+    ? getGoogleMapsUrl(
+        job.location,
+        jobLat,
+        jobLng,
+        jobAny?.map_url || jobAny?.mapUrl
+      )
+    : null;
 
   const { steps, activeStep } = useMemo(() => {
+    if (!job) return { steps: ['Applied', 'In review', 'Shortlisted'] as const, activeStep: 0 };
     const normalized = (job.application_status || 'Applied').toLowerCase();
     const isDeclinedStatus = ['declined', 'rejected', 'withdrawn'].includes(normalized);
 
@@ -140,8 +134,17 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
       steps: ['Applied', 'In review', 'Shortlisted'] as const,
       activeStep: stepIdx,
     };
-  }, [job.application_status]);
-  const isJobCompany = Boolean(job.org_id || job.company_id || job.company_type === 'COMPANY' || job.company_type === 'ORGANIZATION');
+  }, [job?.application_status]);
+
+  const isJobCompany = Boolean(job?.org_id || job?.company_id || (job as any)?.company_type === 'COMPANY' || (job as any)?.company_type === 'ORGANIZATION');
+
+  if (isLoading) {
+    return <JobDetailSkeleton />;
+  }
+
+  if (!job) {
+    return <JobUnavailableScreen onBack={handleBack} />;
+  }
 
   const navigateToChat = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -174,9 +177,24 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     flags?.saved_jobs !== false
   );
 
+  const salaryDisplay = (() => {
+    if (job.salary_display) {
+      return job.salary_display.replace(/[\$₹]/g, '').trim();
+    }
+    if (job.salary_min && job.salary_max) {
+      return `${Number(job.salary_min).toLocaleString()} - ${Number(job.salary_max).toLocaleString()}`;
+    }
+    if (job.salary_min) {
+      return `${Number(job.salary_min).toLocaleString()}+`;
+    }
+    if (job.salary_max) {
+      return `Up to ${Number(job.salary_max).toLocaleString()}`;
+    }
+    return 'Undisclosed';
+  })();
+
   const renderBottomBarActions = () => {
     // Closed jobs: Recruitment pipeline is ended.
-    // Display Follow/Unfollow company/recruiter per Figma design and industry standards.
     if (job.is_closed) {
       return (
         <button
@@ -208,7 +226,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
       }
       if (isDeclined) {
         return (
-          <span className="text-ds-text-muted ds-text-small px-3 py-1.5 text-center flex items-center">
+          <span className="text-ds-text-secondary ds-text-small px-3 py-1.5 text-center flex items-center">
             Offer declined
           </span>
         );
@@ -250,7 +268,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
     if (isDeclined) {
       return (
-        <span className="text-ds-text-muted ds-text-small px-4 py-1.5 border border-ds-border rounded-full">
+        <span className="text-ds-text-secondary ds-text-small px-4 py-1.5 border border-ds-border rounded-full">
           Application Declined
         </span>
       );
@@ -293,30 +311,160 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     );
   };
 
+  const renderMobileBottomBarActions = () => {
+    if (job.is_closed) {
+      return (
+        <button
+          onClick={toggleFollow}
+          disabled={isFollowLoading}
+          type="button"
+          className="w-full h-9 px-4 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer border-none outline-none disabled:opacity-75 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {isFollowLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin shrink-0 text-ds-text-primary" />
+          ) : (
+            job.is_followed ? 'Unfollow' : 'Follow'
+          )}
+        </button>
+      );
+    }
+
+    if (job.is_offer) {
+      if (isAccepted) {
+        return (
+          <button
+            onClick={navigateToChat}
+            type="button"
+            className="w-full h-9 px-3 py-1.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-all shadow-sm flex items-center justify-center cursor-pointer border-none outline-none whitespace-nowrap"
+          >
+            Chat
+          </button>
+        );
+      }
+      if (isDeclined) {
+        return (
+          <div className="w-full h-9 px-3 py-1.5 rounded-full border border-ds-border flex items-center justify-center text-ds-text-muted text-base font-medium font-dm-sans leading-6 select-none whitespace-nowrap">
+            Offer declined
+          </div>
+        );
+      }
+      if (isWithdrawn) {
+        return (
+          <span className="text-ds-error text-sm px-3 py-1.5 text-center flex items-center justify-center w-full">
+            Offer withdrawn
+          </span>
+        );
+      }
+      if (isExpired) {
+        return (
+          <span className="text-ds-error text-sm px-3 py-1.5 text-center flex items-center justify-center w-full">
+            Offer expired
+          </span>
+        );
+      }
+
+      return (
+        <div className="w-full flex items-center gap-2">
+          <button
+            onClick={() => respondToOffer('accept')}
+            type="button"
+            className="flex-1 h-9 px-3 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-all shadow-sm flex items-center justify-center cursor-pointer border-none outline-none whitespace-nowrap"
+          >
+            Accept
+          </button>
+          <button
+            onClick={() => setShowDeclineConfirm(true)}
+            type="button"
+            className="flex-1 h-9 px-3 rounded-full border border-ds-border hover:bg-ds-surface-1/50 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-all flex items-center justify-center cursor-pointer outline-none whitespace-nowrap"
+          >
+            Decline
+          </button>
+        </div>
+      );
+    }
+
+    if (isDeclined) {
+      return (
+        <span className="w-full text-ds-text-secondary text-sm px-4 py-1.5 border border-ds-border rounded-full text-center flex items-center justify-center">
+          Application Declined
+        </span>
+      );
+    }
+
+    if (isShortlisted) {
+      return (
+        <button
+          onClick={navigateToChat}
+          type="button"
+          className="w-full h-9 px-4 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-all shadow-sm flex items-center justify-center cursor-pointer border-none outline-none whitespace-nowrap"
+        >
+          Chat now
+        </button>
+      );
+    }
+
+    if (job.is_applied) {
+      return (
+        <button
+          onClick={() => setShowWithdrawConfirm(true)}
+          type="button"
+          className="w-full h-9 px-4 rounded-full border border-ds-border hover:bg-ds-surface-1/50 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-all cursor-pointer outline-none whitespace-nowrap"
+        >
+          Withdraw
+        </button>
+      );
+    }
+
+    return (
+      <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
+        <button
+          onClick={() => setShowApplyModal(true)}
+          type="button"
+          className="w-full h-9 px-4 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary text-base font-medium font-dm-sans leading-6 shadow-sm flex items-center justify-center cursor-pointer transition-all border-none outline-none whitespace-nowrap"
+        >
+          Apply now
+        </button>
+      </FeatureDisabledTooltip>
+    );
+  };
+
   return (
     <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans relative selection:bg-ds-accent/30 selection:text-ds-text-primary">
-      {/* Fixed Top-Left Back Button (top: 40px, left: 40px matching Figma) */}
+      {/* Desktop Fixed Top-Left Back Button (top: 40px, left: 40px matching Figma) */}
       <button
         onClick={handleBack}
         type="button"
         aria-label="Back"
-        className="fixed top-[40px] left-[40px] z-50 inline-flex items-center gap-2 p-0 text-ds-text-primary text-base font-medium font-dm-sans leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="hidden sm:inline-flex fixed top-[40px] left-[40px] z-50 items-center gap-2 p-0 text-ds-text-primary text-base font-medium font-dm-sans leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
         <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
         <span>Back</span>
       </button>
 
-      {/* Main 768px Centered Column (Figma: top-[60px], centered w-[768px]) */}
-      <div className="w-full max-w-[768px] mx-auto pt-14 sm:pt-[60px] pb-28 px-4 sm:px-0 flex flex-col gap-5 animate-in fade-in duration-300">
+      {/* Mobile Top Header (Frame 2609713 / 2609475: height 24px, Arrow 20x20, Text "Back" 16px 500) */}
+      <div className="sm:hidden w-full px-4 pt-4 pb-2 flex items-center justify-between z-30">
+        <button
+          onClick={handleBack}
+          type="button"
+          aria-label="Back"
+          className="inline-flex items-center gap-2 p-0 text-ds-text-primary text-base font-medium font-dm-sans leading-6 cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        >
+          <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
+          <span>Back</span>
+        </button>
+      </div>
+
+      {/* Main Column (Desktop: centered max-w-[768px], pt-[60px], pb-28; Mobile: pt-2, pb-24, px-4) */}
+      <div className="w-full max-w-[768px] mx-auto pt-2 sm:pt-[60px] pb-24 sm:pb-28 px-4 sm:px-0 flex flex-col gap-5 animate-in fade-in duration-300">
 
         {/* Job Header & Metadata */}
         <div className="w-full flex flex-col justify-start items-start gap-3">
-          {/* Job Title */}
-          <h1 className="w-full text-[40px] leading-[48px] font-bold font-dm-sans text-ds-text-primary">
+          {/* Job Title: Mobile 32px/40px font-bold, Desktop 40px/48px font-bold */}
+          <h1 className="w-full text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] font-bold font-dm-sans text-ds-text-primary">
             {job.title}
           </h1>
 
-          {/* Posted By & Active Status Badge */}
+          {/* Posted By & Active Status Badge (Frame 2608872) */}
           <div className="w-full flex justify-between items-center gap-3">
             <div
               className="flex items-center gap-2 cursor-pointer group"
@@ -330,7 +478,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 }
               }}
             >
-              {/* Org (Square / rounded-lg with BusinessBuildingIcon fallback) vs User (Circle / rounded-full with UserIcon fallback) */}
+              {/* Org (Square / rounded-lg) vs User (Circle / rounded-full) */}
               {job.org_id ? (
                 <div className="size-8 rounded-lg overflow-hidden shrink-0 bg-ds-surface-2 border border-ds-border flex items-center justify-center">
                   {job.company_logo && !avatarError ? (
@@ -368,13 +516,13 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
             {/* Status Badge (Frame 2608515 matching Figma) */}
             {job.is_closed ? (
-              <div className="w-[66px] h-[32px] px-4 py-2 bg-ds-surface-1 border border-ds-warning rounded-[24px] flex items-center justify-center shrink-0 box-border">
+              <div className="h-8 px-4 py-2 bg-ds-surface-1 border border-ds-warning rounded-[24px] flex items-center justify-center shrink-0 box-border">
                 <span className="font-dm-sans font-normal text-xs leading-4 text-center text-ds-warning">
                   Close
                 </span>
               </div>
             ) : (
-              <div className="w-[69px] h-[32px] px-4 py-2 bg-ds-surface-1 border border-ds-success rounded-[24px] flex items-center justify-center shrink-0 box-border">
+              <div className="h-8 px-4 py-2 bg-ds-surface-1 border border-ds-success rounded-[24px] flex items-center justify-center shrink-0 box-border">
                 <span className="font-dm-sans font-normal text-xs leading-4 text-center text-ds-success">
                   Active
                 </span>
@@ -383,13 +531,13 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           </div>
         </div>
 
-        {/* 4-Column Specifications Row (seamless without outer border matching Figma) */}
+        {/* 4-Item Specifications Grid (Mobile 2x2 grid, Desktop 4-col flex with dividers) */}
         <div className="w-full py-2 bg-transparent grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-4">
           {/* Experience */}
           <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
-            <div className="flex items-center gap-2 text-ds-text-muted">
-              <JobExperienceIcon size={20} className="w-5 h-5 text-ds-text-muted shrink-0" />
-              <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Experience</span>
+            <div className="flex items-center gap-2 text-ds-text-secondary">
+              <JobExperienceIcon size={20} className="w-5 h-5 text-ds-text-secondary shrink-0" />
+              <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">Experience</span>
             </div>
             <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
               {job.experience || '0-2 Yrs'}
@@ -400,9 +548,9 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
           {/* Work mode */}
           <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
-            <div className="flex items-center gap-2 text-ds-text-muted">
-              <LocationIcon size={20} className="w-5 h-5 text-ds-text-muted shrink-0" />
-              <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Work mode</span>
+            <div className="flex items-center gap-2 text-ds-text-secondary">
+              <LocationIcon size={20} className="w-5 h-5 text-ds-text-secondary shrink-0" />
+              <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">Work mode</span>
             </div>
             <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
               {job.work_mode || 'Hybrid'}
@@ -413,9 +561,9 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
           {/* Work type */}
           <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
-            <div className="flex items-center gap-2 text-ds-text-muted">
-              <CalendarIcon size={20} className="w-5 h-5 text-ds-text-muted shrink-0 flex-none order-0 grow-0" />
-              <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Work type</span>
+            <div className="flex items-center gap-2 text-ds-text-secondary">
+              <CalendarIcon size={20} className="w-5 h-5 text-ds-text-secondary shrink-0" />
+              <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">Work type</span>
             </div>
             <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
               {job.job_type || 'Full Time'}
@@ -426,44 +574,28 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
           {/* Salary */}
           <div className="flex-1 flex flex-col justify-center items-start gap-1.5">
-            <div className="flex items-center gap-2 text-ds-text-muted">
-              <IndianRupeeIcon size={20} className="w-5 h-5 text-ds-text-muted shrink-0" />
-              <span className="text-ds-text-muted text-xs font-normal font-dm-sans leading-4">Salary</span>
+            <div className="flex items-center gap-2 text-ds-text-secondary">
+              <IndianRupeeIcon size={20} className="w-5 h-5 text-ds-text-secondary shrink-0" />
+              <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">Salary</span>
             </div>
             <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
-              {(() => {
-                if (job.salary_display) {
-                  return job.salary_display.replace(/[\$₹]/g, '').trim();
-                }
-                if (job.salary_min && job.salary_max) {
-                  return `${Number(job.salary_min).toLocaleString()} - ${Number(job.salary_max).toLocaleString()}`;
-                }
-                if (job.salary_min) {
-                  return `${Number(job.salary_min).toLocaleString()}+`;
-                }
-                if (job.salary_max) {
-                  return `Up to ${Number(job.salary_max).toLocaleString()}`;
-                }
-                return 'Undisclosed';
-              })()}
+              {salaryDisplay}
             </div>
           </div>
         </div>
 
-        {/* Profile Match Banner (Figma tooltip spec: 768px, h:36px, var(--ds-surface-1), var(--ds-border), 20px gap) */}
+        {/* Profile Match Banner (Figma tooltip spec: h:36px, bg-ds-surface-1, border-ds-border) */}
         <div className="w-full min-h-9 p-2 bg-ds-surface-1 border border-ds-border rounded-lg flex items-center gap-2.5 self-stretch flex-none box-border">
-          <CyphexAIIcon size={20} className="w-5 h-5 text-ds-accent shrink-0 flex-none order-0 grow-0" />
-          <span className="text-ds-accent ds-text-small flex items-center flex-1 order-1">
+          <CyphexAIIcon size={20} className="w-5 h-5 text-ds-accent shrink-0 flex-none" />
+          <span className="text-ds-accent text-xs font-normal font-dm-sans leading-4 flex items-center flex-1">
             You&apos;re stronger than {job.match_score ?? 90}% of applicants for this job based on your profile and skills
           </span>
         </div>
 
-        {/* Offer Recruiter Note (Figma Frame 2609030: w:700px, min-h:84px, p:12px, gap:8px, bg:var(--ds-surface-1), border-l:2px var(--ds-accent), rounded: 0 16px 16px 16px) */}
+        {/* Offer Recruiter Note (Figma Frame 2609030) */}
         {job.is_offer && job.recruiter_message && (
           <div className="w-full max-w-[700px] min-h-[84px] p-3 bg-ds-surface-1 border-l-2 border-ds-accent rounded-r-2xl rounded-bl-2xl rounded-tl-none flex flex-col items-start gap-2 self-stretch flex-none box-border">
-            {/* Frame 2609968: Recruiter Info Header */}
             <div className="flex items-center gap-2 h-9">
-              {/* Rectangle 29: Avatar (32px x 32px, rounded-full) */}
               <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 flex-none bg-ds-surface-2">
                 {job.recruiter_avatar && !recruiterAvatarError ? (
                   <img
@@ -476,7 +608,6 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   <UserIcon className="w-full h-full p-1.5 text-ds-text-primary" />
                 )}
               </div>
-              {/* Frame 2609931: Recruiter Name & Title */}
               <div className="flex flex-col items-start justify-center h-9">
                 <span className="font-dm-sans font-semibold text-base leading-6 text-ds-text-primary">
                   {job.recruiter_name || job.company}
@@ -487,7 +618,6 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               </div>
             </div>
 
-            {/* Recruiter Message Body */}
             <p className="font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary self-stretch m-0">
               {job.recruiter_message}
             </p>
@@ -496,92 +626,123 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
         {/* Application Status Tracker (if applied) */}
         {job.is_applied && (
-          <div className="w-full max-w-[768px] rounded-2xl border border-ds-border py-5 px-4 flex flex-col items-start gap-4 self-stretch flex-none box-border">
-            <h3 className="font-dm-sans text-base font-medium leading-6 text-ds-text-primary m-0">
-              Application status
-            </h3>
+          <>
+            {/* Desktop Tracker (Unchanged for screens >= sm) */}
+            <div className="hidden sm:flex w-full max-w-[768px] rounded-2xl border border-ds-border py-5 px-4 flex-col items-start gap-4 self-stretch flex-none box-border">
+              <h3 className="font-dm-sans text-base font-medium leading-6 text-ds-text-primary m-0">
+                Application status
+              </h3>
 
-            {/* Frame 2609079: Steps Track (w: 736px, h: 36px) */}
-            <div className="w-full flex items-center h-9 self-stretch flex-none overflow-x-auto no-scrollbar">
-              {steps.map((step, idx) => {
-                const isCompleted = idx < activeStep || (idx === 0 && activeStep === 0);
-                const isCurrent = idx === activeStep && idx !== 0;
-                const isActive = idx <= activeStep;
+              <div className="w-full flex items-center h-9 self-stretch flex-none overflow-x-auto no-scrollbar">
+                {steps.map((step, idx) => {
+                  const isCompleted = idx < activeStep || (idx === 0 && activeStep === 0);
+                  const isCurrent = idx === activeStep && idx !== 0;
+                  const isActive = idx <= activeStep;
 
-                // Ellipse 30 (16px x 16px) using newGlobal.css tokens
-                let dotClass = 'bg-ds-text-primary border border-ds-text-secondary';
-                if (isCompleted) {
-                  dotClass = 'bg-ds-accent border border-ds-accent';
-                } else if (isCurrent) {
-                  dotClass = 'bg-ds-text-primary border border-ds-accent';
-                }
+                  let dotClass = 'bg-ds-text-primary border border-ds-text-secondary';
+                  if (isCompleted) {
+                    dotClass = 'bg-ds-accent border border-ds-accent';
+                  } else if (isCurrent) {
+                    dotClass = 'bg-ds-text-primary border border-ds-accent';
+                  }
 
-                // Poppins 14px 400 text
-                const textClass = isActive ? 'text-ds-accent' : 'text-ds-text-secondary';
+                  const textClass = isActive ? 'text-ds-accent' : 'text-ds-text-secondary';
+                  const lineClass = idx < activeStep ? 'border-ds-accent' : 'border-ds-text-secondary';
 
-                // Line 164/165/166
-                const lineClass = idx < activeStep ? 'border-ds-accent' : 'border-ds-text-secondary';
+                  return (
+                    <React.Fragment key={step}>
+                      <div className="flex items-center gap-2.5 px-4 py-2 h-9 rounded-[24px] shrink-0 box-border">
+                        <div className={`w-4 h-4 rounded-full shrink-0 box-border ${dotClass}`} />
+                        <span className={`font-poppins text-sm font-normal leading-5 text-center whitespace-nowrap ${textClass}`}>
+                          {step}
+                        </span>
+                      </div>
 
-                return (
-                  <React.Fragment key={step}>
-                    {/* Step Pill (Frame 2608617 / 2608621 / 2608622 / 2608623) */}
-                    <div className="flex items-center gap-2.5 px-4 py-2 h-9 rounded-[24px] shrink-0 box-border">
-                      <div className={`w-4 h-4 rounded-full shrink-0 box-border ${dotClass}`} />
-                      <span className={`font-poppins text-sm font-normal leading-5 text-center whitespace-nowrap ${textClass}`}>
-                        {step}
-                      </span>
-                    </div>
-
-                    {/* Connecting Line (Line 164, 165, 166) */}
-                    {idx < steps.length - 1 && (
-                      <div className={`flex-1 min-w-6 h-0 border-t ${lineClass}`} />
-                    )}
-                  </React.Fragment>
-                );
-              })}
+                      {idx < steps.length - 1 && (
+                        <div className={`flex-1 min-w-6 h-0 border-t ${lineClass}`} />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+
+            {/* Mobile Vertical Tracker (Figma Frame 2609080: sm:hidden) */}
+            <div className="sm:hidden w-full flex flex-col items-start py-2 px-4 gap-2 rounded-[28px] self-stretch flex-none box-border">
+              <h3 className="font-poppins text-base font-medium leading-6 text-ds-text-primary m-0">
+                Application status
+              </h3>
+
+              <div className="flex flex-col justify-center items-start px-4">
+                {steps.map((step, idx) => {
+                  const isCompleted = idx < activeStep || (idx === 0 && activeStep === 0);
+                  const isCurrent = idx === activeStep && idx !== 0;
+                  const isActive = idx <= activeStep;
+
+                  let dotClass = 'bg-ds-text-primary border border-ds-text-secondary';
+                  if (isCompleted) {
+                    dotClass = 'bg-ds-accent border border-ds-accent';
+                  } else if (isCurrent) {
+                    dotClass = 'bg-ds-text-primary border border-ds-accent';
+                  }
+
+                  const textClass = isActive ? 'text-ds-accent' : 'text-ds-text-secondary';
+                  const lineClass = idx < activeStep ? 'border-ds-accent' : 'border-ds-text-secondary';
+
+                  return (
+                    <React.Fragment key={step}>
+                      <div className="flex items-center gap-2.5 py-2 h-9 rounded-[24px] box-border">
+                        <div className={`w-4 h-4 rounded-full shrink-0 box-border ${dotClass}`} />
+                        <span className={`font-dm-sans text-sm font-normal leading-5 text-center whitespace-nowrap ${textClass}`}>
+                          {step}
+                        </span>
+                      </div>
+
+                      {idx < steps.length - 1 && (
+                        <div className="w-4 h-5 flex justify-center items-center">
+                          <div className={`w-0 h-5 border-l ${lineClass}`} />
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+          </>
         )}
 
-        {/* Company Analytics Card (Figma Frame 2608882: w:768px, p:16px, gap:16px, border: 1px solid var(--ds-border), rounded: 16px) */}
-        <div className="w-full p-4 rounded-2xl border border-ds-border flex flex-col items-start gap-4 self-stretch flex-none box-border">
-          <h3 className="ds-text-body-1 text-ds-text-primary">
+        {/* Company Analytics Card (Figma Frame 2608882: Mobile border-y, Desktop rounded-2xl border) */}
+        <div className="w-full py-4 sm:p-4 border-y sm:border border-ds-border rounded-none sm:rounded-2xl flex flex-col items-start gap-4 self-stretch flex-none box-border">
+          <h3 className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
             Company analytics
           </h3>
 
-          {/* HorizontalBorder (w: 736px, h: 73px, 2-column layout split by 16px gap, Col 2 starts at 376px) */}
           <div className="w-full h-[73px] grid grid-cols-2 gap-4 self-stretch flex-none box-border">
-            {/* Left Container (w: 108px, h: 73px, pb: 12px, gap: 12px, border-b: 2px solid #22C55E) */}
-            <div className="w-[108px] h-[73px] flex flex-col items-start pb-3 gap-3 border-b-2 border-ds-success box-border flex-none">
-              {/* RESPONSE RATE (w: 108px, h: 16px, DM Sans 12px/16px #B8ADA8) */}
-              <span className="w-[108px] h-4 font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary uppercase flex items-center">
+            {/* RESPONSE RATE */}
+            <div className="w-full max-w-[108px] h-[73px] flex flex-col items-start pb-3 gap-3 border-b-2 border-ds-success box-border flex-none">
+              <span className="w-full h-4 font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary uppercase flex items-center">
                 RESPONSE RATE
               </span>
-              {/* Value (w: 108px, h: 26px, Poppins 500 18px/26px #FFECE6) */}
-              <span className="w-[108px] h-[26px] font-dm-sans font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
+              <span className="w-full h-[26px] font-dm-sans font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
                 {job.response_rate || '98%'}
               </span>
             </div>
 
-            {/* Right Container (left: 376px, w: 360px, h: 73px, gap: 8px) */}
+            {/* AVG. REPLY */}
             <div className="w-full max-w-[360px] h-[73px] flex flex-col items-start gap-2 box-border flex-none">
-              {/* AVG. REPLY (w: 360px, h: 16px, DM Sans 12px/16px #B8ADA8) */}
               <span className="w-full h-4 font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary uppercase flex items-center">
                 AVG. REPLY
               </span>
-              {/* Value (w: 360px, h: 26px, Poppins 500 18px/26px #FFECE6) */}
               <span className="w-full h-[26px] font-dm-sans font-medium text-lg leading-[26px] text-ds-text-primary flex items-center">
                 {job.avg_reply || '1 day'}
               </span>
-              {/* Very fast (w: 360px, h: 15px, Poppins 400 10px/15px var(--ds-success)) */}
               <span className="w-full h-[15px] font-poppins font-normal text-[10px] leading-[15px] text-ds-success flex items-center">
                 Very fast
               </span>
             </div>
           </div>
 
-          {/* Recruiter Note (Figma: width 360px, height 40px, DM Sans 14px/20px #B8ADA8) */}
-          <p className="w-full max-w-[360px] min-h-10 font-dm-sans font-normal text-sm leading-5 text-ds-text-secondary flex flex-col justify-center flex-none">
+          <p className="w-full max-w-[360px] min-h-10 font-dm-sans font-normal text-sm leading-5 text-ds-text-secondary flex flex-col justify-center flex-none m-0">
             <span>{job.company || 'The recruiter'} usually views applications within 24</span>
             <span>hours of submission.</span>
           </p>
@@ -619,16 +780,16 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           </button>
         </div>
 
-        {/* Location & Map Section (Figma Frame 2608887: w:768px, gap:16px) */}
+        {/* Location & Map Section (Frame 2608887) */}
         <div className="w-full flex flex-col items-start gap-4 self-stretch flex-none box-border">
-          {/* Map Container (h:198px, 24px radius, seamless without border, with floating Google Maps redirect pill identical to Org Profile AboutTab) */}
-          <div className="relative w-full h-[198px] rounded-[24px] overflow-hidden group self-stretch flex-none box-border">
+          {/* Map Container (Mobile h-[94px], Desktop h-[198px]) */}
+          <div className="relative w-full h-[94px] sm:h-[198px] rounded-2xl overflow-hidden group self-stretch flex-none box-border border border-ds-border">
             <InteractiveLocationMap
               locationAddress={job.location || ''}
               latitude={jobLat}
               longitude={jobLng}
               readOnly={true}
-              className="!w-full !h-full !rounded-[24px] !border-0 !shadow-none !bg-transparent"
+              className="!w-full !h-full !rounded-2xl !border-0 !shadow-none !bg-transparent"
             />
 
             {mapUrl && (
@@ -644,13 +805,13 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   <GoogleIcon size={14} className="w-3.5 h-3.5 shrink-0" />
                   <span className="hidden sm:inline">Open in Google Maps</span>
                   <span className="sm:hidden">Open Maps</span>
-                  <ExternalLink className="w-3 h-3 text-ds-text-muted shrink-0" />
+                  <ExternalLink className="w-3 h-3 text-ds-text-secondary shrink-0" />
                 </a>
               </div>
             )}
           </div>
 
-          {/* Address Row (Frame 2608879: h:40px, gap:8px, items: center) */}
+          {/* Address Row (Frame 2608879) */}
           {mapUrl ? (
             <a
               href={mapUrl}
@@ -660,15 +821,15 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               aria-label={`Open ${job.location} in Google Maps`}
               className="w-full min-h-10 flex items-center gap-2 self-stretch flex-none group hover:opacity-85 transition-opacity cursor-pointer no-underline"
             >
-              <LocationIcon className="w-5 h-5 text-ds-text-secondary group-hover:text-ds-accent transition-colors shrink-0 flex-none order-0 grow-0" />
-              <span className="ds-text-secondary text-ds-text-secondary group-hover:text-ds-text-primary transition-colors flex-1 order-1">
+              <LocationIcon className="w-5 h-5 text-ds-text-secondary group-hover:text-ds-accent transition-colors shrink-0 flex-none" />
+              <span className="text-sm font-normal font-dm-sans leading-5 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors flex-1">
                 {job.location}
               </span>
             </a>
           ) : (
             <div className="w-full min-h-10 flex items-center gap-2 self-stretch flex-none">
-              <LocationIcon className="w-5 h-5 text-ds-text-secondary shrink-0 flex-none order-0 grow-0" />
-              <span className="ds-text-secondary text-ds-text-secondary flex-1 order-1">
+              <LocationIcon className="w-5 h-5 text-ds-text-secondary shrink-0 flex-none" />
+              <span className="text-sm font-normal font-dm-sans leading-5 text-ds-text-secondary flex-1">
                 {job.location || 'Location not specified'}
               </span>
             </div>
@@ -677,25 +838,23 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
       </div>
 
-      {/* Floating Bottom Action Bar (Figma: width 800px, height 72px, padding 12px, border-radius 16px, border 1px solid var(--ds-border)) */}
-      <div className="fixed bottom-4 left-0 right-0 z-40 px-4 pointer-events-none">
+      {/* Desktop Floating Bottom Action Bar (Unchanged for screens >= sm: width 800px, height 72px) */}
+      <div className="hidden sm:block fixed bottom-4 left-0 right-0 z-40 px-4 pointer-events-none">
         <div className="max-w-[800px] w-full h-[72px] mx-auto p-3 bg-ds-bg border border-ds-border rounded-2xl shadow-2xl flex items-center justify-between gap-3 pointer-events-auto box-border">
-          {/* Frame 2609957: Job Title & Recruiter • Location (h: 48px, gap: 4px) */}
+          {/* Frame 2609957: Job Title & Recruiter • Location */}
           <div className="flex flex-col items-start justify-center gap-1 min-w-0 flex-1 h-12">
             <span className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 truncate">
               {job.title}
             </span>
-            {/* Frame 2609961: Company • Location (h: 20px, gap: 8px) */}
             <div className="w-full flex items-center gap-2 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
               <span className="truncate">{job.company || job.recruiter_name || 'Recruiter'}</span>
-              <span className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
+              <span className="w-1 h-1 bg-ds-text-secondary rounded-full shrink-0" />
               <span className="truncate">{job.location || 'Remote'}</span>
             </div>
           </div>
 
-          {/* Frame 2609956: Share, Bookmark & Context Action Button (h: 48px, gap: 12px) */}
+          {/* Frame 2609956: Share, Bookmark & Context Action Button */}
           <div className="flex items-center gap-3 shrink-0 h-12">
-            {/* Share icon: Only for active open jobs (Apply now / Withdraw) */}
             {showShare && (
               <button
                 onClick={() => setShowShareModal(true)}
@@ -707,7 +866,6 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               </button>
             )}
 
-            {/* Bookmark / Save: Active open jobs AND pending offers (Accept / Decline) */}
             {showSave && (
               <button
                 onClick={toggleSave}
@@ -723,14 +881,48 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               </button>
             )}
 
-            {/* Dynamic Contextual Action */}
             {renderBottomBarActions()}
           </div>
         </div>
       </div>
 
+      {/* Mobile Fixed Docked Bottom Action Bar (Frame 2609956: Full-width CTA, Share, Save) */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-ds-bg/95 backdrop-blur-md border-t border-ds-border px-4 py-2.5 pb-[calc(10px+env(safe-area-inset-bottom,0px))] flex items-center justify-between gap-3 shadow-2xl">
+        {/* Full-width Contextual Action Button */}
+        <div className="flex-1 min-w-0">
+          {renderMobileBottomBarActions()}
+        </div>
 
-      {/* Apply Job Modal */}
+        {/* Share icon: Only for active open jobs (Apply now / Withdraw) */}
+        {showShare && (
+          <button
+            onClick={() => setShowShareModal(true)}
+            aria-label="Share Job"
+            type="button"
+            className="w-9 h-9 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none cursor-pointer shrink-0 p-0"
+          >
+            <ShareIcon size={20} className="w-5 h-5 shrink-0" fill="currentColor" />
+          </button>
+        )}
+
+        {/* Bookmark / Save: Active open jobs AND pending offers */}
+        {showSave && (
+          <button
+            onClick={toggleSave}
+            aria-label={job.is_saved ? 'Unsave job' : 'Save job'}
+            type="button"
+            className="w-9 h-9 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none cursor-pointer shrink-0 p-0"
+          >
+            {job.is_saved ? (
+              <SaveFilledIcon size={20} className="w-5 h-5 text-ds-accent shrink-0" fill="currentColor" />
+            ) : (
+              <SaveIcon size={20} className="w-5 h-5 text-ds-text-primary hover:text-ds-accent shrink-0" fill="currentColor" />
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Apply Job Modal / Bottom Drawer */}
       <ApplyJobModal
         isOpen={showApplyModal}
         onClose={() => setShowApplyModal(false)}

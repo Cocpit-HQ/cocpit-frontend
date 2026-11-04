@@ -103,6 +103,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
       (val) => Boolean(val && (Array.isArray(val) ? val.length > 0 : String(val).trim()))
     );
     if (!hasAny) {
+      router.push('/jobs/search');
       return;
     }
 
@@ -135,7 +136,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
     if (!isRecommendationsLoading && sectionJobs.length === 0) return null;
 
     return (
-      <div className="w-full max-w-[800px] flex flex-col gap-5">
+      <div className="w-full max-w-[800px] flex flex-col gap-3 sm:gap-5">
         {/* Frame 2609722 Header: h-6 flex justify-between items-center gap-2 */}
         <div className="w-full h-6 flex items-center justify-between gap-2">
           <h2 className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
@@ -153,8 +154,11 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
           </button>
         </div>
 
-        {/* Frame 2609820 Horizontal Carousel: gap-5 (20px), h-[192px] */}
-        <DragScrollContainer className="w-full">
+        {/* Frame 2609820 Horizontal Carousel: responsive gap (gap-4 sm:gap-5) */}
+        <DragScrollContainer
+          className="w-full"
+          containerClassName="gap-4 sm:gap-5"
+        >
           {isRecommendationsLoading ? (
             [1, 2, 3].map((n) => <RecommendedJobCardSkeleton key={n} />)
           ) : (
@@ -173,7 +177,7 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[800px] flex flex-col gap-10">
+    <div className="w-full max-w-[800px] flex flex-col gap-6 sm:gap-10">
       {/* Frame 2609821: 4 Horizontal Carousels from Figma Image */}
       {renderSection('Featured opportunities', 'featured', featuredJobs)}
       {renderSection('Best matches for you', 'best-matches', bestMatches)}
@@ -215,4 +219,3 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
 };
 
 export default ExploreTab;
-

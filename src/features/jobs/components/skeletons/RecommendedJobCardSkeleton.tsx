@@ -2,7 +2,7 @@ import React from 'react';
 
 export const RecommendedJobCardSkeleton: React.FC = () => {
   return (
-    <div className="w-[300px] h-[192px] p-3 bg-ds-bg border border-ds-border rounded-2xl flex flex-col justify-between shrink-0 animate-pulse">
+    <div className="w-64 sm:w-[300px] h-[192px] p-3 bg-ds-bg border border-ds-border rounded-2xl flex flex-col justify-between shrink-0 animate-pulse">
       <div className="w-full h-10 flex justify-between items-center">
         <div className="size-10 rounded-lg bg-ds-surface-1 border border-ds-border/40" />
         {/* Top % badge skeleton temporarily commented out */}
