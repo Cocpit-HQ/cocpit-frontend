@@ -56,6 +56,7 @@ export const getNotificationVisualKind = (notification: Notification): Notificat
     type === 'new_device_login' ||
     type === 'password_changed' ||
     type === 'email_changed' ||
+    type === 'password_reset_requested' ||
     notification.text?.toLowerCase().includes('login') ||
     notification.text?.toLowerCase().includes('password')
   ) {
@@ -80,6 +81,7 @@ export const getNotificationVisualKind = (notification: Notification): Notificat
     type === 'org_doc_verification_success' ||
     type === 'org_doc_verification_rejected' ||
     type === 'org_doc_verification_submitted' ||
+    type === 'member_role_updated' ||
     notification.is_company_actor ||
     ext.isCompanyActor ||
     type.startsWith('company_')
@@ -93,9 +95,11 @@ export const getNotificationVisualKind = (notification: Notification): Notificat
 export interface ParsedNotificationText {
   actorName: string | null;
   actorSuffix: string | null; // e.g. "(Unavailable user)" or "(Unavailable page)"
-  boldTarget: string | null;   // e.g. "Hrutika" in "at Hrutika"
+  boldTarget: string | null;   // e.g. "Hrutika" in "at Hrutika" or role name "test2"
   prefixText: string;
+  middleText?: string;
   bodyText: string;
+  targetUrl?: string | null;
 }
 
 /**
@@ -107,7 +111,7 @@ export const parseNotificationText = (
   activeProfileName?: string
 ): ParsedNotificationText => {
   const type: string = (notification.type as string) || '';
-  const actorName = notification.actor_name || null;
+  let actorName = notification.actor_name || null;
   let actorSuffix: string | null = null;
   let boldTarget: string | null = null;
   let prefixText = '';
@@ -164,6 +168,347 @@ export const parseNotificationText = (
   if (actorName && bodyText) {
     const escapedActor = actorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     bodyText = bodyText.replace(new RegExp(`^"?${escapedActor}"?\\s*`, 'i'), '').trim();
+  } else if (!actorName) {
+    const actorMatch = bodyText.match(/^([A-Za-z0-9_\s]+?)\s+(?:accepted your invitation|joined the)/i);
+    if (actorMatch) {
+      actorName = actorMatch[1].trim();
+      bodyText = bodyText.slice(actorName.length).trim();
+    }
+  }
+
+  // Member role updated: e.g. "Your role at [Company Name] has been updated to [New Role]."
+  const rawNotifText = notification.text || bodyText || '';
+  const isRoleUpdated =
+    type === 'member_role_updated' ||
+    /has been updated to/i.test(rawNotifText) ||
+    /Your role at/i.test(rawNotifText);
+
+  if (isRoleUpdated) {
+    let textToParse = rawNotifText.trim();
+    // Strip any preceding actor/company name (e.g. "mourya Tech Your role at...")
+    textToParse = textToParse.replace(/^.*?Your role at\s+/i, 'Your role at ');
+    const roleMatch = textToParse.match(/^Your role at\s+(.+?)\s+has been updated to\s+(.+?)(?:\.|\s*)$/i);
+    if (roleMatch) {
+      const companyName = roleMatch[1].trim();
+      const roleName = roleMatch[2].trim().replace(/\.$/, '');
+      const ext = notification as unknown as ExtendedNotificationFields;
+      let meta: Record<string, any> = {};
+      try {
+        if (typeof ext.metadata === 'string') {
+          meta = JSON.parse(ext.metadata);
+        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+          meta = ext.metadata as Record<string, any>;
+        }
+      } catch {}
+
+      const orgId =
+        (meta.orgId as string) ||
+        (meta.org_id as string) ||
+        (notification as any).recipient_company_id ||
+        (notification as any).recipient_org_id ||
+        notification.reference_id;
+      const roleTarget = (meta.roleId as string) || (meta.role_id as string) || encodeURIComponent(roleName);
+      const orgQuery = orgId ? `?orgId=${orgId}` : '';
+      const targetUrl = `/team/role/${roleTarget}${orgQuery}`;
+
+      return {
+        actorName: null, // strictly null so actor name is not prepended
+        actorSuffix: null,
+        boldTarget: roleName,
+        prefixText: `Your role at ${companyName} has been updated to `,
+        middleText: undefined,
+        bodyText: '',
+        targetUrl,
+      };
+    }
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: null,
+      prefixText: '',
+      bodyText: textToParse,
+      targetUrl: null,
+    };
+  }
+
+  // Ownership transferred: e.g. "You are now the Owner of [Company Name]."
+  const isOwnershipTransferred =
+    type === 'company_ownership_transferred' ||
+    /You are now the Owner of/i.test(rawNotifText);
+
+  if (isOwnershipTransferred) {
+    let textToParse = rawNotifText.trim();
+    textToParse = textToParse.replace(/^.*?You are now the Owner of\s+/i, 'You are now the Owner of ');
+    const ownerMatch = textToParse.match(/^You are now the Owner of\s+(.+?)(?:\.|\s*)$/i);
+    if (ownerMatch) {
+      const companyName = ownerMatch[1].trim().replace(/\.$/, '');
+      const ext = notification as unknown as ExtendedNotificationFields;
+      let meta: Record<string, any> = {};
+      try {
+        if (typeof ext.metadata === 'string') {
+          meta = JSON.parse(ext.metadata);
+        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+          meta = ext.metadata as Record<string, any>;
+        }
+      } catch {}
+
+      const orgId =
+        (meta.orgId as string) ||
+        (meta.org_id as string) ||
+        (notification as any).recipient_company_id ||
+        (notification as any).recipient_org_id ||
+        notification.reference_id;
+      const orgSlug = (meta.orgSlug as string) || (meta.org_slug as string);
+      const targetUrl = orgId ? `/team?orgId=${orgId}` : (orgSlug ? `/organization/${orgSlug}` : '/team');
+
+      return {
+        actorName: null,
+        actorSuffix: null,
+        boldTarget: companyName,
+        prefixText: 'You are now the Owner of ',
+        middleText: undefined,
+        bodyText: '',
+        targetUrl,
+      };
+    }
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: null,
+      prefixText: '',
+      bodyText: textToParse,
+      targetUrl: null,
+    };
+  }
+
+  // Team invite accepted notification: e.g. "accepted your invitation and joined the test2 team."
+  const isTeamInviteAccepted =
+    type === 'team_invite_accepted' ||
+    /(?:accepted your invitation and joined the|joined the)\s+.+?\s+team/i.test(bodyText);
+
+  if (isTeamInviteAccepted) {
+    const teamMatch = bodyText.match(
+      /^(.*?(?:accepted your invitation and joined the|joined the)\s+)(.+?)(\s+team(?:[.!].*)?$)/i
+    );
+    if (teamMatch) {
+      const ext = notification as unknown as ExtendedNotificationFields;
+      let meta: Record<string, any> = {};
+      try {
+        if (typeof ext.metadata === 'string') {
+          meta = JSON.parse(ext.metadata);
+        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+          meta = ext.metadata as Record<string, any>;
+        }
+      } catch {}
+
+      const extractedRole = teamMatch[2].trim();
+      const boldTargetName = (meta.role as string) || (meta.roleName as string) || extractedRole;
+      const orgId =
+        (meta.orgId as string) ||
+        (meta.org_id as string) ||
+        (notification as any).recipient_company_id ||
+        (notification as any).recipient_org_id ||
+        notification.reference_id;
+      const roleTarget = (meta.roleId as string) || (meta.role_id as string) || encodeURIComponent(boldTargetName);
+      const orgQuery = orgId ? `?orgId=${orgId}` : '';
+      const targetUrl = `/team/role/${roleTarget}${orgQuery}`;
+
+      return {
+        actorName,
+        actorSuffix,
+        boldTarget: boldTargetName,
+        prefixText: '',
+        middleText: teamMatch[1],
+        bodyText: teamMatch[3],
+        targetUrl,
+      };
+    }
+  }
+
+  // Team invite declined notification: e.g. "[User Name] declined your invitation to join as [Role]."
+  const isTeamInviteDeclined =
+    type === 'team_invite_declined' ||
+    /declined your invitation to join as/i.test(rawNotifText);
+
+  if (isTeamInviteDeclined) {
+    let textToParse = rawNotifText.trim();
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const orgName = (meta.orgName as string) || (meta.org_name as string) || '';
+    if (orgName && textToParse.toLowerCase().startsWith(orgName.toLowerCase())) {
+      textToParse = textToParse.slice(orgName.length).trim();
+    }
+    if (actorName && textToParse.toLowerCase().startsWith(actorName.toLowerCase())) {
+      textToParse = textToParse.slice(actorName.length).trim();
+    }
+
+    const declinedMatch = textToParse.match(/^(?:(.*?)\s+)?declined your invitation to join as\s+(.+?)(?:\.|\s*)$/i);
+    const userDeclinedName =
+      (meta.userName as string) ||
+      (meta.user_name as string) ||
+      (declinedMatch && declinedMatch[1] ? declinedMatch[1].trim() : null) ||
+      (actorName && (!orgName || actorName.toLowerCase() !== orgName.toLowerCase()) ? actorName : null) ||
+      'User';
+    const roleName =
+      (meta.roleName as string) ||
+      (meta.role as string) ||
+      (declinedMatch && declinedMatch[2] ? declinedMatch[2].trim().replace(/\.$/, '') : 'Team Member');
+    const orgId =
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
+      (notification as any).recipient_company_id ||
+      (notification as any).recipient_org_id ||
+      notification.reference_id;
+    const targetUrl = orgId ? `/team?orgId=${orgId}` : '/team';
+
+    return {
+      actorName: userDeclinedName,
+      actorSuffix,
+      boldTarget: roleName,
+      prefixText: '',
+      middleText: ' declined your invitation to join as ',
+      bodyText: '',
+      targetUrl,
+    };
+  }
+
+  // Team member removed notification: e.g. "[User Name] was removed from [Company Name]"
+  // Personal notification for removed user: "You were removed from [Company Name]"
+  const isTeamMemberRemoved =
+    type === 'team_member_removed' ||
+    /(?:was|were) removed from/i.test(rawNotifText);
+
+  if (isTeamMemberRemoved) {
+    const textToParse = rawNotifText.trim();
+    const removedMatch = textToParse.match(/^(.*?)\s+(?:was|were)\s+removed from\s+([^.]+?)(?:\s+by\s+.+?)?(?:\.|\s*)$/i);
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    // If the text starts with "You were removed", show "You" as actorName
+    const isPersonalRemoval = /^You\s+were\s+removed/i.test(textToParse);
+    const targetUser = isPersonalRemoval
+      ? 'You'
+      : (meta.targetUserName as string) || (removedMatch ? removedMatch[1].trim() : '') || 'Member';
+    const compName = (meta.orgName as string) || (meta.org_name as string) || (removedMatch ? removedMatch[2].trim() : '') || 'Organization';
+
+    const orgId =
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
+      (notification as any).recipient_company_id ||
+      (notification as any).recipient_org_id ||
+      notification.reference_id;
+    const targetUrl = orgId ? `/team?orgId=${orgId}` : '/team';
+
+    return {
+      actorName: targetUser,
+      actorSuffix: null,
+      prefixText: '',
+      middleText: isPersonalRemoval ? ' were removed from ' : ' was removed from ',
+      boldTarget: compName,
+      bodyText: '',
+      targetUrl,
+    };
+  }
+
+  // Job approved: "Your job [Job Title] is now live."
+  const isJobApproved =
+    type === 'job_approved' ||
+    /Your job.+?is now live/i.test(rawNotifText);
+
+  if (isJobApproved) {
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const jobTitleMatch = rawNotifText.match(/Your job\s+[“"']?(.*?)[”"']?\s+is now live/i);
+    let jobTitle = (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
+    jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
+    const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
+    const targetUrl = jobId ? `/jobs/${jobId}` : '/jobs';
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: jobTitle,
+      prefixText: 'Your job ',
+      middleText: undefined,
+      bodyText: ' is now live.',
+      targetUrl,
+    };
+  }
+
+  // Job rejected: "Your job [Job Title] wasn’t approved. Reason: [Reason]."
+  const isJobRejected =
+    type === 'job_rejected' ||
+    /Your job.+?wasn[’']t approved/i.test(rawNotifText);
+
+  if (isJobRejected) {
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const jobTitleMatch = rawNotifText.match(/Your job\s+[“"']?(.*?)[”"']?\s+wasn[’']t approved/i);
+    const reasonMatch = rawNotifText.match(/Reason:\s*(.+?)(?:\.|\s*)$/i);
+    let jobTitle = (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
+    jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
+    const reason = (meta.rejectionReason as string) || (reasonMatch ? reasonMatch[1].trim().replace(/\.$/, '') : 'Not specified');
+    const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
+    const targetUrl = jobId ? `/jobs/${jobId}` : '/jobs';
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: jobTitle,
+      prefixText: 'Your job ',
+      middleText: undefined,
+      bodyText: ` wasn’t approved. Reason: ${reason}.`,
+      targetUrl,
+    };
+  }
+
+  // Password reset request security alert
+  const isPasswordResetRequested =
+    type === 'password_reset_requested' ||
+    /password reset was requested/i.test(rawNotifText);
+
+  if (isPasswordResetRequested) {
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: null,
+      prefixText: '',
+      bodyText: 'A password reset was requested for your account. If this wasn’t you, secure your account now.',
+      targetUrl: '/settings/account',
+    };
   }
 
   return {
@@ -249,6 +594,75 @@ export const getNotificationRoute = (
     return `/post/${postReferenceId}`;
   }
   if (
+    type === 'member_role_updated' ||
+    (notification.text?.startsWith('Your role at ') && notification.text?.includes('has been updated to'))
+  ) {
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const orgId =
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
+      (notification as any).recipient_company_id ||
+      (notification as any).recipient_org_id ||
+      notification.reference_id;
+    let roleTarget = (meta.roleId as string) || (meta.role_id as string);
+    if (!roleTarget && notification.text) {
+      const match = notification.text.match(/has been updated to\s+(.*?)(?:\.|\s*)$/i);
+      if (match) {
+        roleTarget = encodeURIComponent(match[1].trim());
+      }
+    }
+
+    const orgQuery = orgId ? `?orgId=${orgId}` : '';
+    if (roleTarget) {
+      return `/team/role/${roleTarget}${orgQuery}`;
+    }
+    return orgQuery ? `/team${orgQuery}` : '/team';
+  }
+
+  if (
+    type === 'team_invite_accepted' ||
+    (notification.text?.includes('accepted your invitation') && notification.text?.includes('team')) ||
+    (notification.text?.includes('joined the') && notification.text?.includes('team'))
+  ) {
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const orgId =
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
+      (notification as any).recipient_company_id ||
+      (notification as any).recipient_org_id ||
+      notification.reference_id;
+    let roleTarget = (meta.roleId as string) || (meta.role_id as string);
+    if (!roleTarget && notification.text) {
+      const match = notification.text.match(/joined the\s+(.+?)\s+team/i);
+      if (match) {
+        roleTarget = encodeURIComponent(match[1].trim());
+      }
+    }
+
+    const orgQuery = orgId ? `?orgId=${orgId}` : '';
+    if (roleTarget) {
+      return `/team/role/${roleTarget}${orgQuery}`;
+    }
+    return orgQuery ? `/team${orgQuery}` : '/team';
+  }
+
+  if (
     (type.includes('job') || type.includes('application') || type.includes('offer')) &&
     notification.reference_id
   ) {
@@ -261,11 +675,16 @@ export const getNotificationRoute = (
     return '/connections?tab=invitations&sub=teams';
   }
   if (
-    type === 'new_device_login' ||
     type === 'password_changed' ||
+    type === 'password_reset_requested' ||
     type === 'email_changed' ||
-    notification.text?.toLowerCase().includes('login') ||
     notification.text?.toLowerCase().includes('password')
+  ) {
+    return '/settings/account';
+  }
+  if (
+    type === 'new_device_login' ||
+    notification.text?.toLowerCase().includes('login')
   ) {
     return '/settings/privacy';
   }

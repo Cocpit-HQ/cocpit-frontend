@@ -67,6 +67,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         notification.type === 'organization_job' ||
         notification.type === 'organization_invite' ||
         notification.type === 'ORGANIZATION_INVITE' ||
+        (notification.type as string) === 'member_role_updated' ||
+        (notification.type as string) === 'company_ownership_transferred' ||
         notification.type === 'company_deactivated' ||
         notification.type === 'company_reactivated' ||
         notification.type === 'company_deleted' ||
@@ -210,9 +212,6 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       {parsed.prefixText && (
         <span className="font-normal text-ds-text-primary">{parsed.prefixText}</span>
       )}
-      {parsed.boldTarget && (
-        <span className="font-semibold text-ds-text-primary">{parsed.boldTarget}</span>
-      )}
       {parsed.actorName && (
         <span
           onClick={actorUrl ? handleActorClick : undefined}
@@ -226,6 +225,29 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       )}
       {parsed.actorSuffix && (
         <span className="font-normal text-ds-text-primary">{parsed.actorSuffix} </span>
+      )}
+      {parsed.middleText && (
+        <span className="font-normal text-ds-text-primary">{parsed.middleText}</span>
+      )}
+      {parsed.boldTarget && (
+        parsed.targetUrl ? (
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!notification.is_read && onRead) {
+                onRead(notification.notification_id);
+              }
+              if (parsed.targetUrl) {
+                router.push(parsed.targetUrl);
+              }
+            }}
+            className="font-semibold text-ds-accent cursor-pointer"
+          >
+            {parsed.boldTarget}
+          </span>
+        ) : (
+          <span className="font-semibold text-ds-text-primary">{parsed.boldTarget}</span>
+        )
       )}
       <span className="font-normal text-ds-text-primary">{parsed.bodyText}</span>
     </div>

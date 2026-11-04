@@ -596,7 +596,7 @@ export async function getRoleById(
   roleId: string
 ): Promise<TeamRole | null> {
   try {
-    const res = await api.get(`/organizations/${orgId}/teams/roles/${roleId}`);
+    const res = await api.get(`/organizations/${orgId}/teams/roles/${encodeURIComponent(roleId)}`);
     const role = mapRole(res.data);
 
     // If Admin role, merge Owner members into it transparently
