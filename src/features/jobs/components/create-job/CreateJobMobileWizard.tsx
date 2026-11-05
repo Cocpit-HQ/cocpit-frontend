@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Icon } from '@iconify/react';
-import { LeftArrowIcon, DownArrowIcon, LoadingIcon, CloseCrossIcon } from '@/components/icons';
+import { LeftArrowIcon, DownArrowIcon, LoadingIcon, CloseCrossIcon, CyphexAIIcon } from '@/components/icons';
 import { JobListing } from '../../types/jobs.types';
 import * as jobsService from '../../services/jobs.service';
 import { getOnboardingOptions } from '@/services/api/onboarding';
@@ -18,7 +18,9 @@ import { POPULAR_LOCATIONS } from '@/data/staticLocations';
 import { useDebounce } from '@/hooks/use-debounce';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { EditJobMobileScreen } from './EditJobMobileScreen';
+import { useJobStore } from '@/store/job.store';
 
 interface CreateJobMobileWizardProps {
   jobId?: string | null;
@@ -313,6 +315,8 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
         if (result.id) {
           activeId = result.id;
           setCurrentJobId(result.id);
+          // Sync generated draft ID to global store so parent delete/save operations have the active ID
+          useJobStore.getState().setCreateJobId(result.id);
         }
         createdJobData = result.job;
       }
@@ -433,8 +437,9 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
     }
   };
 
-  // Save Draft (Triggered by Save draft button when isDirty === true)
+  // Save Draft (Triggered by Save draft button when isDirty === true; guards against invalid salary ranges)
   const handleSaveDraftClick = async () => {
+    if (!isSalaryValid) return;
     setIsSavingDraft(true);
     try {
       const effectiveExp = experience || 'Junior (1-3 yrs)';
@@ -456,7 +461,7 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
       };
       await onSaveDraft(payload);
       setIsDirty(false);
-      toast.success('Draft saved successfully');
+
     } catch (err) {
       console.error('Failed to save draft:', err);
       toast.error('Failed to save draft');
@@ -465,8 +470,9 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
     }
   };
 
-  // Publish Job
+  // Publish Job (Guards against publishing when validation fails or required fields are incomplete)
   const handlePublishClick = async () => {
+    if (!isPublishEnabled) return;
     setIsPublishing(true);
     try {
       const effectiveExp = experience || 'Junior (1-3 yrs)';
@@ -495,9 +501,66 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
     }
   };
 
-  const displaySalary = minSalary || maxSalary
-    ? `₹${minSalary || '0'} - ₹${maxSalary || 'Negotiable'}`
-    : '$160k - $210k';
+  /**
+   * Formats salary values into clean compact abbreviations ('k', 'm', 'b').
+   * Strips formatting/commas (e.g. "20,000" -> "20k", "1,200,000" -> "1.2m").
+   */
+  const formatSalaryCompact = (val?: string): string => {
+    if (!val) return '0';
+    const cleanNum = Number(val.replace(/[^0-9.]/g, ''));
+    if (!cleanNum || isNaN(cleanNum) || cleanNum === 0) return '0';
+
+    if (cleanNum >= 1_000_000_000) {
+      return `${(cleanNum / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}b`;
+    }
+    if (cleanNum >= 1_000_000) {
+      return `${(cleanNum / 1_000_000).toFixed(1).replace(/\.0$/, '')}m`;
+    }
+    if (cleanNum >= 1_000) {
+      return `${(cleanNum / 1_000).toFixed(1).replace(/\.0$/, '')}k`;
+    }
+    return `${cleanNum}`;
+  };
+
+  /**
+   * Computed preview salary: defaults to "0 - 0" if neither is set, otherwise "${min} - ${max}".
+   */
+  const displaySalary = useMemo(() => {
+    const formattedMin = formatSalaryCompact(minSalary);
+    const formattedMax = formatSalaryCompact(maxSalary);
+    if (formattedMin === '0' && formattedMax === '0') {
+      return '0 - 0';
+    }
+    return `${formattedMin} - ${formattedMax}`;
+  }, [minSalary, maxSalary]);
+
+  // ==========================================
+  // FORM VALIDATION & REACTIVE LOCK LOGIC (Aligned with desktop StepJobDetails)
+  // Provides real-time inline errors and dynamically locks the Publish button.
+  // ==========================================
+  const parsedMinSalary = minSalary ? parseFloat(minSalary.toString().replace(/,/g, '')) : undefined;
+  const parsedMaxSalary = maxSalary ? parseFloat(maxSalary.toString().replace(/,/g, '')) : undefined;
+  const isSalaryRangeInvalid =
+    parsedMinSalary !== undefined &&
+    parsedMaxSalary !== undefined &&
+    parsedMaxSalary < parsedMinSalary;
+  const isSalaryValid = !isSalaryRangeInvalid;
+
+  // Description Validation: Error if entered but below 200 characters, or exceeds 10,000 characters
+  const isDescriptionError =
+    (description.trim().length > 0 && description.trim().length < 200) ||
+    description.length >= 10000;
+
+  // Publish Button Active State: Inactive/disabled when validation errors exist or requirements unmet
+  const isPublishEnabled =
+    role.trim().length >= 2 &&
+    description.trim().length >= 200 &&
+    description.length <= 10000 &&
+    location.trim().length > 0 &&
+    industry.trim().length > 0 &&
+    workType.trim().length > 0 &&
+    workMode.trim().length > 0 &&
+    isSalaryValid;
 
   // ==========================================
   // SCREENS 1 - 4: QUESTIONNAIRE
@@ -513,9 +576,9 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
         : 'w-[360px]';
 
     return (
-      <div className="w-full min-h-screen flex flex-col justify-between items-center relative py-6 px-4 font-dm-sans bg-ds-bg overflow-y-auto">
+      <div className="w-full min-h-screen flex flex-col items-center relative pt-4 pb-8 px-4 font-dm-sans bg-ds-bg overflow-y-auto">
         {/* Frame 2609713: Top Nav Bar (Left Arrow Back + Right Cancel X) */}
-        <div className="w-full max-w-[360px] flex flex-row justify-between items-center h-6 mb-8 shrink-0">
+        <div className="w-full max-w-[360px] flex flex-row justify-between items-center h-6 shrink-0">
           <button
             onClick={handleStepBack}
             type="button"
@@ -535,11 +598,13 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
           </button>
         </div>
 
-        {/* Center Questionnaire Container: Frame 2610015 (width: 360px) */}
-        <div className="w-full max-w-[360px] flex flex-col items-center gap-5 my-auto">
-          {/* Frame 33: Progress Bar (360px x 6px, bg-ds-surface-2 track, bg-ds-accent indicator) */}
-          <div className="w-[360px] h-[6px] bg-ds-surface-2 rounded-lg overflow-hidden relative shrink-0">
-            <div className={`h-full bg-ds-accent rounded-l-lg transition-all duration-300 ${progressWidth}`} />
+        {/* Frame 2610015: Outer Container (width: 392px, padding: 10px 16px, gap: 10px, 49px below Back) */}
+        <div className="w-full max-w-[392px] flex flex-col items-center px-4 py-2.5 gap-2.5 mt-[49px]">
+          {/* Container (Inner Container: width: 360px, padding: 20px 0px 40px, gap: 20px) */}
+          <div className="w-full max-w-[360px] flex flex-col items-center pt-5 pb-10 gap-5">
+            {/* Frame 33: Progress Bar (360px x 6px, bg-ds-surface-2 track, bg-ds-accent indicator) */}
+            <div className="w-[360px] h-[6px] bg-ds-surface-2 rounded-lg overflow-hidden relative shrink-0">
+              <div className={`h-full bg-ds-accent rounded-l-lg transition-all duration-300 ${progressWidth}`} />
           </div>
 
           {/* SCREEN 1: What level of experience are you looking for? */}
@@ -756,6 +821,7 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
               </button>
             </div>
           )}
+          </div>
         </div>
 
         <div className="h-6 shrink-0" />
@@ -799,6 +865,23 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
   // ==========================================
   return (
     <div className="w-full min-h-screen flex flex-col items-center relative py-6 px-4 font-dm-sans bg-ds-bg overflow-y-auto">
+      {/* Dynamic Keyframes for smooth clockwise Cyphex spin loader */}
+      <style jsx global>{`
+        @keyframes cyphex-spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          45% {
+            transform: rotate(200deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+        .animate-cyphex {
+          animation: cyphex-spin 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+      `}</style>
       {/* Top Nav Bar */}
       <div className="w-full max-w-[360px] flex flex-row justify-between items-center h-6 mb-4 shrink-0">
         <button
@@ -909,40 +992,77 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
           </div>
         </div>
 
-        {/* Frame 2608778: AI Description with Regenerate */}
-        <div className="w-full flex flex-col items-start gap-3">
-          <button
-            type="button"
-            onClick={handleRegenerateWithAi}
-            disabled={isAiGenerating}
-            className="inline-flex items-center gap-1.5 text-ds-accent text-base font-medium leading-6 font-dm-sans bg-transparent border-none p-0 cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <Icon icon="solar:magic-stick-bold" className="size-5 shrink-0" />
-            <span>{isAiGenerating ? 'Regenerating...' : 'Regenerate with AI'}</span>
-          </button>
-
-          {/* Description Content */}
-          <div className="w-full text-ds-text-primary text-sm font-normal leading-5 font-dm-sans whitespace-pre-line">
-            {description ? (
-              isDescriptionExpanded ? (
-                description
-              ) : (
-                description.slice(0, 320) + (description.length > 320 ? '...' : '')
-              )
-            ) : (
-              'We are looking for a talent to join our team and create intuitive, user-centered digital experiences.'
-            )}
-          </div>
-
-          {description && description.length > 320 && (
+        {/* Frame 2608778: AI Rewrite Header, Regenerate button, and Description Textarea with inline error handling (matching desktop StepJobDetails) */}
+        <div className="w-full flex flex-col items-start gap-2.5">
+          {/* Header row: Rewrite with AI label on left + Regenerate with AI button on right */}
+          <div className="w-full flex items-center justify-between">
+            <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
+              Rewrite with AI
+            </span>
             <button
               type="button"
-              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-              className="text-ds-accent text-sm font-normal leading-5 font-dm-sans bg-transparent border-none p-0 cursor-pointer hover:underline"
+              onClick={handleRegenerateWithAi}
+              disabled={isAiGenerating}
+              className="inline-flex items-center gap-1.5 text-ds-accent hover:opacity-85 active:scale-95 transition-all text-sm font-medium font-dm-sans leading-5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-transparent border-none p-0"
             >
-              {isDescriptionExpanded ? 'See less' : 'See more'}
+              <CyphexAIIcon
+                size={20}
+                className={`w-4 h-4 text-ds-accent shrink-0 ${isAiGenerating ? 'animate-cyphex' : ''}`}
+              />
+              <span>{isAiGenerating ? 'Generating...' : 'Regenerate with AI'}</span>
             </button>
-          )}
+          </div>
+
+          {/* Description Textarea with 200 character minimum validation, 10,000 character counter, and red inline error message (matching desktop) */}
+          <div
+            className={cn(
+              "w-full relative border-b transition-colors pb-3 flex flex-col gap-1.5",
+              isDescriptionError
+                ? "border-ds-error"
+                : "border-ds-border focus-within:border-ds-accent"
+            )}
+          >
+            <label className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
+              Job description
+            </label>
+            {isAiGenerating ? (
+              <div className="w-full min-h-[140px] flex flex-col gap-3 py-2">
+                <div className="h-4 bg-ds-surface-1/90 rounded w-3/4 animate-pulse" />
+                <div className="h-4 bg-ds-surface-1/80 rounded w-full animate-pulse" />
+                <div className="h-4 bg-ds-surface-1/70 rounded w-5/6 animate-pulse" />
+                <div className="h-4 bg-ds-surface-1/80 rounded w-2/3 animate-pulse" />
+              </div>
+            ) : (
+              <textarea
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setIsDirty(true);
+                }}
+                maxLength={10000}
+                placeholder="Write a job description, including the role overview, key responsibilities, required skills, and qualifications..."
+                rows={5}
+                className="w-full min-h-[140px] bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-relaxed outline-none resize-none"
+              />
+            )}
+            <div className="flex items-center justify-end w-full">
+              <span
+                className={cn(
+                  "text-[11px] font-medium font-dm-sans transition-colors",
+                  description.length >= 10000 ? "text-ds-error" : "text-ds-text-muted"
+                )}
+              >
+                {description.length}/10000
+              </span>
+            </div>
+            {isDescriptionError && (
+              <span className="text-ds-error text-xs font-dm-sans leading-4 mt-1">
+                {description.length >= 10000
+                  ? "Job description cannot exceed 10,000 characters"
+                  : "Job description must contain at least 200 characters"}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Frame 2609988: Additional Form Inputs */}
@@ -1039,49 +1159,70 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
             )}
           </div>
 
-          {/* Min Salary Input */}
-          <div className="w-full py-2 border-b border-ds-border flex flex-col justify-center items-start gap-1">
+          {/* Min Salary Input with Currency Symbol (matching desktop StepJobDetails) */}
+          <div className="w-full py-2 border-b border-ds-border focus-within:border-ds-accent transition-colors flex flex-col justify-center items-start gap-1">
             <label className="text-ds-text-secondary text-xs font-medium leading-4 font-dm-sans">
               Min salary (annual)
             </label>
-            <input
-              type="text"
-              value={minSalary}
-              onChange={(e) => {
-                setMinSalary(e.target.value);
-                setIsDirty(true);
-              }}
-              placeholder="e.g. 1,200,000"
-              className="w-full bg-transparent border-none p-0 text-ds-text-primary text-sm font-normal leading-5 placeholder:text-ds-text-muted focus:outline-none focus:ring-0 font-dm-sans"
-            />
+            <div className="flex items-center gap-1.5 w-full">
+              <span className="text-sm font-normal text-ds-text-muted font-dm-sans select-none">₹</span>
+              <input
+                type="text"
+                value={minSalary}
+                onChange={(e) => {
+                  setMinSalary(e.target.value.replace(/[^0-9,]/g, ''));
+                  setIsDirty(true);
+                }}
+                placeholder="1,200,000"
+                className="w-full bg-transparent border-none p-0 text-ds-text-primary text-sm font-normal leading-5 placeholder:text-ds-text-muted focus:outline-none focus:ring-0 font-dm-sans"
+              />
+            </div>
           </div>
 
-          {/* Max Salary Input */}
-          <div className="w-full py-2 border-b border-ds-border flex flex-col justify-center items-start gap-1">
+          {/* Max Salary Input with Range Validation and Inline Error (matching desktop StepJobDetails) */}
+          <div
+            className={cn(
+              "w-full py-2 border-b flex flex-col justify-center items-start gap-1 relative transition-colors",
+              isSalaryRangeInvalid ? "border-ds-error" : "border-ds-border focus-within:border-ds-accent"
+            )}
+          >
             <label className="text-ds-text-secondary text-xs font-medium leading-4 font-dm-sans">
               Max salary (annual)
             </label>
-            <input
-              type="text"
-              value={maxSalary}
-              onChange={(e) => {
-                setMaxSalary(e.target.value);
-                setIsDirty(true);
-              }}
-              placeholder="e.g. 1,200,000"
-              className="w-full bg-transparent border-none p-0 text-ds-text-primary text-sm font-normal leading-5 placeholder:text-ds-text-muted focus:outline-none focus:ring-0 font-dm-sans"
-            />
+            <div className="flex items-center gap-1.5 w-full">
+              <span className="text-sm font-normal text-ds-text-muted font-dm-sans select-none">₹</span>
+              <input
+                type="text"
+                value={maxSalary}
+                onChange={(e) => {
+                  setMaxSalary(e.target.value.replace(/[^0-9,]/g, ''));
+                  setIsDirty(true);
+                }}
+                placeholder="1,200,000"
+                className="w-full bg-transparent border-none p-0 text-ds-text-primary text-sm font-normal leading-5 placeholder:text-ds-text-muted focus:outline-none focus:ring-0 font-dm-sans"
+              />
+            </div>
+            {isSalaryRangeInvalid && (
+              <span className="text-ds-error text-xs font-dm-sans leading-4 mt-1">
+                Maximum salary must be greater than or equal to minimum salary
+              </span>
+            )}
           </div>
         </div>
 
         {/* Frame 2609956: Bottom Action Buttons (width: 360px, height: 48px, gap: 8px) */}
         <div className="w-full max-w-[360px] h-12 flex flex-row justify-end items-center gap-2 pt-2 shrink-0">
-          {/* Primary emphasis button (Publish: 115px x 36px, bg: ds-accent / bg-ds-accent) */}
+          {/* Primary emphasis button: Publish is locked/inactive when validation fails, active when all requirements met */}
           <button
             type="button"
             onClick={handlePublishClick}
-            disabled={isPublishing}
-            className="w-[115px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary rounded-full flex items-center justify-center font-dm-sans font-medium text-base leading-6 whitespace-nowrap shrink-0 transition-all shadow-sm cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+            disabled={!isPublishEnabled || isPublishing}
+            className={cn(
+              "w-[115px] h-9 px-3 py-1.5 rounded-full flex items-center justify-center font-dm-sans font-medium text-base leading-6 whitespace-nowrap shrink-0 transition-all border-none outline-none",
+              isPublishEnabled && !isPublishing
+                ? "bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary shadow-sm cursor-pointer focus-visible:ring-2 focus-visible:ring-ds-accent"
+                : "bg-ds-surface-1 text-ds-text-muted cursor-not-allowed opacity-50"
+            )}
           >
             {isPublishing ? (
               <Icon icon="lucide:loader-2" className="size-4 animate-spin" />

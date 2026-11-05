@@ -46,7 +46,13 @@ const LoginForm = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
-    const lastResend = localStorage.getItem("lastResendRecovery");
+    // Safe localStorage access wrapped in try/catch to prevent QuotaExceededError crashes in older Safari Private Browsing
+    let lastResend: string | null = null;
+    try {
+      lastResend = localStorage.getItem("lastResendRecovery");
+    } catch {
+      // Ignored in Safari private browsing mode
+    }
     if (lastResend) {
       const elapsed = Math.floor((Date.now() - parseInt(lastResend)) / 1000);
       if (elapsed < 300) {
@@ -138,7 +144,12 @@ const LoginForm = () => {
   const handlePostLoginRedirect = async () => {
     showToast.success("Logged in successfully");
     if (typeof window !== "undefined") {
-      sessionStorage.setItem("cocpit_active_onboarding_session", "true");
+      // Safe sessionStorage access wrapped in try/catch for older Safari Private Browsing
+      try {
+        sessionStorage.setItem("cocpit_active_onboarding_session", "true");
+      } catch {
+        // Ignored in Safari private browsing mode
+      }
     }
     const session = await getSession();
 
@@ -188,7 +199,14 @@ const LoginForm = () => {
     e.preventDefault();
     if (isLoading || isGoogleLoading || isAppleLoading) return;
 
-    if (!email.trim() || !validateEmailFormat(email) || !password) {
+    // Retrieve credentials from state or DOM element fallbacks for older iOS Safari where Keychain AutoFill does not trigger synthetic onChange events
+    const form = e.currentTarget as HTMLFormElement;
+    const emailEl = (form?.elements?.namedItem("email") as HTMLInputElement) || (typeof document !== "undefined" ? document.getElementById("email") as HTMLInputElement : null);
+    const passwordEl = (form?.elements?.namedItem("password") as HTMLInputElement) || (typeof document !== "undefined" ? document.getElementById("password") as HTMLInputElement : null);
+    const activeEmail = (email || emailEl?.value || "").trim();
+    const activePassword = password || passwordEl?.value || "";
+
+    if (!activeEmail || !validateEmailFormat(activeEmail) || !activePassword) {
       setAuthError("Incorrect email or password. Try again");
       return;
     }
@@ -198,8 +216,8 @@ const LoginForm = () => {
     setAuthError(null);
     try {
       const result = await signIn("credentials", {
-        email,
-        password,
+        email: activeEmail,
+        password: activePassword,
         redirect: false,
       });
 
@@ -450,7 +468,13 @@ const LoginForm = () => {
           <div className={`w-full py-2 sm:py-2.5 border-b border-ds-border inline-flex justify-start items-center gap-1 focus-within:border-ds-accent transition-colors ${authError ? "!border-ds-error" : ""}`}>
             <input
               id="email"
+              name="email"
               type="email"
+              // onInput fallback ensures React state updates when older iOS Safari autofills credentials
+              onInput={(e) => {
+                const val = (e.target as HTMLInputElement).value;
+                if (val !== email) setEmail(val);
+              }}
               autoComplete="username"
               placeholder="Enter your email"
               value={email}
@@ -472,7 +496,13 @@ const LoginForm = () => {
           <div className={`w-full h-9 py-2 sm:py-2.5 border-b border-ds-border inline-flex justify-between items-center focus-within:border-ds-accent transition-colors ${authError ? "!border-ds-error" : ""}`}>
             <input
               id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
+              // onInput fallback ensures React state updates when older iOS Safari autofills credentials
+              onInput={(e) => {
+                const val = (e.target as HTMLInputElement).value;
+                if (val !== password) setPassword(val);
+              }}
               autoComplete="current-password"
               placeholder="Enter your password"
               value={password}

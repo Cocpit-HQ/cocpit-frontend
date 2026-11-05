@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { maskEmail } from '@/lib/utils';
 import {
-  useVerifyCurrentEmailInit,
-  useVerifyCurrentEmailConfirm,
   useSubmitNewEmail,
   useSubmitRecoveryEmail,
   useVerifyEmail,
@@ -41,13 +39,11 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
   const isDelete = mode === 'delete';
 
   const [mounted, setMounted] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [newEmail, setNewEmail] = useState('');
-  const [currentEmailCode, setCurrentEmailCode] = useState('');
   const [newEmailCode, setNewEmailCode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [countdown, setCountdown] = useState(30);
-  const hasInitPrimaryRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -55,37 +51,25 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
 
   const queryClient = useQueryClient();
 
-  const verifyCurrentEmailInit = useVerifyCurrentEmailInit();
-  const verifyCurrentEmailConfirm = useVerifyCurrentEmailConfirm();
   const submitNewEmail = useSubmitNewEmail();
   const submitRecoveryEmail = useSubmitRecoveryEmail();
   const verifyEmailMutation = useVerifyEmail();
   const verifyRecoveryEmailMutation = useVerifyRecoveryEmail();
 
+  // Single efficient interval timer for OTP countdown
   useEffect(() => {
-    if (isOpen && isPrimary && !hasInitPrimaryRef.current && step === 1) {
-      hasInitPrimaryRef.current = true;
-      verifyCurrentEmailInit.mutate(undefined, {
-        onError: (err: any) => {
-          setErrorMsg(getErrorMessage(err, 'Failed to send verification code to current email'));
-        }
-      });
-    }
-  }, [isOpen, isPrimary, step, verifyCurrentEmailInit]);
+    if (step !== 2 || countdown <= 0) return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [step, countdown]);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdown > 0 && ((isPrimary && (step === 1 || step === 3)) || (isRecovery && step === 2))) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [countdown, step, isPrimary, isRecovery]);
-
-  useEffect(() => {
-    if ((isPrimary && (step === 1 || step === 3)) || (isRecovery && step === 2)) {
+    if (step === 2) {
       setCountdown(30);
     }
-  }, [step, isPrimary, isRecovery]);
+  }, [step]);
 
   if (!isOpen || !mounted) return null;
 
@@ -97,47 +81,48 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
 
     setErrorMsg('');
 
-    if (isPrimary) {
-      if (step === 1) {
-        if (verifyCurrentEmailConfirm.isSuccess) {
-          setStep(2);
-          return;
-        }
-        if (currentEmailCode.length !== 6) {
-          return setErrorMsg('Please enter a 6-digit code');
-        }
-        verifyCurrentEmailConfirm.mutate(
-          { otp: currentEmailCode },
-          {
-            onSuccess: () => {
-              toast.success('Code verified');
-              setStep(2);
-            },
-            onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Invalid code'))
-          }
-        );
-      } else if (step === 2) {
-        if (!newEmail || !validateEmail(newEmail)) return setErrorMsg('Please enter a valid email address.');
+    if (step === 1) {
+      if (!newEmail || !validateEmail(newEmail)) return setErrorMsg('Please enter a valid email address.');
+      if (newEmail.trim().toLowerCase() === currentEmail.trim().toLowerCase()) {
+        return setErrorMsg(isPrimary ? 'New email must be different from current email.' : 'Recovery email cannot match primary email.');
+      }
+      if (isPrimary) {
         submitNewEmail.mutate(
           { newEmail },
           {
-            onSuccess: () => setStep(3),
+            onSuccess: () => setStep(2),
             onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to submit new email'))
           }
         );
-      } else if (step === 3) {
-        if (verifyEmailMutation.isSuccess) {
-          queryClient.invalidateQueries({ queryKey: ['userAccount'] });
-          if (isCompany) {
-            queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
+      } else if (isRecovery) {
+        submitRecoveryEmail.mutate(
+          { recoveryEmail: newEmail },
+          {
+            onSuccess: () => setStep(2),
+            onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to submit recovery email'))
           }
-          toast.success('Email updated successfully');
-          handleClose();
-          return;
+        );
+      }
+    } else if (step === 2) {
+      if (isPrimary && verifyEmailMutation.isSuccess) {
+        queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+        if (isCompany) {
+          queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
         }
-        if (newEmailCode.length !== 6) {
-          return setErrorMsg('Please enter a 6-digit code');
-        }
+        toast.success('Email updated successfully');
+        handleClose();
+        return;
+      }
+      if (isRecovery && verifyRecoveryEmailMutation.isSuccess) {
+        queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+        toast.success('Recovery email updated successfully');
+        handleClose();
+        return;
+      }
+      if (newEmailCode.length !== 6) {
+        return setErrorMsg('Please enter a 6-digit code');
+      }
+      if (isPrimary) {
         verifyEmailMutation.mutate(
           { otp: newEmailCode },
           {
@@ -152,28 +137,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
             onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify new email'))
           }
         );
-      }
-    } else if (isRecovery) {
-      if (step === 1) {
-        if (!newEmail || !validateEmail(newEmail)) return setErrorMsg('Please enter a valid email address.');
-        if (newEmail.trim().toLowerCase() === currentEmail.trim().toLowerCase()) return setErrorMsg('Recovery email cannot match primary email.');
-        submitRecoveryEmail.mutate(
-          { recoveryEmail: newEmail },
-          {
-            onSuccess: () => setStep(2),
-            onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to submit recovery email'))
-          }
-        );
-      } else if (step === 2) {
-        if (verifyRecoveryEmailMutation.isSuccess) {
-          queryClient.invalidateQueries({ queryKey: ['userAccount'] });
-          toast.success('Recovery email updated successfully');
-          handleClose();
-          return;
-        }
-        if (newEmailCode.length !== 6) {
-          return setErrorMsg('Please enter a 6-digit code');
-        }
+      } else if (isRecovery) {
         verifyRecoveryEmailMutation.mutate(
           { otp: newEmailCode },
           {
@@ -193,18 +157,22 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
     if (countdown > 0) return;
     setCountdown(30);
     setErrorMsg('');
-    if (isPrimary && step === 1) {
-      verifyCurrentEmailInit.mutate(undefined, {
-        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to resend code'))
-      });
-    } else if (isPrimary && step === 3) {
-      submitNewEmail.mutate({ newEmail }, {
-        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to resend code'))
-      });
-    } else if (isRecovery && step === 2) {
-      submitRecoveryEmail.mutate({ recoveryEmail: newEmail }, {
-        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to resend code'))
-      });
+    if (isPrimary) {
+      submitNewEmail.mutate(
+        { newEmail },
+        {
+          onSuccess: () => toast.success('Verification code resent'),
+          onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to resend code'))
+        }
+      );
+    } else if (isRecovery) {
+      submitRecoveryEmail.mutate(
+        { recoveryEmail: newEmail },
+        {
+          onSuccess: () => toast.success('Verification code resent'),
+          onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to resend code'))
+        }
+      );
     }
   };
 
@@ -212,47 +180,45 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
     onClose();
     setTimeout(() => {
       setStep(1);
-      setCurrentEmailCode('');
       setNewEmailCode('');
       setNewEmail('');
-      hasInitPrimaryRef.current = false;
       setErrorMsg('');
-      verifyCurrentEmailConfirm.reset();
       verifyEmailMutation.reset();
       verifyRecoveryEmailMutation.reset();
+      submitNewEmail.reset();
+      submitRecoveryEmail.reset();
     }, 300);
   };
 
   const getTitle = () => {
     if (isDelete) return 'Remove Recovery Email?';
-    if (isRecovery && step === 1) return 'Recovery email';
-    return 'Verify email';
+    if (isRecovery) return 'Recovery email';
+    return 'Change email';
   };
 
   const getSubtitle = () => {
     if (isDelete) return 'Removing your recovery email may make account recovery more difficult.';
-    if (isPrimary) {
-      if (step === 1) return `A 6-digit verification code has been sent to ${maskEmail(currentEmail)}`;
-      if (step === 2) return "Enter a valid email address. You'll need to verify it before the change is applied";
-      if (step === 3) return `A 6-digit verification code has been sent to ${maskEmail(newEmail)}`;
+    if (step === 1) {
+      if (isPrimary) return "Enter a valid email address. You'll need to verify it before the change is applied";
+      if (isRecovery) return "Enter a valid email address. You'll need to verify it before adding";
     }
-    if (isRecovery) {
-      if (step === 1) return "Enter a valid email address. You'll need to verify it before adding";
-      if (step === 2) return `A 6-digit verification code has been sent to ${maskEmail(newEmail)}`;
+    if (step === 2) {
+      return `A 6-digit verification code has been sent to ${maskEmail(newEmail)}`;
     }
     return '';
   };
 
   const getButtonText = () => {
     if (isDelete) return 'Remove';
-    if (isPrimary) {
-      if (step === 1 && verifyCurrentEmailConfirm.isPending) return 'Verifying...';
-      if (step === 2 && submitNewEmail.isPending) return 'Sending...';
-      if (step === 3 && verifyEmailMutation.isPending) return 'Verifying...';
+    if (step === 1) {
+      if (isPrimary && submitNewEmail.isPending) return 'Sending...';
+      if (isRecovery && submitRecoveryEmail.isPending) return 'Sending...';
+      return 'Continue';
     }
-    if (isRecovery) {
-      if (step === 1 && submitRecoveryEmail.isPending) return 'Sending...';
-      if (step === 2 && verifyRecoveryEmailMutation.isPending) return 'Verifying...';
+    if (step === 2) {
+      if (isPrimary && verifyEmailMutation.isPending) return 'Verifying...';
+      if (isRecovery && verifyRecoveryEmailMutation.isPending) return 'Verifying...';
+      return 'Continue';
     }
     return 'Continue';
   };
@@ -260,14 +226,18 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
   const isNewEmailSuccess = (isPrimary && verifyEmailMutation.isSuccess) || (isRecovery && verifyRecoveryEmailMutation.isSuccess);
 
   const getIsDisabled = () => {
-    if (isPrimary) {
-      if (step === 1) return currentEmailCode.length !== 6 || verifyCurrentEmailConfirm.isPending;
-      if (step === 2) return !newEmail || !validateEmail(newEmail) || submitNewEmail.isPending;
-      if (step === 3) return newEmailCode.length !== 6 || verifyEmailMutation.isPending;
+    if (step === 1) {
+      if (!newEmail || !validateEmail(newEmail)) return true;
+      if (newEmail.trim().toLowerCase() === currentEmail.trim().toLowerCase()) return true;
+      if (isPrimary && submitNewEmail.isPending) return true;
+      if (isRecovery && submitRecoveryEmail.isPending) return true;
+      return false;
     }
-    if (isRecovery) {
-      if (step === 1) return !newEmail || !validateEmail(newEmail) || (newEmail.trim().toLowerCase() === currentEmail.trim().toLowerCase()) || submitRecoveryEmail.isPending;
-      if (step === 2) return newEmailCode.length !== 6 || verifyRecoveryEmailMutation.isPending;
+    if (step === 2) {
+      if (!isNewEmailSuccess) return true;
+      if (isPrimary && verifyEmailMutation.isPending) return true;
+      if (isRecovery && verifyRecoveryEmailMutation.isPending) return true;
+      return false;
     }
     return false;
   };
@@ -275,69 +245,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
   const renderContent = () => {
     if (isDelete) return null;
 
-    if (isPrimary && step === 1) {
-      return (
-        <div className="self-stretch py-2 flex flex-col justify-start items-start gap-2">
-          <div className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
-            Enter code
-          </div>
-          <div className="self-stretch flex flex-col justify-start items-start gap-2">
-            <div className="self-stretch pb-1 border-b border-ds-border flex justify-between items-center gap-2">
-              <input
-                type="text"
-                maxLength={6}
-                autoFocus
-                disabled={verifyCurrentEmailConfirm.isPending || (verifyCurrentEmailConfirm.isSuccess && !errorMsg)}
-                value={currentEmailCode}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, '');
-                  setCurrentEmailCode(val);
-                  setErrorMsg('');
-                  if (val.length === 6) {
-                    verifyCurrentEmailConfirm.mutate(
-                      { otp: val },
-                      {
-                        onSuccess: () => {
-                          toast.success('Code verified');
-                        },
-                        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Invalid code'))
-                      }
-                    );
-                  }
-                }}
-                placeholder="000000"
-                className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0 tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
-              />
-              {verifyCurrentEmailConfirm.isSuccess && !errorMsg && (
-                <CheckCircle2 className="w-4 h-4 text-ds-success shrink-0" />
-              )}
-            </div>
-            {errorMsg && (
-              <div className="self-stretch text-ds-error text-xs font-normal font-['DM_Sans'] leading-4">
-                {errorMsg}
-              </div>
-            )}
-            {/* Resend — use invisible instead of unmounting to prevent layout shift */}
-            <div className={`self-stretch flex justify-start items-center ${verifyCurrentEmailConfirm.isSuccess ? 'invisible' : ''}`}>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={countdown > 0 || verifyCurrentEmailConfirm.isSuccess}
-                className={`text-xs font-normal font-['DM_Sans'] leading-4 p-0 bg-transparent border-none ${
-                  countdown > 0 || verifyCurrentEmailConfirm.isSuccess
-                    ? 'text-ds-text-muted cursor-default'
-                    : 'text-ds-accent hover:opacity-80 transition-opacity no-underline hover:no-underline cursor-pointer'
-                }`}
-              >
-                {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if ((isPrimary && step === 2) || (isRecovery && step === 1)) {
+    if (step === 1) {
       return (
         <div className="self-stretch py-2 flex flex-col justify-start items-start gap-2">
           <div className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
@@ -372,7 +280,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
       );
     }
 
-    if ((isPrimary && step === 3) || (isRecovery && step === 2)) {
+    if (step === 2) {
       return (
         <div className="self-stretch py-2 flex flex-col justify-start items-start gap-2">
           <div className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
@@ -391,7 +299,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                   setNewEmailCode(val);
                   setErrorMsg('');
                   if (val.length === 6) {
-                    if (isPrimary && step === 3) {
+                    if (isPrimary) {
                       verifyEmailMutation.mutate(
                         { otp: val },
                         {
@@ -401,7 +309,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                           onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify new email'))
                         }
                       );
-                    } else if (isRecovery && step === 2) {
+                    } else if (isRecovery) {
                       verifyRecoveryEmailMutation.mutate(
                         { otp: val },
                         {

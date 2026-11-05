@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/businessProfile';
 import { useToast } from '@/hooks/use-toast';
+import { useBodyScrollLock } from '@/hooks';
 import { CyphexAIIcon, PdfFileIcon, EyeIcon, UserIcon, LeftArrowIcon, BriefcaseIcon, Icon as CustomIcon } from '@/components/icons';
 import { ApplicantsMobileDrawer } from '../drawers/ApplicantsMobileDrawer';
 import Avatar from '@/components/shared/Avatar';
@@ -179,6 +180,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     }
   };
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  useBodyScrollLock(isNoteModalOpen);
   const [noteText, setNoteText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
@@ -1126,7 +1128,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
       {/* Modal: Add a note (Figma Design) */}
       {isNoteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 px-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 px-4 touch-none">
           <div className="w-[300px] p-3 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center gap-3 relative shadow-2xl animate-in zoom-in-95 duration-200">
             {/* Frame 2609536: Cancel / Close Button */}
             <div className="w-full h-5 flex flex-row justify-end items-center">

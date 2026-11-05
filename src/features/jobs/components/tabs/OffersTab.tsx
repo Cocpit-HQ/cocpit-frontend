@@ -8,6 +8,7 @@ import { Icon } from '@iconify/react';
 import { OfferIcon, UserIcon, Icon as CustomIcon } from '@/components/icons';
 import { CocpitConfirmBox } from '@/shared/commonComponents/CocpitConfirmBox';
 import { toast } from 'sonner';
+import { useBodyScrollLock } from '@/hooks';
 
 interface OffersTabProps {
   offers: JobOffer[];
@@ -47,6 +48,7 @@ export const OffersTab: React.FC<OffersTabProps> = ({
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<'All' | 'Current' | 'Decline' | 'Expired'>('All');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  useBodyScrollLock(mobileFilterOpen);
   const [tempFilter, setTempFilter] = useState<'All' | 'Current' | 'Decline' | 'Expired'>('All');
 
   // Confirmation modal states for mobile
@@ -350,7 +352,7 @@ export const OffersTab: React.FC<OffersTabProps> = ({
       {/* ============================================================ */}
       {mobileFilterOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 md:hidden"
+          className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 md:hidden touch-none"
           onClick={() => setMobileFilterOpen(false)}
         >
           <div

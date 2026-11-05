@@ -384,7 +384,8 @@ export const authOptions: NextAuthOptions = {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        // Use 'lax' instead of 'none' to fix WebKit Bug 188165 where older Safari misinterprets 'None' as 'Strict' and drops CSRF cookies on POST requests
+        sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
         // Explicit maxAge makes this a persistent cookie (survives browser restarts).

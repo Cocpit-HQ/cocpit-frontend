@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { useBodyScrollLock } from '@/hooks';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import {
   UploadIcon,
@@ -30,6 +31,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   onClose,
   onApply,
 }) => {
+  useBodyScrollLock(isOpen);
   const [step, setStep] = useState<1 | 2>(1);
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -231,7 +231,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   const effectiveTab = urlTab || activeTab;
   if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView) {
     return (
-      <div className={`w-full min-h-screen bg-ds-bg flex flex-col items-center ${isFullScreenView ? 'pt-0 pb-0 px-0' : 'pt-14 sm:pt-[60px] pb-16 px-4 sm:px-6 md:px-0'} relative select-text`}>
+      <div className={`w-full min-h-screen bg-ds-bg flex flex-col items-center ${isFullScreenView ? 'pt-0 pb-0 px-0' : 'pt-4 sm:pt-[60px] pb-16 px-4 sm:px-6 md:px-0'} relative select-text`}>
         <MyListingsDashboard
           isCompanyMode={isCompanyMode}
           onBack={() => {

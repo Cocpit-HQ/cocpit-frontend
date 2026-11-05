@@ -5,6 +5,7 @@ import { useInView } from '@/hooks/use-in-view';
 import { Icon } from '@iconify/react';
 import { MenuIcon, DeleteIcon, BriefcaseIcon } from '@/components/icons';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
+import { useBodyScrollLock } from '@/hooks';
 
 interface ListingsTabProps {
   listings: JobListing[];
@@ -74,6 +75,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
   const [activeMenuJobId, setActiveMenuJobId] = useState<string | null>(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [mobileMenuJob, setMobileMenuJob] = useState<JobListing | null>(null);
+  useBodyScrollLock(isFilterDrawerOpen || Boolean(mobileMenuJob));
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { ref: loadMoreRef, inView } = useInView({
@@ -487,7 +489,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
 
       {/* Mobile Filter Bottom Sheet Drawer: Exact Figma (393px x 232px, bg var(--ds-bg), r: 8px 8px 0 0) */}
       {isFilterDrawerOpen && (
-        <div className="fixed inset-0 z-[100] md:hidden">
+        <div className="fixed inset-0 z-[100] md:hidden touch-none">
           {/* Overlay backdrop */}
           <div
             onClick={() => setIsFilterDrawerOpen(false)}
@@ -540,7 +542,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
 
       {/* Mobile 3-Dot More Actions Drawer: Exact Figma (393px x 160px, bg var(--ds-bg), r: 8px 8px 0 0) */}
       {mobileMenuJob && (
-        <div className="fixed inset-0 z-[100] md:hidden">
+        <div className="fixed inset-0 z-[100] md:hidden touch-none">
           {/* Overlay backdrop */}
           <div
             onClick={() => setMobileMenuJob(null)}

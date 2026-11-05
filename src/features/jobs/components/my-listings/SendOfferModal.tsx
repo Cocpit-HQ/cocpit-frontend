@@ -8,6 +8,7 @@ import api from '@/lib/axios';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useBodyScrollLock } from '@/hooks';
 
 export interface SelectableCandidate {
   id: string;
@@ -66,19 +67,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   const currentUserId = (session?.user as any)?.user_id || (session?.user as any)?.id;
 
   // Lock body scroll when modal is open to prevent background scrolling
-  useEffect(() => {
-    if (!isOpen) return;
-    const originalOverflow = document.body.style.overflow;
-    const originalTouchAction = document.body.style.touchAction;
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      document.body.style.touchAction = originalTouchAction;
-    };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     let isMounted = true;

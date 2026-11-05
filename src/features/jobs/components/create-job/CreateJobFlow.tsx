@@ -208,7 +208,8 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
             onClose={handleBack}
             onSaveDraft={handleSaveDraft}
             onPublish={handlePublish}
-            onDeleteDraft={jobId || initialListing?.id ? () => setShowDeleteConfirm(true) : undefined}
+            // Always trigger confirmation modal so user is never silently exited (fixes Safari fresh-session issue)
+            onDeleteDraft={() => setShowDeleteConfirm(true)}
           />
           <ActionConfirmModal
             isOpen={showDeleteConfirm}
@@ -243,7 +244,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
           onClose={handleBack}
           onSaveDraft={handleSaveDraft}
           onPublish={handlePublish}
-          onDeleteDraft={jobId || initialListing?.id ? () => setShowDeleteConfirm(true) : undefined}
+          onDeleteDraft={() => setShowDeleteConfirm(true)}
         />
         <ActionConfirmModal
           isOpen={showDeleteConfirm}

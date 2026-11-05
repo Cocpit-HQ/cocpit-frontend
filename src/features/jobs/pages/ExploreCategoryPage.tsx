@@ -169,29 +169,51 @@ export const ExploreCategoryPage: React.FC<ExploreCategoryPageProps> = ({ catego
 
   return (
     <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans relative selection:bg-ds-accent/30 selection:text-ds-text-primary">
-      {/* Fixed Top-Left Back Button (matching JobDetailPage and post detail page) */}
+      {/* Desktop Fixed Top-Left Back Button (matching JobDetailPage and post detail page) */}
       <button
         onClick={handleBack}
         type="button"
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 z-50 inline-flex items-center gap-2 text-ds-text-primary hover:text-ds-text-secondary text-base font-medium font-dm-sans leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="hidden sm:inline-flex fixed top-[40px] left-[40px] z-50 items-center gap-2 p-0 text-ds-text-primary hover:text-ds-text-secondary text-base font-medium font-dm-sans leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
         <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
         <span>Back</span>
       </button>
 
-      {/* Fixed Top-Right Close Button */}
+      {/* Desktop Fixed Top-Right Close Button */}
       <button
         onClick={handleClose}
         type="button"
         aria-label="Close"
-        className="fixed top-6 right-4 sm:top-10 sm:right-10 z-50 flex items-center justify-center w-5 h-5 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="hidden sm:flex fixed top-[40px] right-[40px] z-50 items-center justify-center w-5 h-5 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
         <X className="w-5 h-5" />
       </button>
 
-      {/* Main 800px Centered Column (matching other detail pages top-[60px]) */}
-      <main className="w-full max-w-[800px] mx-auto pt-16 sm:pt-[60px] pb-28 px-4 sm:px-0 flex flex-col gap-8 animate-in fade-in duration-300">
+      {/* Mobile Top Navigation (In-flow so it scrolls up with page and never overlaps cards) */}
+      <div className="sm:hidden w-full px-4 pt-4 pb-2 flex items-center justify-between z-30">
+        <button
+          onClick={handleBack}
+          type="button"
+          aria-label="Back"
+          className="inline-flex items-center gap-2 p-0 text-ds-text-primary text-base font-medium font-dm-sans leading-6 cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        >
+          <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
+          <span>Back</span>
+        </button>
+
+        <button
+          onClick={handleClose}
+          type="button"
+          aria-label="Close"
+          className="flex items-center justify-center size-8 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Main 800px Centered Column (matching JobDetailPage top-[60px] desktop, pt-2 mobile) */}
+      <main className="w-full max-w-[800px] mx-auto pt-2 sm:pt-[60px] pb-28 px-4 sm:px-0 flex flex-col gap-6 sm:gap-8 animate-in fade-in duration-300">
         {/* Category Header */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">

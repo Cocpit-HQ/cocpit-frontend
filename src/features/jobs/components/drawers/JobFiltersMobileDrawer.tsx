@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { Icon } from "@iconify/react";
+import { useBodyScrollLock } from "@/hooks";
 import { JobsFilter } from "../../types/jobs.types";
 
 export interface JobFiltersMobileDrawerProps {
@@ -41,6 +42,8 @@ export const JobFiltersMobileDrawer: React.FC<JobFiltersMobileDrawerProps> = ({
   setCustomMaxSalary,
   mobileCategoryOptions,
 }) => {
+  useBodyScrollLock(isOpen);
+
   const selectedFilterCount = useMemo(() => {
     let count = 0;
     Object.values(localFilters).forEach((val) => {
@@ -64,7 +67,7 @@ export const JobFiltersMobileDrawer: React.FC<JobFiltersMobileDrawerProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 md:hidden"
+      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 md:hidden touch-none"
       onClick={onClose}
     >
       <div

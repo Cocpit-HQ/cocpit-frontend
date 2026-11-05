@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
+import { useBodyScrollLock } from "@/hooks";
 
 export interface MyApplicationsMobileDrawerProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export const MyApplicationsMobileDrawer: React.FC<MyApplicationsMobileDrawerProp
   setSelectedDate,
 }) => {
   const [tempStatus, setTempStatus] = useState<string>(selectedStatus);
+  useBodyScrollLock(isOpen);
   const [tempDate, setTempDate] = useState<string>(selectedDate);
   const [openSection, setOpenSection] = useState<"status" | "date" | null>("status");
 
@@ -52,7 +54,7 @@ export const MyApplicationsMobileDrawer: React.FC<MyApplicationsMobileDrawerProp
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 md:hidden"
+      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 md:hidden touch-none"
       onClick={onClose}
     >
       <div

@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useBodyScrollLock } from "@/hooks";
 
 export interface JobOptionDrawerProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const JobOptionDrawer: React.FC<JobOptionDrawerProps> = ({
   heightClass,
   ariaLabel = "Select option",
 }) => {
+  useBodyScrollLock(isOpen);
+
   // Close on Escape key
   useEffect(() => {
     if (!isOpen) return;
@@ -42,7 +45,7 @@ export const JobOptionDrawer: React.FC<JobOptionDrawerProps> = ({
       aria-modal="true"
       aria-label={ariaLabel}
       data-job-drawer="true"
-      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 sm:hidden"
+      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 sm:hidden touch-none"
       onClick={onClose}
     >
       <div

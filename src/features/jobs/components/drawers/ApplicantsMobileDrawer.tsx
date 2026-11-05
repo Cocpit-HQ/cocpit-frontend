@@ -1,4 +1,5 @@
 import React from "react";
+import { useBodyScrollLock } from "@/hooks";
 
 export interface ApplicantsMobileDrawerProps {
   isOpen: boolean;
@@ -21,11 +22,13 @@ export const ApplicantsMobileDrawer: React.FC<ApplicantsMobileDrawerProps> = ({
   selectedFilter,
   setSelectedFilter,
 }) => {
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end bg-ds-bg/60 backdrop-blur-xs animate-in fade-in duration-200 md:hidden"
+      className="fixed inset-0 z-50 flex flex-col justify-end bg-ds-bg/60 backdrop-blur-xs animate-in fade-in duration-200 md:hidden touch-none"
       onClick={onClose}
     >
       <div
