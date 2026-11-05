@@ -229,12 +229,16 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   ];
 
   const effectiveTab = urlTab || activeTab;
-  if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView) {
+  if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView || urlView === 'offer-details') {
     return (
       <div className={`w-full min-h-screen bg-ds-bg flex flex-col items-center ${isFullScreenView ? 'pt-0 pb-0 px-0' : 'pt-4 sm:pt-[60px] pb-16 px-4 sm:px-6 md:px-0'} relative select-text`}>
         <MyListingsDashboard
           isCompanyMode={isCompanyMode}
           onBack={() => {
+            if (typeof window !== 'undefined' && window.history.length > 1) {
+              router.back();
+              return;
+            }
             if (isCompanyMode) {
               router.push("/feed");
             } else {

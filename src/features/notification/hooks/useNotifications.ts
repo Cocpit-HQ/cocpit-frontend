@@ -103,14 +103,18 @@ export const useNotifications = () => {
           newNotif.type === 'job_rejected' ||
           newNotif.type === 'team_invite_declined' ||
           newNotif.type === 'team_invite_accepted' ||
-          newNotif.type === 'company_ownership_transferred';
+          newNotif.type === 'company_ownership_transferred' ||
+          newNotif.type === 'offer_accepted' ||
+          newNotif.type === 'job_offer_accepted' ||
+          newNotif.type === 'offer_declined' ||
+          newNotif.type === 'job_offer_declined';
 
         if (newNotif.recipient_company_id) {
-          if (!isOrgLifecycleNotif && (!isCompany || activeProfile?.id !== newNotif.recipient_company_id)) {
+          if (!isCompany || activeProfile?.id !== newNotif.recipient_company_id) {
             return prev;
           }
         } else {
-          if (isCompany && !isOrgLifecycleNotif) return prev;
+          if (isCompany) return prev;
         }
 
         const updated = [normalized, ...prev];

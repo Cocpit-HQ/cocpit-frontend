@@ -495,6 +495,21 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       const activeMentions = (inlineMentionsParam && inlineMentionsParam.length > 0) ? inlineMentionsParam : inlineMentions;
       finalContent = formatMentionsForBackend(finalContent, activeMentions);
 
+      // Extract mentioned user and organization IDs so tag synchronization is triggered
+      if (!activeTagUserIds || activeTagUserIds.length === 0) {
+        if (activeMentions && activeMentions.length > 0) {
+          activeTagUserIds = activeMentions
+            .map(m => m.org_id || m.id)
+            .filter(id => id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+        }
+      }
+      if (!activeTagUserIds || activeTagUserIds.length === 0) {
+        const contentMentionMatches = Array.from(finalContent.matchAll(/@\[[^\]]+\]\((?:(?:user|org|company):)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)/gi));
+        if (contentMentionMatches.length > 0) {
+          activeTagUserIds = Array.from(new Set(contentMentionMatches.map(m => m[1])));
+        }
+      }
+
       let actualInlineFiles: File[] = [];
       if (postType === 'article' || articleData) {
         const blobUrls = Array.from(finalContent.matchAll(/src="(blob:[^"]+)"/g)).map(m => m[1]);

@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { JobOffer } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
 import { useJobStore } from '@/store/job.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useSocket } from '@/context/SocketContext';
 
 export const JOB_OFFERS_QUERY_KEY = ['jobOffers'] as const;
 
@@ -27,8 +28,30 @@ export const useJobOffers = () => {
     refetchOnWindowFocus: true,
   });
 
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleNotification = (data: Record<string, unknown>) => {
+      if (
+        data?.type === 'job_offer_withdrawn' ||
+        data?.type === 'job_offer_received' ||
+        data?.type === 'job_offer'
+      ) {
+        queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY });
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      }
+    };
+    socket.on('notification', handleNotification);
+    return () => {
+      socket.off('notification', handleNotification);
+    };
+  }, [socket, queryClient]);
+
   const offers = useMemo(() => {
-    return rawOffers.map((o) => {
+    return rawOffers
+      .filter((o) => o.status !== 'withdrawn')
+      .map((o) => {
       const raw = o as unknown as Record<string, unknown>;
       const resp = respondedOffers ? (respondedOffers[o.id] || (raw.offer_id ? respondedOffers[String(raw.offer_id)] : undefined) || (raw.job_id ? respondedOffers[String(raw.job_id)] : undefined)) : undefined;
       if (resp) {

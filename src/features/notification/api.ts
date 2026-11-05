@@ -15,8 +15,15 @@ export const getNotifications = async (companyId?: string): Promise<Notification
 };
 
 export const markNotificationAsRead = async (id: string, companyId?: string) => {
-    const response = await api.patch(`/notifications/${id}/read`, { companyId });
-    return response.data;
+    try {
+        const response = await api.patch(`/notifications/${id}/read`, { companyId });
+        return response.data;
+    } catch (error: any) {
+        if (error?.response?.status === 404) {
+            return null;
+        }
+        throw error;
+    }
 };
 
 export const markAllNotificationsRead = async (companyId?: string) => {

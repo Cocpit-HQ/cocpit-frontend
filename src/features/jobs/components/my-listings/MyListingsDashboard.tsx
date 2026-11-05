@@ -260,7 +260,8 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   const handleSelectOfferGroup = useCallback((group: any) => {
     setSelectedOfferGroup(group);
-    transitionTo('offer-details');
+    // Persist jobId in query parameters for offer-details view
+    transitionTo('offer-details', group.id || group.job_id);
   }, [transitionTo]);
 
   if (view === 'create-job') {
@@ -274,31 +275,34 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     );
   }
 
-  if (view === 'offer-details' && selectedOfferGroup) {
+  // Render OfferDetailsScreen when viewing offer details either from in-memory selection or via direct URL link
+  const offerGroup = selectedOfferGroup || (urlJobId ? { id: urlJobId, title: '', company: '', sentCount: 0, acceptedCount: 0, pendingCount: 0, declinedCount: 0 } : null);
+  if (view === 'offer-details' && offerGroup) {
     const matchingListing = listings.find(
-      (l) => l.id === selectedOfferGroup.id || l.title?.toLowerCase() === selectedOfferGroup.title?.toLowerCase()
+      (l) => l.id === offerGroup.id || l.title?.toLowerCase() === offerGroup.title?.toLowerCase()
     );
     return (
       <OfferDetailsScreen
-        offerGroup={selectedOfferGroup}
+        offerGroup={offerGroup}
         matchingListing={matchingListing}
         refreshTrigger={refreshTrigger}
+        onOfferWithdrawn={() => refresh()}
         onBack={() => {
           transitionTo('dashboard');
           setSelectedOfferGroup(null);
         }}
         onViewListingDetails={() => {
-          const matchingListing = listings.find(
-            (l) => l.title?.toLowerCase() === selectedOfferGroup.title?.toLowerCase()
+          const matched = listings.find(
+            (l) => l.title?.toLowerCase() === offerGroup.title?.toLowerCase()
           );
           if (typeof window !== 'undefined') {
             sessionStorage.setItem('coming_from_send_offer_details', 'true');
           }
-          if (matchingListing) {
-            setSelectedListing(matchingListing);
-            transitionTo('view-listing', matchingListing.id);
-          } else if (selectedOfferGroup.job_id || selectedOfferGroup.id) {
-            transitionTo('view-listing', selectedOfferGroup.job_id || selectedOfferGroup.id);
+          if (matched) {
+            setSelectedListing(matched);
+            transitionTo('view-listing', matched.id);
+          } else if (offerGroup.id) {
+            transitionTo('view-listing', offerGroup.id);
           } else {
             toast.error('Listing details not found.');
           }
@@ -536,6 +540,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
             ) : (
               <ListingsTab
                 listings={listings}
+                targetJobId={urlJobId}
                 hasMore={hasMore}
                 isFetchingMore={isFetchingMore}
                 loadMore={loadMore}

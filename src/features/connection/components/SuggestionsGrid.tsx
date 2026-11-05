@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SuggestionCard } from './SuggestionCard';
 import { SuggestionCardSkeleton } from './skeletons/SuggestionCardSkeleton';
 import { useConnectionSuggestions } from '../hooks/useConnectionSuggestions';
@@ -21,6 +21,14 @@ export function SuggestionsGrid({ enabled }: SuggestionsGridProps) {
     fetchNextBatch,
   } = useConnectionSuggestions(enabled);
   const { dismissedSuggestionIds } = useConnectionStore();
+
+  // Restore scroll position when returning to the suggestions list
+  useEffect(() => {
+    const savedPos = useConnectionStore.getState().suggestionsScrollPos;
+    if (savedPos > 0) {
+      window.scrollTo({ top: savedPos, behavior: 'instant' });
+    }
+  }, []);
 
   if (!enabled) return null;
 

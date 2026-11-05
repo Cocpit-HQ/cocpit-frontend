@@ -106,7 +106,9 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
         ? `/jobs/companies/${companyId}/offers/sent` 
         : `/jobs/offers/sent`;
       const response = await api.get(endpoint);
-      const mapped: SentOfferGroup[] = (response.data || []).map((item: any) => ({
+      const mapped: SentOfferGroup[] = (response.data || [])
+        .filter((item: any) => Number(item.total_offers || 0) > 0)
+        .map((item: any) => ({
         id: item.job_id,
         title: item.title,
         company: item.company_display_name || item.company_name || '',
@@ -165,7 +167,8 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
       if (
         data?.type === 'job_offer_declined' ||
         data?.type === 'offer_accepted' ||
-        data?.type === 'job_offer'
+        data?.type === 'job_offer' ||
+        data?.type === 'job_offer_withdrawn'
       ) {
         fetchSentOffers(true);
       }

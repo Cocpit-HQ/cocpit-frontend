@@ -28,7 +28,7 @@ export function GroupedOfferCard({ job }: GroupedOfferCardProps) {
             setLoadingRecipients(true);
             try {
                 const data = await getCompanyOfferRecipients(activeProfile.id, job.jobId || job.id);
-                setRecipients(data);
+                setRecipients((data || []).filter((r: OfferRecipient) => r.status !== 'withdrawn'));
                 setRecipientsLoaded(true);
             } catch (err) {
                 console.error("Error fetching recipients:", err);

@@ -503,7 +503,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       ? 'text-ds-warning'
                       : 'text-ds-text-muted'
                 }`}>
-                {statusUpper === 'CLOSED' ? 'CLOSE' : statusUpper}
+                {statusUpper === 'CLOSED' ? 'CLOSED' : statusUpper}
               </span>
             </div>
           </div>

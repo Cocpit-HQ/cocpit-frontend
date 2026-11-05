@@ -75,7 +75,9 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   const { goBack } = useSmartBack();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo');
+  // SCRUM-1610: Support both returnTo and from query params (e.g. from notifications)
+  // so back navigation pops history back to the caller instead of forcing /jobs
+  const returnTo = searchParams.get('returnTo') || searchParams.get('from');
 
   const handleBack = () => {
     if (returnTo) {
@@ -518,7 +520,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             {job.is_closed ? (
               <div className="h-8 px-4 py-2 bg-ds-surface-1 border border-ds-warning rounded-[24px] flex items-center justify-center shrink-0 box-border">
                 <span className="font-dm-sans font-normal text-xs leading-4 text-center text-ds-warning">
-                  Close
+                  Closed
                 </span>
               </div>
             ) : (

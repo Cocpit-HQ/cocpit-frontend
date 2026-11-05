@@ -241,7 +241,10 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
                 router.push(parsed.targetUrl);
               }
             }}
-            className="font-semibold text-ds-accent cursor-pointer"
+            className={cn(
+              'font-semibold cursor-pointer',
+              parsed.boldTargetClassName || 'text-ds-accent'
+            )}
           >
             {parsed.boldTarget}
           </span>

@@ -187,7 +187,9 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
@@ -216,7 +218,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
     }
 
     const hasMore = fetchedJobs.length === 10;
-    const nextCursor = hasMore ? fetchedJobs[fetchedJobs.length - 1].created_at : null;
+    const nextCursor = hasMore ? (fetchedJobs[fetchedJobs.length - 1].published_at || fetchedJobs[fetchedJobs.length - 1].created_at) : null;
 
     return {
       data: finalJobs,
@@ -324,7 +326,9 @@ export const getRecommendations = async (): Promise<Job[]> => {
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
@@ -382,7 +386,8 @@ const mapExploreJobItem = (job: any): Job => ({
   salary_max: job.salary_max,
   salary_currency: job.salary_currency,
   salary_display: job.salary_display || formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-  posted_at: job.posted_at || getRelativeTime(job.created_at),
+  posted_at: job.posted_at || getRelativeTime(job.published_at || job.created_at),
+  published_at: job.published_at,
   created_at: job.created_at,
   description: job.description || '',
   experience: job.experience || ((job.experience_min != null && job.experience_max != null)
@@ -488,7 +493,9 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
@@ -626,7 +633,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       salary_max: job.salary_max,
       salary_currency: job.salary_currency || 'USD',
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       description: job.description || '',
       requirements: extractRequirements(job.description),
       is_saved: job.isSaved || job.is_saved || false,
@@ -738,7 +747,8 @@ export const getMyApplications = async (status: string = 'all', cursor?: string)
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
       applied_date_display: `Applied ${getRelativeTime(job.applied_at)}`,
       applied_at: job.applied_at,
       created_at: job.created_at,
@@ -887,7 +897,9 @@ export const getMyOffers = async (): Promise<Job[]> => {
         salary_max: job.salary_max,
         salary_currency: job.salary_currency || 'USD',
         salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-        posted_at: getRelativeTime(job.created_at),
+        posted_at: getRelativeTime(job.published_at || job.created_at),
+        published_at: job.published_at,
+        created_at: job.created_at,
         description: job.description || '',
         requirements: extractRequirements(job.description),
         is_saved: useJobStore.getState().savedJobIds.has(job.job_id),
@@ -968,7 +980,9 @@ export const getMyListings = async (
       id: job.job_id,
       title: job.title,
       status: job.status,
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       last_edited: job.updated_at,
       company: job.company_name,
       location: job.location,
@@ -1143,6 +1157,8 @@ export const createJobListing = async (
         id: backendJob.job_id || backendJob.id,
         title: backendJob.title,
         status: status,
+        published_at: backendJob.published_at || (status === 'ACTIVE' ? new Date().toISOString() : undefined),
+        posted_at: status === 'ACTIVE' ? 'Just now' : getRelativeTime(backendJob.created_at),
         last_edited: 'Last edited just now'
       } as JobListing;
     }

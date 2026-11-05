@@ -768,10 +768,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   maxLength={255}
                   className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none cursor-text"
                 />
-                {isSearchingPlaces ? (
+                {isSearchingPlaces && (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-accent shrink-0" />
-                ) : (
-                  <Search className="w-4 h-4 text-ds-text-secondary shrink-0" />
                 )}
               </div>
 

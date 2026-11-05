@@ -96,6 +96,7 @@ export interface ParsedNotificationText {
   actorName: string | null;
   actorSuffix: string | null; // e.g. "(Unavailable user)" or "(Unavailable page)"
   boldTarget: string | null;   // e.g. "Hrutika" in "at Hrutika" or role name "test2"
+  boldTargetClassName?: string;
   prefixText: string;
   middleText?: string;
   bodyText: string;
@@ -126,6 +127,46 @@ export const parseNotificationText = (
       actorSuffix = '(Unavailable page)';
       bodyText = bodyText.replace('(Unavailable page)', '').trim();
     }
+  }
+
+  // Company follower notification: e.g. "radha started following dyp university"
+  const followerText = notification.text || bodyText || '';
+
+  const isCompanyFollower =
+    type === 'company_follower' ||
+    /started following/i.test(followerText);
+
+  if (isCompanyFollower) {
+    const match = followerText.trim().match(/^(.*?)\s+started following\s+(.+?)(?:\.|\s*)$/i);
+    const followerName = (match && match[1] ? match[1].trim() : null) || 'Someone';
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const followerId =
+      (meta.followerId as string) ||
+      (meta.follower_id as string) ||
+      notification.sender_id;
+
+    const targetUrl = followerId ? `/profile/${followerId}` : null;
+    const orgName = match && match[2] ? match[2].trim().replace(/\.$/, '') : '';
+
+    return {
+      actorName: actorName || orgName || null,
+      actorSuffix: null,
+      boldTarget: followerName,
+      boldTargetClassName: 'text-ds-text-primary',
+      prefixText: '',
+      middleText: undefined,
+      bodyText: orgName ? ` started following ${orgName}` : ' started following you',
+      targetUrl,
+    };
   }
 
   // Job application submission: e.g. "Your application for Tech HR at Hrutika has been submitted successfully."
@@ -178,6 +219,7 @@ export const parseNotificationText = (
 
   // Member role updated: e.g. "Your role at [Company Name] has been updated to [New Role]."
   const rawNotifText = notification.text || bodyText || '';
+
   const isRoleUpdated =
     type === 'member_role_updated' ||
     /has been updated to/i.test(rawNotifText) ||
@@ -208,7 +250,8 @@ export const parseNotificationText = (
         (notification as any).recipient_org_id ||
         notification.reference_id;
       const roleTarget = (meta.roleId as string) || (meta.role_id as string) || encodeURIComponent(roleName);
-      const orgQuery = orgId ? `?orgId=${orgId}` : '';
+      // SCRUM-1610: Append from=/notifications so RoleDetailsPage returns to Notification center on Back
+      const orgQuery = orgId ? `?from=/notifications&orgId=${orgId}` : '?from=/notifications';
       const targetUrl = `/team/role/${roleTarget}${orgQuery}`;
 
       return {
@@ -312,7 +355,8 @@ export const parseNotificationText = (
         (notification as any).recipient_org_id ||
         notification.reference_id;
       const roleTarget = (meta.roleId as string) || (meta.role_id as string) || encodeURIComponent(boldTargetName);
-      const orgQuery = orgId ? `?orgId=${orgId}` : '';
+      // SCRUM-1610: Append from=/notifications so RoleDetailsPage returns to Notification center on Back
+      const orgQuery = orgId ? `?from=/notifications&orgId=${orgId}` : '?from=/notifications';
       const targetUrl = `/team/role/${roleTarget}${orgQuery}`;
 
       return {
@@ -430,6 +474,9 @@ export const parseNotificationText = (
   // Job approved: "Your job [Job Title] is now live."
   const isJobApproved =
     type === 'job_approved' ||
+    type === 'job_live' ||
+    type === 'job_published' ||
+    type === 'job_rejected' ||
     /Your job.+?is now live/i.test(rawNotifText);
 
   if (isJobApproved) {
@@ -447,7 +494,7 @@ export const parseNotificationText = (
     let jobTitle = (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
     jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
     const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
-    const targetUrl = jobId ? `/jobs/${jobId}` : '/jobs';
+    const targetUrl = jobId ? `/jobs?tab=My+Listings&jobId=${jobId}` : '/jobs?tab=My+Listings';
 
     return {
       actorName: null,
@@ -482,7 +529,7 @@ export const parseNotificationText = (
     jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
     const reason = (meta.rejectionReason as string) || (reasonMatch ? reasonMatch[1].trim().replace(/\.$/, '') : 'Not specified');
     const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
-    const targetUrl = jobId ? `/jobs/${jobId}` : '/jobs';
+    const targetUrl = jobId ? `/jobs?tab=My+Listings&jobId=${jobId}` : '/jobs?tab=My+Listings';
 
     return {
       actorName: null,
@@ -508,6 +555,39 @@ export const parseNotificationText = (
       prefixText: '',
       bodyText: 'A password reset was requested for your account. If this wasn’t you, secure your account now.',
       targetUrl: '/settings/account',
+    };
+  }
+
+  // Candidate declined/accepted offer notification: e.g. "You declined the offer from dyp university for sap"
+  const isCandidateOfferResponse =
+    /^You\s+(?:declined|accepted)\s+the offer/i.test(rawNotifText);
+
+  if (isCandidateOfferResponse) {
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const match = rawNotifText.match(/^You\s+(declined|accepted)\s+the offer from\s+(.+?)\s+for\s+(.+?)(?:\.|\s*)$/i);
+    const actionVerb = match ? match[1] : 'declined';
+    const company = match ? match[2].trim() : '';
+    const jobTitle = match ? match[3].trim() : 'job';
+    const jobId = (meta.job_id as string) || (meta.jobId as string) || notification.reference_id;
+    const targetUrl = jobId ? `/jobs/${jobId}?returnTo=/notifications` : '/jobs';
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: jobTitle,
+      prefixText: company ? `You ${actionVerb} the offer from ${company} for ` : `You ${actionVerb} the offer for `,
+      middleText: undefined,
+      bodyText: '',
+      targetUrl,
     };
   }
 
@@ -540,6 +620,17 @@ export const getNotificationRoute = (
 
   if (type === 'like' && postReferenceId) {
     return `/post/${postReferenceId}`;
+  }
+  if (type === 'company_follower') {
+    const followerId =
+      notification.sender_id ||
+      (typeof ext.metadata === 'object' && ext.metadata !== null
+        ? ((ext.metadata as Record<string, unknown>).followerId as string) ||
+          ((ext.metadata as Record<string, unknown>).follower_id as string)
+        : null);
+    if (followerId) {
+      return `/profile/${followerId}`;
+    }
   }
   if (type === 'follow' && notification.reference_id) {
     return `/profile/${notification.reference_id}`;
@@ -622,7 +713,7 @@ export const getNotificationRoute = (
 
     const orgQuery = orgId ? `?orgId=${orgId}` : '';
     if (roleTarget) {
-      return `/team/role/${roleTarget}${orgQuery}`;
+      return `/team/role/${roleTarget}${orgId ? `?from=/notifications&orgId=${orgId}` : '?from=/notifications'}`;
     }
     return orgQuery ? `/team${orgQuery}` : '/team';
   }
@@ -657,16 +748,79 @@ export const getNotificationRoute = (
 
     const orgQuery = orgId ? `?orgId=${orgId}` : '';
     if (roleTarget) {
-      return `/team/role/${roleTarget}${orgQuery}`;
+      return `/team/role/${roleTarget}${orgId ? `?from=/notifications&orgId=${orgId}` : '?from=/notifications'}`;
     }
     return orgQuery ? `/team${orgQuery}` : '/team';
+  }
+
+  // Redirect approved / live job notification to /jobs dashboard with highlight
+  if (
+    type === 'job_approved' ||
+    type === 'job_live' ||
+    type === 'job_published' ||
+    type === 'job_rejected' ||
+    type === 'job_live' ||
+    notification.text?.includes('is now live') ||
+    /Your job.+?is now live/i.test(notification.text || '')
+  ) {
+    let jobId = notification.reference_id;
+    if (!jobId) {
+      try {
+        if (typeof ext.metadata === 'string') {
+          const parsed = JSON.parse(ext.metadata);
+          jobId = parsed.jobId || parsed.job_id;
+        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+          jobId = (ext.metadata as any).jobId || (ext.metadata as any).job_id;
+        }
+      } catch {}
+    }
+    return jobId ? `/jobs?tab=My+Listings&jobId=${jobId}` : '/jobs?tab=My+Listings';
+  }
+
+  // Candidate personal notification: "You declined the offer from [Company] for [Job Title]"
+  if (
+    notification.text?.includes('declined the offer') ||
+    notification.text?.includes('accepted the offer') ||
+    /^You\s+(?:declined|accepted)\s+the offer/i.test(notification.text || '')
+  ) {
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+    const jobId = (meta.job_id as string) || (meta.jobId as string) || notification.reference_id;
+    return jobId ? `/jobs/${jobId}?returnTo=/notifications` : '/jobs';
+  }
+
+  // Redirect accepted/declined job offer notifications to offer details page
+  if (
+    type === 'job_offer_accepted' ||
+    type === 'offer_accepted' ||
+    notification.text?.includes('accepted your offer')
+  ) {
+    const offerJobId = notification.reference_id;
+    return offerJobId ? `/jobs?view=offer-details&jobId=${offerJobId}` : '/jobs';
+  }
+
+  // Redirect declined job offer notification to offer details page for the corresponding job posting
+  if (
+    type === 'job_offer_declined' ||
+    type === 'offer_declined' ||
+    notification.text?.includes('declined your offer')
+  ) {
+    const offerJobId = notification.reference_id;
+    return offerJobId ? `/jobs?view=offer-details&jobId=${offerJobId}` : '/jobs';
   }
 
   if (
     (type.includes('job') || type.includes('application') || type.includes('offer')) &&
     notification.reference_id
   ) {
-    return `/jobs/${notification.reference_id}`;
+    // SCRUM-1610: Append returnTo=/notifications so JobDetailPage back button cleanly returns to Notifications
+    return `/jobs/${notification.reference_id}?returnTo=/notifications`;
   }
   if (type === 'community_invite') {
     return '/connections?tab=invitations&sub=channels';

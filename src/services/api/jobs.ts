@@ -31,7 +31,7 @@ function transformJob(backendJob: any): Job {
         company: backendJob.company_display_name || backendJob.company_name || backendJob.recruiter_name || "Unknown Company",
         location: backendJob.location,
         type: backendJob.job_type,
-        postedTime: (backendJob.latest_offer_at || backendJob.created_at) ? formatTimeAgo(backendJob.latest_offer_at || backendJob.created_at) : "Recently",
+        postedTime: (backendJob.latest_offer_at || backendJob.published_at || backendJob.created_at) ? formatTimeAgo(backendJob.latest_offer_at || backendJob.published_at || backendJob.created_at) : "Recently",
         applicants: backendJob.applicants || backendJob.applicants_count || 0,
         salary: formatSalaryRange(backendJob.salary_min, backendJob.salary_max, backendJob.salary_currency) || "Competitive",
         logo: `gradient-${(parseInt(backendJob.job_id.slice(0, 8), 16) % 6) + 1}`,
@@ -42,7 +42,9 @@ function transformJob(backendJob: any): Job {
         isOffer: backendJob.is_offer,
         isSaved: backendJob.isSaved,
         is_closed: backendJob.status === 'CLOSED' || !backendJob.is_active,
-        createdAt: backendJob.latest_offer_at || backendJob.created_at,
+        publishedAt: backendJob.published_at,
+        published_at: backendJob.published_at,
+        createdAt: backendJob.latest_offer_at || backendJob.published_at || backendJob.created_at,
         savedAt: backendJob.saved_at,
         appliedAt: backendJob.applied_at || backendJob.appliedAt, // Handle inconsistent naming if any
 

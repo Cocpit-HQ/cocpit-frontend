@@ -36,6 +36,7 @@ interface OfferDetailsScreenProps {
   refreshTrigger?: number;
   onBack: () => void;
   onViewListingDetails: () => void;
+  onOfferWithdrawn?: () => void;
 }
 
 interface OfferCandidate {
@@ -59,29 +60,35 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   refreshTrigger,
   onBack,
   onViewListingDetails,
+  onOfferWithdrawn,
 }) => {
   const router = useRouter();
   const applicationsCount = matchingListing?.applicants_count ?? offerGroup.applicationsCount ?? 0;
   const shortlistedCount = matchingListing?.shortlisted_count ?? offerGroup.shortlistedCount ?? offerGroup.acceptedCount ?? 0;
-  const offersSentCount = offerGroup.sentCount ?? matchingListing?.offers_count ?? 0;
   const postedDisplay = matchingListing?.posted_at ? `Posted ${matchingListing.posted_at}` : (offerGroup.company || 'Posted recently');
   const [candidates, setCandidates] = useState<OfferCandidate[]>([]);
   const isFirstLoadRef = useRef(true);
   const respondedOffers = useJobStore((state) => state.respondedOffers);
   const { socket } = useSocket();
 
-  const displayCandidates = React.useMemo(() => {
-    return candidates.map((cand) => {
-      const localResp = respondedOffers ? (respondedOffers[cand.id] || (cand.userId ? respondedOffers[cand.userId] : undefined)) : undefined;
-      if (localResp) {
-        return {
-          ...cand,
-          status: (localResp === 'decline' ? 'declined' : 'chat') as OfferCandidate['status'],
-        };
-      }
-      return cand;
-    });
+  const displayCandidates = useMemo(() => {
+    return candidates
+      .filter((cand) => cand.status !== 'withdrawn')
+      .map((cand) => {
+        const localResp = respondedOffers ? (respondedOffers[cand.id] || (cand.userId ? respondedOffers[cand.userId] : undefined)) : undefined;
+        if (localResp) {
+          return {
+            ...cand,
+            status: (localResp === 'decline' ? 'declined' : 'chat') as OfferCandidate['status'],
+          };
+        }
+        return cand;
+      });
   }, [candidates, respondedOffers]);
+
+  const offersSentCount = !isFirstLoadRef.current
+    ? displayCandidates.length
+    : (offerGroup.sentCount ?? matchingListing?.offers_count ?? 0);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -108,7 +115,9 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         ? `/jobs/companies/${companyId}/offers/job/${offerGroup.id}/recipients`
         : `/jobs/offers/job/${offerGroup.id}/recipients`;
       const response = await api.get(endpoint);
-      const mapped: OfferCandidate[] = (response.data || []).map((item: any) => ({
+      const mapped: OfferCandidate[] = (response.data || [])
+        .filter((item: any) => item.status !== 'withdrawn')
+        .map((item: any) => ({
         id: item.offer_id,
         userId: item.user_id,
         name: item.full_name || 'Anonymous User',
@@ -163,7 +172,8 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
       if (
         data?.type === 'job_offer_declined' ||
         data?.type === 'offer_accepted' ||
-        data?.type === 'job_offer'
+        data?.type === 'job_offer' ||
+        data?.type === 'job_offer_withdrawn'
       ) {
         fetchRecipients(true);
       }
@@ -190,9 +200,8 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         ? `/jobs/companies/${orgId}/offers/${selectedCandId}`
         : `/jobs/offers/${selectedCandId}`;
       await api.delete(endpoint);
-      setCandidates((prev) =>
-        prev.map((c) => (c.id === selectedCandId ? { ...c, status: 'withdrawn' } : c))
-      );
+      setCandidates((prev) => prev.filter((c) => c.id !== selectedCandId));
+      onOfferWithdrawn?.();
       toast.success('Offer withdrawn successfully.');
     } catch (error: any) {
       console.error('Failed to withdraw offer:', error);

@@ -20,6 +20,8 @@ export interface Job {
   company: string;
   location: string;
   type: string;
+  publishedAt?: string;
+  published_at?: string;
   createdAt?: string; // ISO date string for cursor
   savedAt?: string;  // ISO date string for cursor
   appliedAt?: string; // ISO date string for cursor

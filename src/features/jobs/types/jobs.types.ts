@@ -39,6 +39,7 @@ export interface Job {
   application_status?: 'Applied' | 'in-review' | 'Shortlisted' | 'Declined' | string;
   applied_date_display?: string;
   applied_at?: string;
+  published_at?: string;
   created_at?: string;
   is_available?: boolean;
   context_sent?: boolean;
@@ -96,6 +97,7 @@ export interface JobsState {
 export interface JobListing {
   id: string;
   title: string;
+  published_at?: string;
   posted_at?: string;
   last_edited?: string;
   status: 'ACTIVE' | 'IN REVIEW' | 'DRAFT' | 'CLOSED' | string;

@@ -55,19 +55,21 @@ export const OffersTab: React.FC<OffersTabProps> = ({
   const [acceptModalId, setAcceptModalId] = useState<string | null>(null);
   const [declineModalId, setDeclineModalId] = useState<string | null>(null);
 
+  const visibleOffers = React.useMemo(() => offers.filter(o => o.status !== 'withdrawn'), [offers]);
+
   const filteredOffers = React.useMemo(() => {
-    if (activeFilter === 'All') return offers;
+    if (activeFilter === 'All') return visibleOffers;
     if (activeFilter === 'Current') {
-      return offers.filter(o => o.status === 'pending' || o.status === 'accepted');
+      return visibleOffers.filter(o => o.status === 'pending' || o.status === 'accepted');
     }
     if (activeFilter === 'Decline') {
-      return offers.filter(o => o.status === 'declined');
+      return visibleOffers.filter(o => o.status === 'declined');
     }
     if (activeFilter === 'Expired') {
-      return offers.filter(o => o.status === 'expired' || o.status === 'withdrawn');
+      return visibleOffers.filter(o => o.status === 'expired');
     }
-    return offers;
-  }, [offers, activeFilter]);
+    return visibleOffers;
+  }, [visibleOffers, activeFilter]);
 
   const handleOpenMobileFilter = () => {
     setTempFilter(activeFilter);
@@ -85,7 +87,7 @@ export const OffersTab: React.FC<OffersTabProps> = ({
     setMobileFilterOpen(false);
   };
 
-  if (offers.length === 0 && !isLoading) {
+  if (visibleOffers.length === 0 && !isLoading) {
     return (
       <div className="w-full max-w-[800px] py-28 flex flex-col justify-center items-center gap-2 select-none animate-in fade-in duration-200 font-dm-sans">
         {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}

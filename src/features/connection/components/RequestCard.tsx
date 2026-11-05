@@ -8,6 +8,7 @@ import { UserIcon } from '@/components/icons';
 import type { ConnectionRequest } from '../types';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import { formatImgSrc } from '@/lib/utils';
+import { useConnectionStore } from '@/store/connection.store';
 
 interface RequestCardProps {
   request: ConnectionRequest;
@@ -58,6 +59,12 @@ export function RequestCard({
   const showAvatar = !!user.avatar && !imgError;
   const hasMutuals = mutuals && mutuals.count > 0;
   const isCompany = request.isCompanyRequest || mode === 'invitations';
+
+  const handleProfileClick = () => {
+    if (typeof window !== 'undefined') {
+      useConnectionStore.getState().setSuggestionsScrollPos(window.scrollY);
+    }
+  };
   const profileId = mode === 'received' ? request.sender_id : request.receiver_id;
   const targetHref = isCompany
     ? `/organization/${user.slug || profileId}`
@@ -72,6 +79,7 @@ export function RequestCard({
       <div className="flex-1 min-w-0 min-h-[52px] flex items-center gap-2">
         <Link
           href={targetHref}
+          onClick={handleProfileClick}
           className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-ds-accent"
           tabIndex={-1}
           aria-hidden="true"
@@ -102,7 +110,8 @@ export function RequestCard({
           <div className="flex items-center gap-1.5 min-w-0 w-full">
             <Link
               href={targetHref}
-              className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm group shrink-0"
+              onClick={handleProfileClick}
+            className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm group shrink-0"
             >
               <span className="font-dm-sans font-normal text-[14px] leading-5 text-ds-text-primary group-hover:text-ds-accent transition-colors whitespace-nowrap">
                 {user.name}

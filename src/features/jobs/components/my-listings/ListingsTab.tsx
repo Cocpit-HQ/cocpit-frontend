@@ -6,9 +6,11 @@ import { Icon } from '@iconify/react';
 import { MenuIcon, DeleteIcon, BriefcaseIcon } from '@/components/icons';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 import { useBodyScrollLock } from '@/hooks';
+import { cn } from '@/lib/utils';
 
 interface ListingsTabProps {
   listings: JobListing[];
+  targetJobId?: string | null;
   hasMore?: boolean;
   isFetchingMore?: boolean;
   loadMore?: () => void;
@@ -56,7 +58,8 @@ const getStatusColor = (status?: string) => {
 };
 
 export const ListingsTab: React.FC<ListingsTabProps> = ({ 
-  listings, 
+  listings,
+  targetJobId, 
   hasMore = false, 
   isFetchingMore = false, 
   loadMore, 
@@ -103,11 +106,23 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
     }
   }, [inView, hasMore, isFetchingMore, loadMore]);
 
+  // Smoothly scroll to and highlight targeted job (e.g. from notification)
+  useEffect(() => {
+    if (!targetJobId || listings.length === 0) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`job-listing-${targetJobId}`) || document.getElementById(`job-listing-mobile-${targetJobId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [targetJobId, listings]);
+
   // Sub-filter tabs from Figma spec
   const filterChips = [
     { label: 'All', key: 'All', count: counts.all },
     { label: 'Active', key: 'Active', count: counts.active },
-    { label: 'Close', key: 'Close', count: counts.closed },
+    { label: 'Closed', key: 'Close', count: counts.closed },
     { label: 'In Review', key: 'In Review', count: counts.inReview },
     { label: 'Draft', key: 'Draft', count: counts.draft }
   ];
@@ -274,7 +289,11 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                 {/* Mobile Job Row (Figma Frame 2609981: 360px x 64px, py-2 px-0 border-b border-ds-border) */}
                 <div
                   onClick={() => onSelectListing && onSelectListing(item)}
-                  className="flex md:hidden w-full h-16 py-2 px-0 justify-between items-center gap-4 cursor-pointer select-none"
+                  id={`job-listing-mobile-${item.id}`}
+                  className={cn(
+                    "flex md:hidden w-full h-16 py-2 px-0 justify-between items-center gap-4 cursor-pointer select-none transition-colors duration-300",
+                    targetJobId === item.id && "bg-ds-surface-1/50 rounded-lg px-2 ring-1 ring-ds-border"
+                  )}
                 >
                   {/* Frame 2609064: Title + Date (gap: 4px) */}
                   <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0">
@@ -292,7 +311,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase ${getMobileStatusColor(item.status)}`}>
-                      {statusUpper === 'CLOSED' ? 'CLOSE' : statusUpper === 'IN_REVIEW' ? 'IN REVIEW' : statusUpper}
+                      {statusUpper === 'CLOSED' ? 'CLOSED' : statusUpper === 'IN_REVIEW' ? 'IN REVIEW' : statusUpper}
                     </span>
 
                     <button
@@ -316,7 +335,11 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                 {/* Desktop Job Card: Preserved 100% Unchanged */}
                 <div
                   onClick={() => onSelectListing && onSelectListing(item)}
-                  className="hidden md:flex w-full max-w-[800px] min-h-[129px] pr-3 border-b border-ds-border flex-col justify-center items-start cursor-pointer select-none"
+                  id={`job-listing-${item.id}`}
+                  className={cn(
+                    "hidden md:flex w-full max-w-[800px] min-h-[129px] pr-3 border-b border-ds-border flex-col justify-center items-start cursor-pointer select-none transition-colors duration-300",
+                    targetJobId === item.id && "bg-ds-surface-1/50 rounded-lg px-3 ring-1 ring-ds-border"
+                  )}
                 >
                 {/* Frame 2609981: Top Row */}
                 <div className="w-full h-[68px] py-2 flex flex-row items-center justify-between gap-4 self-stretch">
@@ -336,7 +359,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase flex items-center ${statusColor}`}>
-                      {statusUpper === 'CLOSED' ? 'CLOSE' : statusUpper}
+                      {statusUpper === 'CLOSED' ? 'CLOSED' : statusUpper}
                     </span>
 
                     {isActive ? (
