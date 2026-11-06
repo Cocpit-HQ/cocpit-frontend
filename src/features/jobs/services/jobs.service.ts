@@ -283,6 +283,55 @@ export const getPaginatedIndustries = async (query?: string, cursor?: string, li
   }
 };
 
+export const getJobRoles = async (query?: string): Promise<string[]> => {
+  try {
+    const params: Record<string, any> = {};
+    if (query) params.q = query;
+    const response = await api.get('/jobs/roles', { params });
+    if (response.data && Array.isArray(response.data.items)) {
+      return response.data.items.map((r: any) => (typeof r === 'string' ? r : r.role_name || r.name || String(r)));
+    }
+    if (Array.isArray(response.data)) {
+      return response.data.map((r: any) => r.role_name || r.name || String(r));
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch job roles:", error);
+    return [];
+  }
+};
+
+export const getPaginatedRoles = async (
+  query?: string,
+  cursor?: string,
+  limit: number = 50
+): Promise<CursorPaginatedResult<string>> => {
+  try {
+    const params: Record<string, any> = { limit };
+    if (query) params.q = query;
+    if (cursor) params.cursor = cursor;
+    const response = await api.get('/jobs/roles', { params });
+    if (response.data && Array.isArray(response.data.items)) {
+      return {
+        items: response.data.items.map((r: any) => (typeof r === 'string' ? r : r.role_name || r.name || String(r))),
+        nextCursor: response.data.nextCursor || null,
+        hasMore: Boolean(response.data.hasMore),
+      };
+    }
+    if (Array.isArray(response.data)) {
+      return {
+        items: response.data.map((r: any) => r.role_name || r.name || String(r)),
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+    return { items: [], nextCursor: null, hasMore: false };
+  } catch (error) {
+    console.error("Failed to fetch paginated roles:", error);
+    return { items: [], nextCursor: null, hasMore: false };
+  }
+};
+
 export const getPaginatedCompanies = async (query?: string, cursor?: string, limit: number = 8): Promise<CursorPaginatedResult<string>> => {
   try {
     const params: Record<string, any> = { limit };
@@ -309,6 +358,35 @@ export const getPaginatedCompanies = async (query?: string, cursor?: string, lim
     return { items: [], nextCursor: null, hasMore: false };
   }
 };
+
+export const getPaginatedInstitutes = async (query?: string, cursor?: string, limit: number = 50): Promise<CursorPaginatedResult<string>> => {
+  try {
+    const params: Record<string, any> = { limit };
+    if (query) params.q = query;
+    if (cursor) params.cursor = cursor;
+    const response = await api.get('/jobs/institutes', { params });
+    if (response.data && Array.isArray(response.data.items)) {
+      return {
+        items: response.data.items,
+        nextCursor: response.data.nextCursor || null,
+        hasMore: Boolean(response.data.hasMore),
+      };
+    }
+    if (Array.isArray(response.data)) {
+      return {
+        items: response.data.map((r: any) => r.institute_name || r.name || String(r)),
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+    return { items: [], nextCursor: null, hasMore: false };
+  } catch (error) {
+    console.error("Failed to fetch paginated institutes:", error);
+    return { items: [], nextCursor: null, hasMore: false };
+  }
+};
+
+export { getPaginatedLocations } from '@/features/search/services/locationSearch.service';
 
 export const getRecommendations = async (): Promise<Job[]> => {
   try {

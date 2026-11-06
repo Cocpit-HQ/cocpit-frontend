@@ -50,6 +50,7 @@ export const useConnectionActions = () => {
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['connection-requests'] });
     queryClient.invalidateQueries({ queryKey: ['connection-counts'] });
+    queryClient.invalidateQueries({ queryKey: ['global-search'] });
   };
 
   // ─── Accept ───────────────────────────────────────────────────────────────

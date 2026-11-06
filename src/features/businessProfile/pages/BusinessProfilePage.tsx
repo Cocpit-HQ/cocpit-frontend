@@ -201,8 +201,13 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   }
 
   const handleBack = () => {
-    if (returnTo) {
-      router.push(returnTo);
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
       return;
     }
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -213,6 +218,15 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   };
 
   const handleClose = () => {
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
+      return;
+    }
     // 1. If originated from notifications (either directly or through job details)
     if (returnTo?.includes("/notifications")) {
       router.push("/notifications");

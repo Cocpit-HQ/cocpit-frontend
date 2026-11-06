@@ -34,7 +34,7 @@ interface OrganizationHeaderProps {
 export function OrganizationHeader({ company, isLoading }: OrganizationHeaderProps) {
     const { isOwner, isAdmin, checkPermission } = useCompanyPermissions(company);
     const { activeProfile } = useActiveProfile();
-    const { syncFollowStatus } = useSocial();
+    const { syncFollowStatus, notifyFollowEvent } = useSocial();
     const queryClient = useQueryClient();
     const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
     const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
@@ -63,7 +63,10 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
         },
         onSuccess: () => {
             const id = company?.company_id || company?.org_id;
-            if (id) syncFollowStatus(id, true);
+            if (id) {
+                syncFollowStatus(id, true);
+                notifyFollowEvent(id, true);
+            }
             queryClient.invalidateQueries({ queryKey: ["company_relationship", id] });
             queryClient.invalidateQueries({ queryKey: ["company_followers", id] });
             if (company?.slug) {
@@ -71,6 +74,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
             }
             queryClient.invalidateQueries({ queryKey: ["profileStats"] });
             queryClient.invalidateQueries({ queryKey: ["following"] });
+            queryClient.invalidateQueries({ queryKey: ["global-search"] });
             toast.success(`Followed ${company?.name}`);
         },
         onError: (err: any) => {
@@ -86,7 +90,10 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
         },
         onSuccess: () => {
             const id = company?.company_id || company?.org_id;
-            if (id) syncFollowStatus(id, false);
+            if (id) {
+                syncFollowStatus(id, false);
+                notifyFollowEvent(id, false);
+            }
             queryClient.invalidateQueries({ queryKey: ["company_relationship", id] });
             queryClient.invalidateQueries({ queryKey: ["company_followers", id] });
             if (company?.slug) {
@@ -94,6 +101,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
             }
             queryClient.invalidateQueries({ queryKey: ["profileStats"] });
             queryClient.invalidateQueries({ queryKey: ["following"] });
+            queryClient.invalidateQueries({ queryKey: ["global-search"] });
             toast.success(`Unfollowed ${company?.name}`);
         },
         onError: (err: any) => {

@@ -35,7 +35,9 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
       setIsFetching(true);
       try {
         const response = await api.get(`/jobs/roles?q=${encodeURIComponent(title)}`);
-        setSuggestions(response.data.map((r: any) => r.role_name));
+        const raw = response.data;
+        const list = Array.isArray(raw) ? raw : (raw?.items || []);
+        setSuggestions(list.map((r: any) => (typeof r === 'string' ? r : r.role_name || r.name || String(r))));
       } catch (error) {
         console.error("Error fetching job roles:", error);
       } finally {
@@ -93,8 +95,8 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
       <div className="w-full max-w-[360px] md:max-w-[592px] flex flex-col justify-center items-center gap-5 my-auto">
         {/* Headings */}
         <div className="self-stretch flex flex-col justify-start items-center gap-2 md:gap-3 text-center">
-          {/* Hey, {name} - Gradient on mobile per Figma */}
-          <div className="text-[32px] md:text-[40px] font-bold leading-[40px] md:leading-[48px] font-dm-sans text-ds-accent">
+          {/* Hey, {name} - Brand gradient design token */}
+          <div className="text-brand-gradient text-[32px] md:text-[40px] font-bold leading-[40px] md:leading-[48px] font-dm-sans">
             Hey, {activeProfile?.name || 'Cocpit'}
           </div>
 

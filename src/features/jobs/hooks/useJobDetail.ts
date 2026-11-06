@@ -154,6 +154,7 @@ export const useJobDetail = (jobId: string) => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'recommendations'] });
+      queryClient.invalidateQueries({ queryKey: ['global-search'] });
     }
   }, [job, savedJobIds, addSavedId, removeSavedId, queryClient]);
 

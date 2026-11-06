@@ -78,12 +78,12 @@ export const FeedPost = (props: FeedPostProps) => {
   const isTargetPostRepostWithThoughts = !!interactionTargetProps.shared_post && !!interactionTargetProps.content && interactionTargetProps.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() !== '';
 
   const {
-    id: targetId,
-    author: targetAuthor,
-    authorAvatar: targetAuthorAvatar,
-    authorSlug: targetAuthorSlug,
+    id: rawTargetId,
+    author: rawTargetAuthor,
+    authorAvatar: rawTargetAuthorAvatar,
+    authorSlug: rawTargetAuthorSlug,
     authorRole: targetAuthorRole,
-    authorHeadline: targetAuthorHeadline,
+    authorHeadline: rawTargetAuthorHeadline,
     imageSrc: targetImageSrc,
     images: targetImages,
     videoSrc: targetVideoSrc,
@@ -98,6 +98,12 @@ export const FeedPost = (props: FeedPostProps) => {
     sampleLikerUsername: targetSampleLikerUsername,
     likedUsers: targetLikedUsers
   } = interactionTargetProps as any;
+
+  const targetId = rawTargetId || (interactionTargetProps as any).post_id;
+  const targetAuthor = rawTargetAuthor || (interactionTargetProps as any).author_name || '';
+  const targetAuthorAvatar = rawTargetAuthorAvatar || (interactionTargetProps as any).author_avatar;
+  const targetAuthorSlug = rawTargetAuthorSlug || (interactionTargetProps as any).author_slug;
+  const targetAuthorHeadline = rawTargetAuthorHeadline || (interactionTargetProps as any).author_headline;
 
   // Fallback: if backend didn't return sample_liker_username but liked_users has entries,
   // pick the first liker that isn't the post author so LikeBar always has a name to show.
@@ -763,7 +769,8 @@ export const FeedPost = (props: FeedPostProps) => {
     e.stopPropagation();
     if (targetId && targetId !== 'preview') {
       saveScrollPosition(props.isProfileView ? "profile" : "post", targetId.toString());
-      router.push(isArticlePost ? `/article/${targetId}` : `/post/${targetId}`);
+      const returnToParam = (props as any).returnTo ? `?returnTo=${encodeURIComponent((props as any).returnTo)}` : '';
+      router.push((isArticlePost ? `/article/${targetId}` : `/post/${targetId}`) + returnToParam);
     }
   };
 
@@ -790,7 +797,8 @@ export const FeedPost = (props: FeedPostProps) => {
     if (targetId && targetId !== 'preview') {
       // Purpose of Bug Fix: Save scroll position and target post ID/viewport top before navigating to single-view post page
       saveScrollPosition(props.isProfileView ? "profile" : "post", targetId.toString());
-      router.push(isArticlePost ? `/article/${targetId}` : `/post/${targetId}`);
+      const returnToParam = (props as any).returnTo ? `?returnTo=${encodeURIComponent((props as any).returnTo)}` : '';
+      router.push((isArticlePost ? `/article/${targetId}` : `/post/${targetId}`) + returnToParam);
     }
   };
 

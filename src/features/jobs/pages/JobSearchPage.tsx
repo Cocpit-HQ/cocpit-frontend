@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Check, Search } from "lucide-react";
+import { SearchPillChevron } from "@/features/search/components/SearchPillChevron";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { LeftArrowIcon } from "@/components/icons";
@@ -18,9 +20,27 @@ import {
   getPaginatedCompanies,
   CursorPaginatedResult,
 } from "../services/jobs.service";
+import { SearchableLocationFilterChip } from '@/features/search/components/filters/SearchableLocationFilterChip';
+
+export interface LocationFilterChipProps {
+  selectedValues: string[];
+  onToggle: (paramKey: string, opt: string) => void;
+}
+
+export const LocationFilterChip: React.FC<LocationFilterChipProps> = ({
+  selectedValues,
+  onToggle,
+}) => {
+  return (
+    <SearchableLocationFilterChip
+      selectedValues={selectedValues}
+      onToggle={(loc) => onToggle('location', loc)}
+    />
+  );
+};
 
 // Standard fixed-options dropdown chip (Job type, Experience, Work mode, Date posted)
-interface StandardFilterChipProps {
+export interface StandardFilterChipProps {
   title: string;
   paramKey: string;
   options: string[];
@@ -28,7 +48,10 @@ interface StandardFilterChipProps {
   onToggle: (paramKey: string, opt: string) => void;
 }
 
-const StandardFilterChip: React.FC<StandardFilterChipProps> = ({
+/* [DEPRECATED / PRESERVED]: Previous StandardFilterChip without checkmarks / selection-pinning preserved for auditability.
+const StandardFilterChipLegacy: React.FC<StandardFilterChipProps> = ...
+*/
+export const StandardFilterChip: React.FC<StandardFilterChipProps> = ({
   title,
   paramKey,
   options,
@@ -37,42 +60,70 @@ const StandardFilterChip: React.FC<StandardFilterChipProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const isActive = selectedValues.length > 0;
+  const openSnapshotRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      openSnapshotRef.current = [...selectedValues];
+    }
+  }, [open]);
+
+  const displayOptions = useMemo(() => {
+    if (selectedValues.length === 0) return options;
+    const snapshot =
+      openSnapshotRef.current.length > 0 ? openSnapshotRef.current : selectedValues;
+    const topItems: string[] = [];
+    const seen = new Set<string>();
+
+    snapshot.forEach((val) => {
+      if (!seen.has(val) && options.includes(val)) {
+        seen.add(val);
+        topItems.push(val);
+      }
+    });
+
+    const bottomItems = options.filter((opt) => !seen.has(opt));
+    return [...topItems, ...bottomItems];
+  }, [options, selectedValues]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) {
+          openSnapshotRef.current = [...selectedValues];
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-[10px] transition-all cursor-pointer ${
+          className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-2 transition-all cursor-pointer font-dm-sans font-medium text-base leading-6 select-none shrink-0 ${
             isActive
-              ? "bg-ds-surface-1 border border-ds-accent"
-              : "bg-transparent border border-ds-border hover:border-ds-text-muted"
-          } text-base font-dm-sans font-medium leading-6 text-ds-text-primary select-none shrink-0`}
+              ? "bg-ds-bg border border-ds-accent text-ds-text-primary"
+              : "bg-transparent border border-ds-border text-ds-text-primary hover:border-ds-text-muted"
+          }`}
         >
-          <Icon
-            icon="solar:alt-arrow-down-linear"
-            className={`size-4 text-ds-text-primary shrink-0 transition-transform duration-200 ${
-              open ? "rotate-180" : "rotate-0"
-            }`}
-          />
+          <SearchPillChevron open={open} className="text-ds-text-primary" />
           <span>{title}</span>
         </button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
         sideOffset={8}
-        className="w-auto min-w-[142px] p-4 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl flex flex-col gap-3.5 z-[120]"
+        className="w-auto min-w-fit p-4 bg-ds-bg border border-ds-border rounded-[10px] shadow-2xl flex flex-col items-start gap-3.5 z-[120] focus:outline-none focus:ring-0"
       >
-        {options.map((opt) => {
+        {displayOptions.map((opt) => {
           const isSelected = selectedValues.includes(opt);
           return (
             <button
               key={opt}
               type="button"
               onClick={() => onToggle(paramKey, opt)}
-              className={`w-full flex items-center min-h-[28px] text-left font-dm-sans text-sm leading-normal font-normal transition-colors cursor-pointer select-none whitespace-nowrap ${
+              className={`font-dm-sans text-sm leading-normal transition-colors cursor-pointer select-none whitespace-nowrap outline-none bg-transparent hover:bg-transparent border-none p-0 text-left ${
                 isSelected
-                  ? "text-ds-accent"
+                  ? "text-ds-accent font-normal"
                   : "text-ds-text-secondary hover:text-ds-text-primary"
               }`}
             >
@@ -86,13 +137,16 @@ const StandardFilterChip: React.FC<StandardFilterChipProps> = ({
 };
 
 // Salary dropdown chip with presets and "Other" (Min / Max inputs)
-interface SalaryFilterChipProps {
+export interface SalaryFilterChipProps {
   selectedValues: string[];
   onToggle: (paramKey: string, opt: string) => void;
   onCustomApply: (min: string, max: string) => void;
 }
 
-const SalaryFilterChip: React.FC<SalaryFilterChipProps> = ({
+/* [DEPRECATED / PRESERVED]: Previous SalaryFilterChip preserved for auditability.
+const SalaryFilterChipLegacy: React.FC<SalaryFilterChipProps> = ...
+*/
+export const SalaryFilterChip: React.FC<SalaryFilterChipProps> = ({
   selectedValues,
   onToggle,
   onCustomApply,
@@ -102,9 +156,16 @@ const SalaryFilterChip: React.FC<SalaryFilterChipProps> = ({
   const [customMin, setCustomMin] = useState("");
   const [customMax, setCustomMax] = useState("");
 
-  const presets = ["Under 3L", "3L-5L", "6L-10L", "10L+"];
+  const presets = useMemo(() => ["Under 3L", "3L-5L", "6L-10L", "10L+"], []);
   const isCustomActive = selectedValues.some((v) => v.startsWith("Custom:"));
   const isActive = selectedValues.length > 0;
+  const openSnapshotRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      openSnapshotRef.current = [...selectedValues];
+    }
+  }, [open]);
 
   useEffect(() => {
     const customItem = selectedValues.find((v) => v.startsWith("Custom:"));
@@ -116,41 +177,62 @@ const SalaryFilterChip: React.FC<SalaryFilterChipProps> = ({
     }
   }, [selectedValues]);
 
+  const displayPresets = useMemo(() => {
+    if (selectedValues.length === 0) return presets;
+    const snapshot =
+      openSnapshotRef.current.length > 0 ? openSnapshotRef.current : selectedValues;
+    const topItems: string[] = [];
+    const seen = new Set<string>();
+
+    snapshot.forEach((val) => {
+      if (!seen.has(val) && presets.includes(val)) {
+        seen.add(val);
+        topItems.push(val);
+      }
+    });
+
+    const bottomItems = presets.filter((p) => !seen.has(p));
+    return [...topItems, ...bottomItems];
+  }, [presets, selectedValues]);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) {
+          openSnapshotRef.current = [...selectedValues];
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-[10px] transition-all cursor-pointer ${
+          className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-2 transition-all cursor-pointer font-dm-sans font-medium text-base leading-6 select-none shrink-0 ${
             isActive
-              ? "bg-ds-surface-1 border border-ds-accent"
-              : "bg-transparent border border-ds-border hover:border-ds-text-muted"
-          } text-base font-dm-sans font-medium leading-6 text-ds-text-primary select-none shrink-0`}
+              ? "bg-ds-bg border border-ds-accent text-ds-text-primary"
+              : "bg-transparent border border-ds-border text-ds-text-primary hover:border-ds-text-muted"
+          }`}
         >
-          <Icon
-            icon="solar:alt-arrow-down-linear"
-            className={`size-4 text-ds-text-primary shrink-0 transition-transform duration-200 ${
-              open ? "rotate-180" : "rotate-0"
-            }`}
-          />
+          <SearchPillChevron open={open} className="text-ds-text-primary" />
           <span>Salary</span>
         </button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
         sideOffset={8}
-        className="w-auto min-w-[142px] p-4 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl flex flex-col gap-3.5 z-[120]"
+        className="w-auto min-w-fit p-4 bg-ds-bg border border-ds-border rounded-[10px] shadow-2xl flex flex-col items-start gap-3.5 z-[120] focus:outline-none focus:ring-0"
       >
-        {presets.map((opt) => {
+        {displayPresets.map((opt) => {
           const isSelected = selectedValues.includes(opt);
           return (
             <button
               key={opt}
               type="button"
               onClick={() => onToggle("salary_range", opt)}
-              className={`w-full flex items-center min-h-[28px] text-left font-dm-sans text-sm leading-normal font-normal transition-colors cursor-pointer select-none whitespace-nowrap ${
+              className={`font-dm-sans text-sm leading-normal transition-colors cursor-pointer select-none whitespace-nowrap outline-none bg-transparent hover:bg-transparent border-none p-0 text-left ${
                 isSelected
-                  ? "text-ds-accent"
+                  ? "text-ds-accent font-normal"
                   : "text-ds-text-secondary hover:text-ds-text-primary"
               }`}
             >
@@ -163,9 +245,9 @@ const SalaryFilterChip: React.FC<SalaryFilterChipProps> = ({
         <button
           type="button"
           onClick={() => setShowCustom((prev) => !prev)}
-          className={`w-full flex items-center min-h-[28px] text-left font-dm-sans text-sm leading-normal font-normal transition-colors cursor-pointer select-none whitespace-nowrap ${
+          className={`font-dm-sans text-sm leading-normal transition-colors cursor-pointer select-none whitespace-nowrap outline-none bg-transparent hover:bg-transparent border-none p-0 text-left ${
             showCustom || isCustomActive
-              ? "text-ds-accent"
+              ? "text-ds-accent font-normal"
               : "text-ds-text-secondary hover:text-ds-text-primary"
           }`}
         >
@@ -174,31 +256,31 @@ const SalaryFilterChip: React.FC<SalaryFilterChipProps> = ({
 
         {/* Min / Max Inputs when Other is selected */}
         {showCustom && (
-          <div className="flex flex-col gap-2.5 pt-1 border-t border-ds-border/60 animate-in fade-in duration-150">
-            <div className="flex items-center justify-between gap-4">
-              <span className="font-dm-sans text-sm text-ds-text-primary">Min</span>
+          <div className="flex flex-col gap-2.5 pt-1 w-full animate-in fade-in duration-150">
+            <div className="flex items-center justify-between gap-6 font-dm-sans text-sm text-ds-text-secondary">
+              <span>Min</span>
               <input
                 type="number"
                 placeholder="0"
                 value={customMin}
                 onChange={(e) => setCustomMin(e.target.value)}
-                className="w-16 px-1.5 py-0.5 text-right text-xs bg-ds-surface-1 border border-ds-border rounded text-ds-text-primary outline-none focus:border-ds-accent"
+                className="w-12 bg-transparent text-right text-sm text-ds-text-primary outline-none focus:text-ds-accent"
               />
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="font-dm-sans text-sm text-ds-text-primary">Max</span>
+            <div className="flex items-center justify-between gap-6 font-dm-sans text-sm text-ds-text-secondary">
+              <span>Max</span>
               <input
                 type="number"
                 placeholder="0"
                 value={customMax}
                 onChange={(e) => setCustomMax(e.target.value)}
-                className="w-16 px-1.5 py-0.5 text-right text-xs bg-ds-surface-1 border border-ds-border rounded text-ds-text-primary outline-none focus:border-ds-accent"
+                className="w-12 bg-transparent text-right text-sm text-ds-text-primary outline-none focus:text-ds-accent"
               />
             </div>
             <button
               type="button"
               onClick={() => onCustomApply(customMin, customMax)}
-              className="py-1 text-xs text-ds-accent hover:underline font-medium text-center cursor-pointer"
+              className="pt-1 text-xs text-ds-accent hover:underline font-medium text-left cursor-pointer font-dm-sans"
             >
               Apply
             </button>
@@ -210,160 +292,14 @@ const SalaryFilterChip: React.FC<SalaryFilterChipProps> = ({
 };
 
 // Searchable and Cursor-paginated filter chip (Industry, Company)
-interface SearchableCursorFilterChipProps {
-  title: string;
-  paramKey: string;
-  selectedValues: string[];
-  fetchData: (query?: string, cursor?: string) => Promise<CursorPaginatedResult<string>>;
-  onToggle: (paramKey: string, opt: string) => void;
-}
+import {
+  SearchableCursorFilterChip,
+  type SearchableCursorFilterChipProps,
+} from '@/features/search/components/filters/SearchableCursorFilterChip';
 
-const SearchableCursorFilterChip: React.FC<SearchableCursorFilterChipProps> = ({
-  title,
-  paramKey,
-  selectedValues,
-  fetchData,
-  onToggle,
-}) => {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [items, setItems] = useState<string[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const isActive = selectedValues.length > 0;
-
-  // Load initial 8 items on open or when query changes
-  useEffect(() => {
-    if (!open) return;
-    let isCurrent = true;
-    setIsLoading(true);
-
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetchData(query.trim() || undefined, undefined);
-        if (isCurrent) {
-          setItems(res.items);
-          setNextCursor(res.nextCursor);
-          setHasMore(res.hasMore);
-        }
-      } catch (err) {
-        console.error(`Failed to load ${title}:`, err);
-      } finally {
-        if (isCurrent) setIsLoading(false);
-      }
-    }, 200);
-
-    return () => {
-      isCurrent = false;
-      clearTimeout(timer);
-    };
-  }, [open, query, fetchData, title]);
-
-  // Load more via cursor on scroll
-  const handleScroll = async () => {
-    const el = scrollContainerRef.current;
-    if (!el || isLoadingMore || !hasMore || !nextCursor) return;
-
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
-      setIsLoadingMore(true);
-      try {
-        const res = await fetchData(query.trim() || undefined, nextCursor);
-        setItems((prev) => [...prev, ...res.items.filter((i) => !prev.includes(i))]);
-        setNextCursor(res.nextCursor);
-        setHasMore(res.hasMore);
-      } catch (err) {
-        console.error(`Failed to load more ${title}:`, err);
-      } finally {
-        setIsLoadingMore(false);
-      }
-    }
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-[10px] transition-all cursor-pointer ${
-            isActive
-              ? "bg-ds-surface-1 border border-ds-accent"
-              : "bg-transparent border border-ds-border hover:border-ds-text-muted"
-          } text-base font-dm-sans font-medium leading-6 text-ds-text-primary select-none shrink-0`}
-        >
-          <Icon
-            icon="solar:alt-arrow-down-linear"
-            className={`size-4 text-ds-text-primary shrink-0 transition-transform duration-200 ${
-              open ? "rotate-180" : "rotate-0"
-            }`}
-          />
-          <span>{title}</span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        sideOffset={8}
-        className="w-56 p-4 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl flex flex-col gap-3 z-[120]"
-      >
-        {/* Search input with bottom line border */}
-        <div className="w-full flex items-center gap-2 border-b border-ds-border pb-2 mb-1">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search"
-            className="w-full bg-transparent text-sm text-ds-text-primary placeholder:text-ds-text-muted outline-none font-dm-sans leading-normal py-0.5"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              className="text-ds-text-secondary hover:text-ds-text-primary text-xs p-1"
-            >
-              <Icon icon="lucide:x" className="size-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Scrollable Items List */}
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="flex flex-col gap-3 max-h-60 overflow-y-auto no-scrollbar py-1 pr-1"
-        >
-          {isLoading ? (
-            <div className="py-3 text-center text-xs text-ds-text-secondary">Loading...</div>
-          ) : items.length === 0 ? (
-            <div className="py-3 text-center text-xs text-ds-text-secondary">No matches found</div>
-          ) : (
-            items.map((opt) => {
-              const isSelected = selectedValues.includes(opt);
-              return (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => onToggle(paramKey, opt)}
-                  className={`w-full flex items-center min-h-[28px] text-left font-dm-sans text-sm leading-normal font-normal transition-colors cursor-pointer select-none overflow-visible ${
-                    isSelected
-                      ? "text-ds-accent"
-                      : "text-ds-text-secondary hover:text-ds-text-primary"
-                  }`}
-                >
-                  <span className="truncate block w-full py-0.5">{opt}</span>
-                </button>
-              );
-            })
-          )}
-          {isLoadingMore && (
-            <div className="py-1.5 text-center text-[10px] text-ds-text-secondary">Loading more...</div>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
+export {
+  SearchableCursorFilterChip,
+  type SearchableCursorFilterChipProps,
 };
 
 export const JobSearchPage: React.FC = () => {
@@ -451,7 +387,8 @@ export const JobSearchPage: React.FC = () => {
           params.set(key, val);
         }
       });
-      router.push(`/jobs/search?${params.toString()}`);
+      params.set("type", "jobs");
+      router.push(`/search?${params.toString()}`);
     },
     [router, urlParams]
   );
@@ -460,12 +397,41 @@ export const JobSearchPage: React.FC = () => {
     updateUrl({ q: text.trim() || null });
   };
 
+  const handleBack = () => {
+    const returnTo = urlParams?.get('returnTo');
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search') && !lastSearch.includes('/search?type=jobs')) {
+      router.replace(lastSearch);
+      return;
+    }
+    router.push('/jobs');
+  };
+
+  const handleClose = () => {
+    const returnTo = urlParams?.get('returnTo');
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search') && !lastSearch.includes('/search?type=jobs')) {
+      router.replace(lastSearch);
+      return;
+    }
+    router.push('/jobs');
+  };
+
   const getParamValues = useCallback(
     (key: string): string[] => {
       const val = urlParams?.get(key);
       if (!val) return [];
+      const delimiter = key === "location" ? "|" : ",";
       return val
-        .split(",")
+        .split(delimiter)
         .map((s) => s.trim())
         .filter(Boolean);
     },
@@ -481,7 +447,8 @@ export const JobSearchPage: React.FC = () => {
       } else {
         next = [...current, option];
       }
-      updateUrl({ [paramKey]: next.length > 0 ? next.join(",") : null });
+      const delimiter = paramKey === "location" ? "|" : ",";
+      updateUrl({ [paramKey]: next.length > 0 ? next.join(delimiter) : null });
     },
     [getParamValues, updateUrl]
   );
@@ -499,7 +466,12 @@ export const JobSearchPage: React.FC = () => {
   );
 
   const handleClearAll = () => {
-    router.push("/jobs/search");
+    const qVal = urlParams?.get("q") || urlParams?.get("search");
+    if (qVal) {
+      router.push(`/search?type=jobs&q=${encodeURIComponent(qVal)}`);
+    } else {
+      router.push("/search?type=jobs");
+    }
   };
 
   // Static options lists
@@ -545,9 +517,9 @@ export const JobSearchPage: React.FC = () => {
       {/* Back Button: 40px top, 40px left */}
       <button
         type="button"
-        onClick={() => router.push("/jobs")}
+        onClick={handleBack}
         className="hidden md:inline-flex fixed top-[40px] left-[40px] z-50 items-center gap-2 p-0 text-ds-text-primary font-medium font-dm-sans text-base leading-6 cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
-        aria-label="Back to Jobs"
+        aria-label="Back"
       >
         <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
         <span className="hidden sm:inline">Back</span>
@@ -556,7 +528,7 @@ export const JobSearchPage: React.FC = () => {
       {/* Close (X) Button: 40px top, 40px right */}
       <button
         type="button"
-        onClick={() => router.push("/jobs")}
+        onClick={handleClose}
         className="hidden md:flex fixed top-[40px] right-[40px] z-50 size-6 items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         aria-label="Close search"
       >
@@ -567,7 +539,7 @@ export const JobSearchPage: React.FC = () => {
       <header className="md:hidden w-full px-4 pt-6 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => router.push("/jobs")}
+          onClick={handleBack}
           className="flex items-center justify-center text-ds-text-primary cursor-pointer shrink-0 bg-transparent border-none outline-none"
           aria-label="Back to Jobs"
         >
@@ -637,33 +609,53 @@ export const JobSearchPage: React.FC = () => {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-[10px] bg-ds-surface-1 border border-ds-accent text-base font-dm-sans font-medium leading-6 text-ds-text-primary select-none shrink-0 cursor-pointer"
+                    className="h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-2 bg-ds-bg border border-ds-accent text-base font-dm-sans font-medium leading-6 text-ds-text-primary select-none shrink-0 cursor-pointer shadow-sm"
                   >
-                    <Icon
-                      icon="solar:alt-arrow-down-linear"
-                      className={`size-4 text-ds-text-primary shrink-0 transition-transform duration-200 ${
-                        isScopeOpen ? "rotate-180" : "rotate-0"
-                      }`}
-                    />
+                    <SearchPillChevron open={isScopeOpen} className="text-ds-text-primary" />
                     <span>Jobs</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent
                   align="start"
                   sideOffset={8}
-                  className="w-auto min-w-[142px] p-4 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl flex flex-col gap-3.5 z-[120]"
+                  className="p-[12px] w-auto min-w-[90px] bg-ds-bg border border-ds-border rounded-[8px] flex flex-col items-start gap-[16px] shadow-2xl z-[120] focus:outline-none focus:ring-0"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setIsScopeOpen(false)}
-                    className="w-full flex items-center min-h-[28px] text-left font-dm-sans text-sm leading-normal font-normal text-ds-accent cursor-pointer"
-                  >
-                    <span>Jobs</span>
-                  </button>
+                  {[
+                    { id: 'all', label: 'All', type: 'all' },
+                    { id: 'people', label: 'People', type: 'people' },
+                    { id: 'jobs', label: 'Jobs', type: 'jobs' },
+                    { id: 'companies', label: 'Company', type: 'companies' },
+                    { id: 'institutes', label: 'Institution', type: 'institutes' },
+                    { id: 'posts', label: 'Posts', type: 'posts' },
+                    { id: 'hashtags', label: 'Hashtags', type: 'hashtags' },
+                  ].map((scope) => {
+                    const isJobs = scope.id === 'jobs';
+                    return (
+                      <button
+                        key={scope.id}
+                        type="button"
+                        onClick={() => {
+                          setIsScopeOpen(false);
+                          if (!isJobs) {
+                            const currentQuery = (searchInput || urlSearch || '').trim();
+                            const qParam = currentQuery ? `&q=${encodeURIComponent(currentQuery)}` : '';
+                            router.push(`/search?type=${scope.type}${qParam}`);
+                          }
+                        }}
+                        className={`font-dm-sans text-[14px] leading-[20px] font-normal transition-colors cursor-pointer text-left whitespace-nowrap outline-none bg-transparent border-none p-0 ${
+                          isJobs
+                            ? 'text-ds-accent'
+                            : 'text-ds-text-secondary hover:text-ds-text-primary'
+                        }`}
+                      >
+                        <span>{scope.label}</span>
+                      </button>
+                    );
+                  })}
                 </PopoverContent>
               </Popover>
 
-              {/* Row 1 Filter Chips */}
+              {/* Row 1 Filter Chips: Job type, Experience, Work mode, Salary, Industry */}
               <StandardFilterChip
                 title="Job type"
                 paramKey="job_type"
@@ -699,8 +691,8 @@ export const JobSearchPage: React.FC = () => {
               />
             </div>
 
-            {/* Filter Row 2 — Desktop only */}
-            <div className="hidden md:flex w-full pl-0 sm:pl-[96px] flex-wrap items-center gap-3">
+            {/* Filter Row 2 (Indented to align under Job type on desktop) — Desktop only */}
+            <div className="hidden md:flex w-full pl-0 sm:pl-[96px] flex flex-wrap items-center gap-3">
               <StandardFilterChip
                 title="Date posted"
                 paramKey="date_posted"
@@ -724,13 +716,14 @@ export const JobSearchPage: React.FC = () => {
                 onClick={() =>
                   updateUrl({ verified: isVerifiedActive ? null : "true" })
                 }
-                className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center transition-all cursor-pointer ${
+                className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-2 transition-all cursor-pointer font-dm-sans font-medium text-base leading-6 text-ds-text-primary select-none shrink-0 ${
                   isVerifiedActive
-                    ? "bg-ds-surface-1 border border-ds-accent"
-                    : "bg-transparent border border-ds-border hover:border-ds-text-muted"
-                } text-base font-dm-sans font-medium leading-6 text-ds-text-primary select-none shrink-0`}
+                    ? "bg-ds-bg border border-ds-accent text-ds-text-primary"
+                    : "bg-transparent border border-ds-border text-ds-text-primary hover:border-ds-text-muted"
+                }`}
               >
                 <span>Verified</span>
+                {isVerifiedActive && <Check className="size-4 text-ds-accent" />}
               </button>
             </div>
           </div>
@@ -844,7 +837,7 @@ export const JobSearchPage: React.FC = () => {
                 <JobCard
                   key={job.id}
                   job={job}
-                  onClick={(j) => router.push(`/jobs/${j.id}`)}
+                  onClick={(j) => router.push(`/jobs/${j.id}?returnTo=${encodeURIComponent(`/search?${urlParams?.toString() || "type=jobs"}`)}`)}
                   onApply={() => setApplyingJob(job)}
                   onSave={(jobId) => toggleSave(jobId)}
                   onWithdraw={(jobId) => withdrawJob(jobId)}

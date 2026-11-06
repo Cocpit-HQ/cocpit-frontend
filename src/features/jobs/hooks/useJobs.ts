@@ -353,6 +353,53 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         });
       });
 
+      // Optimistically update global-search queries (both category and all views)
+      queryClient.setQueriesData({ queryKey: ['global-search'] }, (oldData: any) => {
+        if (!oldData) return oldData;
+        // Case 1: Infinite query pages (category search e.g. type='jobs')
+        if (oldData.pages && Array.isArray(oldData.pages)) {
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              items: Array.isArray(page.items)
+                ? page.items.map((item: any) =>
+                    item.id === jobId || item.job_id === jobId
+                      ? { ...item, is_saved: shouldSave }
+                      : item
+                  )
+                : page.items,
+            })),
+          };
+        }
+        // Case 2: Stage A 'all' search response
+        if (oldData.sections?.jobs?.items && Array.isArray(oldData.sections.jobs.items)) {
+          const updatedItems = oldData.sections.jobs.items.map((item: any) =>
+            item.id === jobId || item.job_id === jobId
+              ? { ...item, is_saved: shouldSave }
+              : item
+          );
+          return {
+            ...oldData,
+            sections: {
+              ...oldData.sections,
+              jobs: {
+                ...oldData.sections.jobs,
+                items: updatedItems,
+              },
+            },
+            results: {
+              ...oldData.results,
+              jobs: {
+                ...oldData.results?.jobs,
+                items: updatedItems,
+              },
+            },
+          };
+        }
+        return oldData;
+      });
+
       return { wasSaved: !shouldSave };
     },
     onError: (err, { jobId }, context) => {
@@ -368,6 +415,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'recommendations'] });
+      queryClient.invalidateQueries({ queryKey: ['global-search'] });
     }
   });
 
@@ -501,9 +549,11 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     filters,
     setFilterValue: setCandidateFilterValue,
     setMultipleFilters,
-    toggleSave: (jobId: string) => {
+    toggleSave: (jobId: string, currentSavedState?: boolean | React.MouseEvent) => {
       // Capture the current saved state HERE, before onMutate has a chance to flip it
-      const shouldSave = !savedJobIds.has(jobId);
+      const isExplicitBool = typeof currentSavedState === 'boolean';
+      const isCurrentlySaved = isExplicitBool ? currentSavedState : savedJobIds.has(jobId);
+      const shouldSave = !isCurrentlySaved;
       toggleSaveMutation.mutate({ jobId, shouldSave });
     },
     applyToJob,

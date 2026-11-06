@@ -66,6 +66,26 @@ export function useNavigationTracker() {
       const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
       sessionStorage.setItem('cocpit_last_location_outside_settings', currentPath);
     }
+
+    // Track real base location outside search (Feed, Jobs dashboard, Organizations, Profiles, Posts, etc.)
+    const isSearchOrChild =
+      !pathname ||
+      pathname.startsWith('/search') ||
+      pathname.startsWith('/jobs/search') ||
+      Boolean(searchParams?.get('returnTo')?.includes('/search'));
+
+    if (!isSearchOrChild) {
+      const queryString = searchParams?.toString();
+      const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
+      sessionStorage.setItem('cocpit_last_location_outside_search', currentPath);
+    }
+
+    // When the user arrives on the main feed, clear stale search history to prevent ghost navigation
+    if (pathname === '/feed') {
+      sessionStorage.removeItem('cocpit_last_search_url');
+      sessionStorage.removeItem('cocpit_search_steps');
+      sessionStorage.removeItem('cocpit_search_origin');
+    }
   }, [pathname, searchParams]);
 }
 

@@ -95,11 +95,12 @@ export function AppShell({
   const isJobDetailPage = Boolean(pathname?.match(/^\/jobs\/[^\/]+\/?$/) && !pathname?.startsWith('/jobs/search'));
   const isJobSearchPage = Boolean(pathname?.startsWith('/jobs/search'));
   const isJobExplorePage = Boolean(pathname?.startsWith('/jobs/explore'));
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage || isJobExplorePage;
+  const isGlobalSearchPage = Boolean(pathname?.startsWith('/search'));
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage || isJobExplorePage || isGlobalSearchPage;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || isSettingsSubpage || activeModal === 'create-post';
 
   return (
-    <div className={`relative flex flex-col ${isSettingsRoute ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground overflow-x-hidden`}>
+    <div className={`relative flex flex-col ${isSettingsRoute ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground ${isGlobalSearchPage ? 'overflow-x-clip' : 'overflow-x-hidden'}`}>
       {!isDistractionFree && (
         <div className="hidden sm:block fixed left-0 top-0 h-screen z-40">
           <Sidebar />

@@ -23,6 +23,7 @@ import {
 import { useConnectionActions } from "@/features/connection/hooks/useConnectionActions";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { companyService } from "@/services/organization.service";
+import { updateGlobalSearchEntityStatus } from "@/features/search/utils/search-cache.utils";
 
 // Layout & Header Components
 import { ProfileCoverSection } from "@/features/profile/components/ProfileCoverSection";
@@ -233,6 +234,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
     queryClient.invalidateQueries({ queryKey: ["profile", targetUserId] });
     queryClient.invalidateQueries({ queryKey: ["connectionCount", targetUserId] });
+    queryClient.invalidateQueries({ queryKey: ["global-search"] });
   };
 
   const handleFollowToggle = async () => {
@@ -255,6 +257,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!targetUserId) return;
     // Optimistic update
     queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_sent" });
+    updateGlobalSearchEntityStatus(queryClient, targetUserId, { connection_status: "pending_sent" });
     try {
       const res = await sendConnectionRequest(targetUserId);
       const reqId = res?.connection_request_id || res?.id || res?.request_id;
@@ -264,12 +267,20 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           status: "pending_sent",
           request_id: reqId,
         }));
+        updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+          connection_status: "pending_sent",
+          pending_request_id: reqId,
+        });
       }
       invalidateRelationshipCaches();
       toast.success("Connection request sent!");
     } catch (err: any) {
       // Rollback
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none", request_id: null });
+      updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+        connection_status: "none",
+        pending_request_id: null,
+      });
       const msg = err?.response?.data?.message || "Failed to send connection request";
       toast.error(msg);
     }
@@ -281,11 +292,23 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     const idToCancel = pendingRequestId || targetUserId;
     if (!idToCancel) return;
 
+    // Optimistic update for search cache
+    updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+      connection_status: "none",
+      pending_request_id: null,
+    });
+
     // We can just use the undo mutation to handle optimistic updates identically to the connections panel
     undo.mutate(idToCancel, {
       onSuccess: () => {
         // Additional invalidations specific to profile page
         invalidateRelationshipCaches();
+      },
+      onError: () => {
+        updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+          connection_status: "pending_sent",
+          pending_request_id: pendingRequestId,
+        });
       }
     });
   };
@@ -294,6 +317,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!pendingRequestId) return;
     // Optimistic update
     queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "connected" });
+    updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+      connection_status: "connected",
+      is_connected: true,
+    });
     try {
       await handleConnectionRequest(pendingRequestId, "connected");
       invalidateRelationshipCaches();
@@ -301,6 +328,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     } catch (err: any) {
       // Rollback
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_received", request_id: pendingRequestId });
+      updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+        connection_status: "pending_received",
+        pending_request_id: pendingRequestId,
+      });
       toast.error("Failed to accept request.");
     }
   };
@@ -309,12 +340,20 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!pendingRequestId) return;
     // Optimistic update
     queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none", request_id: null });
+    updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+      connection_status: "none",
+      pending_request_id: null,
+    });
     try {
       await handleConnectionRequest(pendingRequestId, "rejected");
       invalidateRelationshipCaches();
     } catch (err: any) {
       // Rollback
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_received", request_id: pendingRequestId });
+      updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+        connection_status: "pending_received",
+        pending_request_id: pendingRequestId,
+      });
       toast.error("Failed to decline request.");
     }
   };
@@ -324,6 +363,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     try {
       await removeConnection(targetUserId);
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none" });
+      updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+        connection_status: "none",
+        is_connected: false,
+        is_following: false,
+      });
       queryClient.invalidateQueries({ queryKey: ["relationshipStatus", targetUserId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats"] }); // invalidate current user's stats too
@@ -331,6 +375,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       queryClient.invalidateQueries({ queryKey: ["followers"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] }); // Updates followersCount on the page
+      queryClient.invalidateQueries({ queryKey: ["global-search"] });
       syncFollowStatus(targetUserId, false); // immediately reflect unfollow in UI
       setShowRemoveConnectionDialog(false);
       toast.success("Connection removed");
@@ -416,12 +461,17 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       sessionStorage.removeItem("nav_memory_jobs_return");
       sessionStorage.removeItem("coming_from_job_detail");
     }
-    if (returnTo) {
-      router.push(returnTo);
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
       return;
     }
     if (isFromJobs && savedJobsReturn && savedJobsReturn !== "/jobs") {
       router.push(savedJobsReturn);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
       return;
     }
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -432,6 +482,15 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleClose = () => {
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
+      return;
+    }
     // 1. If originated from notifications (either directly or through job details)
     if (returnTo?.includes("/notifications")) {
       router.push("/notifications");

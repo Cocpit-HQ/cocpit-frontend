@@ -94,11 +94,17 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   }, [job, isCompany, activeProfile, returnTo, router]);
 
   const handleBack = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('coming_from_job_detail');
-    }
-    if (returnTo) {
+    if (returnTo && returnTo.startsWith('/')) {
       router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && (lastSearch.startsWith('/search') || lastSearch.startsWith('/jobs/search'))) {
+      router.replace(lastSearch);
+      return;
+    }
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
       return;
     }
     goBack('/jobs');

@@ -22,7 +22,11 @@ export function BackButton({ className, label = "Back", onClick }: BackButtonPro
     }
     const returnTo = searchParams.get("returnTo");
     if (returnTo) {
-      router.push(returnTo);
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+      } else {
+        router.replace(returnTo);
+      }
     } else {
       router.back();
     }

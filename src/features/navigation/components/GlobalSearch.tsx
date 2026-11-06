@@ -107,16 +107,42 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
     }
   }, [pathname]);
 
+  const navigateToSearch = (targetUrl: string) => {
+    const currentPath =
+      typeof window !== 'undefined'
+        ? window.location.pathname + window.location.search
+        : pathname || '/feed';
+
+    const isAlreadySearch = currentPath.startsWith('/search') || currentPath.startsWith('/jobs/search');
+    const safeOrigin = currentPath.startsWith('/jobs/search')
+      ? '/jobs'
+      : (isAlreadySearch ? '/feed' : currentPath);
+    const separator = targetUrl.includes('?') ? '&' : '?';
+    const finalUrl = isAlreadySearch
+      ? targetUrl
+      : `${targetUrl}${separator}returnTo=${encodeURIComponent(safeOrigin)}`;
+
+    if (typeof window !== 'undefined' && !isAlreadySearch) {
+      sessionStorage.setItem('cocpit_search_origin', safeOrigin);
+    }
+
+    router.push(finalUrl);
+  };
+
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      const trimmed = searchQuery.trim();
+      if (!trimmed) return;
+
+      setIsFocused(false);
+      inputRef.current?.blur();
+      saveSearch(trimmed);
+
       if (isJobsRoute) {
-        if (searchQuery.trim()) {
-          setIsFocused(false);
-          inputRef.current?.blur();
-          router.push(`/jobs/search?q=${encodeURIComponent(searchQuery.trim())}`);
-        }
-        return;
+        navigateToSearch(`/search?type=jobs&q=${encodeURIComponent(trimmed)}`);
+      } else {
+        navigateToSearch(`/search?q=${encodeURIComponent(trimmed)}&type=all`);
       }
     }
   };
@@ -234,10 +260,16 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
         onClick={() => {
           inputRef.current?.focus();
           setIsFocused(true);
-          if (isJobsRoute && searchQuery.trim()) {
+          const trimmed = searchQuery.trim();
+          if (trimmed) {
             setIsFocused(false);
             inputRef.current?.blur();
-            router.push(`/jobs/search?q=${encodeURIComponent(searchQuery.trim())}`);
+            saveSearch(trimmed);
+            if (isJobsRoute) {
+              navigateToSearch(`/search?type=jobs&q=${encodeURIComponent(trimmed)}`);
+            } else {
+              navigateToSearch(`/search?q=${encodeURIComponent(trimmed)}&type=all`);
+            }
           }
         }}
       />
@@ -254,7 +286,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
               onClick={() => {
                 setIsFocused(false);
                 inputRef.current?.blur();
-                router.push(`/jobs/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                navigateToSearch(`/search?type=jobs&q=${encodeURIComponent(searchQuery.trim())}`);
               }}
               className="w-full px-3 py-2.5 flex items-center gap-3 text-ds-text-primary hover:bg-ds-surface-1 rounded-lg cursor-pointer transition-colors"
             >
@@ -305,6 +337,22 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
           {!isJobsRoute && !isSearching && searchResults.length === 0 && (
             <div className="text-[14px] leading-5 text-ds-text-muted">No results found.</div>
           )}
+          {!isJobsRoute && searchQuery.trim() && (
+            <div
+              onClick={() => {
+                setIsFocused(false);
+                inputRef.current?.blur();
+                saveSearch(searchQuery.trim());
+                navigateToSearch(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=all`);
+              }}
+              className="w-full px-3 py-2 flex items-center gap-2.5 text-ds-accent hover:bg-ds-surface-1 rounded-lg cursor-pointer transition-colors border-t border-ds-border/50 pt-2.5"
+            >
+              <Icon name="search" className="w-4 h-4 text-ds-accent shrink-0" />
+              <span className="text-xs sm:text-sm font-medium font-['DM_Sans'] truncate">
+                See all results for &ldquo;{searchQuery.trim()}&rdquo;
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -330,20 +378,16 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
                     onClick={() => {
                       setSearchQuery(item.value);
                       saveSearch(item.value);
-                      setIsFocused(true);
-                      // Outdated search page navigation commented out:
-                      // setIsFocused(false);
-                      // router.push(`/search?q=${encodeURIComponent(item.value)}`);
+                      setIsFocused(false);
+                      navigateToSearch(`/search?q=${encodeURIComponent(item.value)}&type=all`);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         setSearchQuery(item.value);
                         saveSearch(item.value);
-                        setIsFocused(true);
-                        // Outdated search page navigation commented out:
-                        // setIsFocused(false);
-                        // router.push(`/search?q=${encodeURIComponent(item.value)}`);
+                        setIsFocused(false);
+                        navigateToSearch(`/search?q=${encodeURIComponent(item.value)}&type=all`);
                       }
                     }}
                   >

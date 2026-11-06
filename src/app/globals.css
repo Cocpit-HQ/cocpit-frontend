@@ -71,6 +71,7 @@
     /* Shadows & Gradients */
     --gradient-primary: linear-gradient(120deg, #6366F1 0%, #8B5CF6 100%);
     --gradient-subtle: linear-gradient(180deg, #1f2937 0%, #030303 100%);
+    --brand-gradient: linear-gradient(90deg, #EC6229 0%, #FDA17B 100%);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -623,6 +624,15 @@
 
   .gradient-primary {
     background: var(--gradient-primary);
+  }
+
+  .text-brand-gradient {
+    background-image: var(--brand-gradient, linear-gradient(90deg, #EC6229 0%, #FDA17B 100%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
   }
 
   .shadow-purple {
@@ -1424,6 +1434,7 @@
     /* Shadows & Gradients */
     --gradient-primary: linear-gradient(120deg, #6366F1 0%, #8B5CF6 100%);
     --gradient-subtle: linear-gradient(180deg, #1f2937 0%, #030303 100%);
+    --brand-gradient: linear-gradient(90deg, #EC6229 0%, #FDA17B 100%);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -2021,6 +2032,15 @@
 
   .gradient-primary {
     background: var(--gradient-primary);
+  }
+
+  .text-brand-gradient {
+    background-image: var(--brand-gradient, linear-gradient(90deg, #EC6229 0%, #FDA17B 100%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
   }
 
   .shadow-purple {

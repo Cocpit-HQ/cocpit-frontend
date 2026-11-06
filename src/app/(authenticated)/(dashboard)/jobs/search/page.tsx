@@ -1,31 +1,37 @@
 "use client";
 
-import { useActiveProfile } from "@/context/ActiveProfileContext";
-import { Suspense } from "react";
-import { JobSearchPage } from "@/features/jobs/pages/JobSearchPage";
-import { MemoryRouter } from "@/components/layout/MemoryRouter";
+import React, { useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import JobSearchSkeleton from "@/features/jobs/components/skeletons/JobSearchSkeleton";
 
-export default function JobSearchRoute({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const { isCompany, activeProfile } = useActiveProfile();
+function JobSearchRedirect() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  if (isCompany && activeProfile?.id) {
-    return (
-      <Suspense fallback={<JobSearchSkeleton />}>
-        <MemoryRouter section="jobs" />
-        <JobSearchPage />
-      </Suspense>
-    );
-  }
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    params.set("type", "jobs");
+    const rawSearch = params.get("search");
+    if (rawSearch && !params.get("q")) {
+      params.set("q", rawSearch);
+      params.delete("search");
+    }
+    if (!params.get("returnTo")) {
+      params.set("returnTo", "/jobs");
+    }
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("cocpit_search_origin", "/jobs");
+    }
+    router.replace(`/search?${params.toString()}`);
+  }, [router, searchParams]);
 
+  return <JobSearchSkeleton />;
+}
+
+export default function JobSearchRoute() {
   return (
     <Suspense fallback={<JobSearchSkeleton />}>
-      <MemoryRouter section="jobs" />
-      <JobSearchPage />
+      <JobSearchRedirect />
     </Suspense>
   );
 }

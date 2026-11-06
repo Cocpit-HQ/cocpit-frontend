@@ -9,6 +9,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import { formatJobLocation } from '../../utils/location.utils';
+import { getRelativeTime } from '../../services/jobs.service';
 
 interface JobCardProps {
   job: Job;
@@ -19,6 +20,7 @@ interface JobCardProps {
   onAccept?: (offerId: string, e: React.MouseEvent) => void;
   onDecline?: (offerId: string, e: React.MouseEvent) => void;
   isSavedTab?: boolean;
+  ctaText?: string;
 }
 
 export const JobCard: React.FC<JobCardProps> = React.memo(({
@@ -30,6 +32,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
   onAccept,
   onDecline,
   isSavedTab,
+  ctaText,
 }) => {
   const router = useRouter();
   const { flags } = useFeatureFlags();
@@ -136,6 +139,27 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             Withdraw
           </button>
         </div>
+      );
+    }
+
+    if (ctaText) {
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onApply) {
+              onApply(job.id, e);
+            } else if (onClick) {
+              onClick(job);
+            } else {
+              router.push(`/jobs/${job.id}`);
+            }
+          }}
+          className="h-9 px-4 bg-ds-accent hover:bg-ds-accent/90 text-ds-text-primary rounded-full inline-flex items-center justify-center ds-text-body-1 font-medium focus:outline-none transition-all duration-150 active:scale-95 shadow-sm cursor-pointer whitespace-nowrap shrink-0"
+        >
+          {ctaText}
+        </button>
       );
     }
 
@@ -262,7 +286,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
 
           {/* Posted time - Desktop only inside left column */}
           <span className="hidden md:inline text-ds-text-secondary ds-text-secondary font-normal">
-            {job.posted_at}
+            {job.posted_at || (job.created_at ? getRelativeTime(job.created_at) : "Recently posted")}
           </span>
         </div>
 

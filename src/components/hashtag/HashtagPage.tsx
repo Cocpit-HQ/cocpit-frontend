@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useHashtagFeed } from '@/hooks/use-hashtag-feed';
 import { FeedPost } from '@/features/feed/components/FeedPost';
@@ -15,6 +15,7 @@ import { getPostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 export default function HashtagPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const tag = (params.tag as string) || "";
   const { data: session } = useSession();
   const { userCompanies, activeProfile } = useActiveProfile();
@@ -33,6 +34,16 @@ export default function HashtagPage() {
   }, [inView, hasMore, loading, loadMorePosts]);
 
   const handleBack = () => {
+    const returnTo = searchParams?.get('returnTo');
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
+      return;
+    }
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {

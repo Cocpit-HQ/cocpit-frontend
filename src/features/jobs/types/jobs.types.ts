@@ -2,6 +2,7 @@ export interface Job {
   id: string;
   title: string;
   company: string;
+  company_name?: string;
   company_logo?: string;
   location: string;
   job_type: 'Full time' | 'Part time' | 'Remote' | 'Contract' | 'Internship' | string;

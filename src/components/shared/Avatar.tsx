@@ -22,6 +22,15 @@ export interface AvatarProps {
   fallbackIcon?: React.ReactNode;
 }
 
+
+const STATIC_GRADIENT_CLASSES: Record<string, string> = {
+  "gradient-1": "bg-gradient-to-br from-blue-400 to-cyan-400 text-white",
+  "gradient-2": "bg-gradient-to-br from-pink-400 to-rose-400 text-white",
+  "gradient-3": "bg-gradient-to-br from-purple-400 to-indigo-400 text-white",
+  "gradient-4": "bg-gradient-to-br from-green-400 to-emerald-400 text-white",
+  "gradient-5": "bg-gradient-to-br from-orange-400 to-amber-400 text-white",
+};
+
 export const getAvatarGradient = (avatar: string) => {
   return avatarGradients[avatar] || "from-gray-400 to-gray-500";
 };
@@ -98,7 +107,7 @@ export default function Avatar({
     : isValidUrl
     ? "bg-ds-surface-2"
     : isGradient
-    ? `bg-gradient-to-br ${avatarGradients[rawUrl!] || avatarGradients[fallbackGradient] || "from-gray-400 to-gray-500"} text-white`
+    ? (STATIC_GRADIENT_CLASSES[rawUrl!] || STATIC_GRADIENT_CLASSES[fallbackGradient] || "bg-gradient-to-br from-blue-400 to-cyan-400 text-white")
     : "bg-ds-surface-2 border border-ds-border text-ds-text-primary";
 
   const effectiveIndicatorSize = effectiveSize ? indicatorSize[effectiveSize] : "w-2.5 h-2.5";
@@ -121,7 +130,11 @@ export default function Avatar({
           <BusinessBuildingIcon
             className={`w-[65%] h-[65%] text-ds-text-primary shrink-0 ${iconClassName}`}
           />
-        ) : isGradient ? null : (
+        ) : isGradient ? (
+          <span className="font-semibold text-white text-xs sm:text-sm select-none">
+            {name?.charAt(0)?.toUpperCase() || "U"}
+          </span>
+        ) : (
           <UserIcon
             className={`w-[65%] h-[65%] text-ds-text-primary shrink-0 ${iconClassName}`}
           />

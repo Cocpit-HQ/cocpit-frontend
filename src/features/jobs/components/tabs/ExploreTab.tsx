@@ -99,15 +99,21 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
   );
 
   const handleFilterRedirect = (newFilters: Partial<JobsFilter>) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('cocpit_search_origin', '/jobs');
+    }
+
     const hasAny = Object.values(newFilters).some(
       (val) => Boolean(val && (Array.isArray(val) ? val.length > 0 : String(val).trim()))
     );
     if (!hasAny) {
-      router.push('/jobs/search');
+      router.push('/search?type=jobs&returnTo=%2Fjobs');
       return;
     }
 
     const params = new URLSearchParams();
+    params.set('type', 'jobs');
+    params.set('returnTo', '/jobs');
     Object.entries(newFilters).forEach(([key, val]) => {
       if (val) {
         if (Array.isArray(val)) {
@@ -117,15 +123,20 @@ export const ExploreTab: React.FC<ExploreTabProps> = ({
         }
       }
     });
-    router.push(`/jobs/search?${params.toString()}`);
+    router.push(`/search?${params.toString()}`);
   };
 
   const handleSingleFilterRedirect = (key: keyof JobsFilter, value: string) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('cocpit_search_origin', '/jobs');
+    }
     const params = new URLSearchParams();
+    params.set('type', 'jobs');
+    params.set('returnTo', '/jobs');
     if (value) {
       params.set(key, value);
     }
-    router.push(`/jobs/search?${params.toString()}`);
+    router.push(`/search?${params.toString()}`);
   };
 
   const renderSection = (

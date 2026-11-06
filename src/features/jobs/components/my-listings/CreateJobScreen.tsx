@@ -93,7 +93,7 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({ onBack, onSubm
       {/* Questionnaire Form Section */}
       <div className="w-full max-w-md mx-auto py-12 flex flex-col items-center justify-center gap-6">
         <div className="flex flex-col items-center text-center gap-1.5">
-          <span className="text-ds-text-muted text-xs font-semibold font-dm-sans tracking-wide">
+          <span className="text-brand-gradient text-xs font-semibold font-dm-sans tracking-wide">
             Hey, Cocpit
           </span>
           <h3 className="text-black text-xl md:text-2xl font-bold font-dm-sans leading-tight">
