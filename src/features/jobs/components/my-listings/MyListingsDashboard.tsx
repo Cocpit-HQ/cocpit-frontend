@@ -21,7 +21,7 @@ import { BriefcaseIcon, LeftArrowIcon } from '@/components/icons';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface MyListingsDashboardProps {
-  onBack: () => void;
+  onBack?: () => void;
   isCompanyMode?: boolean;
 }
 
@@ -228,10 +228,19 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   // Memoize stable callbacks for child components
   // Memoize stable callbacks for child components
   const handleCreateJobBack = useCallback(() => {
+    const returnTo = searchParams?.get('returnTo') || searchParams?.get('from');
+    if (returnTo) {
+      if (typeof window !== 'undefined' && window.history.length > 1) {
+        router.back();
+      } else {
+        router.push(returnTo);
+      }
+      return;
+    }
     setSelectedListing(null);
     refresh();
     transitionTo('dashboard');
-  }, [refresh, transitionTo]);
+  }, [refresh, transitionTo, searchParams, router]);
 
   const handleSendOfferInit = useCallback((listing: JobListing) => {
     setInitialOfferJobId(listing.id);

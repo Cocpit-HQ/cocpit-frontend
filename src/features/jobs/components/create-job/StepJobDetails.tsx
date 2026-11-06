@@ -127,6 +127,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const [isLoadingIndustries, setIsLoadingIndustries] = useState(false);
   const [isLoadingMoreIndustries, setIsLoadingMoreIndustries] = useState(false);
   const [isIndustryDropdownOpen, setIsIndustryDropdownOpen] = useState(false);
+  const [industryDropdownPlacement, setIndustryDropdownPlacement] = useState<'bottom' | 'left' | 'top'>('bottom');
   const [industrySearchQuery, setIndustrySearchQuery] = useState('');
   const industryDropdownRef = useRef<HTMLDivElement>(null);
   const industrySearchInputRef = useRef<HTMLInputElement>(null);
@@ -391,6 +392,52 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       industrySearchInputRef.current?.focus({ preventScroll: true });
     }
   }, [isIndustryDropdownOpen]);
+
+  // Dynamically calculate whether Industry dropdown should open to the left, upward, or downward based on viewport space
+  const updateIndustryPlacement = useCallback(() => {
+    if (industryDropdownRef.current) {
+      const rect = industryDropdownRef.current.getBoundingClientRect();
+      const dropdownEstimatedHeight = 260; // 36px search + 192px listbox + padding/gaps
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceLeft = rect.left;
+
+      let nextPlacement: 'left' | 'top' | 'bottom';
+      if (spaceBelow < dropdownEstimatedHeight && spaceLeft >= 220) {
+        nextPlacement = 'left';
+      } else if (spaceBelow < dropdownEstimatedHeight) {
+        nextPlacement = 'top';
+      } else {
+        nextPlacement = 'bottom';
+      }
+
+      // Avoid unnecessary re-renders when placement remains identical
+      setIndustryDropdownPlacement((prev) => (prev !== nextPlacement ? nextPlacement : prev));
+    }
+  }, []);
+
+  // Recalculate placement when opened, and keep aligned on scroll or resize with rAF throttling
+  useEffect(() => {
+    if (isIndustryDropdownOpen) {
+      updateIndustryPlacement();
+
+      let rafId: number | null = null;
+      const handleThrottledUpdate = () => {
+        if (rafId !== null) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          updateIndustryPlacement();
+          rafId = null;
+        });
+      };
+
+      window.addEventListener('scroll', handleThrottledUpdate, { passive: true, capture: true });
+      window.addEventListener('resize', handleThrottledUpdate, { passive: true });
+      return () => {
+        if (rafId !== null) cancelAnimationFrame(rafId);
+        window.removeEventListener('scroll', handleThrottledUpdate, true);
+        window.removeEventListener('resize', handleThrottledUpdate);
+      };
+    }
+  }, [isIndustryDropdownOpen, updateIndustryPlacement]);
 
   
 
@@ -946,21 +993,15 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Row 4: AI Rewrite Header & Job Description */}
-          <div className={cn("flex flex-col gap-2.5", isDescriptionError && "mb-3")}>
-            {/* Header row with Cyphex AI Regenerate button */}
-            <div className="flex items-center justify-between">
-              <span className="text-ds-text-primary text-base font-normal sm:font-medium font-dm-sans leading-6">
-                Rewrite with AI
-              </span>
+          <div className={cn("flex flex-col gap-4", isDescriptionError && "mb-3")}>
+            {/* Header row with right-aligned Cyphex AI Regenerate button */}
+            <div className="w-full h-9 flex flex-row justify-end items-center gap-2.5">
               <button
                 type="button"
                 onClick={handleRegenerateAi}
                 disabled={isAiGenerating || regenerateCount >= 3}
-                className="inline-flex items-center gap-1.5 text-ds-accent hover:opacity-85 active:scale-95 transition-all text-sm font-medium font-dm-sans leading-5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-9 px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 active:scale-95 transition-all inline-flex flex-row justify-center items-center gap-1 text-base font-medium font-dm-sans leading-6 text-ds-accent cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
               >
-                <CyphexAIIcon
-                  className={`w-4 h-4 text-ds-accent shrink-0 ${isAiGenerating ? 'animate-cyphex' : ''}`}
-                />
                 <span>
                   {isAiGenerating
                     ? 'Generating...'
@@ -968,6 +1009,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                     ? `Regenerate with AI (${3 - regenerateCount} left)`
                     : 'Regenerate with AI'}
                 </span>
+                <CyphexAIIcon
+                  size={20}
+                  className={`size-5 text-ds-accent shrink-0 ${isAiGenerating ? 'animate-cyphex' : ''}`}
+                />
               </button>
             </div>
 
@@ -1030,6 +1075,9 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               ref={industryDropdownRef}
               className="min-w-0 relative border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5 cursor-pointer select-none"
               onClick={() => {
+                if (!isIndustryDropdownOpen) {
+                  updateIndustryPlacement();
+                }
                 setIsIndustryDropdownOpen((prev) => !prev);
               }}
             >
@@ -1055,7 +1103,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               {isIndustryDropdownOpen && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-[calc(100%+8px)] left-0 w-full p-2 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col gap-2 z-50 overflow-hidden"
+                  className={cn(
+                    "absolute p-2 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl flex flex-col gap-2 z-50 overflow-hidden",
+                    industryDropdownPlacement === 'left'
+                      ? "right-[calc(100%+8px)] bottom-0 w-full min-w-[220px]"
+                      : industryDropdownPlacement === 'top'
+                        ? "bottom-[calc(100%+8px)] left-0 w-full"
+                        : "top-[calc(100%+8px)] left-0 w-full"
+                  )}
                 >
                   {/* Search input with search icon & clear button */}
                   <div className="w-full flex items-center gap-2 border-b border-ds-border pb-2 px-1">

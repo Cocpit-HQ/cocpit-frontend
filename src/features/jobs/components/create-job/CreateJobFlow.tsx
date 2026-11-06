@@ -204,7 +204,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
             jobId={jobId}
             initialRole={title}
             initialDetails={accumulatedDetails}
-            onBack={initialListing ? handleBack : () => setStep('role-input')}
+            onBack={initialListing || jobId ? handleBack : () => setStep('role-input')}
             onClose={handleBack}
             onSaveDraft={handleSaveDraft}
             onPublish={handlePublish}
@@ -240,7 +240,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
           jobId={jobId}
           initialRole={title}
           initialDetails={accumulatedDetails}
-          onBack={initialListing ? handleBack : () => setStep('role-input')}
+          onBack={initialListing || jobId ? handleBack : () => setStep('role-input')}
           onClose={handleBack}
           onSaveDraft={handleSaveDraft}
           onPublish={handlePublish}

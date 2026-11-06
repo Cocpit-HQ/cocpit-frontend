@@ -4,7 +4,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { JobsIcon } from "@/components/icons";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { BusinessProfileData } from "../../types/business-profile.types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { businessProfileService } from "../../services/businessProfile.service";
@@ -83,11 +83,15 @@ const JobCardItem = React.memo(function JobCardItem({
 }: JobCardItemProps) {
   const [imgError, setImgError] = useState(false);
 
+  const statusLower = (job.applicationStatus || '').toLowerCase();
+  const isAccepted = statusLower === 'accepted';
+  const isShortlistedStatus = statusLower === 'shortlisted' || Boolean(isShortlisted);
+
   const isShowJobDetails = Boolean(
     isOwner ||
     isBusinessViewer ||
-    isShortlisted ||
-    job.applicationStatus?.toLowerCase() === 'shortlisted'
+    isShortlistedStatus ||
+    isAccepted
   );
 
   return (
@@ -441,8 +445,14 @@ export default function JobsTab({
     )
   );
 
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const handleCreateJob = () => {
-    router.push(`/jobs?view=create-job&companyId=${data.id}`);
+    const currentUrl = typeof window !== 'undefined'
+      ? `${window.location.pathname}${window.location.search}`
+      : `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ''}`;
+    router.push(`/jobs?view=create-job&companyId=${data.id}&returnTo=${encodeURIComponent(currentUrl)}`);
   };
 
   const { data: jobsResponse, isLoading } = useQuery({
@@ -474,18 +484,17 @@ export default function JobsTab({
 
   const handleNavigate = useCallback(
     (jobId: string) => {
-      const currentUrl = typeof window !== "undefined"
-        ? (window.location.pathname + window.location.search)
-        : `/organization/${data.slug || data.id}?tab=jobs`;
+      const currentUrl = typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ''}`;
       if (isOwner) {
-        const returnUrl = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '';
-        const returnParam = returnUrl ? `&returnTo=${encodeURIComponent(returnUrl)}` : '';
+        const returnParam = currentUrl ? `&returnTo=${encodeURIComponent(currentUrl)}` : '';
         router.push(`/jobs?view=view-listing&jobId=${jobId}${returnParam}`);
       } else {
         router.push(`/jobs/${jobId}?returnTo=${encodeURIComponent(currentUrl)}`);
       }
     },
-    [router, data.slug, data.id, isOwner]
+    [router, isOwner, pathname, searchParams]
   );
 
   const rawList = useMemo(() => {
@@ -643,8 +652,13 @@ export default function JobsTab({
       {jobsToRender.map((job) => {
         const isSaved = savedStatus[job.id] !== undefined ? savedStatus[job.id] : Boolean(job.isSaved);
         const isShortlisted = job.applicationStatus?.toLowerCase() === 'shortlisted';
+        const statusLower = (job.applicationStatus || '').toLowerCase();
+        const isTerminalStatus = statusLower === 'declined' || statusLower === 'rejected' || statusLower === 'withdrawn' || statusLower === 'expired';
         const isApplied = Boolean(
-          (appliedJobIds.has(job.id) || job.isApplied) && !withdrawnJobIds.has(job.id)
+          (appliedJobIds.has(job.id) || job.isApplied) &&
+          !withdrawnJobIds.has(job.id) &&
+          !isTerminalStatus &&
+          statusLower !== 'accepted'
         );
 
         return (

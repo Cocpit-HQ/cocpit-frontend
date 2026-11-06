@@ -368,6 +368,12 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    // Ensures clean subdomain and relative URL resolution on staging/UAT environments
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
   pages: {
     signIn: "/", // Custom login page
@@ -379,6 +385,8 @@ export const authOptions: NextAuthOptions = {
     // when the browser closes, causing logout on every restart.
     maxAge: 7 * 24 * 60 * 60,
   },
+  // Disables the __Host- and __Secure- prefixes on cookie names (fixes SCRUM-9/SCRUM-1621 where older Safari drops __Host- cookies on HTTPS subdomains like staging.cocpit.in)
+  useSecureCookies: false,
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -391,6 +399,23 @@ export const authOptions: NextAuthOptions = {
         // Explicit maxAge makes this a persistent cookie (survives browser restarts).
         // Matches session.maxAge above.
         maxAge: 7 * 24 * 60 * 60,
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },

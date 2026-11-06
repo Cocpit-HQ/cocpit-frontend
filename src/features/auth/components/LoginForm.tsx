@@ -222,6 +222,8 @@ const LoginForm = () => {
       });
 
       if (result?.error) {
+        // Log client-side auth error for easier debugging on mobile Safari Web Inspector
+        console.error("Sign-in response error:", result.error);
         if (!tryParseDeletionError(result.error, email)) {
           const errMsg = result.error !== "CredentialsSignin"
               ? result.error

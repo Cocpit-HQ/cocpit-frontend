@@ -73,17 +73,23 @@ export function AppShell({
   const isSettingsSubpage = isSettingsRoute && !isRootSettings;
   const isHashtagPage = Boolean(pathname?.startsWith('/hashtag/') || pathname === '/hashtag');
   const jobsTab = searchParams?.get('tab')?.toLowerCase();
+  const urlView = searchParams?.get('view');
+  const isFullScreenJobView = Boolean(
+    urlView === 'create-job' ||
+    urlView === 'applicants' ||
+    urlView === 'view-listing' ||
+    urlView === 'offer-details'
+  );
+  const isCandidateMyListings = !isCompany && (
+    jobsTab === 'my listings' ||
+    jobsTab === 'my-listings' ||
+    jobsTab === 'my_listings' ||
+    searchParams?.get('tab') === 'My Listings'
+  );
   const isJobsFullScreen = Boolean(
     pathname === '/jobs' && (
-      jobsTab === 'my listings' ||
-      jobsTab === 'my-listings' ||
-      jobsTab === 'my_listings' ||
-      searchParams?.get('tab') === 'My Listings' ||
-      searchParams?.get('view') === 'create-job' ||
-      searchParams?.get('view') === 'applicants' ||
-      searchParams?.get('view') === 'view-listing' ||
-      searchParams?.get('view') === 'offer-details' ||
-      Boolean(isCompany)
+      isFullScreenJobView ||
+      isCandidateMyListings
     )
   );
   const isJobDetailPage = Boolean(pathname?.match(/^\/jobs\/[^\/]+\/?$/) && !pathname?.startsWith('/jobs/search'));

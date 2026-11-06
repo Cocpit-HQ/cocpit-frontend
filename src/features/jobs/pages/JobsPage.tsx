@@ -135,6 +135,13 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
     setActiveTab(tabId);
     const params = new URLSearchParams(window.location.search);
     params.set("tab", tabId);
+    if (tabId === "Explore") {
+      params.delete("view");
+      params.delete("jobId");
+      params.delete("step");
+      params.delete("title");
+      params.delete("subtab");
+    }
     router.replace(`/jobs?${params.toString()}`);
   };
 
@@ -230,18 +237,20 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
 
   const effectiveTab = urlTab || activeTab;
   if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView || urlView === 'offer-details') {
+    const returnTo = urlParams?.get('returnTo') || urlParams?.get('from');
+    const shouldShowBack = !isCompanyMode || Boolean(returnTo);
+
     return (
-      <div className={`w-full min-h-screen bg-ds-bg flex flex-col items-center ${isFullScreenView ? 'pt-0 pb-0 px-0' : 'pt-4 sm:pt-[60px] pb-16 px-4 sm:px-6 md:px-0'} relative select-text`}>
+      <div className={`w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans ${isFullScreenView ? 'pt-0 pb-0 px-0 flex flex-col items-center' : isCompanyMode ? 'px-4 sm:px-6 md:px-8 pt-0 pb-16 md:pr-[253px]' : 'flex flex-col items-center pt-4 sm:pt-[60px] pb-16 px-4 sm:px-6 md:px-0'} relative select-text`}>
         <MyListingsDashboard
           isCompanyMode={isCompanyMode}
-          onBack={() => {
-            const returnTo = urlParams?.get('returnTo');
+          onBack={shouldShowBack ? () => {
             if (returnTo) {
-              router.push(returnTo);
-              return;
-            }
-            if (typeof window !== 'undefined' && window.history.length > 1) {
-              router.back();
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push(returnTo);
+              }
               return;
             }
             if (isCompanyMode) {
@@ -249,7 +258,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
             } else {
               handleTabChange("Explore");
             }
-          }}
+          } : undefined}
         />
       </div>
     );

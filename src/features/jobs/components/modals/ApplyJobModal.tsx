@@ -26,6 +26,8 @@ interface ApplyJobModalProps {
   jobTitle?: string;
 }
 
+const MAX_NOTE_LENGTH = 1000;
+
 export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   isOpen,
   onClose,
@@ -347,20 +349,31 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               </div>
 
               {/* Note Textarea & Character Counter */}
-              <div className="w-full max-w-[369px] md:w-[276px] flex flex-col gap-1">
+              <div className="w-full max-w-[369px] md:w-[276px] flex flex-col">
                 <textarea
                   value={coverLetter}
-                  onChange={(e) => setCoverLetter(e.target.value.slice(0, 1000))}
-                  maxLength={1000}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length <= MAX_NOTE_LENGTH) {
+                      setCoverLetter(val);
+                    }
+                  }}
+                  maxLength={MAX_NOTE_LENGTH}
                   placeholder="Tell us what makes you unique..."
                   spellCheck={false}
                   data-ms-editor="false"
                   {...({ writingsuggestions: "false" } as any)}
                   className="w-full h-[80px] p-3 bg-ds-bg border border-ds-border rounded-2xl font-dm-sans text-sm text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none box-border overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 />
-                <div className="flex justify-end items-center px-1">
-                  <span className="text-[10px] text-ds-text-muted font-normal font-dm-sans leading-3 select-none">
-                    {coverLetter.length}/1000
+                <div className="ds-supporting-area justify-end pt-1 pr-1">
+                  <span
+                    className={`font-dm-sans text-[10px] md:text-xs transition-colors duration-150 ${
+                      coverLetter.length >= MAX_NOTE_LENGTH
+                        ? 'text-ds-error font-medium'
+                        : 'text-ds-text-secondary'
+                    }`}
+                  >
+                    {coverLetter.length}/{MAX_NOTE_LENGTH}
                   </span>
                 </div>
               </div>
