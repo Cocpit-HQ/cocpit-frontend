@@ -11,6 +11,7 @@ import { ExternalLink, Loader2 } from 'lucide-react';
 import JobDetailSkeleton from '../components/skeletons/JobDetailSkeleton';
 import { JobUnavailableScreen } from '../components/states/JobUnavailableScreen';
 import Avatar from '@/components/shared/Avatar';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import InteractiveLocationMap from '@/features/company-onboarding/components/InteractiveLocationMap';
@@ -72,12 +73,25 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     toggleFollow,
   } = useJobDetail(jobId);
   const { flags } = useFeatureFlags();
+  const { isCompany, activeProfile } = useActiveProfile();
   const { goBack } = useSmartBack();
   const router = useRouter();
   const searchParams = useSearchParams();
   // SCRUM-1610: Support both returnTo and from query params (e.g. from notifications)
   // so back navigation pops history back to the caller instead of forcing /jobs
   const returnTo = searchParams.get('returnTo') || searchParams.get('from');
+
+  // If this job belongs to the current logged-in business account, redirect to the recruiter listing details view
+  React.useEffect(() => {
+    if (!job) return;
+    const isOwner = Boolean(
+      isCompany && activeProfile?.id && (job.org_id === activeProfile.id || job.company_id === activeProfile.id)
+    );
+    if (isOwner) {
+      const returnParam = returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : '';
+      router.replace(`/jobs?view=view-listing&jobId=${job.id}${returnParam}`);
+    }
+  }, [job, isCompany, activeProfile, returnTo, router]);
 
   const handleBack = () => {
     if (returnTo) {
@@ -172,6 +186,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   // - Both icons hidden for chat states (Chat now), terminal offer states (expired/declined), and rejected jobs
   const showShare = !job.is_offer && !job.is_closed && job.application_status !== 'Rejected' && !isShortlisted && !isAccepted;
   const showSave = (
+    !isCompany &&
     job.application_status !== 'Rejected' &&
     !isShortlisted &&
     !isAccepted &&
@@ -196,6 +211,9 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   })();
 
   const renderBottomBarActions = () => {
+    // Viewing as another business account: No candidate apply/withdraw actions
+    if (isCompany) return null;
+
     // Closed jobs: Recruitment pipeline is ended.
     if (job.is_closed) {
       return (
@@ -314,6 +332,9 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   };
 
   const renderMobileBottomBarActions = () => {
+    // Viewing as another business account: No candidate apply/withdraw actions
+    if (isCompany) return null;
+
     if (job.is_closed) {
       return (
         <button

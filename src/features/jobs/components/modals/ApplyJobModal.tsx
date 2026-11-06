@@ -107,7 +107,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
       const selectedResume = fetchedResumes.find((r) => r.id === selectedResumeId);
       const resumeUrlOrName = uploadedFile ? uploadedFile.name : selectedResume?.name || 'resume.pdf';
       const resumeUrlToSend = uploadedFile ? null : selectedResume?.url || null;
-      await onApply(resumeUrlOrName, uploadedFile, resumeUrlToSend, coverLetter);
+      await onApply(resumeUrlOrName, uploadedFile, resumeUrlToSend, coverLetter.slice(0, 1000));
       onClose();
     } catch (err) {
       console.error('Failed to submit application', err);
@@ -124,7 +124,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none w-full outline-none z-[101] [&>button]:hidden max-md:fixed max-md:bottom-0 max-md:top-auto max-md:left-0 max-md:right-0 max-md:translate-x-0 max-md:translate-y-0 max-md:max-w-none max-md:flex max-md:justify-center md:max-w-[320px]">
-        <div className={`w-full max-w-[393px] md:w-[300px] ${step === 2 ? 'md:h-[276px]' : 'md:h-[344px]'} p-[8px_12px_24px] md:p-3 bg-ds-bg rounded-t-[8px] md:rounded-2xl rounded-b-none md:rounded-b-2xl border-t md:border border-ds-border flex flex-col justify-between items-center overflow-hidden box-border shadow-2xl gap-4 md:gap-0`}>
+        <div className={`w-full max-w-[393px] md:w-[300px] ${step === 2 ? 'md:h-[296px]' : 'md:h-[344px]'} p-[8px_12px_24px] md:p-3 bg-ds-bg rounded-t-[8px] md:rounded-2xl rounded-b-none md:rounded-b-2xl border-t md:border border-ds-border flex flex-col justify-between items-center overflow-hidden box-border shadow-2xl gap-4 md:gap-0`}>
           {/* Mobile Drag Handle */}
           <div className="w-full flex md:hidden flex-col items-center justify-center shrink-0 h-5">
             <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
@@ -346,16 +346,24 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 </div>
               </div>
 
-              {/* Note Textarea */}
-              <textarea
-                value={coverLetter}
-                onChange={(e) => setCoverLetter(e.target.value)}
-                placeholder="Tell us what makes you unique..."
-                spellCheck={false}
-                data-ms-editor="false"
-                {...({ writingsuggestions: "false" } as any)}
-                className="w-full max-w-[369px] md:w-[276px] h-[80px] p-3 bg-ds-bg border border-ds-border rounded-2xl font-dm-sans text-sm text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none box-border overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              />
+              {/* Note Textarea & Character Counter */}
+              <div className="w-full max-w-[369px] md:w-[276px] flex flex-col gap-1">
+                <textarea
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value.slice(0, 1000))}
+                  maxLength={1000}
+                  placeholder="Tell us what makes you unique..."
+                  spellCheck={false}
+                  data-ms-editor="false"
+                  {...({ writingsuggestions: "false" } as any)}
+                  className="w-full h-[80px] p-3 bg-ds-bg border border-ds-border rounded-2xl font-dm-sans text-sm text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none box-border overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                />
+                <div className="flex justify-end items-center px-1">
+                  <span className="text-[10px] text-ds-text-muted font-normal font-dm-sans leading-3 select-none">
+                    {coverLetter.length}/1000
+                  </span>
+                </div>
+              </div>
 
               {/* Action Buttons */}
               <div className="self-stretch flex justify-center items-center gap-[10px]">

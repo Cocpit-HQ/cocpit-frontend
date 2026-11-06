@@ -140,10 +140,12 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   useEffect(() => {
     // Prevent race condition where stale URL searchParams clears state during view transitions
     if (view !== 'dashboard' && !urlJobId) return;
-    if (urlJobId && listings.length > 0) {
+    if (urlJobId) {
       const matched = listings.find(l => l.id === urlJobId);
       if (matched) {
         setSelectedListing(matched);
+      } else {
+        jobsService.getJobById(urlJobId).then(j => j && setSelectedListing(j as any));
       }
     } else if (!urlJobId && view === 'dashboard') {
       setSelectedListing(null);
@@ -319,6 +321,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         <ListingDetailsScreen
           listing={listingToUse}
           onBack={() => {
+            const returnTo = searchParams?.get('returnTo');
+            if (returnTo) {
+              router.push(returnTo);
+              return;
+            }
             const fromOffers = typeof window !== 'undefined' && sessionStorage.getItem('coming_from_send_offer_details') === 'true';
             if (fromOffers) {
               if (typeof window !== 'undefined') {
@@ -444,7 +451,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                     setIsSendOfferModalOpen(true);
                   }
                 }}
-                className="w-[103px] h-9 px-3 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-primary rounded-full flex items-center justify-center font-dm-sans font-medium text-base leading-6 whitespace-nowrap transition-all active:scale-95 cursor-pointer outline-none border border-ds-border shrink-0"
+                className="w-[103px] h-9 px-3 py-1.5 bg-transparent hover:bg-ds-surface-1 text-ds-text-primary rounded-full flex items-center justify-center font-dm-sans font-medium text-base leading-6 whitespace-nowrap transition-all active:scale-95 cursor-pointer outline-none border border-ds-border shrink-0"
               >
                 {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
               </button>
@@ -493,7 +500,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                     setIsSendOfferModalOpen(true);
                   }
                 }}
-                className="w-[103px] h-9 px-3 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-primary rounded-[100px] flex items-center justify-center ds-text-body-1 font-medium text-base leading-6 whitespace-nowrap transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 border-none"
+                className="w-[103px] h-9 px-3 py-1.5 bg-transparent hover:bg-ds-surface-1 border border-ds-border text-ds-text-primary rounded-full flex items-center justify-center ds-text-body-1 font-medium text-base leading-6 whitespace-nowrap transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0"
               >
                 {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
               </button>

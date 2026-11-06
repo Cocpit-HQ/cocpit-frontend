@@ -235,6 +235,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
         <MyListingsDashboard
           isCompanyMode={isCompanyMode}
           onBack={() => {
+            const returnTo = urlParams?.get('returnTo');
+            if (returnTo) {
+              router.push(returnTo);
+              return;
+            }
             if (typeof window !== 'undefined' && window.history.length > 1) {
               router.back();
               return;
@@ -270,9 +275,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
               <button
                 type="button"
                 onClick={() => handleTabChange("My Listings")}
-                className="px-3 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 rounded-full inline-flex items-center gap-1 text-ds-text-primary font-dm-sans transition-colors cursor-pointer"
+                className="h-9 px-3 py-1.5 bg-transparent hover:bg-ds-surface-1 border border-ds-border rounded-full inline-flex items-center justify-center gap-2.5 text-ds-text-primary font-dm-sans transition-colors cursor-pointer"
               >
-                <span className="text-base font-medium leading-6">
+                <span className="text-base font-medium font-dm-sans leading-6 text-ds-text-primary">
                   Posted jobs
                 </span>
                 <Icon icon="solar:alt-arrow-right-linear" className="w-4 h-4 text-ds-text-primary shrink-0" />
@@ -362,12 +367,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
           })}
         </div>
 
-        {/* Right side: 'Posted jobs' pill button (Frame primary button with Icon w:133px h:36px padding:6px 12px gap:4px) */}
+        {/* Right side: 'Posted jobs' pill button (Frame secondary button with Icon w:139px h:36px padding:6px 12px gap:10px border:#2C2C33) */}
         <FeatureDisabledTooltip featureKey="enableMyListings">
           <button
             type="button"
             onClick={() => handleTabChange("My Listings")}
-            className="w-[133px] h-9 px-3 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 border-0 rounded-full inline-flex items-center justify-center gap-1 text-ds-text-primary font-dm-sans transition-colors shrink-0 cursor-pointer"
+            className="w-[139px] h-9 px-3 py-1.5 bg-transparent hover:bg-ds-surface-1 border border-ds-border rounded-full inline-flex items-center justify-center gap-2.5 text-ds-text-primary font-dm-sans transition-colors shrink-0 cursor-pointer"
           >
             <span className="w-[89px] h-6 text-base font-medium font-dm-sans leading-6 text-ds-text-primary whitespace-nowrap text-center">
               Posted jobs

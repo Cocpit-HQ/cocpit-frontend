@@ -167,19 +167,20 @@ export const useJobDetail = (jobId: string) => {
 
       let formData: FormData | undefined = undefined;
       let jsonBody: any = undefined;
-      if (uploadedFile || resumeId || coverLetter) {
+      const sanitizedCoverLetter = coverLetter ? coverLetter.slice(0, 1000) : undefined;
+      if (uploadedFile || resumeId || sanitizedCoverLetter) {
         formData = new FormData();
         if (uploadedFile) formData.append('resume', uploadedFile);
         else if (resumeId) {
           formData.append('resume_url', resumeId);
           if (resumeUrlOrName) formData.append('resume_file_name', resumeUrlOrName);
         }
-        if (coverLetter) formData.append('cover_note', coverLetter);
+        if (sanitizedCoverLetter) formData.append('cover_note', sanitizedCoverLetter);
       } else if (resumeUrlOrName || resumeId) {
         jsonBody = {
           resume_url: resumeUrlOrName || resumeId,
           resume_file_name: resumeUrlOrName || null,
-          cover_note: coverLetter
+          cover_note: sanitizedCoverLetter
         };
       }
 

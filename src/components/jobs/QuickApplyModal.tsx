@@ -288,12 +288,16 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Cover Note (Optional)</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium">Cover Note (Optional)</label>
+                  <span className="text-xs text-muted-foreground select-none">{formData.coverNote.length}/1000</span>
+                </div>
                 <textarea
                   rows={3}
+                  maxLength={1000}
                   className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none resize-none"
                   value={formData.coverNote}
-                  onChange={e => setFormData({ ...formData, coverNote: e.target.value })}
+                  onChange={e => setFormData({ ...formData, coverNote: e.target.value.slice(0, 1000) })}
                 />
               </div>
 

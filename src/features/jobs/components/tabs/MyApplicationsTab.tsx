@@ -144,25 +144,6 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
     }
   };
 
-  // Full empty state when user has not applied for any jobs
-  if (jobs.length === 0 && !isLoading) {
-    return (
-      <div className="w-full max-w-[800px] py-28 flex flex-col justify-center items-center gap-2 select-none animate-in fade-in duration-200 font-dm-sans">
-        <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
-          <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
-        </div>
-        <div className="flex flex-col justify-start items-center gap-2 text-center">
-          <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6 text-center">
-            No jobs applications yet
-          </h3>
-          <p className="max-w-sm text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-center">
-            Applied jobs will appear here when you apply for job
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-5 font-dm-sans">
       {/* Stats Cards Row (Desktop gap-6 & 3xl bold, Mobile gap-3 & compact h-[74px]) */}

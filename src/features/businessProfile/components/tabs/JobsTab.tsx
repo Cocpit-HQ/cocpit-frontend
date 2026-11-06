@@ -41,12 +41,14 @@ export interface BusinessJobItem {
   salary: string;
   experience: string;
   isSaved?: boolean;
+  isApplied?: boolean;
 }
 
 interface JobCardItemProps {
   job: BusinessJobItem;
   isSaved: boolean;
   isOwner: boolean;
+  isBusinessViewer?: boolean;
   onToggleSave: (jobId: string, currentSaved: boolean, e: React.MouseEvent) => void;
   onNavigate: (jobId: string) => void;
 }
@@ -60,6 +62,7 @@ const JobCardItem = React.memo(function JobCardItem({
   job,
   isSaved,
   isOwner,
+  isBusinessViewer = false,
   onToggleSave,
   onNavigate,
 }: JobCardItemProps) {
@@ -207,7 +210,7 @@ const JobCardItem = React.memo(function JobCardItem({
             }}
             className="px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-[0.98] text-white rounded-[100px] font-medium font-['DM_Sans'] text-sm sm:text-base leading-6 transition-all cursor-pointer inline-flex justify-center items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent mt-0.5"
           >
-            {isOwner ? "Job details" : "Apply now"}
+            {isOwner || isBusinessViewer || job.isApplied ? "Job details" : "Apply now"}
           </button>
         </div>
       </div>
@@ -223,10 +226,12 @@ export default function JobsTab({
 }: JobsTabProps) {
   const router = useRouter();
   const { activeProfile } = useActiveProfile();
+  const isBusinessViewer = Boolean(activeProfile?.type === 'COMPANY');
 
   const isOwner = Boolean(
     isOwnProfile ||
     canManageCompany ||
+    (activeProfile?.type === 'COMPANY' && (activeProfile.id === data.id || activeProfile.id === (data as any)?.orgId || activeProfile.id === (data as any)?.org_id)) ||
     viewerPermissions?.includes("POST_JOBS") ||
     viewerPermissions?.includes("MANAGE_COMPANY_DETAILS") ||
     viewerPermissions?.includes("MANAGE_COMPANY") ||
@@ -277,9 +282,15 @@ export default function JobsTab({
 
   const handleNavigate = useCallback(
     (jobId: string) => {
-      router.push(`/jobs/${jobId}`);
+      if (isOwner) {
+        const returnUrl = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '';
+        const returnParam = returnUrl ? `&returnTo=${encodeURIComponent(returnUrl)}` : '';
+        router.push(`/jobs?view=view-listing&jobId=${jobId}${returnParam}`);
+      } else {
+        router.push(`/jobs/${jobId}`);
+      }
     },
-    [router]
+    [router, isOwner]
   );
 
   const rawList = useMemo(() => {
@@ -294,6 +305,7 @@ export default function JobsTab({
 
   const mappedJobs: BusinessJobItem[] = useMemo(() => {
     return rawList.map((job: any) => {
+      const id = job.job_id || job.id || "";
       const rawSalary =
         job.salary ||
         job.salary_display ||
@@ -317,7 +329,7 @@ export default function JobsTab({
           : "";
 
       return {
-        id: job.job_id || job.id || "",
+        id,
         title: job.title || "",
         company: job.company || job.company_name || data.name || "",
         companyLogo: job.company_logo || job.logo || data.logoUrl || "",
@@ -327,6 +339,7 @@ export default function JobsTab({
         salary: rawSalary,
         experience,
         isSaved: Boolean(job.is_saved ?? job.isSaved ?? false),
+        isApplied: Boolean(job.is_applied ?? job.hasApplied ?? false),
       };
     });
   }, [rawList, data.name, data.logoUrl, data.location]);
@@ -440,6 +453,7 @@ export default function JobsTab({
             job={job}
             isSaved={isSaved}
             isOwner={isOwner}
+            isBusinessViewer={isBusinessViewer}
             onToggleSave={handleToggleSave}
             onNavigate={handleNavigate}
           />

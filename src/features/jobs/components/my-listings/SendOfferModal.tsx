@@ -127,9 +127,9 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     const fetchCandidates = async () => {
       setIsLoadingCandidates(true);
       try {
-        let endpoint = '/users/suggested';
+        let endpoint = '/users/suggested?usersOnly=true&type=USER';
         if (searchQuery.trim().length > 0) {
-          endpoint = `/users/search?q=${encodeURIComponent(searchQuery.trim())}`;
+          endpoint = `/users/search?q=${encodeURIComponent(searchQuery.trim())}&usersOnly=true&type=USER`;
         }
 
         if (selectedJobId) {
@@ -138,11 +138,13 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
         }
 
         const response = await api.get(endpoint);
-        const mapped = (response.data || []).map((item: any) => ({
-          id: item.id || item.user_id,
-          name: item.full_name || 'Anonymous User',
-          avatar: item.avatar_url || ''
-        })).filter((c: SelectableCandidate) => c.id !== currentUserId);
+        const mapped = (response.data || [])
+          .filter((item: any) => (item.id || item.user_id) !== currentUserId && item.type !== 'COMPANY')
+          .map((item: any) => ({
+            id: item.id || item.user_id,
+            name: item.full_name || 'Anonymous User',
+            avatar: item.avatar_url || ''
+          }));
         setCandidatesList(mapped);
         setAllFetchedCandidates(prev => {
           const updated = { ...prev };
@@ -254,7 +256,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             ? 'h-[440px] md:h-auto'
             : stage === 2
             ? 'h-[420px] md:h-auto'
-            : 'h-[320px] md:h-auto'
+            : 'min-h-[320px] h-auto md:h-auto'
         }`}
         onWheel={(e) => e.stopPropagation()}
       >
@@ -604,14 +606,19 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Frame 2609596: Note textarea with border-radius 16px and border */}
-            <div className="w-full max-w-[369px] h-20 p-2.5 rounded-2xl border border-ds-border box-border flex flex-col items-start gap-3 shrink-0">
-              <textarea
-                value={personalNote}
-                onChange={(e) => setPersonalNote(e.target.value.slice(0, 255))}
-                maxLength={255}
-                placeholder="Tell us what makes you unique..."
-                className="w-full h-full bg-transparent border-none p-0 text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-secondary focus:outline-none focus:ring-0 resize-none leading-5"
-              />
+            <div className="w-full max-w-[369px] flex flex-col items-end gap-1 shrink-0">
+              <div className="w-full h-20 p-2.5 rounded-2xl border border-ds-border box-border flex flex-col items-start gap-3">
+                <textarea
+                  value={personalNote}
+                  onChange={(e) => setPersonalNote(e.target.value.slice(0, 1000))}
+                  maxLength={1000}
+                  placeholder="Tell us what makes you unique..."
+                  className="w-full h-full bg-transparent border-none p-0 text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-secondary focus:outline-none focus:ring-0 resize-none leading-5 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                />
+              </div>
+              <span className="text-xs font-normal font-dm-sans text-ds-text-secondary pr-1">
+                {personalNote.length}/1000
+              </span>
             </div>
 
             {/* Frame 2609476: Action Buttons (369px x 36px, gap: 8px) */}
