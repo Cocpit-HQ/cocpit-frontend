@@ -14,6 +14,7 @@ import { ApplyJobModal } from "../components/modals/ApplyJobModal";
 import { getExploreSectionPaginated } from "../services/jobs.service";
 import { useJobs } from "../hooks/useJobs";
 import { useJobStore } from "@/store/job.store";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface ExploreCategoryPageProps {
   category: string;
@@ -119,6 +120,27 @@ export const ExploreCategoryPage: React.FC<ExploreCategoryPageProps> = ({ catego
 
   const { toggleSave, applyToJob, withdrawJob } = useJobs();
   const { savedJobIds, appliedJobIds } = useJobStore();
+  const { userCompanies } = useActiveProfile();
+
+  const adminOrgIds = useMemo(() => {
+    if (!userCompanies || userCompanies.length === 0) return new Set<string>();
+    const set = new Set<string>();
+    userCompanies.forEach((c: any) => {
+      const roleLower = String(c.role || '').toLowerCase();
+      const isOwner = Boolean(c.is_owner || c.is_creator);
+      const isAdmin = roleLower === 'admin' || roleLower === 'owner' || isOwner;
+      const permissions: string[] = Array.isArray(c.permissions) ? c.permissions : [];
+      const hasJobPermission = permissions.some((p: string) =>
+        p === '*' || p === 'MANAGE_COMPANY' || p === 'MANAGE_ORGANIZATION' || p === 'POST_JOBS'
+      );
+      if (isAdmin || hasJobPermission) {
+        if (c.company_id) set.add(String(c.company_id));
+        if (c.org_id) set.add(String(c.org_id));
+        if (c.id) set.add(String(c.id));
+      }
+    });
+    return set;
+  }, [userCompanies]);
 
   // 1. Category Infinite Query
   const {
@@ -155,6 +177,10 @@ export const ExploreCategoryPage: React.FC<ExploreCategoryPageProps> = ({ catego
     return rawJobs
       .filter((job) => {
         if (!job.id || seen.has(job.id)) return false;
+        if (adminOrgIds.size > 0) {
+          const jobOrgId = String(job.org_id || job.company_id || '');
+          if (jobOrgId && adminOrgIds.has(jobOrgId)) return false;
+        }
         seen.add(job.id);
         return true;
       })
@@ -163,7 +189,7 @@ export const ExploreCategoryPage: React.FC<ExploreCategoryPageProps> = ({ catego
         is_saved: job.is_saved || savedJobIds.has(job.id),
         is_applied: job.is_applied || appliedJobIds.has(job.id),
       }));
-  }, [data, savedJobIds, appliedJobIds]);
+  }, [data, savedJobIds, appliedJobIds, adminOrgIds]);
 
   const totalCount = jobs.length;
 

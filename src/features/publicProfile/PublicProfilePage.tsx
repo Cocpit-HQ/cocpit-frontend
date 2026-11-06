@@ -432,7 +432,40 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleClose = () => {
-    router.push(isFromJobs ? "/jobs" : "/feed");
+    // 1. If originated from notifications (either directly or through job details)
+    if (returnTo?.includes("/notifications")) {
+      router.push("/notifications");
+      return;
+    }
+
+    // 2. If originated from an organization's jobs tab (e.g. /organization/slug?tab=jobs)
+    if (returnTo?.includes("/organization/")) {
+      try {
+        const decoded = decodeURIComponent(returnTo);
+        const match = decoded.match(/\/organization\/[^?&]+/);
+        if (match) {
+          const tabParam = decoded.includes("tab=jobs") ? "?tab=jobs" : "";
+          router.push(`${match[0]}${tabParam}`);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 3. If originated from jobs (or returnTo is a job detail /jobs/...)
+    if (isFromJobs || returnTo?.includes("/jobs")) {
+      const savedJobsReturn = typeof window !== "undefined"
+        ? (sessionStorage.getItem("nav_memory_jobs_return") || sessionStorage.getItem("nav_memory_jobs"))
+        : null;
+      if (savedJobsReturn && savedJobsReturn !== "/jobs" && !savedJobsReturn.startsWith("/jobs/")) {
+        router.push(savedJobsReturn);
+        return;
+      }
+      router.push("/jobs");
+      return;
+    }
+
+    // 4. Default fallback: close to feed
+    router.push("/feed");
   };
 
   const renderTopNavigation = () => (

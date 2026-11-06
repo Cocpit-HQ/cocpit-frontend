@@ -16,6 +16,7 @@ import {
   UserPendingInvitation,
   CreateRoleInput,
   UpdateRoleInput,
+  getPermissionLabel,
 } from '../types/team.types';
 
 // ─── Response Mappers ─────────────────────────────────────────────────────────
@@ -125,6 +126,8 @@ function formatAction(action: string, metadata?: any): string {
       return 'created role';
     case 'UPDATE_ROLE':
       return 'updated role';
+    case 'UPDATE_ROLE_PERMISSIONS':
+      return 'updated permissions for';
     case 'DELETE_ROLE':
       return 'deleted role';
     case 'CREATE_JOB':
@@ -391,6 +394,50 @@ function mapActivityLog(row: any): ActivityLogEntry {
       highlightedText = `as ${metadata.roleName || metadata.role}`;
       if (roleId) {
         highlightedLinkUrl = `/team/role/${roleId}`;
+      }
+    }
+  } else if (actionUpper === 'UPDATE_ROLE_PERMISSIONS') {
+    const roleName = metadata.roleName || targetName || 'team';
+    const added: string[] = Array.isArray(metadata.addedPermissions) ? metadata.addedPermissions : [];
+    const removed: string[] = Array.isArray(metadata.removedPermissions) ? metadata.removedPermissions : [];
+
+    const formatPermList = (perms: string[]) => perms.map((p) => getPermissionLabel(p)).filter(Boolean).join(', ');
+    const roleLink = roleId ? `/team/role/${roleId}` : '';
+
+    if (added.length > 0 && removed.length === 0) {
+      const addedText = formatPermList(added);
+      const permWord = added.length > 1 ? 'permissions to' : 'permission to';
+      actionFormatted = 'added';
+      targetName = `${addedText} ${permWord}`;
+      isTargetClickable = false;
+      highlightedText = roleName;
+      if (roleLink) {
+        highlightedLinkUrl = roleLink;
+      }
+    } else if (removed.length > 0 && added.length === 0) {
+      const removedText = formatPermList(removed);
+      const permWord = removed.length > 1 ? 'permissions from' : 'permission from';
+      actionFormatted = 'removed';
+      targetName = `${removedText} ${permWord}`;
+      isTargetClickable = false;
+      highlightedText = roleName;
+      if (roleLink) {
+        highlightedLinkUrl = roleLink;
+      }
+    } else if (added.length > 0 && removed.length > 0) {
+      const addedText = formatPermList(added);
+      const removedText = formatPermList(removed);
+      actionFormatted = 'updated permissions for';
+      targetName = roleName;
+      if (roleLink) {
+        targetLinkUrl = roleLink;
+      }
+      highlightedText = `(added: ${addedText}, removed: ${removedText})`;
+    } else {
+      actionFormatted = 'updated permissions for';
+      targetName = roleName;
+      if (roleLink) {
+        targetLinkUrl = roleLink;
       }
     }
   } else if (actionUpper === 'CREATE_ROLE' || actionUpper === 'UPDATE_ROLE' || actionUpper === 'DELETE_ROLE') {

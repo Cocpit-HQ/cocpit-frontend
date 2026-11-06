@@ -125,7 +125,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   const handleActorClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (actorUrl) {
-      router.push(actorUrl);
+      const sep = actorUrl.includes('?') ? '&' : '?';
+      router.push(`${actorUrl}${sep}returnTo=/notifications`);
     }
   };
 
@@ -238,7 +239,12 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
                 onRead(notification.notification_id);
               }
               if (parsed.targetUrl) {
-                router.push(parsed.targetUrl);
+                const sep = parsed.targetUrl.includes('?') ? '&' : '?';
+                const finalTargetUrl =
+                  parsed.targetUrl.includes('returnTo') || parsed.targetUrl.includes('from')
+                    ? parsed.targetUrl
+                    : `${parsed.targetUrl}${sep}returnTo=/notifications`;
+                router.push(finalTargetUrl);
               }
             }}
             className={cn(

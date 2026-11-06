@@ -50,7 +50,11 @@ export function useNavigationTracker() {
     }
 
     // Track last visited location outside notifications so < Back on notifications can reliably return to it
-    if (pathname && !pathname.startsWith('/notifications')) {
+    const isFromNotifications =
+      searchParams?.get('returnTo')?.includes('/notifications') ||
+      searchParams?.get('from')?.includes('/notifications');
+
+    if (pathname && !pathname.startsWith('/notifications') && !isFromNotifications) {
       const queryString = searchParams?.toString();
       const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
       sessionStorage.setItem('cocpit_last_location', currentPath);

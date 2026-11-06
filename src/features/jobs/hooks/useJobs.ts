@@ -68,8 +68,37 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     }
   }, [initialSearch, initialLocation, setMultipleFilters]);
 
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, userCompanies } = useActiveProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
+
+  const adminOrgIds = useMemo(() => {
+    if (!userCompanies || userCompanies.length === 0) return new Set<string>();
+    const set = new Set<string>();
+    userCompanies.forEach((c: any) => {
+      const roleLower = String(c.role || '').toLowerCase();
+      const isOwner = Boolean(c.is_owner || c.is_creator);
+      const isAdmin = roleLower === 'admin' || roleLower === 'owner' || isOwner;
+      const permissions: string[] = Array.isArray(c.permissions) ? c.permissions : [];
+      const hasJobPermission = permissions.some((p: string) =>
+        p === '*' || p === 'MANAGE_COMPANY' || p === 'MANAGE_ORGANIZATION' || p === 'POST_JOBS'
+      );
+      if (isAdmin || hasJobPermission) {
+        if (c.company_id) set.add(String(c.company_id));
+        if (c.org_id) set.add(String(c.org_id));
+        if (c.id) set.add(String(c.id));
+      }
+    });
+    return set;
+  }, [userCompanies]);
+
+  const isJobVisibleInCandidateExplore = useCallback((job: Job) => {
+    if (!job) return false;
+    if (adminOrgIds.size > 0) {
+      const jobOrgId = String(job.org_id || job.company_id || '');
+      if (jobOrgId && adminOrgIds.has(jobOrgId)) return false;
+    }
+    return true;
+  }, [adminOrgIds]);
 
   const apiFilters: JobsFilter = useMemo(() => ({
     search: filters.search,
@@ -222,18 +251,23 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     };
   }, [savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers]);
 
-  const recommendedJobs = useMemo(() => rawRecommendations.map(enhanceJob), [rawRecommendations, enhanceJob]);
+  const recommendedJobs = useMemo(
+    () => rawRecommendations.map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+    [rawRecommendations, enhanceJob, isJobVisibleInCandidateExplore]
+  );
 
   const exploreSections = useMemo(() => ({
-    featured: (exploreSectionsData.featured || []).map(enhanceJob),
-    best_matches: (exploreSectionsData.best_matches || []).map(enhanceJob),
-    from_network: (exploreSectionsData.from_network || []).map(enhanceJob),
-    recently_viewed: (exploreSectionsData.recently_viewed || []).map(enhanceJob),
-  }), [exploreSectionsData, enhanceJob]);
+    featured: (exploreSectionsData.featured || []).map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+    best_matches: (exploreSectionsData.best_matches || []).map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+    from_network: (exploreSectionsData.from_network || []).map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+    recently_viewed: (exploreSectionsData.recently_viewed || []).map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+  }), [exploreSectionsData, enhanceJob, isJobVisibleInCandidateExplore]);
 
   const activeJobs = useMemo(() => {
     let jobs: Job[] = [];
-    if (activeTab === 'Explore') jobs = exploreData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
+    if (activeTab === 'Explore') {
+      jobs = (exploreData?.pages.flatMap(p => p.data).map(enhanceJob) || []).filter(isJobVisibleInCandidateExplore);
+    }
     else if (activeTab === 'Saved') jobs = savedData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
     else if (activeTab === 'My Applications') jobs = appliedData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
     else if (activeTab === 'Offers') jobs = (offersData || []).map(enhanceJob);
@@ -246,7 +280,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       seen.add(job.id);
       return true;
     });
-  }, [activeTab, exploreData, savedData, appliedData, offersData, enhanceJob]);
+  }, [activeTab, exploreData, savedData, appliedData, offersData, enhanceJob, isJobVisibleInCandidateExplore]);
 
   const isLoading = 
     (activeTab === 'Explore' && isLoadingExplore) ||

@@ -94,12 +94,11 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   }, [job, isCompany, activeProfile, returnTo, router]);
 
   const handleBack = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('coming_from_job_detail');
+    }
     if (returnTo) {
-      if (typeof window !== 'undefined' && window.history.length > 1) {
-        router.back();
-      } else {
-        router.push(returnTo);
-      }
+      router.replace(returnTo);
       return;
     }
     goBack('/jobs');
