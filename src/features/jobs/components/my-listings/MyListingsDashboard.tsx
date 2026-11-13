@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@iconify/react';
 import * as jobsService from '../../services/jobs.service';
@@ -91,6 +91,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   const [selectedListing, setSelectedListing] = useState<JobListing | null>(null);
   const [listingReferrer, setListingReferrer] = useState<'dashboard' | 'applicants'>('dashboard');
   const { selectedOfferGroup, setSelectedOfferGroup } = useJobStore();
+  const inFlightJobIdRef = useRef<string | null>(null);
 
   // Helper to transition views and update URL query parameters atomically
   const transitionTo = useCallback((nextView: ViewState, nextJobId?: string | null) => {
@@ -138,19 +139,37 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   // Resolve selectedListing if urlJobId is present in URL
   useEffect(() => {
+    // In create-job view, the wizard manages its own draft state and hydration
+    if (view === 'create-job') return;
+
     // Prevent race condition where stale URL searchParams clears state during view transitions
     if (view !== 'dashboard' && !urlJobId) return;
+
     if (urlJobId) {
+      // Prevent redundant fetching if already selected or already in-flight
+      if (selectedListing?.id === urlJobId) return;
+      if (inFlightJobIdRef.current === urlJobId) return;
+
       const matched = listings.find(l => l.id === urlJobId);
       if (matched) {
         setSelectedListing(matched);
       } else {
-        jobsService.getJobById(urlJobId).then(j => j && setSelectedListing(j as any));
+        inFlightJobIdRef.current = urlJobId;
+        jobsService.getJobById(urlJobId)
+          .then(j => {
+            if (j) setSelectedListing(j as any);
+          })
+          .catch(err => {
+            console.error('Failed to resolve listing by ID:', err);
+          })
+          .finally(() => {
+            inFlightJobIdRef.current = null;
+          });
       }
-    } else if (!urlJobId && view === 'dashboard') {
+    } else if (!urlJobId && view === 'dashboard' && selectedListing !== null) {
       setSelectedListing(null);
     }
-  }, [urlJobId, listings, view]);
+  }, [urlJobId, listings, view, selectedListing?.id]);
 
   const handleCreateJob = useCallback(async (title: string, status: string, details?: Partial<JobListing>) => {
     try {
