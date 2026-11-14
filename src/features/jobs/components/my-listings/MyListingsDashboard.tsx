@@ -37,10 +37,13 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   const { activeProfile } = useActiveProfile();
   const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
 
-  // Initialize the local view state based on URL, defaulting to 'dashboard'
+  // Initialize the local view state based on URL, defaulting to 'view-listing' if jobId is present
   const [view, setView] = useState<ViewState>(() => {
     if (urlView && ['dashboard', 'create-job', 'view-listing', 'applicants', 'offer-details'].includes(urlView)) {
       return urlView;
+    }
+    if (urlJobId) {
+      return 'view-listing';
     }
     return 'dashboard';
   });
@@ -56,33 +59,43 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   const urlFilter = searchParams?.get('filter') || 'All';
   const initialFilter = (VALID_FILTERS as readonly string[]).includes(urlFilter) ? urlFilter : 'All';
 
-  // Wrap setActiveSubTab to also update URL
+  // Wrap setActiveSubTab to also update URL without triggering redundant RSC calls
   const setActiveSubTab = useCallback((tab: SubTab) => {
     setActiveSubTabLocal(tab);
-    const params = new URLSearchParams(window.location.search);
-    if (tab === 'Job listings') {
-      params.delete('subtab');
-    } else {
-      params.set('subtab', tab);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (tab === 'Job listings') {
+        params.delete('subtab');
+      } else {
+        params.set('subtab', tab);
+      }
+      const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+      window.history.replaceState(null, '', newUrl);
     }
-    router.replace(`${window.location.pathname}?${params.toString()}`);
-  }, [router]);
+  }, []);
   const {
     listings, isLoading, isFetchingMore, hasMore, counts,
     statusFilter, setStatusFilter: setStatusFilterRaw, loadMore, refresh
   } = useMyListings(initialFilter);
 
-  // Wrap setStatusFilter to also persist the selected filter tab in the URL
+  const activeListings = useMemo(() => {
+    return listings.filter(l => l.status?.toUpperCase() === 'ACTIVE');
+  }, [listings]);
+
+  // Wrap setStatusFilter to update URL without triggering redundant Next.js _rsc network calls
   const setStatusFilter = useCallback((status: string) => {
     setStatusFilterRaw(status);
-    const params = new URLSearchParams(window.location.search);
-    if (status === 'All') {
-      params.delete('filter');
-    } else {
-      params.set('filter', status);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (status === 'All') {
+        params.delete('filter');
+      } else {
+        params.set('filter', status);
+      }
+      const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+      window.history.replaceState(null, '', newUrl);
     }
-    router.replace(`${window.location.pathname}?${params.toString()}`);
-  }, [setStatusFilterRaw, router]);
+  }, [setStatusFilterRaw]);
 
   const [initialOfferJobId, setInitialOfferJobId] = useState<string | undefined>(undefined);
   const [isSendOfferModalOpen, setIsSendOfferModalOpen] = useState(false);
@@ -132,10 +145,12 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     const currentUrlView = searchParams?.get('view') as ViewState | null;
     if (currentUrlView) {
       setView(currentUrlView);
+    } else if (urlJobId) {
+      setView('view-listing');
     } else {
       setView('dashboard');
     }
-  }, [searchParams]);
+  }, [searchParams, urlJobId]);
 
   // Resolve selectedListing if urlJobId is present in URL
   useEffect(() => {
@@ -349,7 +364,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         <ListingDetailsScreen
           listing={listingToUse}
           onBack={() => {
-            const returnTo = searchParams?.get('returnTo');
+            const returnTo = searchParams?.get('returnTo') || searchParams?.get('from');
             if (returnTo) {
               router.push(returnTo);
               return;
@@ -505,7 +520,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 >
                   <span>{label}</span>
                   {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                    <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                   )}
                 </button>
               );
@@ -616,9 +631,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
           setIsSendOfferModalOpen(false);
           setInitialOfferJobId(undefined);
         }}
-        activeListings={listings.filter(l => l.status?.toUpperCase() === 'ACTIVE').length > 0
-          ? listings.filter(l => l.status?.toUpperCase() === 'ACTIVE')
-          : listings /* fallback: show all so modal can render something */}
+        activeListings={activeListings}
         onOfferSent={() => {
           setIsSendOfferModalOpen(false);
           setInitialOfferJobId(undefined);

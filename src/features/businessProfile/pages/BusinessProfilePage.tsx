@@ -152,7 +152,8 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       activeProfile.id === company.org_id ||
       activeProfile.id === company.id ||
       activeProfile.id === (company as any)._id ||
-      activeProfile.id === derivedOrgId
+      activeProfile.id === derivedOrgId ||
+      activeProfile.id === orgId
     )) ||
     (normalizedActiveSlug && (normalizedActiveSlug === normalizedPageSlug || normalizedActiveSlug === company.slug?.toLowerCase().trim())) ||
     (normalizedActiveName && (normalizedActiveName === normalizedCompanyName || normalizedActiveName === normalizedPageSlug))
@@ -175,10 +176,11 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     isActorThisCompany
   );
 
-  // When visiting as a user (not active company actor) or with ?view=public, open as public profile
-  const isPublicView = isExplicitPublic || !isActorThisCompany;
+  // Public view is strictly for external visitors or explicit ?view=public preview.
+  // Company members, admins, owners, or the active company actor viewing their own profile should never show public navigation/back buttons.
+  const isPublicView = isExplicitPublic ? true : (!isOwnProfile && !isOrgAdminOrOwner && !isActorThisCompany);
   const ownProfile = !isPublicView;
-  const canManageCompany = ownProfile && isOrgAdminOrOwner;
+  const canManageCompany = Boolean(ownProfile && (isOrgAdminOrOwner || hasEditPermission));
 
   React.useEffect(() => {
     if (isLoading) return;
@@ -208,6 +210,10 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
     if (lastSearch && lastSearch.startsWith('/search')) {
       router.replace(lastSearch);
+      return;
+    }
+    if (isOwnProfile) {
+      router.push(isFromJobs ? "/jobs" : "/feed");
       return;
     }
     if (typeof window !== "undefined" && window.history.length > 1) {

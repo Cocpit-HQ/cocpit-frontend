@@ -42,6 +42,7 @@ interface Candidate {
   status: 'pending' | 'Shortlisted' | 'Rejected' | 'Applied' | string;
   selfNote?: string;
   note?: string;
+  hasNote?: boolean;
   resumeName?: string;
   resumeFileName?: string;
   resume_file_name?: string;
@@ -218,9 +219,15 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         let apiStatus: string | undefined;
         if (filter === 'Shortlisted') apiStatus = 'Shortlisted';
         else if (filter === 'Pending') apiStatus = 'Applied';
+        else if (filter === 'Noted') apiStatus = 'Noted';
 
         const list = await getJobApplicants(listing.id, apiStatus);
-        const resolvedList = Array.isArray(list) ? list : [];
+        let resolvedList = Array.isArray(list) ? list : [];
+
+        if (filter === 'Noted') {
+          resolvedList = resolvedList.filter((c: any) => c.hasNote || Boolean(c.selfNote?.trim()) || Boolean(c.note?.trim()));
+        }
+
         applicantsCache.set(currentKey, resolvedList);
 
         if (active) {
@@ -348,13 +355,24 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     if (!selectedCandId) return;
     try {
       await upsertApplicationNote(selectedCandId, noteText);
-      setCandidates((prev) =>
-        prev.map((c) =>
+      const trimmedNote = noteText.trim();
+      const hasNoteBool = Boolean(trimmedNote);
+
+      setCandidates((prev) => {
+        const updated = prev.map((c) =>
           (c.applicationId || c.id) === selectedCandId
-            ? { ...c, selfNote: noteText, note: noteText }
+            ? { ...c, selfNote: noteText, note: noteText, hasNote: hasNoteBool }
             : c
-        )
-      );
+        );
+        if (filter === 'Noted' && !hasNoteBool) {
+          return updated.filter((c) => (c.applicationId || c.id) !== selectedCandId);
+        }
+        return updated;
+      });
+
+      // Invalidate Noted cache so switching back re-evaluates
+      applicantsCache.delete(`${listing.id}_Noted`);
+
       if (candidateDetail) {
         setCandidateDetail({ ...candidateDetail, selfNote: noteText });
       }

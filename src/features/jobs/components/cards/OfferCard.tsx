@@ -31,7 +31,15 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
 
   const displayCompany = displayName;
   const expiryText = rawOffer.offer_expiry_text || (offer.days_remaining ? `Offer ends in ${offer.days_remaining} day${offer.days_remaining === 1 ? '' : 's'}` : 'Offer ends soon');
+  const isCompanyOffer = Boolean(offer.org_id || rawOffer.org_id || rawOffer.company_id);
+  const noteSenderName = isCompanyOffer ? displayCompany : (offer.recruiter?.name || displayCompany);
+  const noteAvatar = isCompanyOffer ? (rawOffer.company_logo || offer.recruiter?.avatar) : offer.recruiter?.avatar;
+  const noteSenderTitle = isCompanyOffer
+    ? (rawOffer.company_headline || offer.recruiter?.headline || rawOffer.sent_by_headline)
+    : offer.recruiter?.headline;
   const offerNote = (offer.note || rawOffer.message || rawOffer.note)?.trim();
+  const workMode = offer.work_mode || rawOffer.work_mode || rawOffer.work_model || '';
+  const location = offer.location || rawOffer.location || '';
 
   return (
     <div className="w-full max-w-[801px] flex flex-col items-center select-none font-dm-sans">
@@ -64,11 +72,15 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
                 <span className="text-ds-text-secondary ds-text-secondary font-normal truncate">
                   {displayCompany}
                 </span>
-                <div className="flex items-center gap-2 text-ds-text-secondary ds-text-secondary font-normal">
-                  <span>{rawOffer.work_mode || rawOffer.work_model || 'Hybrid'}</span>
-                  <span className="size-1 rounded-full bg-ds-text-muted shrink-0" />
-                  <span>{offer.location || 'Kolhapur'}</span>
-                </div>
+                {(workMode || location) && (
+                  <div className="flex items-center gap-2 text-ds-text-secondary ds-text-secondary font-normal">
+                    {workMode && <span>{workMode}</span>}
+                    {workMode && location && (
+                      <span className="size-1 rounded-full bg-ds-text-muted shrink-0" />
+                    )}
+                    {location && <span>{location}</span>}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -103,11 +115,15 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
               <span className="text-ds-text-secondary ds-text-secondary font-normal truncate">
                 {displayCompany}
               </span>
-              <div className="flex items-center gap-2 text-ds-text-secondary ds-text-secondary font-normal">
-                <span>{rawOffer.work_mode || rawOffer.work_model || 'Hybrid'}</span>
-                <span className="size-1 rounded-full bg-ds-text-muted shrink-0" />
-                <span>{offer.location || 'Kolhapur'}</span>
-              </div>
+              {(workMode || location) && (
+                <div className="flex items-center gap-2 text-ds-text-secondary ds-text-secondary font-normal">
+                  {workMode && <span>{workMode}</span>}
+                  {workMode && location && (
+                    <span className="size-1 rounded-full bg-ds-text-muted shrink-0" />
+                  )}
+                  {location && <span>{location}</span>}
+                </div>
+              )}
             </div>
 
             <div className="shrink-0 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
@@ -158,13 +174,13 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
           {/* Frame 2609030: Recruiter Note Box (starts 16px below main card, min-h-[84px] h-auto for fluid 3-4 line expansion) */}
           <div className="w-full max-w-[700px] min-h-[84px] h-auto mt-4 p-3 bg-ds-surface-1 border-l-2 border-ds-accent rounded-r-2xl rounded-bl-2xl rounded-tl-none flex flex-col items-start gap-2 shadow-sm transition-[height] duration-200">
             {/* Frame 2609968 */}
-            <div className="flex items-center gap-2 h-9">
+            <div className="flex items-center gap-2 h-9 w-full min-w-0">
               {/* Rectangle 29: Avatar (32px x 32px, rounded-full) */}
               <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 flex-none bg-ds-surface-2">
-                {offer.recruiter.avatar && !avatarError ? (
+                {noteAvatar && !avatarError ? (
                   <img
-                    src={offer.recruiter.avatar}
-                    alt={offer.recruiter.name || displayCompany}
+                    src={noteAvatar}
+                    alt={noteSenderName}
                     className="w-full h-full object-cover rounded-full"
                     onError={() => setAvatarError(true)}
                   />
@@ -173,13 +189,15 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
                 )}
               </div>
               {/* Frame 2609931 */}
-              <div className="flex flex-col items-start justify-center h-9 min-w-0">
-                <span className="font-dm-sans font-semibold text-base leading-6 text-ds-text-primary truncate">
-                  {offer.recruiter.name || displayCompany}
+              <div className="flex flex-col items-start justify-center h-9 min-w-0 flex-1">
+                <span className="font-dm-sans font-semibold text-base leading-6 text-ds-text-primary truncate block w-full" title={noteSenderName}>
+                  {noteSenderName}
                 </span>
-                <span className="font-dm-sans font-normal text-[10px] leading-3 text-ds-text-secondary truncate">
-                  {offer.recruiter.headline || (offer.org_id && displayCompany ? `Recruiter at ${displayCompany}` : 'Recruiter')}
-                </span>
+                {noteSenderTitle && (
+                  <span className="font-dm-sans font-normal text-[10px] leading-3 text-ds-text-secondary truncate block w-full" title={noteSenderTitle}>
+                    {noteSenderTitle}
+                  </span>
+                )}
               </div>
             </div>
 

@@ -103,7 +103,7 @@ export const JobDetailBody: React.FC<JobDetailBodyProps> = ({ job }) => {
                 Experience Level
               </span>
               <span className="text-ds-text-primary text-sm font-medium font-dm-sans mt-0.5">
-                {job.experience || '0-2 Yrs'}
+                {job.experience || '0-1 Yrs'}
               </span>
             </div>
           </div>

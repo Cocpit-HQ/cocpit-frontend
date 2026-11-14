@@ -157,7 +157,8 @@ export const OffersTab: React.FC<OffersTabProps> = ({
               const displayCompany = offer.company_name || rawOffer.company || rawOffer.org_name || rawOffer.organization?.name || 'Company';
               const expiryText = rawOffer.offer_expiry_text || (offer.days_remaining ? `Offer ends in ${offer.days_remaining} day${offer.days_remaining === 1 ? '' : 's'}` : '');
               const offerMessage = offer.note || rawOffer.message || rawOffer.note;
-              const formattedLocation = formatJobLocation(offer.location || rawOffer.location) || 'Kolhapur';
+              const formattedLocation = formatJobLocation(offer.location || rawOffer.location) || '';
+              const workMode = offer.work_mode || rawOffer.work_mode || rawOffer.work_model || '';
               const recruiter = offer.recruiter || rawOffer.recruiter || {};
 
               return (
@@ -177,11 +178,15 @@ export const OffersTab: React.FC<OffersTabProps> = ({
                       <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
                         {displayCompany}
                       </span>
-                      <div className="flex items-center gap-2 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5">
-                        <span>{rawOffer.work_mode || rawOffer.work_model || 'Hybrid'}</span>
-                        <span className="size-1 bg-ds-text-muted rounded-full shrink-0" />
-                        <span className="truncate">{formattedLocation}</span>
-                      </div>
+                      {(workMode || formattedLocation) && (
+                        <div className="flex items-center gap-2 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5">
+                          {workMode && <span>{workMode}</span>}
+                          {workMode && formattedLocation && (
+                            <span className="size-1 bg-ds-text-muted rounded-full shrink-0" />
+                          )}
+                          {formattedLocation && <span className="truncate">{formattedLocation}</span>}
+                        </div>
+                      )}
                     </div>
 
                     <div className="shrink-0 flex items-center justify-end">
@@ -209,16 +214,16 @@ export const OffersTab: React.FC<OffersTabProps> = ({
                   {offerMessage && (
                     <div className="w-full max-w-[361px] p-3 bg-ds-surface-1 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl rounded-tl-none border-l-2 border-ds-accent flex flex-col justify-start items-start gap-2 shadow-sm">
                       {/* Frame 2609968 */}
-                      <div className="flex items-center gap-2 h-9">
+                      <div className="flex items-center gap-2 h-9 w-full min-w-0">
                         <RecruiterAvatar
                           avatar={recruiter.avatar}
                           name={recruiter.name || displayCompany}
                         />
-                        <div className="flex flex-col justify-start items-start min-w-0">
-                          <span className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6 truncate">
+                        <div className="flex flex-col justify-start items-start min-w-0 flex-1">
+                          <span className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6 truncate block w-full" title={recruiter.name || displayCompany}>
                             {recruiter.name || displayCompany}
                           </span>
-                          <span className="text-ds-text-secondary text-[10px] font-normal font-dm-sans leading-3 truncate">
+                          <span className="text-ds-text-secondary text-[10px] font-normal font-dm-sans leading-3 truncate block w-full" title={recruiter.headline || (displayCompany ? `Founder and CEO at ${displayCompany}` : 'Hiring Team')}>
                             {recruiter.headline || (displayCompany ? `Founder and CEO at ${displayCompany}` : 'Hiring Team')}
                           </span>
                         </div>
@@ -304,7 +309,7 @@ export const OffersTab: React.FC<OffersTabProps> = ({
                 >
                   <span>{subTab}</span>
                   {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-ds-accent shadow-sm" />
+                    <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                   )}
                 </button>
               );

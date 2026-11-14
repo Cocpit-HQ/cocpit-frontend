@@ -99,7 +99,7 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
         <div className="flex flex-wrap items-center gap-2 text-xs font-normal font-dm-sans text-ds-text-secondary min-w-0">
           <div className="flex items-center gap-2 shrink-0">
             <Icon icon="solar:bag-2-linear" className="size-4 text-ds-text-secondary shrink-0" />
-            <span>{job.experience || '0-2Yrs'}</span>
+            <span>{job.experience || '0-1Yrs'}</span>
           </div>
 
           {(job.work_mode || job.location) && (

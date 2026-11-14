@@ -34,6 +34,14 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
     status,
   } = listing;
 
+  const displayExperience = experience && experience !== 'Not specified'
+    ? experience
+    : ((listing as any).experience_label || (listing as any).experience_level || experience);
+
+  const displayWorkType = work_type && work_type !== 'Not specified'
+    ? work_type
+    : ((listing as any).job_type || work_type);
+
   const formatSalary = (val: number | undefined | null) => {
     if (val === undefined || val === null || isNaN(val)) return 'Not specified';
     return `₹${Number(val).toLocaleString()}`;
@@ -183,7 +191,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
                 Experience level
               </span>
               <span className="text-ds-text-primary text-sm font-normal leading-5 break-words">
-                {experience || 'Not specified'}
+                {displayExperience || 'Not specified'}
               </span>
             </div>
 
@@ -192,7 +200,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
                 Work type
               </span>
               <span className="text-ds-text-primary text-sm font-normal leading-5 break-words">
-                {work_type || 'Not specified'}
+                {displayWorkType || 'Not specified'}
               </span>
             </div>
           </div>
@@ -325,7 +333,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
                   </span>
                 </div>
                 <span className="text-base font-normal font-dm-sans leading-6 text-ds-text-primary break-words">
-                  {experience || '0-2Yrs'}
+                  {displayExperience || '0-1Yrs'}
                 </span>
               </div>
 

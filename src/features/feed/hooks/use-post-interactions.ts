@@ -115,18 +115,56 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
         setShareCount(prev => Math.max(0, prev - 1));
       }
     };
+
+    const handleGlobalLike = (event: Event) => {
+      const { postId, liked, likeCount: newCount, instanceId: senderId } = (event as CustomEvent).detail || {};
+      if (senderId !== instanceId && id?.toString() === postId?.toString()) {
+        hasLocalLikeChange.current = true;
+        setIsLiked(liked);
+        setLikeCount(newCount);
+      }
+    };
     
     window.addEventListener('repostDeleted', handleRepostDeleted);
-    return () => window.removeEventListener('repostDeleted', handleRepostDeleted);
-  }, [id, isReposted]);
+    window.addEventListener('postLikeUpdated', handleGlobalLike);
+    return () => {
+      window.removeEventListener('repostDeleted', handleRepostDeleted);
+      window.removeEventListener('postLikeUpdated', handleGlobalLike);
+    };
+  }, [id, isReposted, instanceId]);
+
+  const syncLikeInCache = (likedVal: boolean, countVal: number) => {
+    queryClient.setQueriesData({ predicate: (q) => ['feed', 'hashtagFeed', 'userPosts', 'posts'].includes(q.queryKey[0] as string) }, (old: any) => {
+      if (!old?.pages) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page: any) => ({
+          ...page,
+          posts: page.posts?.map((p: any) =>
+            p.id?.toString() === id.toString()
+              ? { ...p, isLiked: likedVal, is_liked: likedVal, likes: countVal }
+              : p.shared_post?.id?.toString() === id.toString()
+              ? { ...p, shared_post: { ...p.shared_post, isLiked: likedVal, is_liked: likedVal, likes: countVal } }
+              : p
+          )
+        }))
+      };
+    });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('postLikeUpdated', { detail: { postId: id.toString(), liked: likedVal, likeCount: countVal, instanceId } }));
+    }
+  };
 
   const handleLike = async (isCompany: boolean, activeProfileId?: string) => {
     const prevLiked = isLiked;
     const prevCount = likeCount;
+    const nextLiked = !isLiked;
+    const nextCount = isLiked ? Math.max(0, prevCount - 1) : prevCount + 1;
 
     hasLocalLikeChange.current = true;
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    setIsLiked(nextLiked);
+    setLikeCount(nextCount);
+    syncLikeInCache(nextLiked, nextCount);
 
     if (props.onLike) props.onLike();
 
@@ -135,11 +173,13 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
       const result = await feedApi.toggleLike(id, companyId);
       setIsLiked(result.liked);
       setLikeCount(result.likeCount);
+      syncLikeInCache(result.liked, result.likeCount);
       queryClient.invalidateQueries({ queryKey: ["activityLogs"] });
     } catch (error) {
       console.error("Failed to toggle like:", error);
       setIsLiked(prevLiked);
       setLikeCount(prevCount);
+      syncLikeInCache(prevLiked, prevCount);
     } finally {
       hasLocalLikeChange.current = false;
     }

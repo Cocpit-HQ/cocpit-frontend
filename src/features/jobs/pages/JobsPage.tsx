@@ -191,7 +191,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
 
   // Hide mobile HomeHeader search bar when the create-job wizard is active
   const urlView = urlParams?.get('view');
-  const isFullScreenView = urlView === 'create-job' || urlView === 'view_listing' || urlView === 'view-listing';
+  const isFullScreenView = urlView === 'create-job' || urlView === 'view_listing' || urlView === 'view-listing' || urlView === 'offer-details' || urlView === 'applicants';
   useEffect(() => {
     if (isFullScreenView) {
       document.body.dataset.hideSearch = 'true';
@@ -236,7 +236,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   ];
 
   const effectiveTab = urlTab || activeTab;
-  if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView || urlView === 'offer-details') {
+  if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView) {
     const returnTo = urlParams?.get('returnTo') || urlParams?.get('from');
     const shouldShowBack = !isCompanyMode || Boolean(returnTo);
 
@@ -246,11 +246,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
           isCompanyMode={isCompanyMode}
           onBack={shouldShowBack ? () => {
             if (returnTo) {
-              if (typeof window !== 'undefined' && window.history.length > 1) {
-                router.back();
-              } else {
-                router.push(returnTo);
-              }
+              router.push(returnTo);
               return;
             }
             if (isCompanyMode) {
@@ -313,9 +309,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                     </span>
                   </div>
                   {isActive ? (
-                    <div className="self-stretch h-[1.5px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                    <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                   ) : (
-                    <div className="self-stretch h-[1.5px] bg-transparent" />
+                    <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
                   )}
                 </button>
               );
@@ -355,7 +351,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
               >
                 <span>{tab.label}</span>
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                  <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                 )}
               </button>
             );

@@ -226,7 +226,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
               >
                 <span>{chip.label}</span>
                 {isSelected && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                  <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                 )}
               </button>
             );

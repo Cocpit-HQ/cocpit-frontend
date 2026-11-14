@@ -127,9 +127,20 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
     try {
       const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
       const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-      const newJobId = await jobsService.initializeJobDraft(title, actorType, actorId);
-      if (newJobId) {
-        setJobId(newJobId);
+      const defaultDetails = {
+        experience: 'Fresher',
+        experience_label: 'Fresher',
+        experience_min: 0,
+        experience_max: 1,
+      };
+      const result = await jobsService.initializeJobDraftWithDetails(title, actorType, actorId, defaultDetails);
+      if (result.id) {
+        setJobId(result.id);
+        setAccumulatedDetails({
+          id: result.id,
+          title,
+          ...defaultDetails,
+        });
       }
     } catch (error) {
       console.error('Failed to create initial draft', error);

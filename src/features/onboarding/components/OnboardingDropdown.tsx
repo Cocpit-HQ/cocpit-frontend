@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { DownArrowIcon, LoadingIcon, CloseCrossIcon } from "@/components/icons";
+import { DownArrowIcon, LoadingIcon, CloseCrossIcon, OrgAvatarFallbackIcon } from "@/components/icons";
 
 export interface DropdownOption {
   id: string;
@@ -46,10 +46,11 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
   fallbackOption,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [failedLogos, setFailedLogos] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>(() => {
     if (displayValue) return displayValue;
     if (value) {
-      const match = options.find((opt) => opt.id === value);
+      const match = options.find((opt) => opt.id === value || opt.label === value);
       return match ? match.label : value;
     }
     return "";
@@ -72,7 +73,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
 
   // Derive label to display on the trigger when not typing
   const selectedOption = useMemo(() => {
-    return options.find((opt) => opt.id === value);
+    return options.find((opt) => opt.id === value || opt.label === value);
   }, [options, value]);
 
   const currentText = displayValue || selectedOption?.label || "";
@@ -80,11 +81,15 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
   // Synchronize search text ONLY when the external selected value changes
   useEffect(() => {
     if (value) {
-      const match = options.find((opt) => opt.id === value);
-      setSearchQuery(match ? match.label : value);
+      const match = options.find((opt) => opt.id === value || opt.label === value);
+      if (typeof document !== "undefined" && document.activeElement !== inputRef.current) {
+        setSearchQuery(match ? match.label : value);
+      }
     } else {
       // If cleared from parent
-      setSearchQuery("");
+      if (typeof document !== "undefined" && document.activeElement !== inputRef.current) {
+        setSearchQuery("");
+      }
     }
   }, [value, options]);
 
@@ -99,7 +104,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
         setIsOpen(false);
         // Reset query text to current selected value when clicking away
         if (value) {
-          const match = options.find((opt) => opt.id === value);
+          const match = options.find((opt) => opt.id === value || opt.label === value);
           setSearchQuery(match ? match.label : value);
         } else {
           setSearchQuery("");
@@ -307,8 +312,14 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
           <div ref={listboxRef} id={`${id}-listbox`} className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt, index) => {
-                const isSelected = opt.id === value || opt.label.toLowerCase() === searchQuery.toLowerCase();
+                const isSelected = opt.id === value || opt.label === value || opt.label.toLowerCase() === searchQuery.toLowerCase();
                 const isHighlighted = index === highlightedIndex;
+                const isOrgField =
+                  Boolean(id?.includes("organization") || id?.includes("company")) ||
+                  Boolean(placeholder?.toLowerCase().includes("organization") || placeholder?.toLowerCase().includes("company"));
+                const isOrg = isOrgField || Boolean(opt.data?.org_id || opt.data?.logo_url);
+                const hasLogo = Boolean(opt.data?.logo_url && !failedLogos[opt.data.logo_url]);
+
                 return (
                   <button
                     key={`${opt.id}-${index}`}
@@ -344,7 +355,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
                       if (searchable) inputRef.current?.focus();
                       else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
                     }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:text-ds-text-primary ${
+                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center gap-2.5 transition-colors cursor-pointer truncate focus:outline-none focus:text-ds-text-primary ${
                       isHighlighted
                         ? "text-ds-text-primary"
                         : isSelected
@@ -352,6 +363,22 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
                         : "text-ds-text-secondary hover:text-ds-text-primary"
                     }`}
                   >
+                    {isOrg && (
+                      hasLogo ? (
+                        <img
+                          src={opt.data.logo_url}
+                          alt={opt.label}
+                          onError={() => {
+                            if (opt.data?.logo_url) {
+                              setFailedLogos((prev) => ({ ...prev, [opt.data.logo_url]: true }));
+                            }
+                          }}
+                          className="w-5 h-5 rounded-[4px] object-cover shrink-0 bg-ds-surface-2"
+                        />
+                      ) : (
+                        <OrgAvatarFallbackIcon size={20} className="w-5 h-5 rounded-[4px] shrink-0" />
+                      )
+                    )}
                     <span className="truncate">{opt.label}</span>
                     {opt.sublabel && (
                       <span className="text-xs text-ds-text-muted ml-1.5 truncate">

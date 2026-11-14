@@ -40,60 +40,20 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
   refreshTrigger = 0
 }) => {
   const [isSendOpen, setIsSendOpen] = useState(false);
-  const { activeProfile, userCompanies } = useActiveProfile();
+  const { activeProfile, isLoading: isActiveProfileLoading } = useActiveProfile();
   const { socket } = useSocket();
 
   // Sent Offers state
   const [sentOffers, setSentOffers] = useState<SentOfferGroup[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
   const isFirstLoadOffersRef = useRef(true);
+  const isFetchingRef = useRef(false);
 
-  // Independently fetch ALL active listings for the Send Offer modal.
-  // We CANNOT rely on the parent's `listings` prop because that array is
-  // paginated and filtered by the current status-filter tab (e.g., "Drafts").
-  const [activeListings, setActiveListings] = useState<JobListing[]>([]);
-
-  useEffect(() => {
-    const fetchActiveListings = async () => {
-      try {
-        const isCompany = activeProfile?.type === 'COMPANY';
-        const orgId = isCompany ? activeProfile?.id : null;
-
-        let jobs: any[] = [];
-        if (isCompany && orgId) {
-          // Fetch all ACTIVE company jobs (no limit)
-          const res = await api.get(`/organizations/${orgId}/jobs`, {
-            params: { scope: 'internal', status: 'ACTIVE', limit: 100 }
-          });
-          jobs = res.data?.jobs || res.data || [];
-        } else {
-          // Personal recruiter — fetch their active jobs
-          const res = await api.get('/jobs/my', { params: { status: 'ACTIVE', limit: 100 } });
-          jobs = res.data?.jobs || res.data || [];
-        }
-
-        const mapped: JobListing[] = jobs.map((job: any) => ({
-          id: job.job_id || job.id,
-          title: job.title,
-          status: job.status,
-          org_id: job.org_id,
-          company: job.company_name,
-          location: job.location,
-        }));
-        setActiveListings(mapped);
-      } catch (err) {
-        console.error('Failed to fetch active listings for offer modal:', err);
-        // Fallback: filter parent listings
-        setActiveListings(listings.filter(l => l.status?.toUpperCase() === 'ACTIVE'));
-      }
-    };
-
-    fetchActiveListings();
-  // Re-fetch when profile or parent listings change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeProfile]);
+  // Active listings are fetched on demand with cursor-based pagination inside SendOfferModal
 
   const fetchSentOffers = useCallback(async (silent = false) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     let companyId = '';
     if (activeProfile && activeProfile.type === 'COMPANY') {
       companyId = activeProfile.id;
@@ -120,7 +80,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
         job_type: item.job_type || 'Full time',
         work_mode: item.work_mode || 'Remote',
         location: item.location || 'Remote',
-        experience_level: item.experience_level || '0-2Yrs',
+        experience_level: item.experience_level || '0-1Yrs',
         salary_min: item.salary_min,
         salary_max: item.salary_max,
         salary_currency: item.salary_currency || 'USD',
@@ -134,32 +94,14 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
         setIsLoadingOffers(false);
       }
       isFirstLoadOffersRef.current = false;
+      isFetchingRef.current = false;
     }
-  }, [activeProfile, userCompanies]);
+  }, [activeProfile?.id, activeProfile?.type]);
 
   useEffect(() => {
+    if (isActiveProfileLoading) return;
     fetchSentOffers();
-  }, [fetchSentOffers, refreshTrigger]);
-
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchSentOffers(true);
-    };
-    const handleVisibility = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        fetchSentOffers(true);
-      }
-    };
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibility);
-    const interval = setInterval(() => fetchSentOffers(true), 5000);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibility);
-      clearInterval(interval);
-    };
-  }, [fetchSentOffers]);
+  }, [fetchSentOffers, refreshTrigger, isActiveProfileLoading]);
 
   useEffect(() => {
     if (!socket) return;
@@ -317,18 +259,19 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
         )}
       </div>
 
-      <SendOfferModal
-        isOpen={isSendOpen}
-        onClose={() => {
-          setIsSendOpen(false);
-          if (onClearInitialOfferJobId) {
-            onClearInitialOfferJobId();
-          }
-        }}
-        activeListings={activeListings}
-        onOfferSent={fetchSentOffers}
-        initialJobId={initialOfferJobId === 'OPEN_ONLY' ? undefined : initialOfferJobId}
-      />
+      {!onOpenSendOfferModal && (
+        <SendOfferModal
+          isOpen={isSendOpen}
+          onClose={() => {
+            setIsSendOpen(false);
+            if (onClearInitialOfferJobId) {
+              onClearInitialOfferJobId();
+            }
+          }}
+          onOfferSent={fetchSentOffers}
+          initialJobId={initialOfferJobId === 'OPEN_ONLY' ? undefined : initialOfferJobId}
+        />
+      )}
     </div>
   );
 };

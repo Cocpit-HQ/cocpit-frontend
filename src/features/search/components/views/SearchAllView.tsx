@@ -22,6 +22,7 @@ import { SearchActionButton } from '../buttons/SearchActionButton';
 import Avatar from '@/components/shared/Avatar';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { formatJobLocation } from '@/features/jobs/utils/location.utils';
+import { cleanSalary } from '@/features/jobs/utils/currency.utils';
 
 interface SearchAllViewProps {
   data?: StageAResponse;
@@ -133,15 +134,12 @@ function CompactJobCard({
   const logoUrl = isCompanyPoster
     ? (job.company_logo || job.logo_url || job.organization?.logo_url || job.recruiter_avatar)
     : (job.recruiter_avatar || job.company_logo || job.logo_url);
-  const salaryText =
+  const salaryText = cleanSalary(
     job.salary_display ||
     (job.salary_min && job.salary_max
-      ? `₹${job.salary_min}–${job.salary_max}`
-      : job.salary_min
-      ? `₹${job.salary_min}`
-      : job.salary_max
-      ? `₹${job.salary_max}`
-      : '');
+      ? `${job.salary_min}–${job.salary_max}`
+      : job.salary_min || job.salary_max || '')
+  );
 
   const experienceText =
     job.experience_label ||

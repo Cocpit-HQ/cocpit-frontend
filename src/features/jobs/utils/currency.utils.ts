@@ -83,34 +83,67 @@ export const formatSalaryRange = (
   max: number | null | undefined, 
   currency?: string
 ): string | undefined => {
-  if (min && max) return `${formatCompact(min, currency)} - ${formatCompact(max, currency)}`;
-  if (min)        return `${formatCompact(min, currency)}+`;
-  if (max)        return `Up to ${formatCompact(max, currency)}`;
+  if (min && max) return `₹${formatCompactNumber(min)} - ₹${formatCompactNumber(max)}`;
+  if (min)        return `₹${formatCompactNumber(min)}+`;
+  if (max)        return `Up to ₹${formatCompactNumber(max)}`;
 
   return undefined;
 };
 
 /**
- * Cleans salary display text by removing dollar signs ($) and converting raw number ranges into 'k' notation.
+ * Cleans salary display text by ensuring Indian Rupee (₹) symbol, removing /yr suffixes,
+ * removing dollar signs ($), and converting raw number ranges into 'k' notation.
  */
 export const cleanSalary = (val?: string | number | null): string => {
   if (!val) return '';
-  const text = String(val).replace(/[\$₹]/g, '').trim();
+  // Remove /yr, /year, /mo, /hr and dollar signs ($)
+  let text = String(val)
+    .replace(/\/yr|\/year|\/mo|\/hr/gi, '')
+    .replace(/\$/g, '')
+    .trim();
 
-  // Matches "800000-900000" or "800000–900000" or "800000 - 900000"
+  // If text starts with ₹, strip it for clean parsing
+  text = text.replace(/^₹\s*/, '').trim();
+
+  // Matches "100k - 120k", "100k–120k", "100k - ₹120k" or "₹100k - ₹120k"
+  const kRangeMatch = text.match(/^₹?(\d+(?:\.\d+)?(?:k|m)?)\s*[-–]\s*₹?(\d+(?:\.\d+)?(?:k|m)?)$/i);
+  if (kRangeMatch) {
+    const minVal = kRangeMatch[1];
+    const maxVal = kRangeMatch[2];
+    const formattedMin = /^\d+$/.test(minVal) && Number(minVal) >= 1000 ? formatCompactNumber(Number(minVal)) : minVal;
+    const formattedMax = /^\d+$/.test(maxVal) && Number(maxVal) >= 1000 ? formatCompactNumber(Number(maxVal)) : maxVal;
+    return `₹${formattedMin} - ₹${formattedMax}`;
+  }
+
+  // Matches raw numbers e.g. "800000-900000" or "800000–900000"
   const rangeMatch = text.match(/^(\d+)\s*[-–]\s*(\d+)$/);
   if (rangeMatch) {
     const min = Number(rangeMatch[1]);
     const max = Number(rangeMatch[2]);
-    return `${formatCompactNumber(min)} - ${formatCompactNumber(max)}`;
+    return `₹${formatCompactNumber(min)} - ₹${formatCompactNumber(max)}`;
   }
 
   // Matches single large number e.g. "800000"
   if (/^\d{4,}$/.test(text)) {
-    return formatCompactNumber(Number(text));
+    return `₹${formatCompactNumber(Number(text))}`;
   }
 
-  return text;
+  // Matches single compact number e.g. "150k"
+  if (/^\d+(?:\.\d+)?(?:k|m)$/i.test(text)) {
+    return `₹${text}`;
+  }
+
+  // Matches "Up to 150k" or "150k+"
+  if (/^up to\s+/i.test(text)) {
+    const rest = text.replace(/^up to\s+/i, '').replace(/^₹\s*/, '');
+    return `Up to ₹${rest}`;
+  }
+  if (text.endsWith('+')) {
+    const rest = text.slice(0, -1).replace(/^₹\s*/, '');
+    return `₹${rest}+`;
+  }
+
+  return text ? `₹${text.replace(/^₹\s*/, '')}` : '';
 };
 
 /** Returns the Iconify icon name for a given currency code. */

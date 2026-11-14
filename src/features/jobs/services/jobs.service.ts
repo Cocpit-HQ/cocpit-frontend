@@ -14,7 +14,7 @@ export const formatExperience = (min?: number, max?: number, level?: string, lab
     if (max != null) return `${min}-${max} Yrs`;
     return `${min}+ Yrs`;
   }
-  return level || '0-2 Yrs';
+  return level || '0-1 Yrs';
 };
 
 // Inverse of formatExperience: parses an experience label (e.g. "0 - 2 years",
@@ -26,7 +26,7 @@ export const parseExperienceRange = (experience?: string): { min?: number; max?:
   const lower = cleanExp.toLowerCase();
 
   if (lower.includes('fresher') || lower.includes('entry')) {
-    return { min: 0, max: 2 };
+    return { min: 0, max: 1 };
   }
   const match = cleanExp.match(/(\d+)\s*-\s*(\d+)/);
   if (match) {
@@ -193,7 +193,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_label || job.experience_level || '0-2Yrs'),
+        : (job.experience_label || job.experience_level || '0-1Yrs'),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: job.is_offer || false,
@@ -410,7 +410,7 @@ export const getRecommendations = async (): Promise<Job[]> => {
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_label || job.experience_level || '0-2Yrs'),
+        : (job.experience_label || job.experience_level || '0-1Yrs'),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: false,
@@ -470,7 +470,7 @@ const mapExploreJobItem = (job: any): Job => ({
   description: job.description || '',
   experience: job.experience || ((job.experience_min != null && job.experience_max != null)
     ? `${job.experience_min}-${job.experience_max}Yrs`
-    : (job.experience_label || job.experience_level || '0-2Yrs')),
+    : (job.experience_label || job.experience_level || '0-1Yrs')),
   is_saved: Boolean(job.is_saved ?? job.isSaved),
   is_applied: Boolean(job.is_applied ?? job.hasApplied),
   is_offer: Boolean(job.is_offer),
@@ -563,6 +563,9 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       id: job.job_id,
       title: job.title,
       company: job.company_name,
+      company_logo: job.company_logo || job.logo_url || job.companyLogo || undefined,
+      recruiter_name: job.recruiter_name || job.recruiterName || undefined,
+      recruiter_avatar: job.recruiter_avatar || job.avatar_url || job.recruiterAvatar || undefined,
       location: job.location,
       job_type: job.job_type || 'Full time',
       work_type: job.job_type || 'Full time',
@@ -577,7 +580,7 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_label || job.experience_level || '0-2Yrs'),
+        : (job.experience_label || job.experience_level || '0-1Yrs'),
       is_saved: true,
       is_applied: job.hasApplied || false,
       is_offer: job.is_offer || false,
@@ -679,14 +682,19 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
         offer_expiry_text = 'Offer expired';
         status = 'Expired';
       } else {
-        offer_expiry_text = `Ends in ${offer_days_left} ${offer_days_left === 1 ? 'day' : 'days'}`;
+        offer_expiry_text = `Offer ends in ${offer_days_left} ${offer_days_left === 1 ? 'day' : 'days'}`;
       }
     } else if (isOfferResolved) {
       offer_days_left = 0;
       offer_expiry_text = undefined;
-    } else {
+    } else if (job.is_offer) {
       offer_days_left = offer_days_left || 7;
-      offer_expiry_text = offer_expiry_text || 'Ends in 7 days';
+      offer_expiry_text = offer_expiry_text
+        ? (offer_expiry_text.startsWith('Offer') ? offer_expiry_text : `Offer ${offer_expiry_text.toLowerCase()}`)
+        : `Offer ends in ${offer_days_left} days`;
+    } else {
+      offer_days_left = undefined;
+      offer_expiry_text = undefined;
     }
 
     if (status) {
@@ -703,9 +711,14 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       company_logo: job.company_logo,
       location: job.location,
       job_type: job.job_type || 'Full time',
-      experience: (job.experience_min != null && job.experience_max != null)
+      work_type: job.job_type || 'Full time',
+      experience: job.experience_label || job.experience_level || ((job.experience_min != null && job.experience_max != null)
         ? `${job.experience_min}-${job.experience_max} Yrs`
-        : (job.experience_label || job.experience_level || '0-2 Yrs'),
+        : '0-1 Yrs'),
+      experience_label: job.experience_label || job.experience_level,
+      experience_level: job.experience_level || job.experience_label,
+      experience_min: job.experience_min,
+      experience_max: job.experience_max,
       work_mode: job.work_mode || 'Hybrid',
       salary_min: job.salary_min,
       salary_max: job.salary_max,
@@ -732,9 +745,15 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       offerStatus: job.is_offer ? (offerResponse === 'accept' ? 'accepted' : offerResponse === 'decline' ? 'declined' : (job.offerStatus || (status ? status.toLowerCase() : undefined))) : undefined,
       offer_days_left,
       offer_expiry_text,
-      recruiter_name: job.recruiter_name || job.recruiterName || undefined,
-      recruiter_title: job.recruiter_title || 'HR Manager',
-      recruiter_avatar: job.recruiter_avatar || job.recruiterAvatar || job.avatar_url || undefined,
+      recruiter_name: (job.org_id || job.orgId)
+        ? (job.company_name || job.company_display_name || job.company || job.offer_sender_name)
+        : (job.offer_sender_name || job.sent_by_name || job.recruiter_name || job.recruiterName || undefined),
+      recruiter_title: (job.org_id || job.orgId)
+        ? (job.company_headline || job.offer_sender_headline || undefined)
+        : (job.offer_sender_headline || job.sent_by_headline || job.recruiter_title || undefined),
+      recruiter_avatar: (job.org_id || job.orgId)
+        ? (job.company_logo || job.offer_sender_avatar || undefined)
+        : (job.offer_sender_avatar || job.sent_by_avatar || job.recruiter_avatar || job.recruiterAvatar || job.avatar_url || undefined),
       recruiter_message: job.recruiter_message || job.message || job.note || undefined,
       response_rate: job.response_rate,
       avg_reply: job.avg_reply,
@@ -818,6 +837,9 @@ export const getMyApplications = async (status: string = 'all', cursor?: string)
       id: job.job_id,
       title: job.title,
       company: job.company_name,
+      company_logo: job.company_logo || job.logo_url || job.companyLogo || undefined,
+      recruiter_name: job.recruiter_name || job.recruiterName || undefined,
+      recruiter_avatar: job.recruiter_avatar || job.avatar_url || job.recruiterAvatar || undefined,
       location: job.location,
       job_type: job.job_type || 'Full time',
       work_type: job.job_type || 'Full time',
@@ -833,7 +855,7 @@ export const getMyApplications = async (status: string = 'all', cursor?: string)
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_label || job.experience_level || '0-2Yrs'),
+        : (job.experience_label || job.experience_level || '0-1Yrs'),
       is_saved: job.isSaved || job.is_saved || false,
       is_applied: true,
       is_offer: false,
@@ -941,7 +963,7 @@ export const getMyOffers = async (): Promise<Job[]> => {
       }
 
       let offer_days_left = 7;
-      let offer_expiry_text = 'Ends in 7 days';
+      let offer_expiry_text = 'Offer ends in 7 days';
       
       const offerExpiresAt = job.expires_at || job.offer_expires_at;
       const isOfferResolved = Boolean(status && ['accepted', 'declined', 'withdrawn'].includes(status.toLowerCase()));
@@ -954,7 +976,7 @@ export const getMyOffers = async (): Promise<Job[]> => {
           offer_expiry_text = 'Offer expired';
           status = 'Expired';
         } else {
-          offer_expiry_text = `Ends in ${offer_days_left} ${offer_days_left === 1 ? 'day' : 'days'}`;
+          offer_expiry_text = `Offer ends in ${offer_days_left} ${offer_days_left === 1 ? 'day' : 'days'}`;
         }
       }
 
@@ -969,8 +991,8 @@ export const getMyOffers = async (): Promise<Job[]> => {
         company_logo: job.company_logo,
         location: job.location,
         job_type: job.job_type || 'Full time',
-        experience: job.experience_label || job.experience_level || '0-2 Yrs',
-        work_mode: job.work_mode || 'Hybrid',
+        experience: job.experience_label || job.experience_level || '0-1 Yrs',
+        work_mode: job.work_mode || '',
         salary_min: job.salary_min,
         salary_max: job.salary_max,
         salary_currency: job.salary_currency || 'USD',
@@ -994,9 +1016,15 @@ export const getMyOffers = async (): Promise<Job[]> => {
         offer_id: job.offer_id,
         offer_days_left,
         offer_expiry_text,
-        recruiter_name: job.sent_by_name || job.recruiter_name || (!job.org_id ? (job.company_display_name || job.company_name) : '') || 'Recruiter',
-        recruiter_title: job.sent_by_headline || job.recruiter_title || (job.org_id ? (job.company_display_name || job.company_name) : '') || 'HR Manager',
-        recruiter_avatar: job.sent_by_avatar || job.recruiter_avatar || (job.org_id ? job.company_logo : undefined) || undefined,
+        recruiter_name: (job.org_id || job.job_org_id)
+          ? (job.company_display_name || job.company_name || 'Company')
+          : (job.sent_by_name || job.recruiter_name || 'Recruiter'),
+        recruiter_title: (job.org_id || job.job_org_id)
+          ? (job.company_headline || job.sent_by_headline || undefined)
+          : (job.sent_by_headline || job.recruiter_title || undefined),
+        recruiter_avatar: (job.org_id || job.job_org_id)
+          ? (job.company_logo || job.sent_by_avatar || undefined)
+          : (job.sent_by_avatar || job.recruiter_avatar || undefined),
         recruiter_message: job.message || job.recruiter_message || undefined,
       };
 
@@ -1216,10 +1244,10 @@ export const createJobListing = async (
              location: details?.location || 'Remote',
              salary_min: sMin || 0,
              salary_max: sMax || sMin || 0,
-             salary_currency: details?.salary_currency || 'USD',
+             salary_currency: details?.salary_currency || 'INR',
              experience_min: expMin !== undefined ? expMin : 0,
-             experience_max: expMax !== undefined ? expMax : 2,
-             experience_label: details?.experience || '0 - 2 years',
+             experience_max: expMax !== undefined ? expMax : 1,
+             experience_label: details?.experience || 'Fresher',
              work_mode: details?.work_mode || 'Hybrid',
              job_type: details?.work_type || 'Full-time',
              industry: details?.industry || 'Technology',
@@ -1295,7 +1323,8 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     job_role: raw.title,
     days_remaining: computeDaysRemaining(raw.expires_at),
     company_name: raw.org_id ? (raw.company_display_name || raw.company_name) : (raw.company_display_name || raw.company_name || ''),
-    location: raw.location || 'Remote',
+    location: raw.location || '',
+    work_mode: raw.work_mode || raw.work_model || undefined,
     status: raw.status as 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired',
     note: raw.message || undefined,
     is_active: raw.is_active,
@@ -1303,9 +1332,15 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     org_id: raw.org_id || raw.company_id,
     recruiter: {
       id: raw.sent_by || raw.recruiter_id,
-      name: raw.sent_by_name || raw.recruiter_name || raw.full_name || (!raw.org_id ? (raw.company_display_name || raw.company_name) : '') || 'Recruiter',
-      headline: raw.sent_by_headline || raw.headline || (raw.org_id ? (raw.company_display_name || raw.company_name) : '') || 'Recruiter',
-      avatar: raw.sent_by_avatar || raw.recruiter_avatar || raw.avatar_url || (raw.org_id ? raw.company_logo : undefined) || undefined,
+      name: (raw.org_id || raw.company_id)
+        ? (raw.company_display_name || raw.company_name || raw.sent_by_name || 'Company')
+        : (raw.sent_by_name || raw.recruiter_name || raw.full_name || 'Recruiter'),
+      headline: (raw.org_id || raw.company_id)
+        ? (raw.company_headline || raw.sent_by_headline || undefined)
+        : (raw.sent_by_headline || raw.headline || undefined),
+      avatar: (raw.org_id || raw.company_id)
+        ? (raw.company_logo || raw.company_avatar || raw.sent_by_avatar || undefined)
+        : (raw.sent_by_avatar || raw.recruiter_avatar || raw.avatar_url || undefined),
     },
   };
 };

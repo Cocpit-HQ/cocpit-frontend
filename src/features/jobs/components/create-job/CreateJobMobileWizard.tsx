@@ -82,8 +82,8 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
   // Sequential Form State
   const [role, setRole] = useState(initialRole || initialDetails?.title || 'UI/UX Designer');
   const [company, setCompany] = useState(initialDetails?.company || companyNameFallback || 'Driftline Digital');
-  const [experience, setExperience] = useState(initialDetails?.experience || '');
-  const [workType, setWorkType] = useState(initialDetails?.work_type || '');
+  const [experience, setExperience] = useState(initialDetails?.experience || (initialDetails as any)?.experience_label || (initialDetails as any)?.experience_level || 'Fresher');
+  const [workType, setWorkType] = useState(initialDetails?.work_type || (initialDetails as any)?.job_type || '');
   const [workMode, setWorkMode] = useState(initialDetails?.work_mode || '');
   const [location, setLocation] = useState(initialDetails?.location || '');
   const [description, setDescription] = useState(initialDetails?.description || '');
@@ -200,7 +200,7 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
 
   // Update company name fallback
   useEffect(() => {
-    if (!company && companyNameFallback) {
+    if (companyNameFallback && company !== companyNameFallback) {
       setCompany(companyNameFallback);
     }
   }, [companyNameFallback, company]);
@@ -294,7 +294,7 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
       let activeId = currentJobId;
       let createdJobData: any = null;
 
-      const effectiveExp = experience || 'Junior (1-3 yrs)';
+      const effectiveExp = experience || 'Fresher';
       const { min: expMin, max: expMax } = jobsService.parseExperienceRange(effectiveExp);
 
       // 1. Initialize draft in database with ALL mobile step data
@@ -390,7 +390,7 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
     if (!currentJobId) return;
     setIsAiGenerating(true);
     try {
-      const effectiveExp = experience || 'Junior (1-3 yrs)';
+      const effectiveExp = experience || 'Fresher';
       const { min: expMin, max: expMax } = jobsService.parseExperienceRange(effectiveExp);
       const context = {
         role: role || 'UI/UX Designer',
@@ -442,7 +442,7 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
     if (!isSalaryValid) return;
     setIsSavingDraft(true);
     try {
-      const effectiveExp = experience || 'Junior (1-3 yrs)';
+      const effectiveExp = experience || 'Fresher';
       const { min: expMin, max: expMax } = jobsService.parseExperienceRange(effectiveExp);
       const payload: Partial<JobListing> = {
         id: currentJobId || undefined,
@@ -475,7 +475,7 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
     if (!isPublishEnabled) return;
     setIsPublishing(true);
     try {
-      const effectiveExp = experience || 'Junior (1-3 yrs)';
+      const effectiveExp = experience || 'Fresher';
       const { min: expMin, max: expMax } = jobsService.parseExperienceRange(effectiveExp);
       const payload: Partial<JobListing> = {
         id: currentJobId || undefined,
@@ -950,7 +950,7 @@ export const CreateJobMobileWizard: React.FC<CreateJobMobileWizardProps> = ({
                 <span>Experience</span>
               </div>
               <span className="text-ds-text-primary text-base font-normal leading-6 font-dm-sans truncate">
-                {experience || '0-2Yrs'}
+                {experience || 'Fresher'}
               </span>
             </div>
 

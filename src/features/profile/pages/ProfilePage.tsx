@@ -175,6 +175,47 @@ export default function ProfilePage() {
   // Restore scroll position when profile and posts are loaded
   useScrollRestoration(!isLoading && (userPostsData !== undefined || isPostsError));
 
+  // Auto-scroll to Experience or Education section when arriving from organization onboarded notification
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const section = urlParams.get("section");
+      const hash = window.location.hash;
+      const targetId =
+        section === "education" || hash === "#education-section"
+          ? "education-section"
+          : section === "experience" || hash === "#experience-section"
+          ? "experience-section"
+          : null;
+
+      if (targetId) {
+        // Clear stored scroll positions to prevent useScrollRestoration from resetting to top
+        sessionStorage.removeItem("scroll-/profile");
+        sessionStorage.removeItem("cocpit_scroll_y");
+        sessionStorage.removeItem("cocpit_profile_scroll_y");
+
+        const scrollToTarget = () => {
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        };
+
+        scrollToTarget();
+        const t1 = setTimeout(scrollToTarget, 100);
+        const t2 = setTimeout(scrollToTarget, 300);
+        const t3 = setTimeout(scrollToTarget, 600);
+        const t4 = setTimeout(scrollToTarget, 1000);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+          clearTimeout(t3);
+          clearTimeout(t4);
+        };
+      }
+    }
+  }, [isLoading]);
+
   // Always refetch fresh user posts on mount so posts published elsewhere appear immediately
   useEffect(() => {
     if (user?.id) {
@@ -775,7 +816,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
         {/* 3. Experience Section */}
-        <div className="w-full flex flex-col items-start gap-4">
+        <div id="experience-section" className="w-full flex flex-col items-start gap-4 scroll-mt-24">
           <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
             <div className="w-[87px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Experience
@@ -820,7 +861,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
         {/* 4. Education Section */}
-        <div className="w-full flex flex-col items-start gap-4">
+        <div id="education-section" className="w-full flex flex-col items-start gap-4 scroll-mt-24">
           <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
             <div className="w-[79px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Education
