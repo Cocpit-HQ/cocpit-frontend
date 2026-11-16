@@ -55,9 +55,10 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   });
 
   // Read initial status filter from URL so refresh preserves the selected tab
-  const VALID_FILTERS = ['All', 'Active', 'Closed', 'In review', 'Drafts'] as const;
+  const VALID_FILTERS = ['All', 'Active', 'Closed', 'Close', 'In review', 'In Review', 'Draft', 'Drafts', 'Rejected'] as const;
   const urlFilter = searchParams?.get('filter') || 'All';
-  const initialFilter = (VALID_FILTERS as readonly string[]).includes(urlFilter) ? urlFilter : 'All';
+  const matchedFilter = VALID_FILTERS.find(f => f.toLowerCase() === urlFilter.toLowerCase()) || 'All';
+  const initialFilter = matchedFilter.toLowerCase() === 'close' ? 'Closed' : matchedFilter.toLowerCase() === 'drafts' ? 'Draft' : matchedFilter.toLowerCase() === 'in review' ? 'In Review' : matchedFilter;
 
   // Wrap setActiveSubTab to also update URL without triggering redundant RSC calls
   const setActiveSubTab = useCallback((tab: SubTab) => {
@@ -282,8 +283,21 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   }, []);
 
   const handleSelectListing = useCallback((listing: JobListing) => {
+    const statusUpper = (listing.status || '').toUpperCase();
+    const modUpper = (listing.moderation_status || '').toUpperCase();
+    if (
+      statusUpper === 'UNDER_REVIEW' ||
+      statusUpper === 'IN REVIEW' ||
+      statusUpper === 'IN_REVIEW' ||
+      statusUpper === 'REJECTED' ||
+      modUpper === 'UNDER_REVIEW' ||
+      modUpper === 'REJECTED'
+    ) {
+      return; // Do not redirect if job status is in review or rejected
+    }
+
     setSelectedListing(listing);
-    const isDraft = (listing.status || '').toUpperCase() === 'DRAFT';
+    const isDraft = statusUpper === 'DRAFT';
     if (isDraft) {
       transitionTo('create-job', listing.id);
     } else {
@@ -293,8 +307,21 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   }, [transitionTo]);
 
   const handleViewApplicants = useCallback((listing: JobListing) => {
+    const statusUpper = (listing.status || '').toUpperCase();
+    const modUpper = (listing.moderation_status || '').toUpperCase();
+    if (
+      statusUpper === 'UNDER_REVIEW' ||
+      statusUpper === 'IN REVIEW' ||
+      statusUpper === 'IN_REVIEW' ||
+      statusUpper === 'REJECTED' ||
+      modUpper === 'UNDER_REVIEW' ||
+      modUpper === 'REJECTED'
+    ) {
+      return; // Do not redirect if job status is in review or rejected
+    }
+
     setSelectedListing(listing);
-    const isDraft = (listing.status || '').toUpperCase() === 'DRAFT';
+    const isDraft = statusUpper === 'DRAFT';
     if (isDraft) {
       transitionTo('create-job', listing.id);
     } else {

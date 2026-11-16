@@ -87,7 +87,9 @@ export function CompanyPrivacySettingsPage() {
     org.is_verified ||
     org.verification_status === 'VERIFIED' ||
     org.verification_status === 'DOMAIN_VERIFIED' ||
-    org.verification_status === 'DOCUMENT_VERIFIED'
+    org.verification_status === 'DOCUMENT_VERIFIED' ||
+    (settings as any)?.is_verified ||
+    (settings as any)?.verification_status === 'VERIFIED'
   );
 
   const isVerified = Boolean(
@@ -99,6 +101,41 @@ export function CompanyPrivacySettingsPage() {
     (activeProfile as any)?.is_verified ||
     (activeProfile as any)?.isVerified
   );
+
+  const isPending = Boolean(
+    !isVerified && (
+      org.verification_status === 'DOCUMENT_PENDING' ||
+      org.verification_status === 'PENDING' ||
+      org.verification_status === 'UNDER_REVIEW' ||
+      activeProfile?.verification_status === 'DOCUMENT_PENDING' ||
+      activeProfile?.verification_status === 'PENDING' ||
+      activeProfile?.verification_status === 'UNDER_REVIEW' ||
+      (settings as any)?.verification_status === 'PENDING' ||
+      (settings as any)?.verification_status === 'UNDER_REVIEW'
+    )
+  );
+
+  const isRejected = Boolean(
+    !isVerified && !isPending && (
+      org.verification_status === 'REJECTED' ||
+      activeProfile?.verification_status === 'REJECTED' ||
+      (settings as any)?.verification_status === 'REJECTED'
+    )
+  );
+
+  const parseRejectionReason = (val?: string) => {
+    if (!val || typeof val !== 'string') return null;
+    const match = val.match(/\[Reason:\s*([^\]]+)\]/i);
+    return match ? match[1].trim() : val;
+  };
+
+  const rejectionReason =
+    org.rejection_reason ||
+    (settings as any)?.rejection_reason ||
+    activeProfile?.rejection_reason ||
+    parseRejectionReason(org.review_notes) ||
+    parseRejectionReason((settings as any)?.review_notes) ||
+    null;
 
   // Sync active profile if backend org verification status changed
   useEffect(() => {
@@ -112,8 +149,18 @@ export function CompanyPrivacySettingsPage() {
       if (refreshProfile) {
         void refreshProfile();
       }
+    } else if (isRejected && activeProfile && activeProfile.verification_status !== 'REJECTED') {
+      if (updateActiveProfile) {
+        updateActiveProfile({
+          verification_status: 'REJECTED',
+          rejection_reason: rejectionReason,
+        });
+      }
+      if (refreshProfile) {
+        void refreshProfile();
+      }
     }
-  }, [isOrgVerified, org.verification_status, activeProfile, updateActiveProfile, refreshProfile]);
+  }, [isOrgVerified, isRejected, org.verification_status, rejectionReason, activeProfile, updateActiveProfile, refreshProfile]);
 
   const handleVerifyClick = useCallback(() => {
     if (!canVerify) return;
@@ -190,12 +237,25 @@ export function CompanyPrivacySettingsPage() {
 
         {/* Section 2: Account Verification */}
         <div className="self-stretch py-2 pb-4 inline-flex justify-between items-center border-b border-ds-border">
-          <div className="inline-flex flex-col justify-center items-start">
-            <div className="justify-center text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+          <div className="inline-flex flex-col justify-center items-start gap-1">
+            <div className="justify-center text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 flex items-center gap-2">
               Account verification
+              {isRejected && (
+                <span className="text-[11px] font-semibold text-rose-500 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded-full">
+                  Rejected
+                </span>
+              )}
             </div>
             <div className="justify-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-              {isVerified ? "Your identity has been verified" : "Verify your identity to unlock more features"}
+              {isVerified
+                ? "Your identity has been verified"
+                : isPending
+                ? "Your documents are under review by admin"
+                : isRejected
+                ? (rejectionReason 
+                    ? `Previous attempt was not approved (${rejectionReason}). Verify again to unlock job posting.`
+                    : "Previous attempt was not approved. Verify again to unlock job posting.")
+                : "Verify your identity to unlock more features"}
             </div>
           </div>
           {isVerified ? (
@@ -207,6 +267,15 @@ export function CompanyPrivacySettingsPage() {
                 Verified
               </span>
             </div>
+          ) : isPending ? (
+            <div
+              className="flex flex-row justify-center items-center px-3 py-1.5 gap-2.5 min-w-[76px] h-[36px] border border-amber-500/40 bg-amber-500/10 rounded-[100px] select-none cursor-default shrink-0 pointer-events-none"
+              aria-disabled="true"
+            >
+              <span className="flex justify-center items-center text-amber-500 font-['DM_Sans'] font-medium text-sm leading-5">
+                Pending
+              </span>
+            </div>
           ) : !canVerify ? (
             <TooltipProvider>
               <Tooltip delayDuration={100} enableTouch>
@@ -214,11 +283,11 @@ export function CompanyPrivacySettingsPage() {
                   <span className="inline-block cursor-not-allowed">
                     <button
                       type="button"
-                      onClick={handleVerifyClick}
-                      className="w-[68px] h-[36px] rounded-[100px] border border-ds-border text-ds-text-primary flex justify-center items-center transition-colors cursor-not-allowed shrink-0"
+                      disabled
+                      className="h-[36px] px-3.5 rounded-[100px] border border-ds-border text-ds-text-muted flex justify-center items-center transition-colors cursor-not-allowed shrink-0"
                     >
-                      <span className="justify-start text-base font-medium font-['DM_Sans'] leading-6">
-                        Verify
+                      <span className="justify-start text-sm font-medium font-['DM_Sans'] leading-5 whitespace-nowrap">
+                        {isRejected ? "Verify Again" : "Verify"}
                       </span>
                     </button>
                   </span>
@@ -232,10 +301,14 @@ export function CompanyPrivacySettingsPage() {
             <button
               type="button"
               onClick={handleVerifyClick}
-              className="w-[68px] h-[36px] rounded-[100px] border border-ds-border hover:border-ds-accent text-ds-text-primary hover:text-ds-accent flex justify-center items-center transition-colors cursor-pointer shrink-0"
+              className={`h-[36px] px-3.5 rounded-[100px] border flex justify-center items-center transition-colors cursor-pointer shrink-0 ${
+                isRejected 
+                  ? 'border-rose-400 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20' 
+                  : 'border-ds-border hover:border-ds-accent text-ds-text-primary hover:text-ds-accent'
+              }`}
             >
-              <span className="justify-start text-base font-medium font-['DM_Sans'] leading-6">
-                Verify
+              <span className="justify-start text-sm font-medium font-['DM_Sans'] leading-5 whitespace-nowrap">
+                {isRejected ? "Verify Again" : "Verify"}
               </span>
             </button>
           )}

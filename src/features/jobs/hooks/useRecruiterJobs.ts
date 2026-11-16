@@ -28,6 +28,8 @@ const mapOldToNewJob = (oldJob: any): Job => {
     org_id: oldJob.companyId,
     actively_hiring: oldJob.activelyHiring,
     easy_apply: oldJob.easyApply,
+    moderation_status: oldJob.moderation_status || oldJob.moderationStatus,
+    rejection_reason: oldJob.rejection_reason || oldJob.rejectionReason,
   };
 };
 export const useRecruiterJobs = (companyId?: string) => {
@@ -169,8 +171,9 @@ export const useRecruiterJobs = (companyId?: string) => {
         easy_apply: jobData.easyApply,
       };
       const listKey = jobData.activelyHiring ? 'published' : 'drafts';
+      newJob.moderation_status = 'UNDER_REVIEW';
       addRecruiterJob(listKey, newJob);
-      toast.success('Job posted successfully!');
+      toast.success('Job submitted for verification! It will be live once reviewed.');
     } catch (err) {
       console.error('Failed to create job:', err);
       toast.error('Failed to post job.');
