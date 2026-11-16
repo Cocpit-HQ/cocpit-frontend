@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { updateGlobalSearchEntityStatus } from "@/features/search/utils/search-cache.utils";
 
 interface SocialContextType {
   followingIds: string[];
@@ -109,6 +110,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
     queryClient.invalidateQueries({ queryKey: ["profileStats"] });
     queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+    updateGlobalSearchEntityStatus(queryClient, targetId, { is_following: isFollowing });
   };
 
   const followUser = async (id: string, sourcePostId?: string, userName?: string) => {
@@ -352,6 +354,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.invalidateQueries({ queryKey: ["company_followers"] });
     queryClient.invalidateQueries({ queryKey: ["company_relationship"] });
     queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
+    queryClient.invalidateQueries({ queryKey: ["global-search"] });
   };
 
   const blockUser = async (id: string) => {

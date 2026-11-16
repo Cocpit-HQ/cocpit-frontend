@@ -119,9 +119,15 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
   const isLoading = connect.isPending && connect.variables === user.id;
   const showAvatar = !!user.avatarUrl && !imgError;
 
+  const handleProfileClick = () => {
+    if (typeof window !== 'undefined') {
+      useConnectionStore.getState().setSuggestionsScrollPos(window.scrollY);
+    }
+  };
+
   // Suggestion card with bg-ds-bg background and 182x216px dimensions per Figma spec
   return (
-    <div className="relative flex flex-col items-center text-center p-3 w-[calc(50%-6px)] sm:w-[182px] h-[216px] rounded-[16px] border border-ds-border bg-ds-bg hover:border-ds-border/80 transition-all font-dm-sans group select-none">
+    <div id={`suggestion-card-${user.id}`} className="relative flex flex-col items-center text-center p-3 w-[calc(50%-6px)] sm:w-[182px] h-[216px] rounded-[16px] border border-ds-border bg-ds-bg hover:border-ds-border/80 transition-all font-dm-sans group select-none">
       {/* Top-Right Dismiss Button per Figma spec (32x32px, absolute top-3 right-3) */}
       <button
         type="button"
@@ -135,6 +141,7 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
       {/* Avatar per Figma spec: 60x60px */}
       <Link
         href={`/profile/${user.id}`}
+        onClick={handleProfileClick}
         className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-ds-accent mb-2 mt-1"
         tabIndex={-1}
         aria-hidden="true"
@@ -162,6 +169,7 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
       <div className="flex flex-col items-center w-full min-h-[40px] mb-2 mt-1">
         <Link
           href={`/profile/${user.id}`}
+          onClick={handleProfileClick}
           className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm no-underline hover:no-underline transition-colors max-w-full"
         >
           <p className="text-[16px] font-normal text-ds-text-primary leading-[24px] truncate w-full">

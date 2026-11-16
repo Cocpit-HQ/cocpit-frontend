@@ -36,31 +36,28 @@ export const NotificationsPage: React.FC = () => {
 
   const handleBack = () => {
     const returnTo = searchParams?.get('returnTo') || searchParams?.get('from');
-    if (returnTo) {
+    if (returnTo && !returnTo.includes('/notifications')) {
       router.push(returnTo);
       return;
     }
 
-    const lastLocation = typeof window !== 'undefined'
+    const rawLastLocation = typeof window !== 'undefined'
       ? sessionStorage.getItem('cocpit_last_location')
       : null;
 
-    if (lastLocation && lastLocation !== '/notifications') {
-      if (typeof window !== 'undefined' && window.history.length > 1) {
-        router.back();
-      } else {
-        router.push(lastLocation);
-      }
-      return;
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('cocpit_last_location');
     }
 
-    if (
-      typeof window !== 'undefined' &&
-      document.referrer &&
-      document.referrer.startsWith(window.location.origin) &&
-      !document.referrer.includes('/notifications')
-    ) {
-      router.back();
+    const isValidLastLocation =
+      rawLastLocation &&
+      rawLastLocation !== '/notifications' &&
+      !rawLastLocation.startsWith('/notifications') &&
+      !rawLastLocation.includes('returnTo=/notifications') &&
+      !rawLastLocation.includes('from=/notifications');
+
+    if (isValidLastLocation) {
+      router.push(rawLastLocation);
       return;
     }
 

@@ -78,12 +78,12 @@ export const FeedPost = (props: FeedPostProps) => {
   const isTargetPostRepostWithThoughts = !!interactionTargetProps.shared_post && !!interactionTargetProps.content && interactionTargetProps.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() !== '';
 
   const {
-    id: targetId,
-    author: targetAuthor,
-    authorAvatar: targetAuthorAvatar,
-    authorSlug: targetAuthorSlug,
+    id: rawTargetId,
+    author: rawTargetAuthor,
+    authorAvatar: rawTargetAuthorAvatar,
+    authorSlug: rawTargetAuthorSlug,
     authorRole: targetAuthorRole,
-    authorHeadline: targetAuthorHeadline,
+    authorHeadline: rawTargetAuthorHeadline,
     imageSrc: targetImageSrc,
     images: targetImages,
     videoSrc: targetVideoSrc,
@@ -99,6 +99,11 @@ export const FeedPost = (props: FeedPostProps) => {
     likedUsers: targetLikedUsers
   } = interactionTargetProps as any;
 
+  const targetId = rawTargetId || (interactionTargetProps as any).post_id;
+  const targetAuthor = rawTargetAuthor || (interactionTargetProps as any).author_name || '';
+  const targetAuthorAvatar = rawTargetAuthorAvatar || (interactionTargetProps as any).author_avatar;
+  const targetAuthorSlug = rawTargetAuthorSlug || (interactionTargetProps as any).author_slug;
+  const targetAuthorHeadline = rawTargetAuthorHeadline || (interactionTargetProps as any).author_headline;
   // Fallback: if backend didn't return sample_liker_username but liked_users has entries,
   // pick the first liker that isn't the post author so LikeBar always has a name to show.
   const resolvedSampleLikerUsername: string | undefined =
@@ -115,8 +120,10 @@ export const FeedPost = (props: FeedPostProps) => {
     (targetImageSrc && typeof targetImageSrc === 'string' && targetImageSrc.trim() !== '') ||
     (Array.isArray(targetImages) && targetImages.length > 0)
   );
+  const targetMedia = (interactionTargetProps as any).media;
+  const hasMultipleMedia = Array.isArray(targetMedia) && targetMedia.length > 1;
   const hasVideo = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
-  const hasMedia = hasImages || hasVideo || targetPost_type === 'image' || targetPost_type === 'video' || Boolean(interactionTargetProps.shared_post);
+  const hasMedia = hasImages || hasVideo || hasMultipleMedia || targetPost_type === 'image' || targetPost_type === 'video' || Boolean(interactionTargetProps.shared_post);
 
   const targetIsCompanyPost = Boolean(interactionTargetProps.isCompanyPost || (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId);
   const targetCompanyId = (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId;
@@ -569,7 +576,7 @@ export const FeedPost = (props: FeedPostProps) => {
     setIsShareModalOpen(true);
   };
 
-  const isVideoFeedCard = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
+  const isVideoFeedCard = !hasMultipleMedia && Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
 
   const isVideoPost = Boolean(
     targetPost_type === 'video' ||
@@ -616,7 +623,7 @@ export const FeedPost = (props: FeedPostProps) => {
     if (currentUserHandle) {
       // Check for structured mentions e.g. @[Name](handle)
       const escapeHandle = currentUserHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const structuredMatch = new RegExp(`@\\[[^\\]]+\\]\\(${escapeHandle}\\)`, 'i');
+      const structuredMatch = new RegExp(`@\\[[^\\]]+\\]\\((?:(?:user|org|company):)?${escapeHandle}\\)`, 'i');
       if (structuredMatch.test(targetContent)) isMatch = true;
 
       // Check for legacy mentions e.g. @handle
@@ -642,7 +649,7 @@ export const FeedPost = (props: FeedPostProps) => {
     // 1. Strip structured mentions using the exact handle
     if (currentUserHandle) {
       const escapeHandle = currentUserHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const structuredMatch = new RegExp(`@\\[([^\\]]+)\\]\\(${escapeHandle}\\)`, 'gi');
+      const structuredMatch = new RegExp(`@\\[([^\\]]+)\\]\\((?:(?:user|org|company):)?${escapeHandle}\\)`, 'gi');
       newContent = newContent.replace(structuredMatch, '$1');
     }
 
@@ -761,7 +768,8 @@ export const FeedPost = (props: FeedPostProps) => {
     e.stopPropagation();
     if (targetId && targetId !== 'preview') {
       saveScrollPosition(props.isProfileView ? "profile" : "post", targetId.toString());
-      router.push(isArticlePost ? `/article/${targetId}` : `/post/${targetId}`);
+      const returnToParam = (props as any).returnTo ? `?returnTo=${encodeURIComponent((props as any).returnTo)}` : '';
+      router.push((isArticlePost ? `/article/${targetId}` : `/post/${targetId}`) + returnToParam);
     }
   };
 
@@ -788,7 +796,8 @@ export const FeedPost = (props: FeedPostProps) => {
     if (targetId && targetId !== 'preview') {
       // Purpose of Bug Fix: Save scroll position and target post ID/viewport top before navigating to single-view post page
       saveScrollPosition(props.isProfileView ? "profile" : "post", targetId.toString());
-      router.push(isArticlePost ? `/article/${targetId}` : `/post/${targetId}`);
+      const returnToParam = (props as any).returnTo ? `?returnTo=${encodeURIComponent((props as any).returnTo)}` : '';
+      router.push((isArticlePost ? `/article/${targetId}` : `/post/${targetId}`) + returnToParam);
     }
   };
 
@@ -903,6 +912,7 @@ export const FeedPost = (props: FeedPostProps) => {
               />
             ) : hasMedia ? (
               <PostMedia
+                media={targetMedia}
                 imageSrc={targetImageSrc}
                 images={targetImages}
                 imageDimensions={(interactionTargetProps as any).imageDimensions}
@@ -981,6 +991,7 @@ export const FeedPost = (props: FeedPostProps) => {
               />
             ) : (
               <PostMedia
+                media={targetMedia}
                 imageSrc={targetImageSrc}
                 images={targetImages}
                 imageDimensions={(interactionTargetProps as any).imageDimensions}

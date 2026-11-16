@@ -71,11 +71,36 @@ export function AppShell({
     pathname?.match(/^\/organization\/[^\/]+\/settings\/?$/)
   );
   const isSettingsSubpage = isSettingsRoute && !isRootSettings;
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage;
+  const isHashtagPage = Boolean(pathname?.startsWith('/hashtag/') || pathname === '/hashtag');
+  const jobsTab = searchParams?.get('tab')?.toLowerCase();
+  const urlView = searchParams?.get('view');
+  const isFullScreenJobView = Boolean(
+    urlView === 'create-job' ||
+    urlView === 'applicants' ||
+    urlView === 'view-listing' ||
+    urlView === 'offer-details'
+  );
+  const isCandidateMyListings = !isCompany && (
+    jobsTab === 'my listings' ||
+    jobsTab === 'my-listings' ||
+    jobsTab === 'my_listings' ||
+    searchParams?.get('tab') === 'My Listings'
+  );
+  const isJobsFullScreen = Boolean(
+    pathname === '/jobs' && (
+      isFullScreenJobView ||
+      isCandidateMyListings
+    )
+  );
+  const isJobDetailPage = Boolean(pathname?.match(/^\/jobs\/[^\/]+\/?$/) && !pathname?.startsWith('/jobs/search'));
+  const isJobSearchPage = Boolean(pathname?.startsWith('/jobs/search'));
+  const isJobExplorePage = Boolean(pathname?.startsWith('/jobs/explore'));
+  const isGlobalSearchPage = Boolean(pathname?.startsWith('/search'));
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage || isJobExplorePage || isGlobalSearchPage;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || isSettingsSubpage || activeModal === 'create-post';
 
   return (
-    <div className={`relative flex flex-col ${isSettingsRoute ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground overflow-x-hidden`}>
+    <div className={`relative flex flex-col ${isSettingsRoute ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground ${isGlobalSearchPage ? 'overflow-x-clip' : 'overflow-x-hidden'}`}>
       {!isDistractionFree && (
         <div className="hidden sm:block fixed left-0 top-0 h-screen z-40">
           <Sidebar />

@@ -1,10 +1,16 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { formatPostedTime } from '../../utils/jobs.utils';
+import React, { useState, useEffect, useRef } from 'react';
 import { JobListing, ListingsCounts } from '../../types/jobs.types';
 import { useInView } from '@/hooks/use-in-view';
 import { Icon } from '@iconify/react';
+import { MenuIcon, DeleteIcon, BriefcaseIcon } from '@/components/icons';
+import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
+import { useBodyScrollLock } from '@/hooks';
+import { cn } from '@/lib/utils';
 
 interface ListingsTabProps {
   listings: JobListing[];
+  targetJobId?: string | null;
   hasMore?: boolean;
   isFetchingMore?: boolean;
   loadMore?: () => void;
@@ -12,27 +18,86 @@ interface ListingsTabProps {
   statusFilter: string;
   onStatusFilterChange: (status: string) => void;
   onSelectListing?: (listing: JobListing) => void;
+  onViewApplicants?: (listing: JobListing) => void;
   onSendOffer?: (listing: JobListing) => void;
   onCloseListing?: (id: string) => void;
   onDeleteListing?: (id: string) => void;
   isLoading?: boolean;
 }
 
+const getMobileStatusColor = (status?: string) => {
+  switch ((status || '').toUpperCase()) {
+    case 'ACTIVE':
+      return 'text-ds-success';
+    case 'IN REVIEW':
+    case 'IN_REVIEW':
+      return 'text-ds-accent';
+    case 'CLOSED':
+    case 'CLOSE':
+      return 'text-ds-warning';
+    case 'DRAFT':
+    default:
+      return 'text-ds-text-muted';
+  }
+};
+
+const getStatusColor = (status?: string) => {
+  switch ((status || '').toUpperCase()) {
+    case 'ACTIVE':
+      return 'text-ds-success';
+    case 'IN REVIEW':
+    case 'IN_REVIEW':
+      return 'text-ds-accent';
+    case 'CLOSED':
+    case 'CLOSE':
+      return 'text-ds-warning';
+    case 'DRAFT':
+    default:
+      return 'text-ds-text-muted';
+  }
+};
+
 export const ListingsTab: React.FC<ListingsTabProps> = ({ 
-  listings, hasMore = false, isFetchingMore = false, loadMore, 
+  listings,
+  targetJobId, 
+  hasMore = false, 
+  isFetchingMore = false, 
+  loadMore, 
   counts = { all: 0, active: 0, closed: 0, draft: 0, inReview: 0 },
-  statusFilter, onStatusFilterChange, onSelectListing,
-  onSendOffer, onCloseListing, onDeleteListing, isLoading = false
+  statusFilter, 
+  onStatusFilterChange, 
+  onSelectListing,
+  onViewApplicants,
+  onSendOffer, 
+  onCloseListing, 
+  onDeleteListing, 
+  isLoading = false
 }) => {
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [jobToClose, setJobToClose] = useState<string | null>(null);
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  const [mobileActionJob, setMobileActionJob] = useState<JobListing | null>(null);
+  const [activeMenuJobId, setActiveMenuJobId] = useState<string | null>(null);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [mobileMenuJob, setMobileMenuJob] = useState<JobListing | null>(null);
+  useBodyScrollLock(isFilterDrawerOpen || Boolean(mobileMenuJob));
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
     rootMargin: '100px',
   });
+
+  // Close dropdown menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenuJobId(null);
+      }
+    };
+    if (activeMenuJobId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeMenuJobId]);
 
   // Trigger loadMore when sentinel is in view
   useEffect(() => {
@@ -41,474 +106,560 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
     }
   }, [inView, hasMore, isFetchingMore, loadMore]);
 
+  // Smoothly scroll to and highlight targeted job (e.g. from notification)
+  useEffect(() => {
+    if (!targetJobId || listings.length === 0) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`job-listing-${targetJobId}`) || document.getElementById(`job-listing-mobile-${targetJobId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [targetJobId, listings]);
+
+  // Sub-filter tabs from Figma spec
   const filterChips = [
-    { label: 'All', count: counts.all },
-    { label: 'Active', count: counts.active },
-    { label: 'Closed', count: counts.closed },
-    { label: 'In review', count: counts.inReview },
-    { label: 'Drafts', count: counts.draft }
+    { label: 'All', key: 'All', count: counts.all },
+    { label: 'Active', key: 'Active', count: counts.active },
+    { label: 'Closed', key: 'Close', count: counts.closed },
+    { label: 'In Review', key: 'In Review', count: counts.inReview },
+    { label: 'Draft', key: 'Draft', count: counts.draft }
   ];
 
-  const getStatusChip = (status: string) => {
-    let bg = 'bg-[#F0FDF4] dark:bg-[#123B23]';
-    let text = 'text-[#22C55E] dark:text-[#4ADE80]';
-    let label = 'ACTIVE';
-
-    switch (status.toUpperCase()) {
-      case 'ACTIVE':
-        bg = 'bg-[#F0FDF4] dark:bg-[#123B23]';
-        text = 'text-[#22C55E] dark:text-[#4ADE80]';
-        label = 'ACTIVE';
-        break;
-      case 'IN REVIEW':
-        bg = 'bg-[#F1F0FF] dark:bg-[#1C2340]';
-        text = 'text-[#4338CA] dark:text-[#818CF8]';
-        label = 'IN REVIEW';
-        break;
-      case 'DRAFT':
-        bg = 'bg-[#F1F3F9] dark:bg-[#2E3445]';
-        text = 'text-[#6B7280] dark:text-[#9CA3AF]';
-        label = 'DRAFT';
-        break;
-      case 'CLOSED':
-        bg = 'bg-[#F1F3F9] dark:bg-[#2E3445]';
-        text = 'text-[#6B7280] dark:text-[#9CA3AF]';
-        label = 'CLOSED';
-        break;
-      default:
-        bg = 'bg-[#F1F3F9] dark:bg-[#2E3445]';
-        text = 'text-[#6B7280] dark:text-[#9CA3AF]';
-        label = status.toUpperCase();
-        break;
+  const getEmptyStateContent = () => {
+    const s = statusFilter.toLowerCase();
+    if (s === 'active') {
+      return {
+        title: 'No active jobs yet',
+        description: 'Your published and active job listings will appear here.',
+      };
     }
-
-    return (
-      <div
-        className={`flex flex-col justify-center items-center rounded-full flex-shrink-0 ${bg}`}
-        style={{
-          padding: '8px',
-          width: '70px',
-          height: '31px',
-        }}
-      >
-        <span
-          className={`font-['Poppins'] font-medium text-[10px] leading-[15px] flex items-center text-center uppercase ${text}`}
-        >
-          {label}
-        </span>
-      </div>
-    );
+    if (s === 'close' || s === 'closed') {
+      return {
+        title: 'No closed jobs',
+        description: 'Jobs that are no longer accepting applications will appear here.',
+      };
+    }
+    if (s === 'in review' || s === 'in_review') {
+      return {
+        title: 'No jobs in review',
+        description: 'Jobs currently undergoing review will appear here.',
+      };
+    }
+    if (s === 'draft' || s === 'drafts') {
+      return {
+        title: 'No draft jobs',
+        description: 'Jobs saved as drafts will appear here.',
+      };
+    }
+    return {
+      title: 'No active jobs yet',
+      description: 'Your published and active job listings will appear here.',
+    };
   };
 
-  return (
-    <div
-      className="w-full max-w-[998px] h-[708px] bg-white dark:bg-[#0B0F19] rounded-[24px] p-[16px] flex flex-col items-start gap-[16px] box-border"
-    >
-      {/* Heading Frame */}
-      <div className="w-full hidden md:flex flex-col gap-[4px] px-0">
-        <h3 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black dark:text-[#F9FAFB] capitalize">
-          {statusFilter === 'All' ? 'All Jobs' : statusFilter === 'Drafts' ? 'Drafts' : `${statusFilter} Jobs`}
-        </h3>
-        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] dark:text-[#9CA3AF]">
-          Total jobs - {filterChips.find(c => c.label.toLowerCase() === statusFilter.toLowerCase())?.count || 0}
-        </span>
-      </div>
+  const emptyContent = getEmptyStateContent();
+  const getCurrentTabInfo = () => {
+    const s = statusFilter.toLowerCase();
+    if (s === 'active') return { title: 'Active Jobs', count: counts?.active ?? 0 };
+    if (s === 'close' || s === 'closed') return { title: 'Closed Jobs', count: counts?.closed ?? 0 };
+    if (s === 'in review' || s === 'in_review') return { title: 'In Review Jobs', count: counts?.inReview ?? 0 };
+    if (s === 'draft' || s === 'drafts') return { title: 'Draft Jobs', count: counts?.draft ?? 0 };
+    return { title: 'All Jobs', count: counts?.all ?? listings.length };
+  };
 
-      {/* Mobile Heading & Filter Icon */}
-      <div className="w-full flex md:hidden justify-between items-center px-0 mb-2">
-        <div className="flex flex-col gap-1">
-          <h3 className="font-['Poppins'] font-medium text-[20px] leading-[28px] text-black dark:text-[#F9FAFB] capitalize">
-            {statusFilter === 'All' ? 'All jobs' : statusFilter === 'Drafts' ? 'Drafts' : `${statusFilter} jobs`}
-          </h3>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] dark:text-[#9CA3AF]">
-            Total jobs - {filterChips.find(c => c.label.toLowerCase() === statusFilter.toLowerCase())?.count || 0}
-          </span>
-        </div>
-        <button 
-          onClick={() => setIsFilterSheetOpen(true)}
-          className="p-2 relative hover:bg-slate-50 dark:hover:bg-[#2E3445] rounded-full transition-colors active:scale-95"
+  const { title: tabTitle, count: tabCount } = getCurrentTabInfo();
+
+  return (
+    <div className="w-full max-w-[800px] flex flex-col gap-4 font-dm-sans">
+      {/* Mobile Section Header & Filter Row (Figma: All jobs + filter icon) */}
+      <div className="flex md:hidden w-full h-10 justify-between items-center relative select-none">
+        <span className="font-dm-sans font-normal text-base leading-6 text-ds-text-primary">
+          {statusFilter.toLowerCase() === 'all'
+            ? 'All jobs'
+            : statusFilter.toLowerCase() === 'draft' || statusFilter.toLowerCase() === 'drafts'
+            ? 'Draft jobs'
+            : statusFilter.toLowerCase() === 'in review' || statusFilter.toLowerCase() === 'in_review'
+            ? 'In review jobs'
+            : `${statusFilter} jobs`}
+        </span>
+        <button
+          type="button"
+          onClick={() => setIsFilterDrawerOpen(true)}
+          aria-label="Filter jobs"
+          className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer outline-none"
         >
-          <Icon icon="lucide:list-filter" className="w-6 h-6 text-black dark:text-[#F9FAFB]" />
-          {statusFilter !== 'All' && (
-            <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white dark:border-[#0B0F19]" />
-          )}
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6H16M6 10H14M8 14H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
         </button>
       </div>
 
-      {/* Filter Row Frame (Frame 2608535) - Desktop Only */}
-      <div className="w-full hidden md:flex flex-col items-start p-0 gap-[16px] flex-none self-stretch">
-        <div className="w-full flex flex-row items-center gap-[8px] border-b border-transparent">
+      {/* Desktop Section Header: All Jobs & Total jobs (Desktop only) */}
+      <div className="hidden md:flex w-full flex-col items-start gap-1">
+        <h3 className="text-ds-text-primary ds-text-body-1 font-medium">
+          {tabTitle}
+        </h3>
+        <span className="text-ds-text-secondary ds-text-small font-normal">
+          Total jobs - {tabCount}
+        </span>
+      </div>
+
+      {/* Desktop Sub-filter tabs row (Desktop only) */}
+      <div className="hidden md:flex w-full items-center justify-between select-none">
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar h-9">
           {filterChips.map((chip) => {
-            const isSelected = statusFilter.toLowerCase() === chip.label.toLowerCase();
+            const isSelected =
+              statusFilter.toLowerCase() === chip.key.toLowerCase() ||
+              (chip.key === 'Close' && statusFilter.toLowerCase() === 'closed') ||
+              (chip.key === 'Draft' && statusFilter.toLowerCase() === 'drafts');
+
             return (
-              <div
-                key={chip.label}
-                onClick={() => onStatusFilterChange(chip.label)}
-                className={`font-['Poppins'] text-[14px] leading-[20px] px-[16px] py-[8px] cursor-pointer transition-all border-b-2 ${
-                  isSelected
-                    ? 'text-[#6366F1] dark:text-[#818CF8] font-semibold border-[#6366F1] dark:border-[#818CF8]'
-                    : 'text-[#000000] dark:text-[#F9FAFB] font-normal border-transparent hover:text-[#6366F1]/80 dark:hover:text-[#818CF8]/80'
+              <button
+                type="button"
+                key={chip.key}
+                onClick={() => onStatusFilterChange(chip.key)}
+                className={`relative h-9 px-3 py-1.5 flex flex-col justify-center items-center text-base font-medium font-dm-sans transition-colors whitespace-nowrap cursor-pointer shrink-0 focus:outline-none ${
+                  isSelected ? 'text-ds-text-primary' : 'text-ds-text-secondary hover:text-ds-text-primary'
                 }`}
               >
-                {chip.label}
-              </div>
+                <span>{chip.label}</span>
+                {isSelected && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                )}
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Job Card List with Scroll */}
-      <div className="w-full flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-[16px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Job Card List */}
+      <div className="w-full flex flex-col gap-0 md:gap-3">
         {isLoading ? (
-          [1, 2, 3, 4].map((n) => (
-              <div
+          [1, 2, 3].map((n) => (
+            <div
               key={n}
-              className="w-full bg-white dark:bg-[#0B0F19] flex-none rounded-[12px] animate-pulse border border-slate-100 dark:border-[#2E3445]"
+              className="w-full py-4 border-b border-ds-border flex flex-col gap-3 animate-pulse"
             >
-              {/* Desktop Skeleton */}
-              <div className="hidden md:flex flex-row items-center justify-between py-4 px-4 gap-4 h-[92px] w-full">
-                <div className="flex flex-col items-start gap-2 w-1/4 h-[48px] justify-center">
-                  <div className="w-3/4 h-5 bg-slate-200 dark:bg-[#2E3445] rounded" />
-                  <div className="w-1/2 h-4 bg-slate-100 dark:bg-[#1C2340] rounded" />
+              <div className="w-full flex justify-between items-center">
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <div className="w-1/3 h-5 bg-ds-surface-2 rounded" />
+                  <div className="w-1/4 h-4 bg-ds-surface-2 rounded" />
                 </div>
-                <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
-                <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
-                <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
-                <div className="w-[12%] h-[31px] bg-slate-200 dark:bg-[#2E3445] rounded-full" />
-                <div className="w-[104px] flex justify-end gap-4">
-                  <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full" />
-                  <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full" />
-                </div>
+                <div className="w-16 h-4 bg-ds-surface-2 rounded-full" />
               </div>
-              {/* Mobile Skeleton */}
-              <div className="flex md:hidden flex-row items-center py-3 px-1 gap-4 w-full">
-                {/* Logo */}
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1C2340] shrink-0" />
-                {/* Info */}
-                <div className="flex-1 flex flex-col gap-2 min-w-0">
-                  <div className="w-3/4 h-5 bg-slate-200 dark:bg-[#2E3445] rounded" />
-                  <div className="w-1/2 h-4 bg-slate-100 dark:bg-[#1C2340] rounded" />
-                  <div className="w-2/3 h-4 bg-slate-100 dark:bg-[#1C2340] rounded" />
+              <div className="w-full flex justify-between items-center">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-8 bg-ds-surface-2 rounded" />
+                  <div className="w-16 h-8 bg-ds-surface-2 rounded" />
+                  <div className="w-16 h-8 bg-ds-surface-2 rounded" />
                 </div>
-                {/* 3 Dots */}
-                <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full shrink-0" />
+                <div className="w-28 h-9 bg-ds-surface-2 rounded-full" />
               </div>
             </div>
           ))
         ) : listings.length === 0 && !isFetchingMore ? (
-          <div className="py-12 flex flex-col items-center justify-center gap-3 text-center w-full">
-            <h4 className="text-gray-400 dark:text-[#9CA3AF] text-sm font-semibold font-['Poppins']">No listings found</h4>
-            <p className="text-gray-400 dark:text-[#9CA3AF] text-xs font-['Poppins'] max-w-xs">
-              There are no jobs matching the selected filter status.
+          <div className="w-full max-w-[800px] min-h-[324px] pt-[60px] pb-[120px] flex flex-col justify-center items-center gap-2 select-none self-stretch animate-in fade-in duration-200">
+            {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
+            <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
+              <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
+            </div>
+
+            {/* Title: 16px semibold (600), line-height 24px, color #FFECE6 (--ds-text-primary) */}
+            <h3 className="text-ds-text-primary ds-text-body-2 font-semibold font-dm-sans leading-6 text-center">
+              {emptyContent.title}
+            </h3>
+
+            {/* Subtitle: 14px regular (400), line-height 20px, color #B8ADA8 (--ds-text-secondary), max-w-[306px] */}
+            <p className="max-w-[306px] text-ds-text-secondary ds-text-secondary font-normal font-dm-sans leading-5 text-center">
+              {emptyContent.description}
             </p>
           </div>
         ) : (
-          listings.map((item, index) => (
-            <div
-              key={item.id || `listing-${index}`}
-              onClick={() => onSelectListing && onSelectListing(item)}
-              className={`w-full bg-white dark:bg-[#0B0F19] rounded-[12px] hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors border border-transparent md:border-none md:bg-transparent ${
-                onSelectListing ? 'cursor-pointer' : ''
-              }`}
-            >
-              {/* Desktop View */}
-              <div className="hidden md:flex flex-row items-center justify-between py-4 px-4 gap-4 h-[92px] w-full">
-                {/* Job Title & Date */}
-                <div className="flex flex-col items-start gap-2 w-1/4 min-w-[140px] justify-center shrink-0">
-                  <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
-                    {item.title}
-                  </span>
-                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF] truncate w-full">
-                    {item.posted_at || item.last_edited || 'Posted recently'}
-                  </span>
-                </div>
+          listings.map((item, index) => {
+            const statusUpper = (item.status || 'DRAFT').toUpperCase();
+            const isActive = statusUpper === 'ACTIVE';
+            const isDraft = statusUpper === 'DRAFT';
+            const statusColor = getStatusColor(item.status);
+            const isMenuOpen = activeMenuJobId === item.id;
 
-                {/* Applications */}
-                <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                  <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
-                    {item.applicants_count || 0}
-                  </span>
-                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
-                    Applications
-                  </span>
-                </div>
-
-                {/* Shortlisted */}
-                <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                  <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
-                    {item.shortlisted_count || 0}
-                  </span>
-                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
-                    Shortlisted
-                  </span>
-                </div>
-
-                {/* Offer sent */}
-                <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                  <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
-                    {item.offers_count || 0}
-                  </span>
-                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
-                    Offer sent
-                  </span>
-                </div>
-
-                {/* Status */}
-                <div className="flex flex-col items-start gap-[10px] w-[12%] min-w-[80px] justify-center shrink-0">
-                  <span className="font-['Poppins'] font-medium text-[10px] leading-[15px] uppercase" style={{
-                    color: item.status?.toUpperCase() === 'ACTIVE' ? '#22C55E' : 
-                           item.status?.toUpperCase() === 'IN REVIEW' ? '#4338CA' : 
-                           item.status?.toUpperCase() === 'CLOSED' ? '#EAB308' : '#6B7280'
-                  }}>
-                    {item.status || 'DRAFT'}
-                  </span>
-                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
-                    Status
-                  </span>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-4 w-[104px] h-[60px] shrink-0" onClick={(e) => e.stopPropagation()}>
-                  {item.status?.toUpperCase() === 'ACTIVE' && (
-                    <>
-                      <button 
-                        onClick={() => onSendOffer && onSendOffer(item)}
-                        className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
-                      >
-                        <Icon icon="lucide:gift" className="w-6 h-6 text-black dark:text-[#F9FAFB] stroke-[1.5px]" />
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setJobToClose(item.id); }}
-                        className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
-                      >
-                        <Icon icon="lucide:x-circle" className="w-6 h-6 text-black dark:text-[#F9FAFB] stroke-[1.5px]" />
-                      </button>
-                    </>
+            return (
+              <React.Fragment key={item.id || `listing-${index}`}>
+                {/* Mobile Job Row (Figma Frame 2609981: 360px x 64px, py-2 px-0 border-b border-ds-border) */}
+                <div
+                  onClick={() => onSelectListing && onSelectListing(item)}
+                  id={`job-listing-mobile-${item.id}`}
+                  className={cn(
+                    "flex md:hidden w-full h-16 py-2 px-0 justify-between items-center gap-4 cursor-pointer select-none transition-colors duration-300",
+                    targetJobId === item.id && "bg-ds-surface-1/50 rounded-lg px-2 ring-1 ring-ds-border"
                   )}
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setJobToDelete(item.id); }}
-                    className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
-                  >
-                    <Icon icon="fluent:delete-16-regular" className="w-5 h-5 text-[#FF6B6B] dark:text-[#F87171]" />
-                  </button>
-                </div>
-              </div>
+                >
+                  {/* Frame 2609064: Title + Date (gap: 4px) */}
+                  <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0">
+                    <h4 className="w-full text-ds-text-primary text-base font-medium font-dm-sans leading-6 line-clamp-1 truncate m-0">
+                      {item.title}
+                    </h4>
+                    <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
+                      {formatPostedTime(item.posted_at || item.last_edited)}
+                    </span>
+                  </div>
 
-              {/* Mobile View */}
-              <div className="flex md:hidden flex-row items-center py-3 px-1 gap-4 w-full bg-transparent">
-                {/* Logo */}
-                <div className="w-14 h-14 rounded-2xl bg-black shrink-0 overflow-hidden relative flex items-center justify-center text-white shadow-sm border border-slate-100 dark:border-[#2E3445]">
-                  <Icon icon="lucide:infinity" className="w-8 h-8 text-white" />
-                </div>
-                
-                {/* Info */}
-                <div className="flex-1 flex flex-col justify-center min-w-0">
-                  <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
-                    {item.title}
-                  </span>
-                  <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-gray-500 dark:text-[#9CA3AF] truncate w-full mt-0.5">
-                    {item.applicants_count || 0} applicants
-                  </span>
-                  <div className="flex items-center gap-1 mt-1 text-[12px] leading-[16px]">
-                    <span className="font-['Poppins'] font-medium capitalize" style={{
-                      color: item.status?.toUpperCase() === 'ACTIVE' ? '#22C55E' : 
-                             item.status?.toUpperCase() === 'IN REVIEW' ? '#4338CA' : 
-                             item.status?.toUpperCase() === 'CLOSED' ? '#EAB308' : '#6B7280'
-                    }}>
-                      {item.status || 'Draft'}
+                  {/* Frame 2609239: Status (top) + 3-dots menu (bottom) */}
+                  <div
+                    className="flex flex-col justify-center items-end gap-2 shrink-0 h-10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase ${getMobileStatusColor(item.status)}`}>
+                      {statusUpper === 'CLOSED' ? 'CLOSED' : statusUpper === 'IN_REVIEW' ? 'IN REVIEW' : statusUpper}
                     </span>
-                    <span className="text-gray-400">•</span>
-                    <span className="font-['Poppins'] font-normal text-gray-500 dark:text-[#9CA3AF] truncate">
-                      {item.status?.toUpperCase() === 'ACTIVE' ? 'Posted' : item.status?.toUpperCase() === 'IN REVIEW' ? 'Submitted' : item.status?.toUpperCase() === 'CLOSED' ? 'Closed' : 'Last edited'} {item.posted_at?.replace('Posted ', '').replace('Submitted ', '').replace('Last edited ', '') || '2h ago'}
-                    </span>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMobileMenuJob(item);
+                      }}
+                      className="w-5 h-5 flex items-center justify-end text-ds-text-secondary hover:text-ds-text-primary focus:outline-none transition-colors shrink-0 cursor-pointer bg-transparent border-none p-0"
+                      aria-label="Job actions"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="5" cy="10" r="1.5" fill="currentColor" />
+                        <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                        <circle cx="15" cy="10" r="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
-                {/* 3 Dots */}
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setMobileActionJob(item); }}
-                  className="p-2 shrink-0 hover:bg-slate-100 dark:hover:bg-[#2E3445] rounded-full transition-colors active:scale-95"
+                {/* Desktop Job Card: Preserved 100% Unchanged */}
+                <div
+                  onClick={() => onSelectListing && onSelectListing(item)}
+                  id={`job-listing-${item.id}`}
+                  className={cn(
+                    "hidden md:flex w-full max-w-[800px] min-h-[129px] pr-3 border-b border-ds-border flex-col justify-center items-start cursor-pointer select-none transition-colors duration-300",
+                    targetJobId === item.id && "bg-ds-surface-1/50 rounded-lg px-3 ring-1 ring-ds-border"
+                  )}
                 >
-                  <Icon icon="lucide:more-vertical" className="w-5 h-5 text-black dark:text-[#F9FAFB]" />
-                </button>
+                {/* Frame 2609981: Top Row */}
+                <div className="w-full h-[68px] py-2 flex flex-row items-center justify-between gap-4 self-stretch">
+                  {/* Frame 2609064: Title + Date */}
+                  <div className="flex-1 h-[52px] flex flex-col justify-center items-start gap-2 self-stretch min-w-0">
+                    <h4 className="w-full h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 line-clamp-1 truncate flex items-center">
+                      {item.title}
+                    </h4>
+                    <span className="h-5 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate flex items-center">
+                      {formatPostedTime(item.posted_at || item.last_edited)}
+                    </span>
+                  </div>
+
+                  {/* Frame 2609239: Status & Action on right */}
+                  <div
+                    className="relative w-[59px] h-5 flex flex-row items-center gap-2 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase flex items-center ${statusColor}`}>
+                      {statusUpper === 'CLOSED' ? 'CLOSED' : statusUpper}
+                    </span>
+
+                    {isActive ? (
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuJobId(isMenuOpen ? null : item.id);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="w-5 h-5 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary focus:outline-none transition-colors shrink-0 cursor-pointer"
+                          aria-label="Job actions"
+                        >
+                          <MenuIcon className="w-5 h-5 text-ds-text-secondary hover:text-ds-text-primary transition-colors shrink-0" />
+                        </button>
+
+                        {/* Dropdown Menu for Active Listing matching Figma 'Active three dot' */}
+                        {isMenuOpen && (
+                          <div
+                            ref={menuRef}
+                            className="absolute right-0 top-7 z-50 w-[92px] p-3 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl flex flex-col items-start gap-4 text-left select-none animate-in fade-in zoom-in-95 duration-100"
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuJobId(null);
+                                onSendOffer && onSendOffer(item);
+                              }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
+                            >
+                              Send offer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuJobId(null);
+                                setJobToClose(item.id);
+                              }}
+                              className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
+                            >
+                              Close Job
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuJobId(null);
+                                setJobToDelete(item.id);
+                              }}
+                              className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
+                            >
+                              Delete job
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setJobToDelete(item.id);
+                        }}
+                        className="w-5 h-5 flex items-center justify-center text-ds-error hover:opacity-80 focus:outline-none transition-colors shrink-0 cursor-pointer"
+                        aria-label="Delete job"
+                      >
+                        <DeleteIcon className="w-5 h-5 text-ds-error shrink-0" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Frame 2609982: Bottom Row */}
+                <div className="w-full h-[60px] flex flex-row justify-center items-center gap-3 self-stretch">
+                  {/* Frame 2609980: 3 metric columns */}
+                  <div className="flex-1 h-[60px] flex flex-row items-center gap-3 min-w-0">
+                    {/* Frame 2608617: Applications */}
+                    <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
+                      <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                        {item.applicants_count || 0}
+                      </span>
+                      <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                        Applications
+                      </span>
+                    </div>
+
+                    {/* Frame 2609065: Shortlisted */}
+                    <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
+                      <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                        {item.shortlisted_count || 0}
+                      </span>
+                      <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                        Shortlisted
+                      </span>
+                    </div>
+
+                    {/* Frame 2609240: Offer sent */}
+                    <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
+                      <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                        {item.offers_count || 0}
+                      </span>
+                      <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                        Offer sent
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* View applicants / Edit draft CTA */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onViewApplicants) {
+                        onViewApplicants(item);
+                      } else if (onSelectListing) {
+                        onSelectListing(item);
+                      }
+                    }}
+                    className="w-[143px] min-w-[143px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary rounded-full text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap focus:outline-none transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
+                  >
+                    {isDraft ? 'Edit draft' : 'View applicants'}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+              </React.Fragment>
+            );
+          })
         )}
 
         {/* Infinite scroll loader trigger */}
-        {hasMore ? (
-          <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center flex-shrink-0">
+        {hasMore && (
+          <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center">
             {isFetchingMore ? (
-              <div className="flex items-center gap-2 text-indigo-500 dark:text-[#818CF8] font-medium text-xs">
-                <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
+              <div className="flex items-center gap-2 text-ds-accent font-medium ds-text-small font-dm-sans">
+                <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
                 <span>Loading more listings...</span>
               </div>
             ) : (
               <div className="h-4 w-full" />
             )}
           </div>
-        ) : listings.length > 0 ? (
-          <div className="w-full py-6 flex justify-center items-center flex-shrink-0">
-            <span className="text-gray-400 dark:text-[#9CA3AF] text-xs font-['Poppins'] font-medium bg-gray-50 dark:bg-[#2E3445] px-4 py-2 rounded-full">
-              You've reached the end of your listings.
-            </span>
-          </div>
-        ) : null}
+        )}
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {jobToDelete && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
-          <div className="w-[360px] p-6 bg-white dark:bg-[#0B0F19] rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-            <div className="flex flex-col gap-1.5 mt-2">
-              <div className="text-black dark:text-[#F9FAFB] text-base font-normal font-['Poppins'] leading-5">
-                Are you sure you want to delete job?
+      {/* Mobile Filter Bottom Sheet Drawer: Exact Figma (393px x 232px, bg var(--ds-bg), r: 8px 8px 0 0) */}
+      {isFilterDrawerOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden touch-none">
+          {/* Overlay backdrop */}
+          <div
+            onClick={() => setIsFilterDrawerOpen(false)}
+            className="fixed inset-0 bg-ds-bg/80 backdrop-blur-sm animate-in fade-in duration-200"
+          />
+
+          {/* Drawer Sheet */}
+          <div className="fixed bottom-0 left-0 right-0 z-[101] flex justify-center">
+            <div className="w-full max-w-[393px] h-[232px] bg-ds-bg border-t border-x border-ds-border rounded-t-[8px] p-[8px_12px_24px] flex flex-col items-start gap-4 box-border shadow-2xl animate-in slide-in-from-bottom duration-200">
+              {/* Drag Handle (pepicons-pop:line-x 50px x 3px var(--ds-text-muted)) */}
+              <div className="w-full h-5 flex flex-col items-center justify-center shrink-0">
+                <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
               </div>
-              <div className="text-gray-400 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">
-                This cannot be undone
+
+              {/* Filter Options List */}
+              <div className="self-stretch flex flex-col items-start gap-4">
+                {[
+                  { label: 'All jobs', key: 'All' },
+                  { label: 'Active', key: 'Active' },
+                  { label: 'In review', key: 'In Review' },
+                  { label: 'Closed', key: 'Close' },
+                  { label: 'Draft', key: 'Draft' },
+                ].map((option) => {
+                  const isSelected =
+                    statusFilter.toLowerCase() === option.key.toLowerCase() ||
+                    (option.key === 'Close' && statusFilter.toLowerCase() === 'closed') ||
+                    (option.key === 'Draft' && statusFilter.toLowerCase() === 'drafts');
+
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => {
+                        onStatusFilterChange(option.key);
+                        setIsFilterDrawerOpen(false);
+                      }}
+                      className={`h-5 p-0 bg-transparent border-0 outline-none cursor-pointer font-dm-sans font-normal text-sm leading-5 transition-colors text-left flex items-center ${
+                        isSelected ? 'text-ds-accent' : 'text-ds-text-primary hover:text-ds-accent'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
-            <div className="flex justify-center items-center gap-3 w-full mt-2">
-              <button
-                onClick={() => setJobToDelete(null)}
-                type="button"
-                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 dark:border-[#818CF8] bg-white dark:bg-[#0B0F19] text-indigo-500 dark:text-[#818CF8] text-sm font-medium font-['Poppins'] hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-all active:scale-95 flex justify-center items-center"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { 
-                  if (onDeleteListing) onDeleteListing(jobToDelete); 
-                  setJobToDelete(null); 
-                }}
-                type="button"
-                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] dark:bg-[#F87171] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 dark:hover:bg-red-400 transition-all active:scale-95 flex justify-center items-center"
-              >
-                Delete
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Close Confirmation Modal */}
-      {jobToClose && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
-          <div className="w-[360px] p-6 bg-white dark:bg-[#0B0F19] rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-            <div className="flex flex-col gap-1.5 mt-2">
-              <div className="text-black dark:text-[#F9FAFB] text-lg font-medium font-['Poppins'] leading-6">
-                Close Job?
-              </div>
-              <div className="text-gray-500 dark:text-[#9CA3AF] text-sm font-normal font-['Poppins'] leading-5">
-                No new applicants will be able to apply after you close this job. Existing offers will remain active for 10 days.
-              </div>
-            </div>
-            <div className="flex justify-center items-center gap-3 w-full mt-2">
-              <button
-                onClick={() => setJobToClose(null)}
-                type="button"
-                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 dark:border-[#818CF8] bg-white dark:bg-[#0B0F19] text-indigo-500 dark:text-[#818CF8] text-sm font-medium font-['Poppins'] hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-all active:scale-95 flex justify-center items-center"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { 
-                  if (onCloseListing) onCloseListing(jobToClose); 
-                  setJobToClose(null); 
-                }}
-                type="button"
-                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] dark:bg-[#F87171] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 dark:hover:bg-red-400 transition-all active:scale-95 flex justify-center items-center"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Mobile Action Bottom Sheet */}
-      {mobileActionJob && (
-        <div 
-          className="fixed md:hidden inset-0 z-[70] bg-black/40 backdrop-blur-sm animate-in fade-in flex flex-col justify-end"
-          onClick={() => setMobileActionJob(null)}
-        >
-          <div 
-            className="w-full bg-white dark:bg-[#0B0F19] rounded-t-3xl p-6 pb-8 flex flex-col gap-2 animate-in slide-in-from-bottom"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-12 h-1.5 bg-gray-300 dark:bg-[#2E3445] rounded-full self-center mb-4" />
-            <div className="mb-4">
-              <h4 className="font-['Poppins'] font-semibold text-lg text-black dark:text-[#F9FAFB]">{mobileActionJob.title}</h4>
-              <p className="text-sm text-gray-500 dark:text-[#9CA3AF]">Choose an action</p>
-            </div>
-            
-            {mobileActionJob.status?.toUpperCase() === 'ACTIVE' && (
-              <>
-                <button 
-                  onClick={() => { onSendOffer && onSendOffer(mobileActionJob); setMobileActionJob(null); }}
-                  className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-[#2E3445] rounded-2xl transition-colors active:scale-95 text-left"
-                >
-                  <Icon icon="lucide:gift" className="w-6 h-6 text-black dark:text-[#F9FAFB]" />
-                  <span className="font-['Poppins'] font-medium text-black dark:text-[#F9FAFB]">Send offer</span>
-                </button>
-                <button 
-                  onClick={() => { setJobToClose(mobileActionJob.id); setMobileActionJob(null); }}
-                  className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-[#2E3445] rounded-2xl transition-colors active:scale-95 text-left"
-                >
-                  <Icon icon="lucide:x-circle" className="w-6 h-6 text-black dark:text-[#F9FAFB]" />
-                  <span className="font-['Poppins'] font-medium text-black dark:text-[#F9FAFB]">Close job</span>
-                </button>
-              </>
-            )}
-            <button 
-              onClick={() => { setJobToDelete(mobileActionJob.id); setMobileActionJob(null); }}
-              className="w-full flex items-center gap-4 p-4 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-colors active:scale-95 text-left"
-            >
-              <Icon icon="fluent:delete-16-regular" className="w-6 h-6 text-[#FF6B6B]" />
-              <span className="font-['Poppins'] font-medium text-[#FF6B6B]">Delete job</span>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Mobile 3-Dot More Actions Drawer: Exact Figma (393px x 160px, bg var(--ds-bg), r: 8px 8px 0 0) */}
+      {mobileMenuJob && (
+        <div className="fixed inset-0 z-[100] md:hidden touch-none">
+          {/* Overlay backdrop */}
+          <div
+            onClick={() => setMobileMenuJob(null)}
+            className="fixed inset-0 bg-ds-bg/80 backdrop-blur-sm animate-in fade-in duration-200"
+          />
 
-      {/* Mobile Filter Bottom Sheet */}
-      {isFilterSheetOpen && (
-        <div 
-          className="fixed md:hidden inset-0 z-[70] bg-black/40 backdrop-blur-sm animate-in fade-in flex flex-col justify-end"
-          onClick={() => setIsFilterSheetOpen(false)}
-        >
-          <div 
-            className="w-full bg-white dark:bg-[#0B0F19] rounded-t-3xl p-6 pb-8 flex flex-col gap-2 animate-in slide-in-from-bottom"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-12 h-1.5 bg-gray-300 dark:bg-[#2E3445] rounded-full self-center mb-4" />
-            <div className="mb-2 px-2">
-              <h4 className="font-['Poppins'] font-medium text-[20px] text-indigo-500 dark:text-[#818CF8]">All jobs</h4>
-            </div>
-            
-            <div className="flex flex-col gap-1 w-full mt-2">
-              {filterChips.map(chip => (
+          {/* Drawer Sheet */}
+          <div className="fixed bottom-0 left-0 right-0 z-[101] flex justify-center">
+            <div className="w-full max-w-[393px] h-[160px] bg-ds-bg border-t border-x border-ds-border rounded-t-[8px] p-[8px_12px_24px] flex flex-col items-start gap-4 box-border shadow-2xl animate-in slide-in-from-bottom duration-200">
+              {/* Drag Handle (pepicons-pop:line-x 50px x 3px var(--ds-text-muted)) */}
+              <div className="w-full h-5 flex flex-col items-center justify-center shrink-0">
+                <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
+              </div>
+
+              {/* Action Buttons List */}
+              <div className="self-stretch flex flex-col items-start gap-4">
+                {(mobileMenuJob.status || '').toUpperCase() === 'ACTIVE' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const job = mobileMenuJob;
+                        setMobileMenuJob(null);
+                        onSendOffer && onSendOffer(job);
+                      }}
+                      className="h-5 p-0 bg-transparent border-0 outline-none cursor-pointer font-dm-sans font-normal text-sm leading-5 text-ds-text-primary hover:text-ds-accent transition-colors text-left flex items-center"
+                    >
+                      Send offer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const jobId = mobileMenuJob.id;
+                        setMobileMenuJob(null);
+                        setJobToClose(jobId);
+                      }}
+                      className="h-5 p-0 bg-transparent border-0 outline-none cursor-pointer font-dm-sans font-normal text-sm leading-5 text-ds-text-primary hover:text-ds-accent transition-colors text-left flex items-center"
+                    >
+                      Close job
+                    </button>
+                  </>
+                )}
                 <button
-                  key={chip.label}
+                  type="button"
                   onClick={() => {
-                    onStatusFilterChange(chip.label);
-                    setIsFilterSheetOpen(false);
+                    const jobId = mobileMenuJob.id;
+                    setMobileMenuJob(null);
+                    setJobToDelete(jobId);
                   }}
-                  className="w-full flex items-center p-4 hover:bg-slate-50 dark:hover:bg-[#2E3445] rounded-2xl transition-colors text-left"
+                  className="h-5 p-0 bg-transparent border-0 outline-none cursor-pointer font-dm-sans font-normal text-sm leading-5 text-ds-text-primary hover:text-ds-error transition-colors text-left flex items-center"
                 >
-                  <span className={`font-['Poppins'] text-[18px] ${
-                    statusFilter.toLowerCase() === chip.label.toLowerCase()
-                      ? 'font-medium text-indigo-500 dark:text-[#818CF8]' 
-                      : 'font-normal text-black dark:text-[#F9FAFB]'
-                  }`}>
-                    {chip.label === 'Drafts' ? 'Draft' : chip.label}
-                  </span>
+                  Delete job
                 </button>
-              ))}
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal using common ActionConfirmModal */}
+      <ActionConfirmModal
+        isOpen={Boolean(jobToDelete)}
+        onClose={() => setJobToDelete(null)}
+        onConfirm={() => {
+          if (jobToDelete && onDeleteListing) {
+            onDeleteListing(jobToDelete);
+          }
+          setJobToDelete(null);
+        }}
+        title="Are you sure you want to delete job?"
+        description="Your changes be undone"
+        confirmText="Delete"
+        cancelText="Cancel"
+        buttonWidthClass="w-[77px]"
+        modalClassName="w-[272px]"
+      />
+
+      {/* Close Confirmation Modal using common ActionConfirmModal */}
+      <ActionConfirmModal
+        isOpen={Boolean(jobToClose)}
+        onClose={() => setJobToClose(null)}
+        onConfirm={() => {
+          if (jobToClose && onCloseListing) {
+            onCloseListing(jobToClose);
+          }
+          setJobToClose(null);
+        }}
+        title="Are you sure you want to close job?"
+        description="No new applicants will be able to apply after you close this job. Existing offers will remain active for 10 days."
+        confirmText="Close"
+        cancelText="Cancel"
+        buttonWidthClass="w-[77px]"
+        modalClassName="w-[272px]"
+      />
     </div>
   );
 };

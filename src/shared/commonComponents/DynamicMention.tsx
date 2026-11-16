@@ -25,18 +25,22 @@ interface DynamicMentionProps {
 }
 
 export const DynamicMention = ({ displayName, handle, mentionedUsers, disableLinks, className, style }: DynamicMentionProps) => {
-  const isId = isUUID(handle);
+  const prefixMatch = handle ? handle.match(/^(user|org|company):(.+)$/i) : null;
+  const explicitType = prefixMatch ? prefixMatch[1].toLowerCase() : null;
+  const cleanHandle = prefixMatch ? prefixMatch[2] : handle;
+
+  const isId = isUUID(cleanHandle);
   const user = mentionedUsers
     ? isId
-      ? mentionedUsers.find((u) => u.user_id === handle || u.org_id === handle)
+      ? mentionedUsers.find((u) => u.user_id === cleanHandle || u.org_id === cleanHandle)
       : mentionedUsers.find(
           (u) =>
-            u.account_name?.toLowerCase() === handle.toLowerCase() ||
-            u.slug?.toLowerCase() === handle.toLowerCase()
+            u.account_name?.toLowerCase() === cleanHandle.toLowerCase() ||
+            u.slug?.toLowerCase() === cleanHandle.toLowerCase()
         )
     : null;
 
-  const isCompany = Boolean(
+  const isCompany = explicitType === 'org' || explicitType === 'company' || Boolean(
     user && (
       user.is_company ||
       user.type?.toUpperCase() === 'COMPANY' ||
@@ -47,10 +51,8 @@ export const DynamicMention = ({ displayName, handle, mentionedUsers, disableLin
 
   const nameToShow = user?.full_name || displayName;
   const linkHref = isCompany
-    ? `/organization/${user?.slug || user?.account_name || user?.org_id || user?.user_id || handle}`
-    : user
-    ? `/profile/${user?.slug || user?.account_name || user?.user_id || handle}`
-    : `/profile/${handle.toLowerCase()}`;
+    ? `/organization/${user?.slug || user?.account_name || user?.org_id || cleanHandle}`
+    : `/profile/${user?.slug || user?.account_name || user?.user_id || cleanHandle}`;
   
   const defaultClassName = "mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold";
   const finalClassName = cn(defaultClassName, className);

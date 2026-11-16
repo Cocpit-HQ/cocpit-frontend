@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
-import { X, Image as ImageIcon, BarChart3, Loader2, Loader, ChevronDown } from 'lucide-react';
+import { X, Image as ImageIcon, BarChart3, Loader2, Loader, ChevronDown, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreatePostForm } from '../../hooks/use-create-post-form';
 import {
@@ -21,6 +21,13 @@ import { DeleteConfirmationModal } from '@/components/shared/DeleteConfirmationM
 import { useBodyScrollLock } from '@/hooks';
 import { cn } from '@/lib/utils';
 
+const formatDuration = (seconds?: number): string => {
+  if (!seconds || isNaN(seconds)) return '';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+};
+
 // --- Draggable Image Component ---
 const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scrollContainerRef, dragBoundsRef, isSingleImage }: any) => {
   const controls = useDragControls();
@@ -30,6 +37,10 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
   const startX = useRef(0);
   const lastX = useRef<number | null>(null);
   const rAFRef = useRef<number | null>(null);
+
+  const isVideo = img.type === 'video' ||
+    img.file?.type?.startsWith('video/') ||
+    img.url?.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/i);
 
   // Scoped global selection prevention while dragging
   useEffect(() => {
@@ -181,13 +192,47 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <div className="w-full h-full relative select-none [-webkit-touch-callout:none]">
-        <img
-          src={img.url}
-          alt="Upload preview"
-          draggable={false}
-          onDragStart={(e) => e.preventDefault()}
-          className={`pointer-events-none select-none rounded-[8px] [-webkit-touch-callout:none] ${isSingleImage ? "w-full h-auto max-h-[500px] object-contain" : "w-full h-full object-cover"}`}
-        />
+        {isVideo ? (
+          <div className="w-full h-full relative flex items-center justify-center bg-black/40 overflow-hidden rounded-[8px]">
+            <video
+              src={img.url.startsWith('blob:') ? img.url : `${img.url}#t=0.001`}
+              preload="metadata"
+              muted
+              playsInline
+              className={`pointer-events-none select-none rounded-[8px] [-webkit-touch-callout:none] ${isSingleImage ? "w-full h-auto max-h-[500px] object-contain" : "w-full h-full object-cover"}`}
+            />
+            {img.thumbnailUrl && (
+              <img
+                src={img.thumbnailUrl}
+                alt="Video thumbnail"
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                className={`absolute inset-0 pointer-events-none select-none rounded-[8px] [-webkit-touch-callout:none] ${isSingleImage ? "w-full h-auto max-h-[500px] object-contain" : "w-full h-full object-cover"}`}
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = 'none';
+                }}
+              />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center text-white backdrop-blur-sm shadow-md">
+                <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+              </div>
+            </div>
+            {img.duration ? (
+              <div className="absolute bottom-2 right-2 bg-black/75 backdrop-blur-sm text-white text-[11px] font-medium px-1.5 py-0.5 rounded pointer-events-none select-none">
+                {formatDuration(img.duration)}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <img
+            src={img.url}
+            alt="Upload preview"
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
+            className={`pointer-events-none select-none rounded-[8px] [-webkit-touch-callout:none] ${isSingleImage ? "w-full h-auto max-h-[500px] object-contain" : "w-full h-full object-cover"}`}
+          />
+        )}
 
         {/* Delete Button (Figma spec: top-right circular cross) */}
         <button
@@ -197,8 +242,8 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
             e.stopPropagation();
             onRemove(img.id);
           }}
-          className="absolute top-[8px] right-[8px] w-[32px] h-[32px] flex items-center justify-center bg-[#1A1A20] rounded-full shadow-md cursor-pointer outline-none pointer-events-auto"
-          aria-label="Remove photo"
+          className="absolute top-[8px] right-[8px] w-[32px] h-[32px] flex items-center justify-center bg-[#1A1A20] rounded-full shadow-md cursor-pointer outline-none pointer-events-auto z-10"
+          aria-label={isVideo ? "Remove video" : "Remove photo"}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 1L1 13M1 1l12 12"/></svg>
         </button>
@@ -324,18 +369,17 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
     }
   }, []);
 
+  const totalMediaCount = media.uploadedImages.length + media.uploadedVideos.length;
+  const videoCount = media.uploadedImages.filter(i => i.type === 'video' || i.url?.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/i)).length + media.uploadedVideos.length;
+
   const handleMediaClick = useCallback(() => {
     if (state.postType === 'poll') return;
-    if (media.uploadedVideos.length >= 1) {
-      toast.error("Only one video file is allowed");
-      return;
-    }
-    if (media.uploadedImages.length >= 12) {
-      toast.error("Maximum 12 images allowed");
+    if (totalMediaCount >= 12) {
+      toast.error("Maximum 12 attachments allowed");
       return;
     }
     galleryInputRef.current?.click();
-  }, [state.postType, media.uploadedVideos.length, media.uploadedImages.length]);
+  }, [state.postType, totalMediaCount]);
 
   if (!isOpen) return null;
 
@@ -655,7 +699,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
                     img={img}
                     imageToDelete={imageToDelete}
                     setImageToDelete={setImageToDelete}
-                    onRemove={(id: string) => media.removeMediaItem(id, media.setUploadedImages, false)}
+                    onRemove={(id: string) => media.removeMediaItem(id, media.setUploadedImages, !!editPostId)}
                     scrollContainerRef={carouselRef}
                     dragBoundsRef={dragBoundsRef}
                     isSingleImage={media.uploadedImages.length === 1}
@@ -673,7 +717,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
                   />
                 </div>
               )}
-              {media.uploadedImages.length >= 12 && (
+              {totalMediaCount >= 12 && (
                 <p className="text-center text-[var(--ds-error)] text-[10px] mt-1 font-medium">
                   Attached media limit reached ({media.uploadedImages.length}/12)
                 </p>
@@ -682,7 +726,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
           )}
 
           {/* Video Preview */}
-          {media.uploadedVideos.length > 0 && state.postType !== 'poll' && !state.sharedPost && (
+          {media.uploadedVideos.length > 0 && media.uploadedImages.length === 0 && state.postType !== 'poll' && !state.sharedPost && (
             <div className="ml-11 flex flex-col gap-2">
               <div className="relative w-full rounded-xl overflow-hidden border border-ds-border">
                 <video
@@ -695,7 +739,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    media.removeMediaItem(media.uploadedVideos[0].id, media.setUploadedVideos, false);
+                    media.removeMediaItem(media.uploadedVideos[0].id, media.setUploadedVideos, !!editPostId);
                   }}
                   className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
                   title="Remove video"
@@ -722,25 +766,23 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
             </div>
           )}
 
-          <div className="flex items-center justify-between ml-11">
-            <div className="flex gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex gap-4 pl-11">
               {!state.sharedPost && (
                 <>
                   <button
                     onClick={handleMediaClick}
                     className={`transition-colors ${
-                      state.postType === 'poll' || media.uploadedVideos.length >= 1 || media.uploadedImages.length >= 12
+                      state.postType === 'poll' || totalMediaCount >= 12
                         ? 'text-ds-text-secondary/50 cursor-default'
                         : 'text-ds-text-secondary hover:text-ds-text-primary cursor-pointer'
                     }`}
                     title={
-                      media.uploadedVideos.length >= 1
-                        ? "Only one video allowed"
-                        : media.uploadedImages.length >= 12
-                        ? "Maximum 12 images allowed"
+                      totalMediaCount >= 12
+                        ? "Maximum 12 attachments allowed"
                         : "Add Photo or Video"
                     }
-                    disabled={state.postType === 'poll'}
+                    disabled={state.postType === 'poll' || totalMediaCount >= 12}
                   >
                     <ImageIcon className="w-5 h-5 ds-icon-20" />
                   </button>
@@ -824,12 +866,12 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
           ref={galleryInputRef}
           type="file"
           accept={
-            media.uploadedImages.length > 0
+            videoCount >= 4
               ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif"
               : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
           }
           multiple
-          onChange={(e) => media.handleDesktopPhotoUpload(e, false)}
+          onChange={(e) => media.handleDesktopPhotoUpload(e, !!editPostId)}
           className="hidden"
         />
         {/* Delete Confirmation Modal */}

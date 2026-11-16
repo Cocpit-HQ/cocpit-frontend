@@ -187,6 +187,12 @@ export default function SinglePostPage({ params }: PageProps) {
       sessionStorage.removeItem("cocpit_post_stack");
     }
 
+    const returnTo = searchParams?.get('returnTo');
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
@@ -218,6 +224,12 @@ export default function SinglePostPage({ params }: PageProps) {
     let savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
     if (savedPath && savedPath.startsWith("/post/")) {
       savedPath = "/feed";
+    }
+
+    const returnTo = searchParams?.get('returnTo');
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
     }
 
     if (typeof window !== "undefined" && window.history.length > depth) {

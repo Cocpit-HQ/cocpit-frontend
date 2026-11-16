@@ -289,7 +289,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const isJobMessage = isMessage && payload.isJobChat;
       const isRegularMessage = isMessage && !isJobMessage;
       const isPost = ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention'].includes(type) || type.includes('post');
-      const isJob = type.includes('job') || type.includes('application');
+      const isJob = type.includes('job') || type.includes('application') || type.includes('offer');
+      // Offer response types are always company-targeted — keep reference here for prefs bypass below.
+      const isOfferResponseType =
+        type === 'offer_accepted' ||
+        type === 'job_offer_accepted' ||
+        type === 'offer_declined' ||
+        type === 'job_offer_declined';
 
       // Toast suppression: only controls the popup — DB notification is already saved
       if (prefs) {
@@ -303,7 +309,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const isDirectInteraction = type === 'mention' || type === 'post_tag';
         if (isPost && !isDirectInteraction && prefs.posts === false) return;
         // Exclude job messages from being incorrectly suppressed by the "Job Alerts" toggle
-        if (isJob && !isJobMessage && prefs.jobs === false) return;
+        // Offer-response notifications are always shown regardless of job prefs — company admin must see them.
+        if (isJob && !isJobMessage && !isOfferResponseType && prefs.jobs === false) return;
       }
 
       // Suppress toast for application_submitted because the frontend API hook (useJobs/useJobDetail) already triggers a success toast for it.
@@ -335,14 +342,26 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const currentProfileType = currentProfile?.type || 'USER';
       const currentProfileId = currentProfile?.id;
 
+      // Offer response notifications are always company-targeted; the backend may omit
+      // recipient_company_id on these payloads, so bypass the targetProfileType guard for them.
+      const isOfferResponseNotif =
+        type === 'offer_accepted' ||
+        type === 'job_offer_accepted' ||
+        type === 'offer_declined' ||
+        type === 'job_offer_declined';
+
       if (currentProfileType === 'COMPANY') {
-        if (targetProfileType !== 'COMPANY' || (targetCompanyId && String(currentProfileId) !== String(targetCompanyId))) {
-          console.log("[DEBUG] Toast suppressed: notification targeted to", targetProfileType, targetCompanyId, "while active actor is COMPANY", currentProfileId);
-          return;
+        // Offer-response notifications are inherently company-targeted — allow them even when
+        // the backend payload omits recipient_company_id.
+        if (!isOfferResponseNotif) {
+          if (targetProfileType !== 'COMPANY' || (targetCompanyId && String(currentProfileId) !== String(targetCompanyId))) {
+            console.log("[DEBUG] Toast suppressed: notification targeted to", targetProfileType, targetCompanyId, "while active actor is COMPANY", currentProfileId);
+            return;
+          }
         }
       } else {
-        // Active actor is USER: suppress company-targeted notification toasts
-        if (targetProfileType === 'COMPANY' || targetCompanyId) {
+        // Active actor is USER: allow offer-response notifications so company admin receives them in personal view
+        if (!isOfferResponseNotif && (targetProfileType === 'COMPANY' || targetCompanyId)) {
           console.log("[DEBUG] Toast suppressed: notification targeted to COMPANY", targetCompanyId, "while active actor is USER");
           return;
         }
@@ -455,10 +474,48 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const companyPayload = payload as CompanyUpdateNotification;
         const companyName = companyPayload.actor_name || payload.senderName || 'Someone';
         const companyAvatar = companyPayload.actor_avatar || payload.senderAvatar;
-        const notifText = companyPayload.text || 'New job alert';
+        const candidateName =
+          companyPayload.actor_name ||
+          (payload as any).senderName ||
+          (payload as any).sender_name ||
+          (payload as any).candidateName ||
+          (payload as any).candidate_name ||
+          (payload.metadata as any)?.candidateName ||
+          (payload.metadata as any)?.candidate_name ||
+          (payload.metadata as any)?.userName ||
+          (payload.metadata as any)?.user_name ||
+          null;
+        const jobTitle =
+          (payload as any).jobTitle ||
+          (payload as any).job_title ||
+          (payload as any).title ||
+          (payload.metadata as any)?.jobTitle ||
+          (payload.metadata as any)?.job_title ||
+          (payload.metadata as any)?.title ||
+          null;
+        let notifText = companyPayload.text || '';
+        if (!notifText) {
+          if (type === 'offer_accepted' || type === 'job_offer_accepted' || type.includes('offer_accepted')) {
+            notifText = candidateName && jobTitle
+              ? `"${candidateName}" accepted your offer for the job role "${jobTitle}"`
+              : candidateName
+                ? `"${candidateName}" accepted your job offer`
+                : 'A candidate accepted your job offer';
+          } else if (type === 'offer_declined' || type === 'job_offer_declined' || type.includes('offer_declined')) {
+            notifText = candidateName && jobTitle
+              ? `"${candidateName}" declined your offer for ${jobTitle}`
+              : candidateName
+                ? `"${candidateName}" declined your job offer`
+                : 'A candidate declined your job offer';
+          } else {
+            notifText = 'New job alert';
+          }
+        }
         const referenceId = companyPayload.reference_id || payload.referenceId;
         let navigateTo = '/notifications';
         if ((payload.type === 'job' || payload.type === 'company_job' || payload.type === 'application_shortlisted' || payload.type === 'job_offer') && referenceId) navigateTo = `/jobs/${referenceId}`;
+        else if ((payload.type === 'offer_accepted' || payload.type === 'job_offer_accepted') && referenceId) navigateTo = `/jobs?view=offer-details&jobId=${referenceId}`;
+        else if ((payload.type === 'offer_declined' || payload.type === 'job_offer_declined') && referenceId) navigateTo = `/jobs?view=offer-details&jobId=${referenceId}`;
         else if (payload.type === 'company_event' && referenceId) navigateTo = `/events/${referenceId}`;
 
         console.log("[SOCKET] Toast title:", companyName, "Text:", notifText);

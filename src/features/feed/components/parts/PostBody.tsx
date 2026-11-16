@@ -40,10 +40,16 @@ export const PostBody = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const measurerRef = useRef<HTMLDivElement>(null);
 
+  // Helper to extract visual rendered text for measurer by unwrapping mentions @[Display](handle) -> Display
+  const getVisualContent = (raw: string) => {
+    return raw.replace(/@\[([^\]]+)\]\([^)]+\)/g, '$1');
+  };
+
   // Initial rough guess for SSR / first paint before measurement
   const [isLong, setIsLong] = useState(() => {
-    const lines = content.split('\n').filter((l) => l.trim() !== '');
-    return lines.length > effectiveMaxLines || content.length > effectiveMaxLines * 45;
+    const visual = getVisualContent(content);
+    const lines = visual.split('\n').filter((l) => l.trim() !== '');
+    return lines.length > effectiveMaxLines || visual.length > effectiveMaxLines * 45;
   });
 
   const [truncatedContent, setTruncatedContent] = useState<string | null>(null);
@@ -68,7 +74,7 @@ export const PostBody = ({
     const measureAndTruncate = () => {
       // 1. Check if the entire raw content fits within dynamic maxHeight
       const fullDynamicMaxHeight = getDynamicMaxHeight(content);
-      measurer.textContent = content;
+      measurer.textContent = getVisualContent(content);
       if (measurer.scrollHeight <= fullDynamicMaxHeight + 1) {
         setIsLong(false);
         setTruncatedContent(null);
@@ -86,7 +92,7 @@ export const PostBody = ({
         ? content.replace(/\n\s*\n+/g, '\n').trimEnd()
         : content.replace(/\n\s*\n\s*\n+/g, '\n\n').trimEnd();
 
-      const tokens = collapsed.split(/(\s+)/);
+      const tokens = collapsed.split(/(@\[[^\]]+\]\([^)]+\)|\s+)/).filter(Boolean);
       if (tokens.length === 0) {
         setTruncatedContent(null);
         return;
@@ -94,7 +100,7 @@ export const PostBody = ({
 
       const testFit = (candidateText: string) => {
         measurer.innerHTML = '';
-        measurer.appendChild(document.createTextNode(candidateText));
+        measurer.appendChild(document.createTextNode(getVisualContent(candidateText)));
         const seeMoreSpan = document.createElement('span');
         seeMoreSpan.className = 'font-semibold ml-1 whitespace-nowrap';
         seeMoreSpan.textContent = ' ... See more';
@@ -124,26 +130,31 @@ export const PostBody = ({
       let finalTruncated = '';
       if (best > 0) {
         finalTruncated = tokens.slice(0, best).join('').trimEnd().replace(/[,;:\s—\-]+$/, '');
+        finalTruncated = finalTruncated.replace(/@\[[^\]]*$/, '').trimEnd();
         setDynamicMaxHeight(getDynamicMaxHeight(finalTruncated));
       }
 
       // Fallback for extreme cases (e.g. single unbroken token overflowing)
       if ((best === 0 || !testFit(finalTruncated)) && tokens[0]) {
-        let charLow = 1;
-        let charHigh = tokens[0].length;
-        let bestChar = 1;
-        while (charLow <= charHigh) {
-          const charMid = Math.floor((charLow + charHigh) / 2);
-          const charCandidate = tokens[0].slice(0, charMid);
-          
-          if (testFit(charCandidate)) {
-            bestChar = charMid;
-            charLow = charMid + 1;
-          } else {
-            charHigh = charMid - 1;
+        if (/^@\[[^\]]+\]\([^)]+\)$/.test(tokens[0])) {
+          finalTruncated = tokens[0];
+        } else {
+          let charLow = 1;
+          let charHigh = tokens[0].length;
+          let bestChar = 1;
+          while (charLow <= charHigh) {
+            const charMid = Math.floor((charLow + charHigh) / 2);
+            const charCandidate = tokens[0].slice(0, charMid);
+            
+            if (testFit(charCandidate)) {
+              bestChar = charMid;
+              charLow = charMid + 1;
+            } else {
+              charHigh = charMid - 1;
+            }
           }
+          finalTruncated = tokens[0].slice(0, bestChar);
         }
-        finalTruncated = tokens[0].slice(0, bestChar);
         setDynamicMaxHeight(getDynamicMaxHeight(finalTruncated));
       }
 

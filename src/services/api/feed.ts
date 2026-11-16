@@ -169,6 +169,9 @@ export interface BackendMedia {
   width?: number;
   height?: number;
   aspect_ratio: string | null;
+  order_index?: number;
+  thumbnail_url?: string | null;
+  duration_seconds?: number | null;
 }
 
 export interface BackendPoll {

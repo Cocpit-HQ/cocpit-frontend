@@ -12,6 +12,8 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 interface VerifyIdentityModalProps {
   isOpen: boolean;
   onClose: () => void;
+  // Callback invoked upon successful verification to enable redirection back to caller flows
+  onSuccess?: () => void;
 }
 
 const documentOptions = [
@@ -21,7 +23,7 @@ const documentOptions = [
   { id: 'PAN_CARD', label: 'PAN Card', icon: PanCardIcon },
 ];
 
-export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProps) {
+export function VerifyIdentityModal({ isOpen, onClose, onSuccess }: VerifyIdentityModalProps) {
   const { isCompany } = useActiveProfile();
   const { mutate: verifyIdentity, isPending } = useIdentityVerification();
 
@@ -45,6 +47,8 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
       {
         onSuccess: () => {
           handleClose();
+          // Notify caller of successful verification for proper post-verification redirection
+          onSuccess?.();
         }
       }
     );

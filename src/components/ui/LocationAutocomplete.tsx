@@ -20,6 +20,8 @@ interface LocationAutocompleteProps {
   mode?: "legacy" | "places";
   allowedCountryCodes?: string[];
   isGlobal?: boolean;
+  variant?: "default" | "underline";
+  placeholder?: string;
 }
 
 type DisplaySuggestion =
@@ -38,7 +40,7 @@ function staticToStructured(loc: StaticLocation): StructuredLocation {
   };
 }
 
-export default function LocationAutocomplete({ onSelect, value, allowedCountryCodes, isGlobal }: LocationAutocompleteProps) {
+export default function LocationAutocomplete({ onSelect, value, allowedCountryCodes, isGlobal, variant = "default", placeholder = "Enter your location" }: LocationAutocompleteProps) {
   const [query, setQuery] = useState(value ?? "");
   // "idle" = showing popular static cities; "searching" = user typed, use API
   const [mode, setMode] = useState<"idle" | "searching">("idle");
@@ -201,15 +203,23 @@ export default function LocationAutocomplete({ onSelect, value, allowedCountryCo
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
       <div
-        className={`${styles.inputWrapper} ${open ? styles.isOpen : ""}`}
+        className={
+          variant === "underline"
+            ? "w-full flex items-center justify-between bg-transparent border-none p-0 outline-none"
+            : `${styles.inputWrapper} ${open ? styles.isOpen : ""}`
+        }
         onClick={handleWrapperClick}
         style={{ cursor: "pointer" }}
       >
         <input
           ref={inputRef}
           type="text"
-          className={styles.input}
-          placeholder="Enter your location"
+          className={
+            variant === "underline"
+              ? "w-full bg-transparent border-none text-ds-text-primary text-sm font-normal leading-5 outline-none placeholder:text-ds-text-muted font-sans p-0"
+              : styles.input
+          }
+          placeholder={placeholder}
           value={query}
           onChange={handleInputChange}
           onFocus={handleFocus}

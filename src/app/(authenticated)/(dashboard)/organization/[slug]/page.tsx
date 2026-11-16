@@ -70,11 +70,14 @@ export default function CompanyPage() {
                     </div>
                     <button
                         type="button"
-                        onClick={() => router.push('/feed')}
+                        onClick={() => {
+                            const isFromJobs = searchParams?.get('source') === 'jobs' || searchParams?.get('returnTo')?.includes('/jobs');
+                            router.push(isFromJobs ? '/jobs' : '/feed');
+                        }}
                         className="h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex items-center justify-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
                     >
                         <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                            Back to Feed
+                            {(searchParams?.get('source') === 'jobs' || searchParams?.get('returnTo')?.includes('/jobs')) ? 'Back to Jobs' : 'Back to Feed'}
                         </span>
                     </button>
                 </div>

@@ -84,8 +84,7 @@ export function MobileAccountView({
               <ChevronRight className="w-5 h-5 text-ds-text-muted shrink-0" strokeWidth={1.5} />
             </div>
 
-            {/* Row 2: Manage email (Commented out) */}
-            {/*
+            {/* Row 2: Manage email */}
             <div
               onClick={() => router.push(`${basePath}/account-email`)}
               role="button"
@@ -102,7 +101,6 @@ export function MobileAccountView({
               </div>
               <ChevronRight className="w-5 h-5 text-ds-text-muted shrink-0" strokeWidth={1.5} />
             </div>
-            */}
 
             {/* Row 2: Manage phone number */}
             <div

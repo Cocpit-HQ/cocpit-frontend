@@ -17,7 +17,7 @@ import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
 import { ComposerImagePreview, ComposerImage, MAX_COMPOSER_IMAGES } from '@/features/feed/components/create-post/ComposerImagePreview';
-import { getImageDimensions, getVideoDimensions } from '@/features/feed/utils/imageBounds';
+import { getImageDimensions, getVideoDimensions, getVideoMetadataAndPoster } from '@/features/feed/utils/imageBounds';
 import {
   usePostPoll,
   MAX_POLL_QUESTION_LENGTH,
@@ -255,7 +255,7 @@ const FeedComposerInline = ({
   }, [isEditMode, editPostId, editPostData]);
   ===== END LEGACY INLINE EDIT ===== */
 
-  // ── Media Handlers (Max 12 photos, or 1 video) ─────────────────────────────
+  // ── Media Handlers (Max 12 attachments, up to 4 videos) ─────────────────────
   const handleImageClick = useCallback(() => {
     if (mode === 'poll') {
       poll.clearPoll();
@@ -264,29 +264,23 @@ const FeedComposerInline = ({
     if (selectedImages.length >= MAX_COMPOSER_IMAGES) {
       return;
     }
-    if (selectedVideo) {
-      toast.error("Only one video file is allowed");
-      return;
-    }
     fileInputRef.current?.click();
-  }, [mode, poll, selectedImages.length, selectedVideo]);
+  }, [mode, poll, selectedImages.length]);
 
   const handleFilesChosen = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const fileArray = Array.from(files);
 
-    // Media upload size constraints:
-    // - Per image limit: 10MB maximum (reject individual file > 10MB)
-    // - Total image upload limit: 120MB maximum (reject cumulative size > 120MB for up to 12 images)
-    // - Video limit: 100MB maximum
     const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
     const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120MB total images limit
     const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB video limit
+    const MAX_VIDEO_DURATION = 240.0; // 4 minutes
+    const MAX_VIDEOS = 4;
 
     const videoFiles = fileArray.filter(f => f.type.startsWith('video/'));
-    const imageFiles = fileArray.filter(f => f.type.startsWith('image/'));
+    const imageFiles = fileArray.filter(f => !f.type.startsWith('video/'));
 
-    // Validate video file size limit (100MB)
+    // Validate video file sizes (100MB each)
     if (videoFiles.length > 0) {
       const oversizedVideo = videoFiles.find(f => f.size > MAX_VIDEO_SIZE);
       if (oversizedVideo) {
@@ -296,7 +290,7 @@ const FeedComposerInline = ({
       }
     }
 
-    // Validate image file size limits (10MB per image, 120MB total post images)
+    // Validate image file sizes (10MB per image, 120MB cumulative)
     if (imageFiles.length > 0) {
       const oversizedImage = imageFiles.find(f => f.size > MAX_SINGLE_IMAGE_SIZE);
       if (oversizedImage) {
@@ -305,97 +299,88 @@ const FeedComposerInline = ({
         return;
       }
 
-      const currentTotalSize = selectedImages.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+      const currentTotalImageSize = selectedImages
+        .filter(img => img.type !== 'video')
+        .reduce((sum, img) => sum + (img.file?.size || 0), 0);
       const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
-      if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
+      if (currentTotalImageSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
         toast.error("Total image upload size cannot exceed 120MB.");
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
     }
 
-    // Mixed check in selection
-    if (videoFiles.length > 0 && imageFiles.length > 0) {
-      toast.error("Cannot upload video and images together");
+    // Count limits
+    const currentVideosCount = selectedImages.filter(img => img.type === 'video').length;
+    if (currentVideosCount + videoFiles.length > MAX_VIDEOS) {
+      toast.error(`Maximum ${MAX_VIDEOS} videos allowed per post`);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    // Video upload
-    if (videoFiles.length > 0) {
-      if (selectedImages.length > 0) {
-        toast.error("Cannot upload video and images together");
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      if (videoFiles.length > 1 || selectedVideo !== null) {
-        toast.error("Only one video file is allowed");
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      const vidFile = videoFiles[0];
-      try {
-        const dims = await getVideoDimensions(vidFile);
-        setSelectedVideo({
-          file: vidFile,
-          previewUrl: URL.createObjectURL(vidFile),
-          naturalWidth: dims.width,
-          naturalHeight: dims.height,
-        });
-      } catch (e) {
-        console.error('Failed to load video dimensions:', e);
-        setSelectedVideo({
-          file: vidFile,
-          previewUrl: URL.createObjectURL(vidFile),
-        });
-      }
-      setMode('video');
-      setIsExpanded(true);
+    const remainingSlots = MAX_COMPOSER_IMAGES - selectedImages.length;
+    if (remainingSlots <= 0) {
+      toast.error(`Maximum ${MAX_COMPOSER_IMAGES} attachments allowed`);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    // Images upload
-    if (imageFiles.length > 0) {
-      if (selectedVideo !== null) {
-        toast.error("Cannot upload video and images together");
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      const remainingSlots = MAX_COMPOSER_IMAGES - selectedImages.length;
-      if (remainingSlots <= 0) {
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
+    const filesToProcess = fileArray.slice(0, remainingSlots);
+    const newMediaItems: ComposerImage[] = [];
 
-      const filesToAdd = imageFiles.slice(0, remainingSlots);
+    for (const file of filesToProcess) {
+      if (file.type.startsWith('video/')) {
+        let videoMeta;
+        try {
+          videoMeta = await getVideoMetadataAndPoster(file);
+        } catch (e) {
+          console.error('Failed to load video metadata:', e);
+        }
 
-      const newImages: ComposerImage[] = [];
-      for (const file of filesToAdd) {
+        if (videoMeta && videoMeta.duration > MAX_VIDEO_DURATION) {
+          toast.error(`Video "${file.name}" exceeds 4 minutes (240 seconds)`);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+
+        newMediaItems.push({
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          file,
+          previewUrl: URL.createObjectURL(file),
+          thumbnailUrl: videoMeta?.posterUrl,
+          thumbnailBlob: videoMeta?.posterBlob,
+          naturalWidth: videoMeta?.width || 800,
+          naturalHeight: videoMeta?.height || 600,
+          aspectRatio: videoMeta?.aspectRatio || 4 / 3,
+          type: 'video',
+          duration: videoMeta?.duration,
+        });
+      } else {
         try {
           const dims = await getImageDimensions(file);
-          newImages.push({
+          newMediaItems.push({
             id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             file,
             previewUrl: URL.createObjectURL(file),
             naturalWidth: dims.width,
             naturalHeight: dims.height,
             aspectRatio: dims.aspectRatio,
+            type: 'image',
           });
         } catch (e) {
           console.error('Failed to load image dimensions:', e);
         }
       }
+    }
 
-      if (newImages.length > 0) {
-        setSelectedImages((prev) => [...prev, ...newImages]);
-        setMode('photo');
-        setIsExpanded(true);
-      }
+    if (newMediaItems.length > 0) {
+      setSelectedImages((prev) => [...prev, ...newMediaItems]);
+      setMode('photo');
+      setIsExpanded(true);
     }
 
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [selectedImages.length, selectedVideo]);
+  }, [selectedImages]);
 
   const handleRemoveVideo = useCallback(() => {
     if (selectedVideo) URL.revokeObjectURL(selectedVideo.previewUrl);
@@ -655,12 +640,17 @@ const FeedComposerInline = ({
       const payload: any = {
         title: '',
         content: finalContent,
-        post_type: selectedImages.length > 0 ? 'image' : 'text',
+        post_type: selectedImages.length === 0 ? 'text' : (selectedImages.length === 1 && selectedImages[0].type === 'video' ? 'video' : 'image'),
         category: 'Professional',
         visibility: 'public',
         location: locationString,
         companyId: companyId || undefined,
-        media_metadata: selectedImages.length > 0 ? selectedImages.map(img => ({ width: img.naturalWidth, height: img.naturalHeight })) : undefined,
+        media_metadata: selectedImages.length > 0 ? selectedImages.map(img => ({
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          duration_seconds: img.duration ? Math.round(img.duration * 100) / 100 : undefined,
+          thumbnail_url: img.thumbnailUrl,
+        })) : undefined,
         shared_post_id: sharedPostId,
       };
 
@@ -738,11 +728,7 @@ const FeedComposerInline = ({
         <input
           ref={fileInputRef}
           type="file"
-          accept={
-            selectedImages.length > 0
-              ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif"
-              : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
-          }
+          accept="image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
           multiple
           className="hidden"
           onChange={(e) => handleFilesChosen(e.target.files)}
@@ -1143,8 +1129,8 @@ const FeedComposerInline = ({
                   <button
                     type="button"
                     onClick={handleImageClick}
-                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null}
-                    className={`flex justify-center items-center gap-[8px] w-[92px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null
+                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES}
+                    className={`flex justify-center items-center gap-[8px] w-[92px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${selectedImages.length >= MAX_COMPOSER_IMAGES
                         ? 'opacity-40 cursor-default pointer-events-none text-ds-text-muted'
                         : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
                       }`}
@@ -1204,8 +1190,8 @@ const FeedComposerInline = ({
                 <button
                   type="button"
                   onClick={handleImageClick}
-                  disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null}
-                  className={`flex justify-center items-center gap-[8px] h-[36px] px-[12px] py-[6px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ${selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null
+                  disabled={selectedImages.length >= MAX_COMPOSER_IMAGES}
+                  className={`flex justify-center items-center gap-[8px] h-[36px] px-[12px] py-[6px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ${selectedImages.length >= MAX_COMPOSER_IMAGES
                       ? 'opacity-40 cursor-default pointer-events-none text-ds-text-muted'
                       : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
                     }`}

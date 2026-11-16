@@ -19,6 +19,7 @@ export interface BusinessProfileTabsProps {
   currentUserId?: string;
   canManageOwnPosts?: boolean;
   viewerPermissions?: string[];
+  isOrgAdminOrOwner?: boolean;
 }
 
 const normalizeTab = (tab: string | null | undefined, isEdu?: boolean): string => {
@@ -38,6 +39,7 @@ export function BusinessProfileTabs({
   currentUserId,
   canManageOwnPosts,
   viewerPermissions,
+  isOrgAdminOrOwner,
 }: BusinessProfileTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -151,6 +153,7 @@ export function BusinessProfileTabs({
             isOwnProfile={isOwnProfile}
             canManageCompany={canManageCompany}
             viewerPermissions={viewerPermissions}
+            isOrgAdminOrOwner={isOrgAdminOrOwner}
           />
         </Tabs.Content>
 

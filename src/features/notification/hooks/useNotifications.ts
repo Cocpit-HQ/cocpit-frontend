@@ -96,7 +96,19 @@ export const useNotifications = () => {
           created_at: newNotif.created_at || new Date().toISOString(),
         };
 
-        // Multi-tenant check: if company notification, verify current company
+        // Multi-tenant check: allow organization lifecycle notifications to be seen across both personal & company views
+        const isOrgLifecycleNotif =
+          newNotif.type === 'team_member_removed' ||
+          newNotif.type === 'job_approved' ||
+          newNotif.type === 'job_rejected' ||
+          newNotif.type === 'team_invite_declined' ||
+          newNotif.type === 'team_invite_accepted' ||
+          newNotif.type === 'company_ownership_transferred' ||
+          newNotif.type === 'offer_accepted' ||
+          newNotif.type === 'job_offer_accepted' ||
+          newNotif.type === 'offer_declined' ||
+          newNotif.type === 'job_offer_declined';
+
         if (newNotif.recipient_company_id) {
           if (!isCompany || activeProfile?.id !== newNotif.recipient_company_id) {
             return prev;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getConnectionSuggestions } from '@/services/api/connections';
 import { useConnectionStore } from '@/store/connection.store';
@@ -11,10 +11,19 @@ const PREFETCH_THRESHOLD = 4;
  * @param enabled  Pass false when on Sent tab — suggestions are only shown on Received tab.
  */
 export const useConnectionSuggestions = (enabled: boolean) => {
-  const { dismissedSuggestionIds, followedUserIds } = useConnectionStore();
-  const [offset, setOffset] = useState(0);
-  const [pool, setPool] = useState<SuggestedUser[]>([]);
-  const [hasMore, setHasMore] = useState(true);
+  const {
+    dismissedSuggestionIds,
+    followedUserIds,
+    suggestionsPool: pool,
+    setSuggestionsPool: setPool,
+    suggestionsOffset: offset,
+    setSuggestionsOffset: setOffset,
+    suggestionsHasMore: hasMore,
+    setSuggestionsHasMore: setHasMore,
+  } = useConnectionStore();
+
+
+
 
   // Exclude IDs already dismissed or requested
   const excludedIds = Array.from(
@@ -49,7 +58,7 @@ export const useConnectionSuggestions = (enabled: boolean) => {
         return [...prevPool, ...filteredNew];
       });
     }
-  }, [query.data, dismissedSuggestionIds, followedUserIds]);
+  }, [query.data, dismissedSuggestionIds, followedUserIds, setHasMore, setPool]);
 
   // Compute active visible cards (all unacted candidates in pool)
   const activeSuggestions = pool.filter(
@@ -61,7 +70,7 @@ export const useConnectionSuggestions = (enabled: boolean) => {
     if (hasMore && !query.isFetching) {
       setOffset((prev) => prev + BATCH_SIZE);
     }
-  }, [hasMore, query.isFetching]);
+  }, [hasMore, query.isFetching, setOffset]);
 
   // Auto pre-fetch next batch when unacted remaining pool drops below threshold
   useEffect(() => {

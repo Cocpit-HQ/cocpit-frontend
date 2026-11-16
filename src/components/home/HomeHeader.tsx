@@ -297,7 +297,12 @@ export const HomeHeader = () => {
 
                 } else if (hasSeeMore && activeIndex === visibleHashtags.length) {
                     setIsSearchFocused(false);
-                    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                    const returnPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : pathname;
+                    const safeReturn = returnPath && !returnPath.startsWith('/search') && !returnPath.startsWith('/jobs/search') ? returnPath : '/feed';
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('cocpit_search_origin', safeReturn);
+                    }
+                    router.push(`/search?q=${encodeURIComponent(searchQuery)}&returnTo=${encodeURIComponent(safeReturn)}`);
                 } else {
                     const peopleIdx = activeIndex - visibleHashtags.length - (hasSeeMore ? 1 : 0);
                     const user = searchResults[peopleIdx];
@@ -429,7 +434,10 @@ export const HomeHeader = () => {
                                             onChange={(e) => setJobTitleQuery(e.target.value)}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') {
-                                                    router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                                    if (typeof window !== 'undefined') {
+                                                        sessionStorage.setItem('cocpit_search_origin', '/jobs');
+                                                    }
+                                                    router.push(`/search?type=jobs&q=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}&returnTo=%2Fjobs`);
                                                 }
                                             }}
                                             className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
@@ -450,7 +458,10 @@ export const HomeHeader = () => {
                                             onChange={(e) => setJobLocationQuery(e.target.value)}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') {
-                                                    router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                                    if (typeof window !== 'undefined') {
+                                                        sessionStorage.setItem('cocpit_search_origin', '/jobs');
+                                                    }
+                                                    router.push(`/search?type=jobs&q=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}&returnTo=%2Fjobs`);
                                                 }
                                             }}
                                             className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
@@ -460,7 +471,10 @@ export const HomeHeader = () => {
                                     {/* Find jobs button */}
                                     <button
                                         onClick={() => {
-                                            router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                            if (typeof window !== 'undefined') {
+                                                sessionStorage.setItem('cocpit_search_origin', '/jobs');
+                                            }
+                                            router.push(`/search?type=jobs&q=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}&returnTo=%2Fjobs`);
                                         }}
                                         className="px-4 py-2 h-10 rounded-[24px] border border-[#6366F1] text-[#6366F1] bg-transparent hover:bg-[#6366F1] hover:text-white text-[16px] font-medium leading-[24px] font-poppins transition-all duration-200 flex-shrink-0"
                                     >
@@ -526,7 +540,12 @@ export const HomeHeader = () => {
                                                         <button
                                                             onClick={() => {
                                                                 setIsSearchFocused(false);
-                                                                router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                                                                const returnPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : pathname;
+                                                                const safeReturn = returnPath && !returnPath.startsWith('/search') && !returnPath.startsWith('/jobs/search') ? returnPath : '/feed';
+                                                                if (typeof window !== 'undefined') {
+                                                                    sessionStorage.setItem('cocpit_search_origin', safeReturn);
+                                                                }
+                                                                router.push(`/search?q=${encodeURIComponent(searchQuery)}&returnTo=${encodeURIComponent(safeReturn)}`);
                                                             }}
                                                             className={`w-full px-4 py-2 text-xs font-bold text-primary transition-colors text-left border-t border-border/50 bg-muted/5 ${activeIndex === 5 ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
                                                         >
@@ -1037,7 +1056,12 @@ export const HomeHeader = () => {
                                                 <button
                                                     onClick={() => {
                                                         setIsSearchFocused(false);
-                                                        router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                                                        const returnPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : pathname;
+                                                        const safeReturn = returnPath && !returnPath.startsWith('/search') && !returnPath.startsWith('/jobs/search') ? returnPath : '/feed';
+                                                        if (typeof window !== 'undefined') {
+                                                            sessionStorage.setItem('cocpit_search_origin', safeReturn);
+                                                        }
+                                                        router.push(`/search?q=${encodeURIComponent(searchQuery)}&returnTo=${encodeURIComponent(safeReturn)}`);
                                                     }}
                                                     className={`w-full px-4 py-2 text-xs font-bold text-primary transition-colors text-left border-t border-border/50 bg-muted/5 ${activeIndex === 5 ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
                                                 >

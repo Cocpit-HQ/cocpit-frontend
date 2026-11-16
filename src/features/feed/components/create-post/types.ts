@@ -35,6 +35,9 @@ export interface MediaItem {
   naturalWidth?: number;
   naturalHeight?: number;
   hasUserCropInteraction?: boolean;
+  duration?: number;
+  thumbnailUrl?: string;
+  thumbnailBlob?: Blob;
 }
 
 export interface PollOption {

@@ -133,6 +133,7 @@ export function useProfile(userId: string, sourcePostId?: string) {
         enabled: !!userId,
         retry: false,
         staleTime: 1000 * 30, // 30 seconds
+        refetchOnMount: "always",
     });
 }
 

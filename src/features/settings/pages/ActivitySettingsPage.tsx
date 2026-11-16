@@ -39,7 +39,9 @@ export function ActivitySettingsPage() {
     : null;
   const companyId = currentOrg
     ? (currentOrg.company_id || (currentOrg as any).org_id)
-    : (orgSlug || (isCompany ? activeProfile?.id : undefined));
+    : (activeProfile && (activeProfile.slug === orgSlug || activeProfile.id === orgSlug || isCompany)
+        ? activeProfile.id
+        : (isCompany ? activeProfile?.id : undefined));
   const queryClient = useQueryClient();
   const activeTab = useSettingsStore((state) => state.activity.activeTab);
   const setActiveTab = useSettingsStore((state) => state.setActivityTab);

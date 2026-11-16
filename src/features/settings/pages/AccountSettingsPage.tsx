@@ -79,8 +79,7 @@ export function AccountSettingsPage() {
               </Link>
             </div>
 
-            {/* Row 2: Manage email (Commented out) */}
-            {/*
+            {/* Row 2: Manage email */}
             <div className="self-stretch py-2 border-t border-ds-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
               <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
                 <span className="text-ds-text-primary ds-text-body-1">
@@ -101,7 +100,6 @@ export function AccountSettingsPage() {
                 </button>
               </Link>
             </div>
-            */}
 
             {/* Row 3: Manage phone number */}
             <div className="self-stretch py-2 border-t border-ds-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">

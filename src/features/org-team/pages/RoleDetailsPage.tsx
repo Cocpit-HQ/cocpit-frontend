@@ -86,6 +86,17 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
     const query = params.toString();
     router.replace(`${window.location.pathname}${query ? `?${query}` : ''}`);
   }, [router]);
+  // SCRUM-1610: History-aware back navigation. Pops history back to caller (e.g. /notifications or /team)
+  // to avoid history trapping loops, with fallback to returnTo/team for fresh tabs without history.
+  const handleBack = useCallback(() => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      const returnTo = searchParams?.get('from') || searchParams?.get('returnTo');
+      router.push(returnTo || '/team');
+    }
+  }, [router, searchParams]);
+
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null);
   const [removeTarget, setRemoveTarget] = useState<TeamMember | null>(null);
@@ -118,7 +129,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
       <div className="w-full flex flex-col items-center justify-center py-16 gap-4 font-['DM_Sans',sans-serif]">
         <p className="font-['DM_Sans',sans-serif] ds-text-body text-ds-text-muted">Role not found.</p>
         <button
-          onClick={() => router.push('/team')}
+          onClick={handleBack}
           className="text-[var(--ds-accent)] ds-text-secondary-1 hover:underline font-['DM_Sans',sans-serif]"
         >
           ← Back to team
@@ -156,7 +167,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
       {/* Back button (Frame 2609475: top: 40px, left: 40px, width: hug 65px, height: hug 24px, gap: 8px) */}
       <div className="absolute left-[40px] top-[40px] hidden md:block">
         <button
-          onClick={() => router.push('/team')}
+          onClick={handleBack}
           aria-label="Back"
           className="h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity"
         >
@@ -173,7 +184,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
         {/* Mobile back button (shows only on small screens) */}
         <div className="md:hidden flex items-center">
           <button
-            onClick={() => router.push('/team')}
+            onClick={handleBack}
             aria-label="Back"
             className="h-[24px] flex flex-row items-center p-0 gap-2 cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity -ml-1"
           >

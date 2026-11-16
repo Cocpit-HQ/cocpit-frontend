@@ -82,8 +82,13 @@ export function MobileCompanyAccountView({
           </h2>
 
           <div className="flex flex-col w-full">
-            {/* Row 1: Manage email (Display-only per SCRUM-1482) */}
-            <div className="flex flex-row items-center justify-between py-3 w-full">
+            {/* Row 1: Manage email */}
+            <div
+              onClick={() => router.push(`${basePath}/account-email`)}
+              role="button"
+              tabIndex={0}
+              className="flex flex-row items-center justify-between py-3 w-full active:bg-ds-surface-1 transition-colors border-b border-ds-border/30 cursor-pointer"
+            >
               <div className="flex flex-col min-w-0 pr-3">
                 <span className="text-ds-text-primary text-[15px] font-medium font-['DM_Sans'] leading-[22px]">
                   Manage email
@@ -92,9 +97,10 @@ export function MobileCompanyAccountView({
                   {emailDisplay}
                 </span>
               </div>
+              <ChevronRight className="w-5 h-5 text-ds-text-muted shrink-0" strokeWidth={1.5} />
             </div>
 
-            {/* Row 2: Manage phone number (Temporarily hidden per SCRUM-1479)
+            {/* Row 2: Manage phone number */}
             <div
               onClick={() => router.push(`${basePath}/account-phone`)}
               role="button"
@@ -111,7 +117,6 @@ export function MobileCompanyAccountView({
               </div>
               <ChevronRight className="w-5 h-5 text-ds-text-muted shrink-0" strokeWidth={1.5} />
             </div>
-            */}
           </div>
         </div>
 

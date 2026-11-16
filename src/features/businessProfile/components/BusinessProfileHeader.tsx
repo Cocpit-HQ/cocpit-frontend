@@ -164,6 +164,7 @@ export default function BusinessProfileHeader({
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["companyProfile", rawSlug] });
+      queryClient.invalidateQueries({ queryKey: ["global-search"] });
       if (orgId) {
         queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
         queryClient.invalidateQueries({ queryKey: ["org_followers", orgId] });
@@ -233,6 +234,7 @@ export default function BusinessProfileHeader({
       queryClient.invalidateQueries({ queryKey: ["company_followers"] });
       queryClient.invalidateQueries({ queryKey: ["company_relationship"] });
       queryClient.invalidateQueries({ queryKey: ["organizationStats"] });
+      queryClient.invalidateQueries({ queryKey: ["global-search"] });
 
       // 4. Notify app via custom event and cross-tab localStorage
       if (typeof window !== "undefined" && orgId) {

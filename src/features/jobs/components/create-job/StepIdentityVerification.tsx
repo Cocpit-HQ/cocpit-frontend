@@ -1,143 +1,163 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { toast } from 'sonner';
+import { LeftArrowIcon, TrustShieldIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
-
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { VerifyIdentityModal } from '@/features/settings';
 
 interface StepIdentityVerificationProps {
   onBack: () => void;
+  onClose?: () => void;
   onVerifySuccess: () => void;
   title?: string;
 }
 
 export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> = ({
   onBack,
+  onClose,
   onVerifySuccess,
   title,
 }) => {
   const { activeProfile } = useActiveProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
   const router = useRouter();
-
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
   const handleVerifyClick = () => {
     if (isCompanyMode) {
       router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`);
     } else {
+      // Open verification modal directly within the Create Job flow instead of redirecting to Settings
       setIsVerifyModalOpen(true);
     }
   };
 
   return (
-    <div className={`w-full max-w-[998px] mx-auto flex flex-col justify-start items-center gap-8 px-4 md:px-0 animate-in fade-in duration-300 ${isCompanyMode ? 'bg-white dark:bg-[#0F1115]' : 'bg-white dark:bg-[#0B0F19]'}`}>
-      
-      {/* Header Row */}
-      <div className="self-stretch flex flex-row justify-start items-center gap-4">
+    <div className="w-full min-h-screen flex flex-col justify-center items-center relative py-6 md:py-8 px-4 font-dm-sans overflow-y-auto">
+      {/* Top Left: Back Navigation */}
+      {/* Desktop Fixed Back button (preserved 100%) */}
+      <button
+        onClick={onBack}
+        type="button"
+        aria-label="Back"
+        className="hidden md:inline-flex fixed top-[40px] left-[40px] z-[60] items-center gap-2 p-0 text-ds-text-primary cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+      >
+        <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
+        <span className="font-dm-sans font-medium text-base leading-6">Back</span>
+      </button>
+
+      {/* Desktop Fixed Close button (preserved 100%) */}
+      <button
+        onClick={onClose || onBack}
+        type="button"
+        aria-label="Close"
+        className="hidden md:inline-flex fixed top-[40px] right-[40px] z-[60] text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer p-1 select-none bg-transparent border-none outline-none"
+      >
+        <Icon icon="solar:close-linear" className="w-5 h-5 shrink-0" />
+      </button>
+
+      {/* Mobile Top Back Bar (Frame 2609713 / Frame 2609475) */}
+      <div className="flex md:hidden w-full max-w-[360px] items-center justify-start h-6 mb-4 shrink-0">
         <button
           onClick={onBack}
           type="button"
-          className={`size-12 rounded-[100px] outline outline-1 outline-offset-[-1px] backdrop-blur-md flex justify-center items-center gap-2.5 active:scale-95 transition-all shadow-sm flex-shrink-0 ${isCompanyMode ? 'outline-zinc-300 hover:bg-slate-50 text-gray-500 dark:outline-[#2A2D35] dark:hover:bg-[#121B2B] dark:text-[#A1A8B3]' : 'outline-zinc-300 hover:bg-slate-50 text-gray-500 dark:outline-[#2E3445] dark:hover:bg-[#1C2340] dark:text-[#9CA3AF]'}`}
+          aria-label="Back"
+          className="inline-flex items-center gap-2 p-0 text-ds-text-primary cursor-pointer select-none bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
         >
-          <Icon icon="lucide:chevron-left" className="w-5 h-5 currentColor" />
+          <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
+          <span className="font-dm-sans font-medium text-base leading-6 text-ds-text-primary">Back</span>
         </button>
-        <div className="flex flex-col justify-start items-start">
-          <div className={`text-lg font-medium font-['Poppins'] leading-6 ${isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]'}`}>Create job</div>
-          <div className={`text-xs font-normal font-['Poppins'] leading-4 ${isCompanyMode ? 'text-gray-500 dark:text-[#A1A8B3]' : 'text-gray-500 dark:text-[#9CA3AF]'}`}>
-            {title || 'Tell us the role, AI will draft the rest'}
-          </div>
-        </div>
       </div>
 
-      {/* Verification Center Content */}
-      <div className={`w-full max-w-[672px] py-6 rounded-3xl flex flex-col justify-start items-center gap-5 overflow-hidden ${isCompanyMode ? 'bg-white dark:bg-[#0F1115]' : 'bg-white dark:bg-[#0B0F19]'}`}>
-        
-        {/* Verification Shield Ribbon SVG Graphic */}
-        <div className="w-32 h-32 flex items-center justify-center relative">
-          <Icon icon="streamline-freehand-color:security-computer-shield" className="w-24 h-24" />
-        </div>
-
-        {/* Headings */}
-        <div className="flex flex-col items-center text-center gap-2 px-4">
-          <h2 className={`text-2xl font-bold font-['Poppins'] leading-tight ${isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]'}`}>
+      {/* Main Container: Frame 2610015 & Container 360px x 519.36px on mobile, 640px on desktop */}
+      <div className="w-full max-w-[360px] md:max-w-[640px] flex flex-col items-center px-0 md:px-5 pt-0 md:pt-5 pb-6 md:pb-10 gap-5 my-auto text-center font-dm-sans">
+        {/* Headings: Frame 2609237 */}
+        <div className="w-full max-w-[360px] md:max-w-[578px] flex flex-col items-center gap-3">
+          {/* Title: 32px on mobile (leading 40px), 40px on desktop (leading 48px), bold, text-ds-text-primary */}
+          <h1 className="w-full text-ds-text-primary text-[32px] md:text-[40px] font-bold leading-[40px] md:leading-[48px] font-dm-sans text-center">
             Identity Verification Required
-          </h2>
-          <p className={`text-xs font-normal font-['Poppins'] leading-relaxed max-w-[420px] ${isCompanyMode ? 'text-gray-500 dark:text-[#A1A8B3]' : 'text-gray-500 dark:text-[#9CA3AF]'}`}>
+          </h1>
+          {/* Subtitle: 16px, semibold, leading-6, text-ds-text-secondary */}
+          <p className="w-full text-ds-text-secondary text-base font-semibold leading-6 font-dm-sans text-center">
             To maintain the integrity of our career network and ensure the highest quality of listings, only verified users can post a job.
           </p>
         </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col gap-3 items-center w-full max-w-[280px]">
+        {/* Buttons Container: width: 300px, height: 88px, gap: 16px */}
+        <div className="w-full max-w-[300px] flex flex-col justify-center items-center gap-4 shrink-0">
+          {/* Primary emphasis button: width 203px, height 36px, px-3 py-1.5, bg-ds-accent, rounded-full */}
           <button
+            type="button"
             onClick={handleVerifyClick}
-            type="button"
-            className={`w-full h-11 px-5 text-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-md ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0] disabled:bg-[#1A73E8]/50 shadow-blue-100' : 'bg-[#6366F1] hover:bg-indigo-600 disabled:bg-indigo-300 shadow-indigo-100'}`}
+            className="w-[203px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 transition-all shadow-sm cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 font-dm-sans"
           >
-            <span>Verify now</span>
+            <span className="font-dm-sans font-medium text-base leading-6 text-ds-text-primary whitespace-nowrap">
+              Verify Now
+            </span>
           </button>
-          
-          <button
-            type="button"
-            className={`w-full h-11 px-5 rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 text-sm font-semibold font-['Poppins'] transition-all active:scale-95 ${isCompanyMode ? 'bg-white hover:bg-slate-50 text-[#1A73E8] outline-blue-400 dark:bg-[#0F1115] dark:hover:bg-[#121B2B] dark:text-[#4D9CFF] dark:outline-[#2A2D35]' : 'bg-white hover:bg-slate-50 text-indigo-500 outline-indigo-400 dark:bg-[#0B0F19] dark:hover:bg-[#1C2340] dark:text-[#818CF8] dark:outline-[#2E3445]'}`}
-          >
-            <span>Learn about verification</span>
-          </button>
+          {/* Secondary button: width 203px, height 36px, px-3 py-1.5, border border-ds-border, rounded-full, text-ds-text-primary */}
+          <div className="w-[203px] h-9 px-3 py-1.5 border border-ds-border text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 bg-transparent shrink-0 select-none cursor-default font-dm-sans">
+            <span className="font-dm-sans font-medium text-base leading-6 text-ds-text-primary whitespace-nowrap">
+              Learn about verification
+            </span>
+          </div>
         </div>
 
-        {/* Benefits Row */}
-        <div className="self-stretch pt-4 flex flex-col sm:flex-row justify-center items-stretch gap-4 px-4 w-full">
-          {/* Card 1: Visibility */}
-          <div className={`w-full sm:w-72 p-4 rounded-xl flex flex-col justify-start items-start gap-1.5 border shadow-sm ${isCompanyMode ? 'bg-slate-50 border-slate-100/50 dark:bg-[#121B2B] dark:border-[#2A2D35]' : 'bg-slate-50 border-slate-100/50 dark:bg-[#1C2340] dark:border-[#2E3445]'}`}>
-            <div className={`size-8 rounded-full flex items-center justify-center ${isCompanyMode ? 'bg-blue-50 text-[#1A73E8] dark:bg-[#1A73E8]/20 dark:text-[#4D9CFF]' : 'bg-indigo-50 text-indigo-500 dark:bg-[#6366F1]/20 dark:text-[#818CF8]'}`}>
-              <Icon icon="solar:eye-linear" className="w-5 h-5 currentColor" />
+        {/* Frame 2609984: width 360px on mobile, 600px on desktop — side-by-side flex-row */}
+        <div className="w-full max-w-[360px] md:max-w-[600px] flex flex-row justify-center items-stretch gap-3">
+          {/* Card 1: Higher Visibility */}
+          <div className="flex-1 w-full min-h-[112px] p-4 bg-ds-surface-1 rounded-xl flex flex-col items-start gap-1 text-left">
+            {/* Eye open icon: 20px x 20px, text-ds-accent */}
+            <div className="size-5 flex items-center justify-center text-ds-accent shrink-0">
+              <Icon icon="solar:eye-linear" className="size-5" />
             </div>
-            <div className="self-stretch pt-0.5 flex flex-col justify-start items-start">
-              <span className={`text-xs font-semibold font-['Poppins'] leading-4 ${isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]'}`}>
-                Higher Visibility
-              </span>
+            {/* Higher Visibility: 14px, 400, leading-5, text-ds-text-primary */}
+            <div className="w-full text-ds-text-primary text-sm font-normal leading-5 font-dm-sans">
+              Higher Visibility
             </div>
-            <div className="self-stretch flex flex-col justify-start items-start">
-              <p className={`text-[11px] font-normal font-['Poppins'] leading-snug ${isCompanyMode ? 'text-gray-500 dark:text-[#A1A8B3]' : 'text-gray-500 dark:text-[#9CA3AF]'}`}>
-                Verified jobs appear higher in search results.
-              </p>
+            {/* Helper: 12px, 400, leading-4, text-ds-text-secondary */}
+            <div className="w-full text-ds-text-secondary text-xs font-normal leading-4 font-dm-sans">
+              Verified jobs appear higher in search results.
             </div>
           </div>
 
-          {/* Card 2: Trust */}
-          <div className={`w-full sm:w-72 p-4 rounded-xl flex flex-col justify-start items-start gap-1.5 border shadow-sm ${isCompanyMode ? 'bg-slate-50 border-slate-100/50 dark:bg-[#121B2B] dark:border-[#2A2D35]' : 'bg-slate-50 border-slate-100/50 dark:bg-[#1C2340] dark:border-[#2E3445]'}`}>
-            <div className={`size-8 rounded-full flex items-center justify-center ${isCompanyMode ? 'bg-blue-50 text-[#1A73E8] dark:bg-[#1A73E8]/20 dark:text-[#4D9CFF]' : 'bg-indigo-50 text-indigo-500 dark:bg-[#6366F1]/20 dark:text-[#818CF8]'}`}>
-              <Icon icon="solar:shield-keyhole-linear" className="w-5 h-5 currentColor" />
+          {/* Card 2: Build Trust */}
+          <div className="flex-1 w-full min-h-[112px] p-4 bg-ds-surface-1 rounded-xl flex flex-col items-start gap-1 text-left">
+            {/* Trust icon: 20px x 20px, text-ds-accent */}
+            <div className="size-5 flex items-center justify-center text-ds-accent shrink-0">
+              <TrustShieldIcon className="size-5 text-ds-accent" size={20} />
             </div>
-            <div className="self-stretch pt-0.5 flex flex-col justify-start items-start">
-              <span className={`text-xs font-semibold font-['Poppins'] leading-4 ${isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]'}`}>
-                Build Trust
-              </span>
+            {/* Build Trust: 14px, 400, leading-5, text-ds-text-primary */}
+            <div className="w-full text-ds-text-primary text-sm font-normal leading-5 font-dm-sans">
+              Build Trust
             </div>
-            <div className="self-stretch flex flex-col justify-start items-start">
-              <p className={`text-[11px] font-normal font-['Poppins'] leading-snug ${isCompanyMode ? 'text-gray-500 dark:text-[#A1A8B3]' : 'text-gray-500 dark:text-[#9CA3AF]'}`}>
-                Show candidates your profile is legitimate.
-              </p>
+            {/* Helper: 12px, 400, leading-4, text-ds-text-secondary */}
+            <div className="w-full text-ds-text-secondary text-xs font-normal leading-4 font-dm-sans">
+              Show candidates your profile is legitimate.
             </div>
           </div>
         </div>
 
-        {/* Footer Support Text */}
-        <div className="self-stretch pt-4 flex justify-center items-center gap-1.5 text-center px-4">
-          <p className={`text-xs font-normal font-['Poppins'] leading-relaxed ${isCompanyMode ? 'text-gray-500 dark:text-[#A1A8B3]' : 'text-gray-500 dark:text-[#9CA3AF]'}`}>
+        {/* Frame 2609084: Footer note */}
+        <div className="w-full max-w-[360px] md:max-w-[600px] pt-4 flex flex-row flex-wrap justify-center items-center gap-1 text-xs font-normal leading-4 text-center font-dm-sans">
+          <span className="text-ds-text-secondary">
             Verification typically takes less than 2 minutes. Need help?{' '}
-            <button type="button" className={`hover:underline font-medium ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-indigo-500 dark:text-[#818CF8]'}`}>
-              Contact Support
-            </button>
-          </p>
+          </span>
+          <span className="text-ds-accent font-normal select-none cursor-default">
+            Contact Support
+          </span>
         </div>
       </div>
 
-      <VerifyIdentityModal 
+      {/* Identity verification modal for in-flow verification */}
+      <VerifyIdentityModal
         isOpen={isVerifyModalOpen}
         onClose={() => setIsVerifyModalOpen(false)}
+        onSuccess={() => {
+          setIsVerifyModalOpen(false);
+          // Advance wizard to role-input step after completing verification
+          onVerifySuccess();
+        }}
       />
     </div>
   );

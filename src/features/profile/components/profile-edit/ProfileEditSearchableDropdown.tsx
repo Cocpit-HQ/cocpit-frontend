@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronDownIcon, LoadingIcon } from "@/components/icons";
+import { ChevronDownIcon, LoadingIcon, OrgAvatarFallbackIcon } from "@/components/icons";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -9,12 +9,44 @@ import { toast } from "sonner";
 export interface SearchableDropdownOption {
   id: string;
   label: string;
+  org_id?: string | null;
+  logo_url?: string | null;
+  [key: string]: any;
+}
+
+function normalizeOptions(
+  items: (string | SearchableDropdownOption)[]
+): SearchableDropdownOption[] {
+  const seen = new Set<string>();
+  const normalized: SearchableDropdownOption[] = [];
+  for (const item of items) {
+    if (!item) continue;
+    const opt: SearchableDropdownOption =
+      typeof item === "string" ? { id: item, label: item } : item;
+    const normKey = opt.org_id
+      ? `org_${opt.org_id}`
+      : opt.id
+      ? `id_${opt.id}`
+      : opt.label?.trim().toLowerCase();
+    if (normKey && !seen.has(normKey)) {
+      seen.add(normKey);
+      normalized.push({
+        ...(typeof item === "object" ? item : {}),
+        id: opt.id || opt.label,
+        label: opt.label?.trim() || "",
+        org_id: opt.org_id ?? null,
+        logo_url: opt.logo_url ?? null,
+      });
+    }
+  }
+  return normalized;
 }
 
 interface ProfileEditSearchableDropdownProps {
   id?: string;
   label: string;
   value: string;
+  selectedId?: string | null;
   options?: (string | SearchableDropdownOption)[];
   loadOptions?: (query: string) => Promise<(string | SearchableDropdownOption)[]>;
   onSelect: (value: string) => void;
@@ -36,6 +68,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
   id,
   label,
   value,
+  selectedId,
   options = [],
   loadOptions,
   onSelect,
@@ -57,12 +90,14 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
   const [asyncOptions, setAsyncOptions] = useState<SearchableDropdownOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [failedLogos, setFailedLogos] = useState<Record<string, boolean>>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query, 250);
   const lastSelectedRef = useRef<string>(value || "");
+  const lastFetchedQueryRef = useRef<string | null>(null);
 
   // Sync external value
   useEffect(() => {
@@ -92,7 +127,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
     if (!loadOptions) return;
 
     const trimmed = debouncedQuery.trim();
-    if (trimmed && trimmed === lastSelectedRef.current && asyncOptions.length > 0) {
+    if (trimmed === lastFetchedQueryRef.current && asyncOptions.length > 0) {
       return;
     }
 
@@ -102,17 +137,8 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
       try {
         const res = await loadOptions(trimmed);
         if (!isCancelled && Array.isArray(res)) {
-          const seen = new Set<string>();
-          const normalized: SearchableDropdownOption[] = [];
-          for (const item of res) {
-            const opt = typeof item === "string" ? { id: item, label: item } : item;
-            const normKey = opt.label?.trim().toLowerCase();
-            if (normKey && !seen.has(normKey)) {
-              seen.add(normKey);
-              normalized.push({ id: opt.id || opt.label, label: opt.label.trim() });
-            }
-          }
-          setAsyncOptions(normalized);
+          setAsyncOptions(normalizeOptions(res));
+          lastFetchedQueryRef.current = trimmed;
         }
       } catch (err) {
         if (!isCancelled) setAsyncOptions([]);
@@ -130,28 +156,14 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
   const displayedOptions: SearchableDropdownOption[] = useMemo(() => {
     const baseList: SearchableDropdownOption[] = loadOptions
       ? asyncOptions
-      : options.map((opt) => (typeof opt === "string" ? { id: opt, label: opt } : opt));
-
-    const seen = new Set<string>();
-    const uniqueList: SearchableDropdownOption[] = [];
-    for (const item of baseList) {
-      const key = item.label?.trim().toLowerCase();
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        uniqueList.push(item);
-      }
-    }
-
-    if (loadOptions) {
-      return uniqueList;
-    }
+      : normalizeOptions(options);
 
     const q = query.trim().toLowerCase();
-    if (!q) return uniqueList;
+    if (!q) return baseList;
 
-    return uniqueList.filter(
+    return baseList.filter(
       (opt) =>
-        opt.label.toLowerCase().includes(q) || opt.id.toLowerCase().includes(q)
+        opt.label.toLowerCase().includes(q) || (opt.id && String(opt.id).toLowerCase().includes(q))
     );
   }, [loadOptions, asyncOptions, options, query]);
 
@@ -196,20 +208,12 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
       if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         setIsOpen(true);
-        if (loadOptions && asyncOptions.length === 0) {
-          loadOptions("").then((res) => {
+        const q = query.trim();
+        if (loadOptions && (lastFetchedQueryRef.current !== q || asyncOptions.length === 0)) {
+          loadOptions(q).then((res) => {
             if (Array.isArray(res)) {
-              const seen = new Set<string>();
-              const normalized: SearchableDropdownOption[] = [];
-              for (const item of res) {
-                const opt = typeof item === "string" ? { id: item, label: item } : item;
-                const normKey = opt.label?.trim().toLowerCase();
-                if (normKey && !seen.has(normKey)) {
-                  seen.add(normKey);
-                  normalized.push({ id: opt.id || opt.label, label: opt.label.trim() });
-                }
-              }
-              setAsyncOptions(normalized);
+              setAsyncOptions(normalizeOptions(res));
+              lastFetchedQueryRef.current = q;
             }
           });
         }
@@ -286,22 +290,17 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
             value={query}
             onFocus={() => {
               setIsOpen(true);
-              if (loadOptions && asyncOptions.length === 0) {
-                loadOptions("").then((res) => {
-                  if (Array.isArray(res)) {
-                    const seen = new Set<string>();
-                    const normalized: SearchableDropdownOption[] = [];
-                    for (const item of res) {
-                      const opt = typeof item === "string" ? { id: item, label: item } : item;
-                      const normKey = opt.label?.trim().toLowerCase();
-                      if (normKey && !seen.has(normKey)) {
-                        seen.add(normKey);
-                        normalized.push({ id: opt.id || opt.label, label: opt.label.trim() });
-                      }
+              const q = query.trim();
+              if (loadOptions && (lastFetchedQueryRef.current !== q || asyncOptions.length === 0)) {
+                setIsLoading(true);
+                loadOptions(q)
+                  .then((res) => {
+                    if (Array.isArray(res)) {
+                      setAsyncOptions(normalizeOptions(res));
+                      lastFetchedQueryRef.current = q;
                     }
-                    setAsyncOptions(normalized);
-                  }
-                });
+                  })
+                  .finally(() => setIsLoading(false));
               }
             }}
             onChange={handleInputChange}
@@ -346,25 +345,47 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
           <div ref={listboxRef} className="w-full max-h-[240px] overflow-y-auto overscroll-contain touch-pan-y flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
             {displayedOptions.length > 0 ? (
               displayedOptions.map((opt, idx) => {
-                const isSelected = opt.label.toLowerCase() === value.toLowerCase();
+                const isSelected = selectedId !== undefined
+                  ? Boolean(selectedId && (opt.org_id ? opt.org_id === selectedId : opt.id === selectedId))
+                  : (value ? opt.label.toLowerCase() === value.toLowerCase() : false);
                 const isHighlighted = idx === highlightedIndex;
+
+                const isOrg = Boolean(opt.org_id || opt.logo_url);
+                const hasLogo = Boolean(opt.logo_url && !failedLogos[opt.logo_url]);
+
                 return (
                   <button
-                    key={`search-opt-${idx}-${opt.id || opt.label}`}
+                    key={`search-opt-${idx}-${opt.org_id || opt.id || opt.label}`}
                     type="button"
                     role="option"
                     aria-selected={isSelected}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleSelectOption(opt)}
                     className={cn(
-                      "self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none bg-transparent",
+                      "self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center gap-2.5 transition-colors cursor-pointer truncate focus:outline-none bg-transparent",
                       isHighlighted
-                        ? "text-[var(--ds-text-primary)]"
+                        ? "text-[var(--ds-text-primary)] bg-[var(--ds-surface-1)]"
                         : isSelected
                         ? "text-[var(--ds-accent)] font-medium"
                         : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
                     )}
                   >
+                    {isOrg && (
+                      hasLogo ? (
+                        <img
+                          src={opt.logo_url!}
+                          alt={opt.label}
+                          onError={() => {
+                            if (opt.logo_url) {
+                              setFailedLogos((prev) => ({ ...prev, [opt.logo_url!]: true }));
+                            }
+                          }}
+                          className="w-5 h-5 rounded-[4px] object-cover shrink-0 bg-[var(--ds-surface-2)]"
+                        />
+                      ) : (
+                        <OrgAvatarFallbackIcon size={20} className="w-5 h-5 rounded-[4px] shrink-0" />
+                      )
+                    )}
                     <span className="truncate">{opt.label}</span>
                   </button>
                 );
@@ -398,7 +419,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
           {error}
         </span>
       ) : warning ? (
-        <span className="font-['DM_Sans'] text-[12px] text-[#EC6229] leading-tight">
+        <span className="font-['DM_Sans'] text-[12px] text-[var(--ds-accent)] leading-tight">
           {warning}
         </span>
       ) : null}

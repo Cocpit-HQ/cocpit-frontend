@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
 import { Share2, Flag, ChevronLeft, X } from "lucide-react";
 import { BlockIcon } from "@/components/icons";
@@ -23,6 +23,7 @@ import {
 import { useConnectionActions } from "@/features/connection/hooks/useConnectionActions";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { companyService } from "@/services/organization.service";
+import { updateGlobalSearchEntityStatus } from "@/features/search/utils/search-cache.utils";
 
 // Layout & Header Components
 import { ProfileCoverSection } from "@/features/profile/components/ProfileCoverSection";
@@ -79,6 +80,24 @@ interface PublicProfileProps {
 
 export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const source = searchParams?.get("source");
+  const from = searchParams?.get("from");
+  const returnTo = searchParams?.get("returnTo");
+  const isFromJobs = Boolean(
+    source === "job_application_dashboard" ||
+    source === "jobs" ||
+    source?.toLowerCase().includes("job") ||
+    from === "jobs" ||
+    from?.toLowerCase().includes("job") ||
+    returnTo?.includes("/jobs") ||
+    (typeof window !== "undefined" && (
+      window.sessionStorage.getItem("coming_from_job_detail") === "true" ||
+      window.sessionStorage.getItem("nav_memory_jobs") ||
+      window.sessionStorage.getItem("nav_memory_jobs_return") ||
+      document.referrer.includes("/jobs")
+    ))
+  );
   const { startChat, blockUser, unblockUser, isBlocked, followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
   const { activeProfile, isCompany } = useActiveProfile();
   const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
@@ -215,6 +234,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
     queryClient.invalidateQueries({ queryKey: ["profile", targetUserId] });
     queryClient.invalidateQueries({ queryKey: ["connectionCount", targetUserId] });
+    queryClient.invalidateQueries({ queryKey: ["global-search"] });
   };
 
   const handleFollowToggle = async () => {
@@ -237,6 +257,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!targetUserId) return;
     // Optimistic update
     queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_sent" });
+    updateGlobalSearchEntityStatus(queryClient, targetUserId, { connection_status: "pending_sent" });
     try {
       const res = await sendConnectionRequest(targetUserId);
       const reqId = res?.connection_request_id || res?.id || res?.request_id;
@@ -246,12 +267,20 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           status: "pending_sent",
           request_id: reqId,
         }));
+        updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+          connection_status: "pending_sent",
+          pending_request_id: reqId,
+        });
       }
       invalidateRelationshipCaches();
       toast.success("Connection request sent!");
     } catch (err: any) {
       // Rollback
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none", request_id: null });
+      updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+        connection_status: "none",
+        pending_request_id: null,
+      });
       const msg = err?.response?.data?.message || "Failed to send connection request";
       toast.error(msg);
     }
@@ -263,11 +292,23 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     const idToCancel = pendingRequestId || targetUserId;
     if (!idToCancel) return;
 
+    // Optimistic update for search cache
+    updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+      connection_status: "none",
+      pending_request_id: null,
+    });
+
     // We can just use the undo mutation to handle optimistic updates identically to the connections panel
     undo.mutate(idToCancel, {
       onSuccess: () => {
         // Additional invalidations specific to profile page
         invalidateRelationshipCaches();
+      },
+      onError: () => {
+        updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+          connection_status: "pending_sent",
+          pending_request_id: pendingRequestId,
+        });
       }
     });
   };
@@ -276,6 +317,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!pendingRequestId) return;
     // Optimistic update
     queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "connected" });
+    updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+      connection_status: "connected",
+      is_connected: true,
+    });
     try {
       await handleConnectionRequest(pendingRequestId, "connected");
       invalidateRelationshipCaches();
@@ -283,6 +328,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     } catch (err: any) {
       // Rollback
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_received", request_id: pendingRequestId });
+      updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+        connection_status: "pending_received",
+        pending_request_id: pendingRequestId,
+      });
       toast.error("Failed to accept request.");
     }
   };
@@ -291,12 +340,20 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!pendingRequestId) return;
     // Optimistic update
     queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none", request_id: null });
+    updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+      connection_status: "none",
+      pending_request_id: null,
+    });
     try {
       await handleConnectionRequest(pendingRequestId, "rejected");
       invalidateRelationshipCaches();
     } catch (err: any) {
       // Rollback
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_received", request_id: pendingRequestId });
+      updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+        connection_status: "pending_received",
+        pending_request_id: pendingRequestId,
+      });
       toast.error("Failed to decline request.");
     }
   };
@@ -306,6 +363,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     try {
       await removeConnection(targetUserId);
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none" });
+      updateGlobalSearchEntityStatus(queryClient, targetUserId, {
+        connection_status: "none",
+        is_connected: false,
+        is_following: false,
+      });
       queryClient.invalidateQueries({ queryKey: ["relationshipStatus", targetUserId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats"] }); // invalidate current user's stats too
@@ -313,6 +375,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       queryClient.invalidateQueries({ queryKey: ["followers"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] }); // Updates followersCount on the page
+      queryClient.invalidateQueries({ queryKey: ["global-search"] });
       syncFollowStatus(targetUserId, false); // immediately reflect unfollow in UI
       setShowRemoveConnectionDialog(false);
       toast.success("Connection removed");
@@ -391,14 +454,76 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleBack = () => {
+    const savedJobsReturn = typeof window !== "undefined"
+      ? (sessionStorage.getItem("nav_memory_jobs_return") || sessionStorage.getItem("nav_memory_jobs"))
+      : null;
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("nav_memory_jobs_return");
+      sessionStorage.removeItem("coming_from_job_detail");
+    }
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    if (isFromJobs && savedJobsReturn && savedJobsReturn !== "/jobs") {
+      router.push(savedJobsReturn);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
+      return;
+    }
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
-      router.push("/feed");
+      router.push(isFromJobs ? "/jobs" : "/feed");
     }
   };
 
   const handleClose = () => {
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
+      return;
+    }
+    // 1. If originated from notifications (either directly or through job details)
+    if (returnTo?.includes("/notifications")) {
+      router.push("/notifications");
+      return;
+    }
+
+    // 2. If originated from an organization's jobs tab (e.g. /organization/slug?tab=jobs)
+    if (returnTo?.includes("/organization/")) {
+      try {
+        const decoded = decodeURIComponent(returnTo);
+        const match = decoded.match(/\/organization\/[^?&]+/);
+        if (match) {
+          const tabParam = decoded.includes("tab=jobs") ? "?tab=jobs" : "";
+          router.push(`${match[0]}${tabParam}`);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 3. If originated from jobs (or returnTo is a job detail /jobs/...)
+    if (isFromJobs || returnTo?.includes("/jobs")) {
+      const savedJobsReturn = typeof window !== "undefined"
+        ? (sessionStorage.getItem("nav_memory_jobs_return") || sessionStorage.getItem("nav_memory_jobs"))
+        : null;
+      if (savedJobsReturn && savedJobsReturn !== "/jobs" && !savedJobsReturn.startsWith("/jobs/")) {
+        router.push(savedJobsReturn);
+        return;
+      }
+      router.push("/jobs");
+      return;
+    }
+
+    // 4. Default fallback: close to feed
     router.push("/feed");
   };
 
@@ -450,7 +575,17 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   if (userError || !user) {
     return (
-      <div className="min-h-screen w-full bg-[var(--ds-bg)] flex flex-col items-center justify-center p-5 select-none">
+      <div className="min-h-screen w-full bg-[var(--ds-bg)] flex flex-col items-center justify-center p-5 select-none relative">
+        {/* Top-left Back button */}
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="Back"
+          className="fixed top-6 left-4 sm:top-10 sm:left-10 flex items-center gap-2 h-9 px-2 rounded-md text-[var(--ds-text-primary)] hover:text-[var(--ds-text-secondary)] transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] z-[60] group"
+        >
+          <ChevronLeft className="w-5 h-5 text-[var(--ds-text-primary)] group-hover:text-[var(--ds-text-secondary)] transition-colors shrink-0" />
+          <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px]">Back</span>
+        </button>
         {/* FullPageError: max-w-[800px], flex flex-col items-center justify-center, gap: 24px */}
         <div className="w-full max-w-[800px] flex flex-col items-center justify-center gap-6 text-center animate-in fade-in duration-200">
           {/* IconFrame: 64x64px, rounded-full, bg #1A1A20, p-4 (16px) */}
@@ -478,11 +613,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           {/* Primary emphasis button: h: 36px, px: 12px, py: 6px, gap: 10px, bg: #EC6229, rounded: 100px */}
           <button
             type="button"
-            onClick={() => router.push('/feed')}
+            onClick={handleBack}
             className="h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex items-center justify-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
             <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-              Back to Feed
+              {isFromJobs ? 'Back to Jobs' : 'Back to Feed'}
             </span>
           </button>
         </div>

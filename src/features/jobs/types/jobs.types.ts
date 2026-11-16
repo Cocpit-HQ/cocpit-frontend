@@ -2,6 +2,7 @@ export interface Job {
   id: string;
   title: string;
   company: string;
+  company_name?: string;
   company_logo?: string;
   location: string;
   job_type: 'Full time' | 'Part time' | 'Remote' | 'Contract' | 'Internship' | string;
@@ -32,11 +33,14 @@ export interface Job {
   response_rate?: string; // e.g., "98%", "95%", "92%"
   avg_reply?: string; // e.g., "1 day", "2 day", "3 day"
   match_reason?: string; // e.g., "Matches your skills in React and Node.js"
+  match_score?: number;
+  profile_match_text?: string;
 
   // Application details
   application_status?: 'Applied' | 'in-review' | 'Shortlisted' | 'Declined' | string;
   applied_date_display?: string;
   applied_at?: string;
+  published_at?: string;
   created_at?: string;
   is_available?: boolean;
   context_sent?: boolean;
@@ -60,6 +64,13 @@ export interface Job {
   company_type?: string;
   industry?: string;
   skills?: string[];
+  quality_score?: number;
+  network_badge?: {
+    connection_count: number;
+    primary_name: string;
+    text: string;
+  } | null;
+  last_viewed_at?: string;
 }
 
 export interface JobsFilter {
@@ -71,6 +82,8 @@ export interface JobsFilter {
   salary_range?: string | string[];
   date_posted?: string;
   industry?: string;
+  company?: string;
+  verified?: string;
 }
 
 export interface JobsState {
@@ -85,6 +98,7 @@ export interface JobsState {
 export interface JobListing {
   id: string;
   title: string;
+  published_at?: string;
   posted_at?: string;
   last_edited?: string;
   status: 'ACTIVE' | 'IN REVIEW' | 'DRAFT' | 'CLOSED' | string;

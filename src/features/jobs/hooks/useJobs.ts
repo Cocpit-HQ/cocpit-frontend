@@ -22,11 +22,15 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     setMultipleFilters,
     savedJobIds,
     appliedJobIds,
+    withdrawnJobIds,
+    respondedOffers,
     setApplicationStats,
     addSavedId,
     removeSavedId,
     addAppliedId,
     removeAppliedId,
+    addWithdrawnId,
+    removeWithdrawnId,
     addSavedIds,
     addAppliedIds,
     setOfferResponse,
@@ -40,11 +44,15 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       setMultipleFilters: state.setMultipleFilters,
       savedJobIds: state.savedJobIds,
       appliedJobIds: state.appliedJobIds,
+      withdrawnJobIds: state.withdrawnJobIds,
+      respondedOffers: state.respondedOffers,
       setApplicationStats: state.setApplicationStats,
       addSavedId: state.addSavedId,
       removeSavedId: state.removeSavedId,
       addAppliedId: state.addAppliedId,
       removeAppliedId: state.removeAppliedId,
+      addWithdrawnId: state.addWithdrawnId,
+      removeWithdrawnId: state.removeWithdrawnId,
       addSavedIds: state.addSavedIds,
       addAppliedIds: state.addAppliedIds,
       setOfferResponse: state.setOfferResponse,
@@ -60,8 +68,37 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     }
   }, [initialSearch, initialLocation, setMultipleFilters]);
 
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, userCompanies } = useActiveProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
+
+  const adminOrgIds = useMemo(() => {
+    if (!userCompanies || userCompanies.length === 0) return new Set<string>();
+    const set = new Set<string>();
+    userCompanies.forEach((c: any) => {
+      const roleLower = String(c.role || '').toLowerCase();
+      const isOwner = Boolean(c.is_owner || c.is_creator);
+      const isAdmin = roleLower === 'admin' || roleLower === 'owner' || isOwner;
+      const permissions: string[] = Array.isArray(c.permissions) ? c.permissions : [];
+      const hasJobPermission = permissions.some((p: string) =>
+        p === '*' || p === 'MANAGE_COMPANY' || p === 'MANAGE_ORGANIZATION' || p === 'POST_JOBS'
+      );
+      if (isAdmin || hasJobPermission) {
+        if (c.company_id) set.add(String(c.company_id));
+        if (c.org_id) set.add(String(c.org_id));
+        if (c.id) set.add(String(c.id));
+      }
+    });
+    return set;
+  }, [userCompanies]);
+
+  const isJobVisibleInCandidateExplore = useCallback((job: Job) => {
+    if (!job) return false;
+    if (adminOrgIds.size > 0) {
+      const jobOrgId = String(job.org_id || job.company_id || '');
+      if (jobOrgId && adminOrgIds.has(jobOrgId)) return false;
+    }
+    return true;
+  }, [adminOrgIds]);
 
   const apiFilters: JobsFilter = useMemo(() => ({
     search: filters.search,
@@ -74,6 +111,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       : (filters.salary_range || undefined),
     date_posted: filters.date_posted || undefined,
     industry: filters.industry || undefined,
+    company: filters.company || undefined,
+    verified: filters.verified || undefined,
   }), [filters, recruiterFilters.salaryRange]);
 
   // 1. Explore Tab Query (Paginated)
@@ -82,7 +121,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     fetchNextPage: loadMoreExplore,
     hasNextPage: hasMoreExplore,
     isFetchingNextPage: isFetchingMoreExplore,
-    isLoading: isLoadingExplore
+    isLoading: isLoadingExplore,
+    isError: isErrorExplore
   } = useInfiniteQuery({
     queryKey: ['jobs', 'explore', apiFilters],
     queryFn: async ({ pageParam }) => {
@@ -109,7 +149,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     fetchNextPage: loadMoreSaved,
     hasNextPage: hasMoreSaved,
     isFetchingNextPage: isFetchingMoreSaved,
-    isLoading: isLoadingSaved
+    isLoading: isLoadingSaved,
+    isError: isErrorSaved
   } = useInfiniteQuery({
     queryKey: ['jobs', 'saved', apiFilters],
     queryFn: async ({ pageParam }) => {
@@ -129,7 +170,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     fetchNextPage: loadMoreApplied,
     hasNextPage: hasMoreApplied,
     isFetchingNextPage: isFetchingMoreApplied,
-    isLoading: isLoadingApplied
+    isLoading: isLoadingApplied,
+    isError: isErrorApplied
   } = useInfiniteQuery({
     queryKey: ['jobs', 'applied', selectedStatusFilter],
     queryFn: async ({ pageParam }) => {
@@ -147,7 +189,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   // 4. Offers Query
   const {
     data: offersData,
-    isLoading: isLoadingOffers
+    isLoading: isLoadingOffers,
+    isError: isErrorOffers
   } = useQuery({
     queryKey: ['jobs', 'offers'],
     queryFn: () => jobsService.getMyOffers(),
@@ -155,29 +198,76 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     enabled: !isCompanyMode && !!token && activeTab === 'Offers',
   });
 
-  // 5. Recommendations Query
+  // 5. Explore Sections Query (Aggregated 4 Categories)
+  const {
+    data: exploreSectionsData = { featured: [], best_matches: [], from_network: [], recently_viewed: [] },
+    isLoading: isExploreSectionsLoading
+  } = useQuery({
+    queryKey: ['jobs', 'explore-sections'],
+    queryFn: () => jobsService.getExploreSections(),
+    staleTime: 1000 * 60 * 2,
+    refetchOnMount: true,
+    enabled: !isCompanyMode && activeTab === 'Explore',
+  });
+
+  // 5b. Recommendations Query
   const {
     data: rawRecommendations = [],
     isLoading: isRecommendationsLoading
   } = useQuery({
     queryKey: ['jobs', 'recommendations'],
-    queryFn: () => jobsService.getRecommendations(),
+    queryFn: async () => {
+      const res = await jobsService.getRecommendations();
+      const savedSync: string[] = [];
+      res.forEach((j: Job) => {
+        if (j.is_saved) savedSync.push(j.id);
+      });
+      if (savedSync.length > 0) addSavedIds(savedSync);
+      return res;
+    },
     staleTime: 1000 * 60 * 10,
     enabled: !isCompanyMode && !!token && activeTab === 'Explore',
   });
 
   // Dynamically enhance lists with O(1) Zustand lookups
-  const enhanceJob = useCallback((job: Job) => ({
-    ...job,
-    is_saved: job.is_saved || savedJobIds.has(job.id) || savedJobIds.has(job.offer_id || ''),
-    is_applied: job.is_applied || appliedJobIds.has(job.id),
-  }), [savedJobIds, appliedJobIds]);
+  const enhanceJob = useCallback((job: Job) => {
+    const isWithdrawn = withdrawnJobIds.has(job.id);
+    const offerResp = (job.offer_id && respondedOffers[job.offer_id]) || (job.id && respondedOffers[job.id]);
+    const offerStatus = offerResp
+      ? (offerResp === 'accept' ? 'accepted' : 'declined')
+      : job.offerStatus;
+    const applicationStatus = isWithdrawn
+      ? 'Withdrawn'
+      : offerResp
+        ? (offerResp === 'accept' ? 'Accepted' : 'Declined')
+        : job.application_status;
 
-  const recommendedJobs = useMemo(() => rawRecommendations.map(enhanceJob), [rawRecommendations, enhanceJob]);
+    return {
+      ...job,
+      is_saved: savedJobIds.has(job.id) || savedJobIds.has(job.offer_id || ''),
+      is_applied: !isWithdrawn && (appliedJobIds.has(job.id) || job.is_applied),
+      offerStatus,
+      application_status: applicationStatus,
+    };
+  }, [savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers]);
+
+  const recommendedJobs = useMemo(
+    () => rawRecommendations.map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+    [rawRecommendations, enhanceJob, isJobVisibleInCandidateExplore]
+  );
+
+  const exploreSections = useMemo(() => ({
+    featured: (exploreSectionsData.featured || []).map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+    best_matches: (exploreSectionsData.best_matches || []).map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+    from_network: (exploreSectionsData.from_network || []).map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+    recently_viewed: (exploreSectionsData.recently_viewed || []).map(enhanceJob).filter(isJobVisibleInCandidateExplore),
+  }), [exploreSectionsData, enhanceJob, isJobVisibleInCandidateExplore]);
 
   const activeJobs = useMemo(() => {
     let jobs: Job[] = [];
-    if (activeTab === 'Explore') jobs = exploreData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
+    if (activeTab === 'Explore') {
+      jobs = (exploreData?.pages.flatMap(p => p.data).map(enhanceJob) || []).filter(isJobVisibleInCandidateExplore);
+    }
     else if (activeTab === 'Saved') jobs = savedData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
     else if (activeTab === 'My Applications') jobs = appliedData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
     else if (activeTab === 'Offers') jobs = (offersData || []).map(enhanceJob);
@@ -190,13 +280,19 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       seen.add(job.id);
       return true;
     });
-  }, [activeTab, exploreData, savedData, appliedData, offersData, enhanceJob]);
+  }, [activeTab, exploreData, savedData, appliedData, offersData, enhanceJob, isJobVisibleInCandidateExplore]);
 
   const isLoading = 
     (activeTab === 'Explore' && isLoadingExplore) ||
     (activeTab === 'Saved' && isLoadingSaved) ||
     (activeTab === 'My Applications' && isLoadingApplied) ||
     (activeTab === 'Offers' && isLoadingOffers);
+
+  const isError = 
+    (activeTab === 'Explore' && isErrorExplore) ||
+    (activeTab === 'Saved' && isErrorSaved) ||
+    (activeTab === 'My Applications' && isErrorApplied) ||
+    (activeTab === 'Offers' && isErrorOffers);
 
   const isFetchingMore = 
     (activeTab === 'Explore' && isFetchingMoreExplore) ||
@@ -232,6 +328,78 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       if (selectedJob?.id === jobId) {
         setSelectedJob(prev => prev ? { ...prev, is_saved: shouldSave } : null);
       }
+
+      // Optimistically update React Query cache across explore, saved, recommendations
+      ['explore', 'saved', 'recommendations'].forEach((subKey) => {
+        queryClient.setQueriesData({ queryKey: ['jobs', subKey] }, (oldData: any) => {
+          if (!oldData) return oldData;
+          if (oldData.pages) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                data: page.data?.map((item: Job) =>
+                  item.id === jobId ? { ...item, is_saved: shouldSave } : item
+                ),
+              })),
+            };
+          }
+          if (Array.isArray(oldData)) {
+            return oldData.map((item: Job) =>
+              item.id === jobId ? { ...item, is_saved: shouldSave } : item
+            );
+          }
+          return oldData;
+        });
+      });
+
+      // Optimistically update global-search queries (both category and all views)
+      queryClient.setQueriesData({ queryKey: ['global-search'] }, (oldData: any) => {
+        if (!oldData) return oldData;
+        // Case 1: Infinite query pages (category search e.g. type='jobs')
+        if (oldData.pages && Array.isArray(oldData.pages)) {
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              items: Array.isArray(page.items)
+                ? page.items.map((item: any) =>
+                    item.id === jobId || item.job_id === jobId
+                      ? { ...item, is_saved: shouldSave }
+                      : item
+                  )
+                : page.items,
+            })),
+          };
+        }
+        // Case 2: Stage A 'all' search response
+        if (oldData.sections?.jobs?.items && Array.isArray(oldData.sections.jobs.items)) {
+          const updatedItems = oldData.sections.jobs.items.map((item: any) =>
+            item.id === jobId || item.job_id === jobId
+              ? { ...item, is_saved: shouldSave }
+              : item
+          );
+          return {
+            ...oldData,
+            sections: {
+              ...oldData.sections,
+              jobs: {
+                ...oldData.sections.jobs,
+                items: updatedItems,
+              },
+            },
+            results: {
+              ...oldData.results,
+              jobs: {
+                ...oldData.results?.jobs,
+                items: updatedItems,
+              },
+            },
+          };
+        }
+        return oldData;
+      });
+
       return { wasSaved: !shouldSave };
     },
     onError: (err, { jobId }, context) => {
@@ -245,6 +413,9 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'recommendations'] });
+      queryClient.invalidateQueries({ queryKey: ['global-search'] });
     }
   });
 
@@ -255,6 +426,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     },
     onMutate: async ({ jobId }) => {
       addAppliedId(jobId);
+      removeWithdrawnId(jobId);
       if (selectedJob?.id === jobId) {
         setSelectedJob(prev => prev ? { ...prev, is_applied: true, application_status: 'Applied' } : null);
       }
@@ -269,6 +441,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-sections'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-section'] });
     }
   });
 
@@ -281,7 +455,10 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     if (uploadedFile || coverLetter || resumeId) {
       formData = new FormData();
       if (uploadedFile) formData.append('resume', uploadedFile);
-      else if (resumeId) formData.append('resume_url', resumeId);
+      else if (resumeId) {
+        formData.append('resume_url', resumeId);
+        if (resumeUrlOrName) formData.append('resume_file_name', resumeUrlOrName);
+      }
       if (coverLetter) formData.append('cover_note', coverLetter);
     }
     applyMutation.mutate({ jobId, formData });
@@ -291,12 +468,37 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     mutationFn: (jobId: string) => jobsService.withdrawApplication(jobId),
     onMutate: async (jobId) => {
       removeAppliedId(jobId);
+      addWithdrawnId(jobId);
       if (selectedJob?.id === jobId) {
         setSelectedJob(prev => prev ? { ...prev, is_applied: false, application_status: 'Withdrawn' } : null);
       }
+      // Optimistically update React Query cache across explore, saved, applied
+      ['explore', 'saved', 'applied'].forEach((subKey) => {
+        queryClient.setQueriesData({ queryKey: ['jobs', subKey] }, (oldData: any) => {
+          if (!oldData) return oldData;
+          if (oldData.pages) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                data: page.data.map((item: Job) =>
+                  item.id === jobId ? { ...item, is_applied: false, application_status: 'Withdrawn' } : item
+                ),
+              })),
+            };
+          }
+          if (Array.isArray(oldData)) {
+            return oldData.map((item: Job) =>
+              item.id === jobId ? { ...item, is_applied: false, application_status: 'Withdrawn' } : item
+            );
+          }
+          return oldData;
+        });
+      });
     },
     onError: (err, jobId) => {
       addAppliedId(jobId);
+      removeWithdrawnId(jobId);
       toast.error('Failed to withdraw application.');
     },
     onSuccess: () => {
@@ -305,6 +507,9 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     onSettled: async () => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
       queryClient.invalidateQueries({ queryKey: ['jobs', 'explore'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-sections'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-section'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'saved'] });
       const stats = await jobsService.getApplicationStats();
       setApplicationStats(stats);
     }
@@ -323,7 +528,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       toast.success(action === 'accept' ? 'Offer accepted successfully!' : 'Offer declined successfully');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs', 'offers'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobOffers'] });
     }
   });
 
@@ -331,7 +537,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     jobs: activeJobs,
     recommendedJobs,
     isLoading,
-    isRecommendationsLoading,
+    isRecommendationsLoading: isRecommendationsLoading || isExploreSectionsLoading,
+    exploreSections,
     isFetchingMore,
     hasMore,
     loadMore,
@@ -342,14 +549,20 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     filters,
     setFilterValue: setCandidateFilterValue,
     setMultipleFilters,
-    toggleSave: (jobId: string) => {
+    toggleSave: (jobId: string, currentSavedState?: boolean | React.MouseEvent) => {
       // Capture the current saved state HERE, before onMutate has a chance to flip it
-      const shouldSave = !savedJobIds.has(jobId);
+      const isExplicitBool = typeof currentSavedState === 'boolean';
+      const isCurrentlySaved = isExplicitBool ? currentSavedState : savedJobIds.has(jobId);
+      const shouldSave = !isCurrentlySaved;
       toggleSaveMutation.mutate({ jobId, shouldSave });
     },
     applyToJob,
     withdrawJob: (jobId: string) => withdrawMutation.mutate(jobId),
-    respondToOffer: (offerId: string, action: 'accept' | 'decline') => respondOfferMutation.mutate({ offerId, action }),
+    respondToOffer: (offerId: string, action: 'accept' | 'decline') => {
+      setOfferResponse(offerId, action);
+      respondOfferMutation.mutate({ offerId, action });
+    },
     applicationStats: useJobStore(state => state.applications.stats),
+    isError,
   };
 };

@@ -337,13 +337,19 @@ export function OrganizationsSettingsPage() {
               {statusConfig.actionText && statusConfig.modalTarget && (
                 <button
                   type="button"
+                  disabled={isAssociatedDeactivated}
+                  title={isAssociatedDeactivated ? "Cannot leave while the page is deactivated" : undefined}
                   onClick={() => {
+                    if (isAssociatedDeactivated) return;
                     setActionError(null);
                     setModalState(statusConfig.modalTarget!);
                   }}
                   className={cn(
-                    "h-[36px] px-[12px] py-[6px] rounded-[100px] inline-flex justify-center items-center gap-[10px] cursor-pointer font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary whitespace-nowrap text-center transition-colors ds-focus-ring shrink-0",
-                    statusConfig.modalTarget === 'leave' && "w-[109px] bg-transparent border border-ds-border hover:bg-white/5 active:bg-white/10",
+                    "h-[36px] px-[12px] py-[6px] rounded-[100px] inline-flex justify-center items-center gap-[10px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary whitespace-nowrap text-center transition-colors ds-focus-ring shrink-0",
+                    isAssociatedDeactivated
+                      ? "w-[109px] bg-transparent border border-ds-border opacity-40 cursor-not-allowed pointer-events-none"
+                      : "cursor-pointer",
+                    !isAssociatedDeactivated && statusConfig.modalTarget === 'leave' && "w-[109px] bg-transparent border border-ds-border hover:bg-white/5 active:bg-white/10",
                     statusConfig.modalTarget === 'reactivate' && "w-[145px] bg-ds-surface-1 border border-ds-accent hover:bg-ds-surface-1/80 active:bg-ds-surface-1/90",
                     statusConfig.modalTarget === 'recover' && "w-[126px] bg-ds-surface-1 border border-ds-accent hover:bg-ds-surface-1/80 active:bg-ds-surface-1/90"
                   )}

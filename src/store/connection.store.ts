@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ConnectionTab, InvitationSubTab } from '@/features/connection/types';
+import type { ConnectionTab, InvitationSubTab, SuggestedUser } from '@/features/connection/types';
 
 interface ConnectionUIState {
   // ─── Tab ──────────────────────────────────────────────────────────────────
@@ -30,6 +30,15 @@ interface ConnectionUIState {
   clearFollowed:   () => void;
   dismissedSuggestionIds: Set<string>;
   dismissSuggestion:      (userId: string) => void;
+  // ─── Suggestions list & scroll position retention ─────────────────────────
+  suggestionsPool: SuggestedUser[];
+  setSuggestionsPool: (pool: SuggestedUser[] | ((prev: SuggestedUser[]) => SuggestedUser[])) => void;
+  suggestionsOffset: number;
+  setSuggestionsOffset: (offset: number | ((prev: number) => number)) => void;
+  suggestionsHasMore: boolean;
+  setSuggestionsHasMore: (hasMore: boolean) => void;
+  suggestionsScrollPos: number;
+  setSuggestionsScrollPos: (pos: number) => void;
 }
 
 export const useConnectionStore = create<ConnectionUIState>()(
@@ -63,6 +72,14 @@ export const useConnectionStore = create<ConnectionUIState>()(
         set((s) => ({ followedUserIds: new Set([...s.followedUserIds, userId]) })),
       clearFollowed: () => set({ followedUserIds: new Set() }),
       dismissedSuggestionIds: new Set(),
+      suggestionsPool: [],
+      setSuggestionsPool: (pool) => set((s) => ({ suggestionsPool: typeof pool === 'function' ? pool(s.suggestionsPool) : pool })),
+      suggestionsOffset: 0,
+      setSuggestionsOffset: (offset) => set((s) => ({ suggestionsOffset: typeof offset === 'function' ? offset(s.suggestionsOffset) : offset })),
+      suggestionsHasMore: true,
+      setSuggestionsHasMore: (hasMore) => set({ suggestionsHasMore: hasMore }),
+      suggestionsScrollPos: 0,
+      setSuggestionsScrollPos: (pos) => set({ suggestionsScrollPos: pos }),
       dismissSuggestion: (userId) =>
         set((s) => ({ dismissedSuggestionIds: new Set([...s.dismissedSuggestionIds, userId]) })),
     }),

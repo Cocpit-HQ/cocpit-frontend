@@ -45,11 +45,16 @@ export function useNavigationTracker() {
       sessionStorage.removeItem('coming_from_job_detail');
       sessionStorage.removeItem('nav_memory_jobs');
       sessionStorage.removeItem('nav_memory_jobs_base');
+      sessionStorage.removeItem('nav_memory_jobs_return');
       useJobStore.getState().setActiveCandidateTab('Explore');
     }
 
     // Track last visited location outside notifications so < Back on notifications can reliably return to it
-    if (pathname && !pathname.startsWith('/notifications')) {
+    const isFromNotifications =
+      searchParams?.get('returnTo')?.includes('/notifications') ||
+      searchParams?.get('from')?.includes('/notifications');
+
+    if (pathname && !pathname.startsWith('/notifications') && !isFromNotifications) {
       const queryString = searchParams?.toString();
       const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
       sessionStorage.setItem('cocpit_last_location', currentPath);
@@ -60,6 +65,26 @@ export function useNavigationTracker() {
       const queryString = searchParams?.toString();
       const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
       sessionStorage.setItem('cocpit_last_location_outside_settings', currentPath);
+    }
+
+    // Track real base location outside search (Feed, Jobs dashboard, Organizations, Profiles, Posts, etc.)
+    const isSearchOrChild =
+      !pathname ||
+      pathname.startsWith('/search') ||
+      pathname.startsWith('/jobs/search') ||
+      Boolean(searchParams?.get('returnTo')?.includes('/search'));
+
+    if (!isSearchOrChild) {
+      const queryString = searchParams?.toString();
+      const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
+      sessionStorage.setItem('cocpit_last_location_outside_search', currentPath);
+    }
+
+    // When the user arrives on the main feed, clear stale search history to prevent ghost navigation
+    if (pathname === '/feed') {
+      sessionStorage.removeItem('cocpit_last_search_url');
+      sessionStorage.removeItem('cocpit_search_steps');
+      sessionStorage.removeItem('cocpit_search_origin');
     }
   }, [pathname, searchParams]);
 }

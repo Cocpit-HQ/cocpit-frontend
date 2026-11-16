@@ -35,6 +35,17 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const source = searchParams?.get("source");
+  const returnTo = searchParams?.get("returnTo");
+  const isFromJobs = Boolean(
+    source === "jobs" ||
+    source === "job_application_dashboard" ||
+    returnTo?.includes("/jobs") ||
+    (typeof window !== "undefined" && (
+      window.sessionStorage.getItem("coming_from_job_detail") === "true" ||
+      window.sessionStorage.getItem("nav_memory_jobs")
+    ))
+  );
   const isExplicitPublic = searchParams?.get("view") === "public" || searchParams?.get("mode") === "public" || searchParams?.get("preview") === "true";
   const rawSlug = (params?.slug as string) || "";
   const slug = decodeURIComponent(rawSlug);
@@ -151,7 +162,10 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     profileResponse?.is_own_profile ||
     profileResponse?.viewer_permissions?.includes('*') ||
     profileResponse?.viewer_permissions?.includes('MANAGE_COMPANY') ||
-    profileResponse?.viewer_permissions?.includes('MANAGE_ORGANIZATION')
+    profileResponse?.viewer_permissions?.includes('MANAGE_ORGANIZATION') ||
+    profileResponse?.viewer_permissions?.includes('POST_JOBS') ||
+    profileResponse?.viewer_role?.toLowerCase() === 'admin' ||
+    profileResponse?.viewer_role?.toLowerCase() === 'owner'
   );
 
   const hasEditPermission = Boolean(
@@ -187,14 +201,58 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   }
 
   const handleBack = () => {
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
+      return;
+    }
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
-      router.push("/feed");
+      router.push(isFromJobs ? "/jobs" : "/feed");
     }
   };
 
   const handleClose = () => {
+    if (returnTo && returnTo.startsWith('/')) {
+      router.replace(returnTo);
+      return;
+    }
+    const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
+    if (lastSearch && lastSearch.startsWith('/search')) {
+      router.replace(lastSearch);
+      return;
+    }
+    // 1. If originated from notifications (either directly or through job details)
+    if (returnTo?.includes("/notifications")) {
+      router.push("/notifications");
+      return;
+    }
+
+    // 2. If originated from another company's jobs tab
+    if (returnTo?.includes("/organization/") && !returnTo.includes(slug)) {
+      try {
+        const decoded = decodeURIComponent(returnTo);
+        const match = decoded.match(/\/organization\/[^?&]+/);
+        if (match) {
+          const tabParam = decoded.includes("tab=jobs") ? "?tab=jobs" : "";
+          router.push(`${match[0]}${tabParam}`);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 3. If originated from jobs (or returnTo is a job detail /jobs/...)
+    if (isFromJobs || returnTo?.includes("/jobs")) {
+      router.push("/jobs");
+      return;
+    }
+
+    // 4. Default fallback: close to feed
     router.push("/feed");
   };
   const isBlockedByTarget = Boolean(
@@ -565,6 +623,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
                 currentUserId={currentUserId}
                 canManageOwnPosts={canManageOwnPosts}
                 viewerPermissions={effectiveViewerPermissions}
+                isOrgAdminOrOwner={isOrgAdminOrOwner}
               />
             </div>
           </>

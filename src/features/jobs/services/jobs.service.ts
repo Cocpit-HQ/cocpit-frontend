@@ -22,18 +22,35 @@ export const formatExperience = (min?: number, max?: number, level?: string, lab
 // Used for both Publish and Regenerate JD so the two never disagree.
 export const parseExperienceRange = (experience?: string): { min?: number; max?: number } => {
   if (!experience) return {};
-  const match = experience.match(/(\d+)\s*-\s*(\d+)/);
-  if (match) {
-    return { min: parseInt(match[1]), max: parseInt(match[2]) };
+  const cleanExp = experience.trim();
+  const lower = cleanExp.toLowerCase();
+
+  if (lower.includes('fresher') || lower.includes('entry')) {
+    return { min: 0, max: 2 };
   }
-  if (experience.includes('5+')) {
+  const match = cleanExp.match(/(\d+)\s*-\s*(\d+)/);
+  if (match) {
+    return { min: parseInt(match[1], 10), max: parseInt(match[2], 10) };
+  }
+  const plusMatch = cleanExp.match(/(\d+)\s*\+/);
+  if (plusMatch) {
+    const minVal = parseInt(plusMatch[1], 10);
+    return { min: minVal, max: minVal >= 5 ? 10 : minVal + 5 };
+  }
+  if (lower.includes('junior')) {
+    return { min: 1, max: 3 };
+  }
+  if (lower.includes('mid')) {
+    return { min: 3, max: 5 };
+  }
+  if (lower.includes('senior')) {
     return { min: 5, max: 10 };
   }
   return {};
 };
 
 // Canonical dropdown presets the Create Job form offers (excluding 'Other').
-const EXPERIENCE_PRESETS = ['Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)'];
+const EXPERIENCE_PRESETS = ['Fresher', 'Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)'];
 
 // Resolves a persisted experience_min/experience_max back into what the
 // Create Job form should show when reopening a draft: a matching preset
@@ -79,26 +96,33 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       }
 
       if (filters.experience) {
-        switch (filters.experience) {
-          case 'Fresher':
-            params.experience_min = 0;
-            params.experience_max = 1;
-            params.experienceLevel = 'Fresher';
-            break;
-          case 'Junior (1-3 yrs)':
-            params.experience_min = 1;
-            params.experience_max = 3;
-            params.experienceLevel = 'Junior';
-            break;
-          case 'Mid-level (3-5 yrs)':
-            params.experience_min = 3;
-            params.experience_max = 5;
-            params.experienceLevel = 'Mid-level';
-            break;
-          case 'Senior (5+ yrs)':
-            params.experience_min = 5;
-            params.experienceLevel = 'Senior';
-            break;
+        if (filters.experience.includes(',')) {
+          params.experienceLevel = filters.experience;
+        } else {
+          switch (filters.experience) {
+            case 'Fresher':
+              params.experience_min = 0;
+              params.experience_max = 1;
+              params.experienceLevel = 'Fresher';
+              break;
+            case 'Junior (1-3 yrs)':
+              params.experience_min = 1;
+              params.experience_max = 3;
+              params.experienceLevel = 'Junior';
+              break;
+            case 'Mid-level (3-5 yrs)':
+              params.experience_min = 3;
+              params.experience_max = 5;
+              params.experienceLevel = 'Mid-level';
+              break;
+            case 'Senior (5+ yrs)':
+              params.experience_min = 5;
+              params.experienceLevel = 'Senior';
+              break;
+            default:
+              params.experienceLevel = filters.experience;
+              break;
+          }
         }
       }
 
@@ -137,6 +161,8 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
 
       if (filters.date_posted) params.datePosted = filters.date_posted;
       if (filters.industry) params.industry = filters.industry;
+      if (filters.company) params.company = filters.company;
+      if (filters.verified) params.verified = filters.verified;
 
     }
 
@@ -150,6 +176,9 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       id: job.job_id,
       title: job.title,
       company: job.company_name,
+      company_logo: job.company_logo || job.companyLogo || undefined,
+      recruiter_name: job.recruiter_name || job.recruiterName || undefined,
+      recruiter_avatar: job.recruiter_avatar || job.recruiterAvatar || undefined,
       location: job.location,
       job_type: job.job_type || 'Full time',
       work_type: job.job_type || 'Full time',
@@ -158,7 +187,9 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
@@ -171,6 +202,10 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       offerStatus: job.offerStatus,
       tags: job.tags || [],
       org_id: job.org_id,
+      company_id: job.company_id || job.org_id,
+      company_slug: job.company_slug || job.companySlug || job.org_slug || undefined,
+      company_type: job.company_type || job.entity_type || undefined,
+      industry: job.industry || '',
       recruiter_id: job.recruiter_id,
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false
@@ -183,7 +218,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
     }
 
     const hasMore = fetchedJobs.length === 10;
-    const nextCursor = hasMore ? fetchedJobs[fetchedJobs.length - 1].created_at : null;
+    const nextCursor = hasMore ? (fetchedJobs[fetchedJobs.length - 1].published_at || fetchedJobs[fetchedJobs.length - 1].created_at) : null;
 
     return {
       data: finalJobs,
@@ -196,16 +231,162 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
   }
 };
 
-export const getIndustries = async (query?: string): Promise<{ industry_name: string }[]> => {
+export interface CursorPaginatedResult<T> {
+  items: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export const getIndustries = async (query?: string, cursor?: string, limit: number = 50): Promise<{ industry_name: string }[]> => {
   try {
-    const params = query ? { q: query } : {};
+    const params: Record<string, any> = { limit };
+    if (query) params.q = query;
+    if (cursor) params.cursor = cursor;
     const response = await api.get('/jobs/industries', { params });
-    return response.data || [];
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    if (response.data && Array.isArray(response.data.items)) {
+      return response.data.items.map((name: string) => ({ industry_name: name }));
+    }
+    return [];
   } catch (error) {
     console.error("Failed to fetch industries:", error);
     return [];
   }
 };
+
+export const getPaginatedIndustries = async (query?: string, cursor?: string, limit: number = 50): Promise<CursorPaginatedResult<string>> => {
+  try {
+    const params: Record<string, any> = { limit };
+    if (query) params.q = query;
+    if (cursor) params.cursor = cursor;
+    const response = await api.get('/jobs/industries', { params });
+    if (response.data && Array.isArray(response.data.items)) {
+      return {
+        items: response.data.items,
+        nextCursor: response.data.nextCursor || null,
+        hasMore: Boolean(response.data.hasMore),
+      };
+    }
+    if (Array.isArray(response.data)) {
+      return {
+        items: response.data.map((r: any) => r.industry_name || r.name || String(r)),
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+    return { items: [], nextCursor: null, hasMore: false };
+  } catch (error) {
+    console.error("Failed to fetch paginated industries:", error);
+    return { items: [], nextCursor: null, hasMore: false };
+  }
+};
+
+export const getJobRoles = async (query?: string): Promise<string[]> => {
+  try {
+    const params: Record<string, any> = {};
+    if (query) params.q = query;
+    const response = await api.get('/jobs/roles', { params });
+    if (response.data && Array.isArray(response.data.items)) {
+      return response.data.items.map((r: any) => (typeof r === 'string' ? r : r.role_name || r.name || String(r)));
+    }
+    if (Array.isArray(response.data)) {
+      return response.data.map((r: any) => r.role_name || r.name || String(r));
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch job roles:", error);
+    return [];
+  }
+};
+
+export const getPaginatedRoles = async (
+  query?: string,
+  cursor?: string,
+  limit: number = 50
+): Promise<CursorPaginatedResult<string>> => {
+  try {
+    const params: Record<string, any> = { limit };
+    if (query) params.q = query;
+    if (cursor) params.cursor = cursor;
+    const response = await api.get('/jobs/roles', { params });
+    if (response.data && Array.isArray(response.data.items)) {
+      return {
+        items: response.data.items.map((r: any) => (typeof r === 'string' ? r : r.role_name || r.name || String(r))),
+        nextCursor: response.data.nextCursor || null,
+        hasMore: Boolean(response.data.hasMore),
+      };
+    }
+    if (Array.isArray(response.data)) {
+      return {
+        items: response.data.map((r: any) => r.role_name || r.name || String(r)),
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+    return { items: [], nextCursor: null, hasMore: false };
+  } catch (error) {
+    console.error("Failed to fetch paginated roles:", error);
+    return { items: [], nextCursor: null, hasMore: false };
+  }
+};
+
+export const getPaginatedCompanies = async (query?: string, cursor?: string, limit: number = 8): Promise<CursorPaginatedResult<string>> => {
+  try {
+    const params: Record<string, any> = { limit };
+    if (query) params.q = query;
+    if (cursor) params.cursor = cursor;
+    const response = await api.get('/jobs/companies', { params });
+    if (response.data && Array.isArray(response.data.items)) {
+      return {
+        items: response.data.items,
+        nextCursor: response.data.nextCursor || null,
+        hasMore: Boolean(response.data.hasMore),
+      };
+    }
+    if (Array.isArray(response.data)) {
+      return {
+        items: response.data.map((r: any) => r.company_name || r.name || String(r)),
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+    return { items: [], nextCursor: null, hasMore: false };
+  } catch (error) {
+    console.error("Failed to fetch paginated companies:", error);
+    return { items: [], nextCursor: null, hasMore: false };
+  }
+};
+
+export const getPaginatedInstitutes = async (query?: string, cursor?: string, limit: number = 50): Promise<CursorPaginatedResult<string>> => {
+  try {
+    const params: Record<string, any> = { limit };
+    if (query) params.q = query;
+    if (cursor) params.cursor = cursor;
+    const response = await api.get('/jobs/institutes', { params });
+    if (response.data && Array.isArray(response.data.items)) {
+      return {
+        items: response.data.items,
+        nextCursor: response.data.nextCursor || null,
+        hasMore: Boolean(response.data.hasMore),
+      };
+    }
+    if (Array.isArray(response.data)) {
+      return {
+        items: response.data.map((r: any) => r.institute_name || r.name || String(r)),
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+    return { items: [], nextCursor: null, hasMore: false };
+  } catch (error) {
+    console.error("Failed to fetch paginated institutes:", error);
+    return { items: [], nextCursor: null, hasMore: false };
+  }
+};
+
+export { getPaginatedLocations } from '@/features/search/services/locationSearch.service';
 
 export const getRecommendations = async (): Promise<Job[]> => {
   try {
@@ -223,7 +404,9 @@ export const getRecommendations = async (): Promise<Job[]> => {
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
@@ -245,6 +428,124 @@ export const getRecommendations = async (): Promise<Job[]> => {
   } catch (error) {
     console.error("Failed to fetch recommended jobs:", error);
     return [];
+  }
+};
+
+export interface ExploreSectionsData {
+  featured: Job[];
+  best_matches: Job[];
+  from_network: Job[];
+  recently_viewed: Job[];
+}
+
+export interface PaginatedExploreCategoryResult {
+  category: string;
+  title: string;
+  description: string;
+  items: Job[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  requiresAuth?: boolean;
+}
+
+const mapExploreJobItem = (job: any): Job => ({
+  id: job.id || job.job_id,
+  title: job.title,
+  company: job.company || job.company_name || '',
+  company_logo: job.company_logo || job.companyLogo || undefined,
+  company_slug: job.company_slug || undefined,
+  recruiter_name: job.recruiter_name || job.recruiterName || undefined,
+  recruiter_avatar: job.recruiter_avatar || job.recruiterAvatar || undefined,
+  location: job.location || '',
+  job_type: job.job_type || 'Full time',
+  work_type: job.job_type || 'Full time',
+  work_mode: job.work_mode,
+  salary_min: job.salary_min,
+  salary_max: job.salary_max,
+  salary_currency: job.salary_currency,
+  salary_display: job.salary_display || formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
+  posted_at: job.posted_at || getRelativeTime(job.published_at || job.created_at),
+  published_at: job.published_at,
+  created_at: job.created_at,
+  description: job.description || '',
+  experience: job.experience || ((job.experience_min != null && job.experience_max != null)
+    ? `${job.experience_min}-${job.experience_max}Yrs`
+    : (job.experience_label || job.experience_level || '0-2Yrs')),
+  is_saved: Boolean(job.is_saved ?? job.isSaved),
+  is_applied: Boolean(job.is_applied ?? job.hasApplied),
+  is_offer: Boolean(job.is_offer),
+  application_status: job.application_status || job.applicationStatus || job.current_status || null,
+  tags: job.tags || [],
+  skills: Array.isArray(job.skills) ? job.skills : [],
+  org_id: job.org_id,
+  recruiter_id: job.recruiter_id,
+  industry: job.industry || '',
+  is_available: job.is_available ?? (job.status !== 'CLOSED' && job.is_active !== false),
+  is_closed: job.is_closed ?? (job.status === 'CLOSED' || job.is_active === false),
+  applicants: Number(job.applicants || job.applicants_count || 0),
+  applicants_count: Number(job.applicants || job.applicants_count || 0),
+  offer_id: job.offer_id || undefined,
+  offerStatus: job.offerStatus || undefined,
+  is_recommended: Boolean(job.is_recommended),
+  recommended_badge: job.recommended_badge || '',
+  match_score: job.match_score || null,
+  quality_score: job.quality_score,
+  network_badge: job.network_badge || null,
+  last_viewed_at: job.last_viewed_at,
+});
+
+export const getExploreSections = async (): Promise<ExploreSectionsData> => {
+  try {
+    const response = await api.get('/jobs/explore/sections');
+    const sections = response.data?.data || response.data || {};
+    return {
+      featured: (sections.featured || []).map(mapExploreJobItem),
+      best_matches: (sections.best_matches || []).map(mapExploreJobItem),
+      from_network: (sections.from_network || []).map(mapExploreJobItem),
+      recently_viewed: (sections.recently_viewed || []).map(mapExploreJobItem),
+    };
+  } catch (error) {
+    console.error("Failed to fetch explore sections:", error);
+    return {
+      featured: [],
+      best_matches: [],
+      from_network: [],
+      recently_viewed: [],
+    };
+  }
+};
+
+export const getExploreSectionPaginated = async (
+  category: string,
+  cursor?: string,
+  limit: number = 10
+): Promise<PaginatedExploreCategoryResult> => {
+  try {
+    const params: Record<string, any> = { limit };
+    if (cursor) params.cursor = cursor;
+
+    const response = await api.get(`/jobs/explore/sections/${category}`, { params });
+    const payload = response.data?.data || response.data || {};
+
+    return {
+      category: payload.category || category,
+      title: payload.title || '',
+      description: payload.description || '',
+      items: (payload.items || []).map(mapExploreJobItem),
+      nextCursor: payload.nextCursor || null,
+      hasMore: Boolean(payload.hasMore),
+      requiresAuth: Boolean(payload.requiresAuth),
+    };
+  } catch (error) {
+    console.error(`Failed to fetch explore section '${category}':`, error);
+    return {
+      category,
+      title: '',
+      description: '',
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    };
   }
 };
 
@@ -270,7 +571,9 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
@@ -356,7 +659,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
     if (!job) return null;
 
     const respondedOffers = useJobStore.getState().respondedOffers;
-    const offerResponse = respondedOffers[job.job_id] || respondedOffers[job.offer_id];
+    const offerResponse = respondedOffers[job.job_id] || respondedOffers[job.offer_id] || respondedOffers[job.id];
     let status = (job.is_offer ? job.offerStatus : undefined) || job.applicationStatus;
     if (job.is_offer && offerResponse) {
       status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
@@ -366,7 +669,8 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
     let offer_expiry_text = job.offer_expiry_text;
     
     const offerExpiresAt = job.expires_at || job.offer_expires_at;
-    if (offerExpiresAt) {
+    const isOfferResolved = Boolean(status && ['accepted', 'declined', 'withdrawn'].includes(status.toLowerCase()));
+    if (offerExpiresAt && !isOfferResolved) {
       const expiryDate = new Date(offerExpiresAt);
       const now = new Date();
       const diffMs = expiryDate.getTime() - now.getTime();
@@ -377,6 +681,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       } else {
         offer_expiry_text = `Ends in ${offer_days_left} ${offer_days_left === 1 ? 'day' : 'days'}`;
       }
+    } else if (isOfferResolved) {
+      offer_days_left = 0;
+      offer_expiry_text = undefined;
     } else {
       offer_days_left = offer_days_left || 7;
       offer_expiry_text = offer_expiry_text || 'Ends in 7 days';
@@ -384,6 +691,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
 
     if (status) {
       status = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+      if (status === 'Rejected') {
+        status = 'Declined';
+      }
     }
 
     const formattedJob: Job = {
@@ -401,7 +711,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       salary_max: job.salary_max,
       salary_currency: job.salary_currency || 'USD',
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       description: job.description || '',
       requirements: extractRequirements(job.description),
       is_saved: job.isSaved || job.is_saved || false,
@@ -410,18 +722,27 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       is_closed: job.status === 'CLOSED' || job.is_active === false,
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_followed: job.is_followed || false,
-      org_id: job.org_id,
-      recruiter_id: job.recruiter_id,
+      org_id: job.org_id || job.orgId || undefined,
+      company_id: job.company_id || job.org_id || job.orgId || undefined,
+      company_slug: job.company_slug || job.companySlug || job.org_slug || undefined,
+      company_type: job.company_type || job.entity_type || undefined,
+      recruiter_id: job.recruiter_id || job.recruiterId || undefined,
       application_status: status,
       offer_id: job.offer_id,
+      offerStatus: job.is_offer ? (offerResponse === 'accept' ? 'accepted' : offerResponse === 'decline' ? 'declined' : (job.offerStatus || (status ? status.toLowerCase() : undefined))) : undefined,
       offer_days_left,
       offer_expiry_text,
-      recruiter_name: job.recruiter_name,
+      recruiter_name: job.recruiter_name || job.recruiterName || undefined,
       recruiter_title: job.recruiter_title || 'HR Manager',
-      recruiter_avatar: job.recruiter_avatar,
-      recruiter_message: job.recruiter_message || undefined,
+      recruiter_avatar: job.recruiter_avatar || job.recruiterAvatar || job.avatar_url || undefined,
+      recruiter_message: job.recruiter_message || job.message || job.note || undefined,
       response_rate: job.response_rate,
       avg_reply: job.avg_reply,
+      is_recommended: job.is_recommended || false,
+      recommended_badge: job.recommended_badge || '',
+      match_reason: job.match_reason || '',
+      match_score: job.match_score || null,
+      profile_match_text: job.profile_match_text || job.match_reason || '',
     };
 
     return formattedJob;
@@ -466,6 +787,15 @@ export const applyJob = async (jobId: string, formData?: FormData, jsonBody?: an
   }
 };
 
+export const deleteRecentResume = async (resumeUrl?: string, name?: string, id?: string): Promise<void> => {
+  try {
+    await api.delete('/jobs/applications/me/resumes', { data: { resume_url: resumeUrl, name, id } });
+  } catch (error) {
+    console.error('Error deleting recent resume:', error);
+    throw error;
+  }
+};
+
 export const getRecentResumes = async (): Promise<any[]> => {
   try {
     const response = await api.get('/jobs/applications/me/resumes');
@@ -495,7 +825,8 @@ export const getMyApplications = async (status: string = 'all', cursor?: string)
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
       applied_date_display: `Applied ${getRelativeTime(job.applied_at)}`,
       applied_at: job.applied_at,
       created_at: job.created_at,
@@ -510,7 +841,7 @@ export const getMyApplications = async (status: string = 'all', cursor?: string)
       org_id: job.org_id,
       recruiter_id: job.recruiter_id,
       context_sent: job.context_sent,
-      application_status: job.applicationStatus || job.current_status || 'Applied',
+      application_status: (job.applicationStatus || job.current_status || 'Applied').toLowerCase() === 'rejected' ? 'Declined' : (job.applicationStatus || job.current_status || 'Applied'),
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false
     }));
@@ -613,7 +944,8 @@ export const getMyOffers = async (): Promise<Job[]> => {
       let offer_expiry_text = 'Ends in 7 days';
       
       const offerExpiresAt = job.expires_at || job.offer_expires_at;
-      if (offerExpiresAt) {
+      const isOfferResolved = Boolean(status && ['accepted', 'declined', 'withdrawn'].includes(status.toLowerCase()));
+      if (offerExpiresAt && !isOfferResolved) {
         const expiryDate = new Date(offerExpiresAt);
         const now = new Date();
         const diffMs = expiryDate.getTime() - now.getTime();
@@ -643,7 +975,9 @@ export const getMyOffers = async (): Promise<Job[]> => {
         salary_max: job.salary_max,
         salary_currency: job.salary_currency || 'USD',
         salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
-        posted_at: getRelativeTime(job.created_at),
+        posted_at: getRelativeTime(job.published_at || job.created_at),
+        published_at: job.published_at,
+        created_at: job.created_at,
         description: job.description || '',
         requirements: extractRequirements(job.description),
         is_saved: useJobStore.getState().savedJobIds.has(job.job_id),
@@ -652,15 +986,18 @@ export const getMyOffers = async (): Promise<Job[]> => {
         is_closed: job.job_status === 'CLOSED' || job.is_active === false,
         is_followed: useJobStore.getState().followedCompanies.has(job.company_name),
         org_id: job.org_id,
+        company_id: job.company_id || job.org_id,
+        company_slug: job.company_slug || job.companySlug || job.org_slug || undefined,
+        company_type: job.company_type || job.entity_type || undefined,
         recruiter_id: job.recruiter_id,
         application_status: status,
         offer_id: job.offer_id,
         offer_days_left,
         offer_expiry_text,
-        recruiter_name: job.sent_by_name,
-        recruiter_title: 'HR Manager',
-        recruiter_avatar: undefined,
-        recruiter_message: job.message || undefined,
+        recruiter_name: job.sent_by_name || job.recruiter_name || (!job.org_id ? (job.company_display_name || job.company_name) : '') || 'Recruiter',
+        recruiter_title: job.sent_by_headline || job.recruiter_title || (job.org_id ? (job.company_display_name || job.company_name) : '') || 'HR Manager',
+        recruiter_avatar: job.sent_by_avatar || job.recruiter_avatar || (job.org_id ? job.company_logo : undefined) || undefined,
+        recruiter_message: job.message || job.recruiter_message || undefined,
       };
 
       return formattedJob;
@@ -698,8 +1035,9 @@ export const getMyListings = async (
     if (status && status !== 'All') {
       // Map frontend labels to backend param: "In review" -> "IN_REVIEW", "Drafts" -> "DRAFT"
       let statusParam = status;
-      if (status === 'Drafts') statusParam = 'DRAFT';
-      else if (status === 'In review') statusParam = 'IN_REVIEW';
+      if (status === 'Drafts' || status === 'Draft') statusParam = 'DRAFT';
+      else if (status.toLowerCase() === 'in review') statusParam = 'IN_REVIEW';
+      else if (status.toLowerCase() === 'close' || status.toLowerCase() === 'closed') statusParam = 'CLOSED';
       else statusParam = status.replace(/ /g, '_').toUpperCase();
       params.status = statusParam;
     }
@@ -720,7 +1058,9 @@ export const getMyListings = async (
       id: job.job_id,
       title: job.title,
       status: job.status,
-      posted_at: getRelativeTime(job.created_at),
+      posted_at: getRelativeTime(job.published_at || job.created_at),
+      published_at: job.published_at,
+      created_at: job.created_at,
       last_edited: job.updated_at,
       company: job.company_name,
       location: job.location,
@@ -735,6 +1075,7 @@ export const getMyListings = async (
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
       org_id: job.org_id,
+      industry: job.industry || '',
       applicants_count: Number(job.applicants_count || 0),
       shortlisted_count: Number(job.shortlisted_count || 0),
       offers_count: Number(job.offers_count || 0)
@@ -751,27 +1092,37 @@ export const getMyListings = async (
   }
 };
 
-export const initializeJobDraft = async (
+export const initializeJobDraftWithDetails = async (
   title: string,
   actorType?: string,
-  actorId?: string
-): Promise<string | null> => {
+  actorId?: string,
+  details?: Record<string, any>
+): Promise<{ id: string | null; job: any }> => {
   try {
     const currentActorType = actorType || api.defaults.headers.common["x-actor-type"];
     const currentActorId = actorId || api.defaults.headers.common["x-actor-id"];
 
-    const payload: any = { title, status: 'DRAFT' };
+    const payload: any = { title, status: 'DRAFT', ...(details || {}) };
     if (currentActorType === "ORGANIZATION" && currentActorId) {
       payload.org_id = currentActorId;
     }
 
     const response = await api.post('/jobs', payload);
     const newJob = response.data.job || response.data;
-    return newJob.job_id || newJob.id;
+    return { id: newJob.job_id || newJob.id || null, job: newJob };
   } catch (error) {
-    console.error("Failed to initialize job draft:", error);
-    return null;
+    console.error("Failed to initialize job draft with details:", error);
+    return { id: null, job: null };
   }
+};
+
+export const initializeJobDraft = async (
+  title: string,
+  actorType?: string,
+  actorId?: string
+): Promise<string | null> => {
+  const result = await initializeJobDraftWithDetails(title, actorType, actorId);
+  return result.id;
 };
 
 export const generateJobDescription = async (
@@ -838,6 +1189,7 @@ export const createJobListing = async (
         experience_min: expMin,
         experience_max: expMax,
         experience_level: details?.experience, // backend column is experience_level
+        experience_label: details?.experience,
         industry: details?.industry
       };
       
@@ -883,6 +1235,8 @@ export const createJobListing = async (
         id: backendJob.job_id || backendJob.id,
         title: backendJob.title,
         status: status,
+        published_at: backendJob.published_at || (status === 'ACTIVE' ? new Date().toISOString() : undefined),
+        posted_at: status === 'ACTIVE' ? 'Just now' : getRelativeTime(backendJob.created_at),
         last_edited: 'Last edited just now'
       } as JobListing;
     }
@@ -940,7 +1294,7 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     context_sent: raw.context_sent,
     job_role: raw.title,
     days_remaining: computeDaysRemaining(raw.expires_at),
-    company_name: raw.org_id ? (raw.company_display_name || raw.company_name) : '',
+    company_name: raw.org_id ? (raw.company_display_name || raw.company_name) : (raw.company_display_name || raw.company_name || ''),
     location: raw.location || 'Remote',
     status: raw.status as 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired',
     note: raw.message || undefined,
@@ -949,9 +1303,9 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     org_id: raw.org_id || raw.company_id,
     recruiter: {
       id: raw.sent_by || raw.recruiter_id,
-      name: raw.sent_by_name || 'Recruiter',
-      headline: raw.org_id ? (raw.company_display_name || '') : (raw.sent_by_headline || ''),
-      avatar: raw.org_id ? (raw.company_logo || undefined) : undefined,
+      name: raw.sent_by_name || raw.recruiter_name || raw.full_name || (!raw.org_id ? (raw.company_display_name || raw.company_name) : '') || 'Recruiter',
+      headline: raw.sent_by_headline || raw.headline || (raw.org_id ? (raw.company_display_name || raw.company_name) : '') || 'Recruiter',
+      avatar: raw.sent_by_avatar || raw.recruiter_avatar || raw.avatar_url || (raw.org_id ? raw.company_logo : undefined) || undefined,
     },
   };
 };

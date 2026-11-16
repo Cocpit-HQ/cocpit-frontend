@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
+import { CandidateCheckboxIcon, SearchIcon } from '@/components/icons';
+import Avatar from '@/components/shared/Avatar';
 import { JobListing } from '../../types/jobs.types';
 import { useSession } from 'next-auth/react';
 import api from '@/lib/axios';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useBodyScrollLock } from '@/hooks';
 
 export interface SelectableCandidate {
   id: string;
@@ -31,9 +34,25 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   const { isCompany, activeProfile } = useActiveProfile();
   const isCompanyMode = isCompany && !!activeProfile?.id;
 
-  const [stage, setStage] = useState<1 | 2 | 3>(1);
+  const [stage, setStage] = useState<1 | 2 | 3>(initialJobId ? 2 : 1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedJobId, setSelectedJobId] = useState('');
+  const [selectedJobId, setSelectedJobId] = useState(initialJobId || '');
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [prevInitialJobId, setPrevInitialJobId] = useState(initialJobId);
+
+  if (isOpen !== prevIsOpen || initialJobId !== prevInitialJobId) {
+    setPrevIsOpen(isOpen);
+    setPrevInitialJobId(initialJobId);
+    if (isOpen) {
+      if (initialJobId) {
+        setSelectedJobId(initialJobId);
+        setStage(2);
+      } else {
+        setSelectedJobId('');
+        setStage(1);
+      }
+    }
+  }
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]); // Array of candidate IDs
   const [personalNote, setPersonalNote] = useState('');
   const [candidatesList, setCandidatesList] = useState<SelectableCandidate[]>([]);
@@ -47,11 +66,15 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   const { data: session } = useSession();
   const currentUserId = (session?.user as any)?.user_id || (session?.user as any)?.id;
 
+  // Lock body scroll when modal is open to prevent background scrolling
+  useBodyScrollLock(isOpen);
+
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
       if (isOpen && initialJobId) {
         setSelectedJobId(initialJobId);
+        setStage(2);
         setIsFetchingRecipients(true);
         try {
           const job = activeListings.find(l => l.id === initialJobId);
@@ -104,9 +127,9 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     const fetchCandidates = async () => {
       setIsLoadingCandidates(true);
       try {
-        let endpoint = '/users/suggested';
+        let endpoint = '/users/suggested?usersOnly=true&type=USER';
         if (searchQuery.trim().length > 0) {
-          endpoint = `/users/search?q=${encodeURIComponent(searchQuery.trim())}`;
+          endpoint = `/users/search?q=${encodeURIComponent(searchQuery.trim())}&usersOnly=true&type=USER`;
         }
 
         if (selectedJobId) {
@@ -115,11 +138,13 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
         }
 
         const response = await api.get(endpoint);
-        const mapped = (response.data || []).map((item: any) => ({
-          id: item.id || item.user_id,
-          name: item.full_name || 'Anonymous User',
-          avatar: item.avatar_url || ''
-        })).filter((c: SelectableCandidate) => c.id !== currentUserId);
+        const mapped = (response.data || [])
+          .filter((item: any) => (item.id || item.user_id) !== currentUserId && item.type !== 'COMPANY')
+          .map((item: any) => ({
+            id: item.id || item.user_id,
+            name: item.full_name || 'Anonymous User',
+            avatar: item.avatar_url || ''
+          }));
         setCandidatesList(mapped);
         setAllFetchedCandidates(prev => {
           const updated = { ...prev };
@@ -192,7 +217,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
       });
 
       await Promise.all(promises);
-      toast.success(`Offers sent successfully to: ${selectedList.map(c => c.name).join(', ')}`);
+      toast.success("Offer sent");
 
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages'] });
@@ -218,393 +243,414 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      {/* Mobile bottom sheet / Desktop centered modal */}
-      <div className="w-full md:w-[416px] md:p-4 bg-white dark:bg-[#0F1115] md:rounded-3xl flex flex-col justify-start items-center overflow-hidden shadow-xl border border-indigo-50/50 dark:border-[#2A2D35] animate-in slide-in-from-bottom md:zoom-in-95 duration-300 rounded-t-[28px] max-h-[92dvh] md:max-h-none overflow-y-auto">
+    <div
+      className="fixed inset-0 z-[100] flex flex-col justify-end md:justify-center md:items-center bg-ds-bg/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 md:p-4 overscroll-contain"
+      onWheel={(e) => e.stopPropagation()}
+      onClick={handleCancelClick}
+    >
+      {/* Centered modal on desktop, bottom sheet drawer on mobile */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-[393px] md:max-w-[400px] mx-auto bg-ds-bg border-t border-x md:border border-ds-border rounded-t-[8px] md:rounded-2xl p-[8px_12px_24px] md:p-4 shadow-2xl flex flex-col justify-between md:justify-start items-center gap-4 font-dm-sans animate-in slide-in-from-bottom md:zoom-in-95 duration-200 select-none overscroll-contain box-border ${
+          stage === 1
+            ? 'h-[440px] md:h-auto'
+            : stage === 2
+            ? 'h-[420px] md:h-auto'
+            : 'min-h-[320px] h-auto md:h-auto'
+        }`}
+        onWheel={(e) => e.stopPropagation()}
+      >
+        {/* Mobile Drag Handle */}
+        <div className="w-full h-5 flex md:hidden flex-col items-center justify-center shrink-0">
+          <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
+        </div>
 
-        {/* STAGE 1: Choose Job */}
+        {/* STAGE 1: Choose Job (Exact Figma Parity) */}
         {stage === 1 && (
-          <>
-            {/* Mobile drag handle */}
-            <div className="md:hidden w-full flex flex-col items-center pt-3 pb-1 px-4">
-              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-[#2A2D35] mb-1" />
-            </div>
-
-            {/* Desktop close button */}
-            <div className="hidden md:flex self-stretch flex-col justify-start items-end gap-2.5">
+          <div className="w-full flex-1 flex flex-col justify-between items-center gap-3">
+            {/* Header: Desktop Close Icon */}
+            <div className="w-full max-w-[376px] h-5 hidden md:flex justify-end items-center shrink-0">
               <button
                 onClick={handleCancelClick}
                 type="button"
-                className="w-6 h-6 relative overflow-hidden flex items-center justify-center hover:opacity-75 transition-opacity"
+                aria-label="Close"
+                className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none p-0 outline-none"
               >
-                <Icon icon="lucide:x" className="w-5 h-5 text-red-400" />
+                <Icon icon="lucide:x" className="size-5" />
               </button>
             </div>
 
-            {/* Content Container */}
-            <div className="w-full flex flex-col justify-start items-center gap-4 px-4 md:px-0 pb-6 md:pb-0">
-              {/* Title Header */}
-              <div className="w-full flex flex-col justify-start items-center gap-2">
-                <div className="text-center justify-start text-black dark:text-[#F9FAFB] text-lg font-semibold md:font-medium font-['Poppins'] leading-6">Send offer</div>
-                <div className="text-center justify-start text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">Choose or create a job to send an offer.</div>
-              </div>
+            {/* Title: Send offer */}
+            <h3 className="w-full max-w-[369px] h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center shrink-0">
+              Send offer
+            </h3>
 
-              {/* Search input */}
-              <div data-property-1="SEARCH" className={`w-full md:w-96 px-4 py-3 md:py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 dark:outline-[#2A2D35] bg-white dark:bg-[#0B0F19] inline-flex justify-between items-center transition-colors ${isCompanyMode ? 'focus-within:outline-blue-400' : 'focus-within:outline-indigo-400'
-                }`}>
+            {/* Underline Search bar */}
+            <div className="w-full max-w-[369px] px-2 py-1 flex justify-center items-center shrink-0">
+              <div className="w-full max-w-[337px] h-9 px-3 py-1.5 border-b border-ds-text-primary flex justify-between items-center gap-2.5 transition-colors">
                 <input
                   type="text"
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-0 p-0 text-black dark:text-[#F9FAFB] text-base font-normal font-['Poppins'] leading-6 focus:ring-0 focus:outline-none placeholder-gray-400 text-sm"
+                  className="flex-1 bg-transparent border-none p-0 text-ds-text-primary text-base font-normal font-dm-sans leading-6 placeholder:text-ds-text-muted placeholder:font-normal focus:outline-none focus:ring-0"
                 />
-                <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center text-gray-450 pointer-events-none">
-                  <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
+                <SearchIcon size={20} className="size-5 text-ds-text-primary shrink-0 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Job Listings List (Frame 2608872 rows: height 60px each) */}
+            <div
+              className="w-full max-w-[369px] flex-1 max-h-[200px] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              {filteredListings.length === 0 ? (
+                <div className="py-8 text-center text-ds-text-muted text-xs font-dm-sans w-full">
+                  No active job listings found.
                 </div>
-              </div>
-
-              {/* Job Listings List */}
-              <div className="w-full md:w-96 flex flex-col justify-start items-start gap-4">
-                <div className="text-left justify-start text-black dark:text-[#F9FAFB] text-xs font-normal font-['Poppins'] leading-4">Recent jobs</div>
-                <div className="self-stretch flex flex-col gap-2 md:max-h-[220px] overflow-y-auto pr-1 w-full [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-                  {filteredListings.length === 0 ? (
-                    <div className="py-12 text-center text-gray-400 text-xs font-['Poppins'] w-full">
-                      No active job listings found.
-                    </div>
-                  ) : (
-                    filteredListings.map((job) => {
-                      const isSelected = job.id === selectedJobId;
-                      return (
-                        <div
-                          key={job.id}
-                          onClick={() => setSelectedJobId(job.id)}
-                          className={`self-stretch px-4 py-3 md:py-2 rounded-xl inline-flex justify-start items-start gap-4 cursor-pointer border transition-all ${isSelected
-                              ? (isCompanyMode ? 'bg-blue-50 dark:bg-[#16365F] border-blue-100 dark:border-[#1A73E8]/30 shadow-sm' : 'bg-indigo-50 dark:bg-[#252E54] border-indigo-100 dark:border-indigo-500/30 shadow-sm')
-                              : 'bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-[#1C2340]/30 border-transparent'
-                            }`}
-                        >
-                          <div className="flex-1 inline-flex flex-col justify-start items-start gap-1 md:gap-2 min-w-0">
-                            <div className="justify-center text-black dark:text-[#F9FAFB] text-base font-semibold md:font-medium font-['Poppins'] capitalize leading-6 truncate w-full text-left">{job.title}</div>
-                            <div className="self-stretch justify-center text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4 text-left">{job.posted_at || 'Posted recently'}</div>
-                          </div>
-                          <div className="w-16 p-2 bg-green-50 dark:bg-[#123B23] rounded-full inline-flex flex-col justify-center items-center flex-shrink-0">
-                            <div className="justify-center text-green-500 dark:text-[#4ADE80] text-[10px] font-medium font-['Poppins'] uppercase">ACTIVE</div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="self-stretch inline-flex justify-start items-start gap-4 w-full">
-                <button
-                  onClick={handleCancelClick}
-                  type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
-                    }`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    if (!selectedJob) return;
-                    setIsFetchingRecipients(true);
-                    try {
-                      const companyId = selectedJob.org_id || (selectedJob as any).company_id;
-                      const endpoint = companyId
-                        ? `/jobs/companies/${companyId}/offers/job/${selectedJobId}/recipients`
-                        : `/jobs/offers/job/${selectedJobId}/recipients`;
-
-                      const [res, applicantsRes] = await Promise.all([
-                        api.get(endpoint),
-                        api.get(`/jobs/${selectedJobId}/applicants`).catch(() => ({ data: [] }))
-                      ]);
-
-                      const offeredMap: Record<string, string> = {};
-                      res.data.forEach((r: any) => {
-                        offeredMap[r.user_id] = r.status;
-                      });
-
-                      const appliedSet = new Set<string>(applicantsRes.data.map((a: any) => a.applicantId));
-
-                      setAlreadyOfferedCandidates(offeredMap);
-                      setAppliedCandidates(appliedSet);
-                      setStage(2);
-                      setSearchQuery('');
-                    } catch (err) {
-                      console.error("Failed to fetch recipients or applicants", err);
-                      setStage(2);
-                      setSearchQuery('');
-                    } finally {
-                      setIsFetchingRecipients(false);
-                    }
-                  }}
-                  disabled={!selectedJobId || isFetchingRecipients}
-                  type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-default ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
-                    }`}
-                >
-                  {isFetchingRecipients ? <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" /> : "Continue"}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* STAGE 2: Choose Candidates */}
-        {stage === 2 && (
-          <>
-            {/* Mobile drag handle */}
-            <div className="md:hidden w-full flex flex-col items-center pt-3 pb-1 px-4">
-              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-[#2A2D35] mb-1" />
-            </div>
-
-            {/* Desktop close button */}
-            <div className="hidden md:flex self-stretch flex-col justify-start items-end gap-2.5">
-              <button
-                onClick={handleCancelClick}
-                type="button"
-                className="w-6 h-6 relative overflow-hidden flex items-center justify-center hover:opacity-75 transition-opacity"
-              >
-                <Icon icon="lucide:x" className="w-5 h-5 text-red-400" />
-              </button>
-            </div>
-
-            {/* Content Container */}
-            <div className="w-full flex flex-col justify-start items-center gap-4 px-4 md:px-0 pb-6 md:pb-0">
-              {/* Title Header */}
-              <div className="w-full flex flex-col justify-start items-center gap-2">
-                <div className="text-center justify-start text-black dark:text-[#F9FAFB] text-lg font-semibold md:font-medium font-['Poppins'] leading-6">Send offer</div>
-                <div className="text-center justify-start text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">Write a short invitation message</div>
-              </div>
-
-              {/* Search input */}
-              <div data-property-1="SEARCH" className={`w-full md:w-96 px-4 py-3 md:py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 dark:outline-[#2A2D35] bg-white dark:bg-[#0B0F19] inline-flex justify-between items-center transition-colors ${isCompanyMode ? 'focus-within:outline-blue-400' : 'focus-within:outline-indigo-400'
-                }`}>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-0 p-0 text-black dark:text-[#F9FAFB] text-base font-normal font-['Poppins'] leading-6 focus:ring-0 focus:outline-none placeholder-gray-400 text-sm"
-                />
-                <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center text-gray-400 pointer-events-none">
-                  <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
-                </div>
-              </div>
-
-              {/* Candidates selection */}
-              <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full px-2 box-border">
-                <div className="text-left justify-start text-black text-xs font-normal font-['Poppins'] leading-4">Choose candidates</div>
-
-                <div className="self-stretch flex flex-col justify-start items-start gap-2 max-h-[220px] overflow-y-auto pr-1 w-full [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-                  {(() => {
-                    const availableCandidates = candidatesList.filter((cand) => {
-                      const offerStatus = alreadyOfferedCandidates[cand.id];
-                      const isAlreadyOffered = offerStatus && ['pending', 'accepted', 'declined'].includes(offerStatus.toLowerCase());
-                      const hasApplied = appliedCandidates.has(cand.id);
-                      return !isAlreadyOffered && !hasApplied;
-                    });
-
-                    if (availableCandidates.length === 0) {
-                      return (
-                        <div className="py-8 text-center text-gray-400 text-xs font-['Poppins'] w-full">
-                          No candidates available.
-                        </div>
-                      );
-                    }
-
-                    return availableCandidates.map((cand) => {
-                      const isChecked = selectedCandidates.includes(cand.id);
-
-                      return (
-                        <div
-                          key={cand.id}
-                          onClick={() => {
-                            toggleCandidateSelection(cand.id);
-                          }}
-                          className={`self-stretch h-12 inline-flex justify-between items-center rounded-xl px-2 transition-colors w-full box-border cursor-pointer ${isCompanyMode ? 'hover:bg-blue-50/20' : 'hover:bg-indigo-50/20'
-                            }`}
-                        >
-                          <div className="flex justify-start items-center gap-2">
-                            <div className="relative w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
-                              <span>{(cand.name || 'C').charAt(0).toUpperCase()}</span>
-                              {cand.avatar && cand.avatar !== '/assets/pngegg.png' ? (
-                                <img
-                                  className="absolute inset-0 w-full h-full object-cover"
-                                  src={cand.avatar}
-                                  alt={cand.name}
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).style.display = 'none';
-                                  }}
-                                />
-                              ) : null}
-                            </div>
-                            <div className="inline-flex flex-col justify-center items-start">
-                              <div className="flex items-center gap-2">
-                                <span className="text-left text-black text-base font-normal font-['Poppins'] leading-6">{cand.name}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Checkbox */}
-                          {isChecked ? (
-                            <div className="p-1 inline-flex flex-col justify-center items-center">
-                              <div className={`w-5 h-5 rounded flex items-center justify-center border ${isCompanyMode ? 'bg-[#1A73E8] border-[#1A73E8]' : 'bg-indigo-500 border-indigo-500'
-                                }`}>
-                                <Icon icon="lucide:check" className="w-3.5 h-3.5 text-white stroke-[3]" />
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="p-1 inline-flex flex-col justify-center items-center">
-                              <div className="w-5 h-5 rounded border bg-white border-gray-300" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-
-              {/* Footer Buttons */}
-              <div className="self-stretch inline-flex justify-start items-start gap-4 w-full">
-                <button
-                  onClick={() => {
-                    if (initialJobId) {
-                      handleCancelClick();
-                    } else {
-                      setStage(1);
-                      setSearchQuery('');
-                    }
-                  }}
-                  type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
-                    }`}
-                >
-                  {initialJobId ? 'Cancel' : 'Back'}
-                </button>
-                <button
-                  onClick={() => {
-                    setStage(3);
-                    setSearchQuery('');
-                  }}
-                  disabled={selectedCandidates.length === 0}
-                  type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-default ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
-                    }`}
-                >
-                  Continue
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* STAGE 3: Personal Note & Send */}
-        {stage === 3 && (
-          <>
-            {/* Mobile drag handle */}
-            <div className="md:hidden w-full flex flex-col items-center pt-3 pb-1 px-4">
-              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-[#2A2D35] mb-1" />
-            </div>
-
-            {/* Desktop close button */}
-            <div className="hidden md:flex self-stretch flex-col justify-start items-end gap-2.5">
-              <button
-                onClick={handleCancelClick}
-                type="button"
-                className="w-6 h-6 relative overflow-hidden flex items-center justify-center hover:opacity-75 transition-opacity"
-              >
-                <Icon icon="lucide:x" className="w-5 h-5 text-red-400" />
-              </button>
-            </div>
-
-            {/* Content Container */}
-            <div className="w-full flex flex-col justify-start items-center gap-4 px-4 md:px-0 pb-6 md:pb-0">
-              {/* Title Header */}
-              <div className="w-full flex flex-col justify-start items-center gap-2">
-                <div className="text-center justify-start text-black dark:text-[#F9FAFB] text-lg font-semibold md:font-medium font-['Poppins'] leading-6">Send offer</div>
-                <div className="text-center justify-start text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">Write a short invitation message</div>
-              </div>
-
-              {/* Selected Candidates Avatars */}
-              <div className="w-full flex justify-center items-start gap-8 mt-2 mb-4 flex-wrap">
-                {selectedCandidates.map((id) => {
-                  const c = allFetchedCandidates[id];
-                  if (!c) return null;
+              ) : (
+                filteredListings.map((job) => {
+                  const isSelected = job.id === selectedJobId;
                   return (
                     <div
-                      key={c.id}
-                      className="flex flex-col items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => {
-                        toggleCandidateSelection(c.id);
-                        if (selectedCandidates.length === 1) {
-                          setStage(2);
-                        }
-                      }}
+                      key={job.id}
+                      onClick={() => setSelectedJobId(job.id)}
+                      className={`w-full h-[60px] py-2 px-2 inline-flex justify-between items-center gap-3 cursor-pointer rounded-xl transition-all select-none ${
+                        isSelected
+                          ? 'bg-ds-surface-1 border border-ds-accent/50 shadow-sm'
+                          : 'hover:bg-ds-surface-1/60 border border-transparent'
+                      }`}
                     >
-                      <div className="relative">
-                        <div className="relative w-14 h-14 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-lg border-2 border-white shadow-sm overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
-                          <span>{(c.name || 'C').charAt(0).toUpperCase()}</span>
-                          {c.avatar && c.avatar !== '/assets/pngegg.png' ? (
-                            <img
-                              className="absolute inset-0 w-full h-full object-cover"
-                              src={c.avatar}
-                              alt={c.name}
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          ) : null}
-                        </div>
-                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded border-[1.5px] border-white flex items-center justify-center shadow-sm ${isCompanyMode ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'
-                          }`}>
-                          <Icon icon="lucide:check" className="w-3.5 h-3.5 text-white stroke-[3]" />
-                        </div>
+                      <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0 pointer-events-none">
+                        <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate w-full text-left">
+                          {job.title}
+                        </span>
+                        <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 text-left">
+                          {job.posted_at || 'Posted recently'}
+                        </span>
                       </div>
-                      <span className="text-gray-500 text-sm font-normal font-['Poppins'] leading-tight capitalize">{c.name.toLowerCase()}</span>
+                      {/* Active Badge (Frame 2608515: 69px x 32px, radius 24px) */}
+                      <div className="w-[69px] h-8 px-4 py-2 bg-ds-surface-1 rounded-full border border-ds-success flex justify-center items-center shrink-0 pointer-events-none">
+                        <span className="text-ds-success text-xs font-normal font-dm-sans leading-4 text-center">
+                          Active
+                        </span>
+                      </div>
                     </div>
                   );
-                })}
-              </div>
+                })
+              )}
+            </div>
 
-              {/* Single Textarea */}
-              <div className={`self-stretch h-36 px-4 py-3 bg-white dark:bg-[#0B0F19] rounded-2xl outline outline-1 inline-flex justify-start items-start w-full box-border transition-colors ${isCompanyMode ? 'outline-gray-200 dark:outline-[#2A2D35] focus-within:outline-blue-300' : 'outline-gray-200 dark:outline-[#2A2D35] focus-within:outline-indigo-300'
-                }`}>
-                <textarea
-                  value={personalNote}
-                  onChange={(e) => setPersonalNote(e.target.value)}
-                  placeholder="Add a personal note...."
-                  className="flex-1 w-full h-full bg-transparent border-0 p-0 text-gray-700 dark:text-[#F9FAFB] text-sm font-normal font-['Poppins'] focus:outline-none focus:ring-0 resize-none placeholder-gray-500 dark:placeholder-[#9CA3AF]"
+            {/* Action Buttons (Frame 2609476: 369px x 36px, gap 8px) */}
+            <div className="w-full max-w-[369px] h-9 flex justify-center items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!selectedJob) return;
+                  setIsFetchingRecipients(true);
+                  try {
+                    const companyId = selectedJob.org_id || (selectedJob as any).company_id;
+                    const endpoint = companyId
+                      ? `/jobs/companies/${companyId}/offers/job/${selectedJobId}/recipients`
+                      : `/jobs/offers/job/${selectedJobId}/recipients`;
+
+                    const [res, applicantsRes] = await Promise.all([
+                      api.get(endpoint),
+                      api.get(`/jobs/${selectedJobId}/applicants`).catch(() => ({ data: [] }))
+                    ]);
+
+                    const offeredMap: Record<string, string> = {};
+                    res.data.forEach((r: any) => {
+                      offeredMap[r.user_id] = r.status;
+                    });
+
+                    const appliedSet = new Set<string>(applicantsRes.data.map((a: any) => a.applicantId));
+
+                    setAlreadyOfferedCandidates(offeredMap);
+                    setAppliedCandidates(appliedSet);
+                    setSelectedCandidates([]);
+                    setPersonalNote('');
+                    setSearchQuery('');
+                    setStage(2);
+                  } catch (err) {
+                    console.error("Failed to fetch recipients or applicants", err);
+                    setSelectedCandidates([]);
+                    setPersonalNote('');
+                    setSearchQuery('');
+                    setStage(2);
+                  } finally {
+                    setIsFetchingRecipients(false);
+                  }
+                }}
+                disabled={!selectedJobId || isFetchingRecipients}
+                className={`w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none ${
+                  !selectedJobId || isFetchingRecipients
+                    ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
+                    : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
+                }`}
+              >
+                {isFetchingRecipients ? (
+                  <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
+                ) : (
+                  "Continue"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelClick}
+                className="w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STAGE 2: Choose Candidates (Exact Figma Parity) */}
+        {stage === 2 && (
+          <div className="w-full flex-1 flex flex-col justify-between items-center gap-3">
+            {/* Header: Desktop Close Icon */}
+            <div className="w-full max-w-[376px] h-5 hidden md:flex justify-end items-center shrink-0">
+              <button
+                onClick={handleCancelClick}
+                type="button"
+                aria-label="Close"
+                className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none p-0 outline-none"
+              >
+                <Icon icon="lucide:x" className="size-5" />
+              </button>
+            </div>
+
+            {/* Title: Send offer */}
+            <h3 className="w-full max-w-[369px] h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center shrink-0">
+              Send offer
+            </h3>
+
+            {/* Underline Search bar */}
+            <div className="w-full max-w-[369px] px-2 py-1 flex justify-center items-center shrink-0">
+              <div className="w-full max-w-[337px] h-9 px-3 py-1.5 border-b border-ds-text-primary flex justify-between items-center gap-2.5 transition-colors">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent border-none p-0 text-ds-text-primary text-base font-normal font-dm-sans leading-6 placeholder:text-ds-text-muted focus:outline-none focus:ring-0"
                 />
-              </div>
-
-              {/* Footer Buttons */}
-              <div className="self-stretch inline-flex justify-start items-start gap-4 w-full">
-                <button
-                  onClick={() => setStage(2)}
-                  type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
-                    }`}
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleSendClick}
-                  disabled={selectedCandidates.length === 0 || isSending}
-                  type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-default ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
-                    }`}
-                >
-                  {isSending ? <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" /> : "Send"}
-                </button>
+                <SearchIcon size={20} className="size-5 text-ds-text-primary shrink-0 pointer-events-none" />
               </div>
             </div>
-          </>
+
+            {/* Candidates selection list (36px rows each) */}
+            <div
+              className="w-full max-w-[369px] flex-1 max-h-[190px] overflow-y-auto select-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              {(() => {
+                if ((isFetchingRecipients || isLoadingCandidates) && candidatesList.length === 0) {
+                  return (
+                    <div className="py-8 flex flex-col items-center justify-center gap-2 text-ds-text-muted text-xs font-dm-sans w-full">
+                      <Icon icon="lucide:loader-2" className="size-5 animate-spin text-ds-accent" />
+                      <span>Loading candidates...</span>
+                    </div>
+                  );
+                }
+
+                const availableCandidates = candidatesList.filter((cand) => {
+                  const offerStatus = alreadyOfferedCandidates[cand.id];
+                  const isAlreadyOffered = offerStatus && ['pending', 'accepted', 'declined'].includes(offerStatus.toLowerCase());
+                  const hasApplied = appliedCandidates.has(cand.id);
+                  return !isAlreadyOffered && !hasApplied;
+                });
+
+                if (availableCandidates.length === 0) {
+                  return (
+                    <div className="py-8 text-center text-ds-text-muted text-xs font-dm-sans w-full">
+                      No candidates available.
+                    </div>
+                  );
+                }
+
+                return availableCandidates.map((cand) => {
+                  const isChecked = selectedCandidates.includes(cand.id);
+
+                  return (
+                    <div
+                      key={cand.id}
+                      onClick={() => toggleCandidateSelection(cand.id)}
+                      className="w-full h-9 px-2 inline-flex justify-between items-center rounded-lg transition-colors cursor-pointer select-none shrink-0 hover:bg-ds-surface-1/60"
+                    >
+                      {/* Left: 20px avatar + candidate name */}
+                      <div className="flex items-center gap-2 min-w-0 pointer-events-none">
+                        <Avatar
+                          src={cand.avatar}
+                          name={cand.name}
+                          isCompany={false}
+                          className="size-5 rounded-full shrink-0"
+                        />
+                        <span className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 truncate">
+                          {cand.name}
+                        </span>
+                      </div>
+
+                      {/* Right: Checkbox (20px x 20px, radius 4px) */}
+                      <div
+                        className={`size-5 rounded-[4px] flex items-center justify-center border transition-all pointer-events-none shrink-0 ${
+                          isChecked
+                            ? 'bg-ds-accent border-ds-accent text-ds-text-primary'
+                            : 'border-ds-border bg-ds-surface-1'
+                        }`}
+                      >
+                        {isChecked && <Icon icon="lucide:check" className="size-3.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Action Buttons: Frame 2609476 (369px x 36px, gap 8px) */}
+            <div className="w-full max-w-[369px] h-9 flex justify-center items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setPersonalNote('');
+                  setSearchQuery('');
+                  setStage(3);
+                }}
+                disabled={selectedCandidates.length === 0}
+                className={`w-[94px] h-9 px-3 py-1.5 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none ${
+                  selectedCandidates.length === 0
+                    ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
+                    : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
+                }`}
+              >
+                Continue
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCandidates([]);
+                  setPersonalNote('');
+                  setSearchQuery('');
+                  if (initialJobId) {
+                    handleCancelClick();
+                  } else {
+                    setStage(1);
+                  }
+                }}
+                className="w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none"
+              >
+                {initialJobId ? 'Cancel' : 'Back'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STAGE 3: Personal Note & Send (Exact Figma Parity - 320px height) */}
+        {stage === 3 && (
+          <div className="w-full flex-1 flex flex-col justify-between items-center gap-3">
+            {/* Header: Desktop Close Icon */}
+            <div className="w-full max-w-[376px] h-5 hidden md:flex justify-end items-center shrink-0">
+              <button
+                onClick={handleCancelClick}
+                type="button"
+                aria-label="Close"
+                className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none p-0 outline-none"
+              >
+                <Icon icon="lucide:x" className="size-5" />
+              </button>
+            </div>
+
+            {/* Title: Send offer (16px DM Sans font-medium leading-6) */}
+            <h3 className="w-full max-w-[369px] h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center shrink-0">
+              Send offer
+            </h3>
+
+            {/* Frame 2609544 / Frame 2609983: Selected Candidates Row (369px x 64px, gap: 8px) */}
+            <div className="w-full max-w-[369px] h-16 flex items-center justify-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0">
+              {selectedCandidates.map((id) => {
+                const c = allFetchedCandidates[id];
+                if (!c) return null;
+                return (
+                  <div
+                    key={c.id}
+                    className="relative w-[100px] h-16 shrink-0 cursor-pointer hover:opacity-85 transition-opacity select-none"
+                    onClick={() => {
+                      toggleCandidateSelection(c.id);
+                      if (selectedCandidates.length === 1) {
+                        setStage(2);
+                      }
+                    }}
+                    title="Click to remove"
+                  >
+                    {/* Ellipse 24: Avatar 40x40 at left: 30px, top: 0px */}
+                    <div className="absolute left-[30px] top-0 size-10">
+                      <Avatar
+                        src={c.avatar}
+                        name={c.name}
+                        isCompany={false}
+                        className="size-10 rounded-full"
+                      />
+                    </div>
+
+                    {/* CandidateCheckboxIcon: Exact Figma SVG (46px x 46px at left: 49px, top: 15px) */}
+                    <CandidateCheckboxIcon className="absolute left-[49px] top-[15px] size-[46px] pointer-events-none z-10" />
+
+                    {/* Candidate Name: 14px DM Sans leading-5 centered at top: 48px */}
+                    <span className="absolute top-12 inset-x-0 h-5 text-ds-text-primary text-sm font-normal font-dm-sans text-center truncate px-0.5 leading-5 block">
+                      {c.name}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Frame 2609596: Note textarea with border-radius 16px and border */}
+            <div className="w-full max-w-[369px] flex flex-col items-end gap-1 shrink-0">
+              <div className="w-full h-20 p-2.5 rounded-2xl border border-ds-border box-border flex flex-col items-start gap-3">
+                <textarea
+                  value={personalNote}
+                  onChange={(e) => setPersonalNote(e.target.value.slice(0, 1000))}
+                  maxLength={1000}
+                  placeholder="Tell us what makes you unique..."
+                  className="w-full h-full bg-transparent border-none p-0 text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-secondary focus:outline-none focus:ring-0 resize-none leading-5 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                />
+              </div>
+              <span className="text-xs font-normal font-dm-sans text-ds-text-secondary pr-1">
+                {personalNote.length}/1000
+              </span>
+            </div>
+
+            {/* Frame 2609476: Action Buttons (369px x 36px, gap: 8px) */}
+            <div className="w-full max-w-[369px] h-9 flex justify-center items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleSendClick}
+                disabled={selectedCandidates.length === 0 || isSending}
+                className={`w-[77px] h-9 px-3 py-1.5 rounded-full box-border text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all select-none ${
+                  selectedCandidates.length === 0 || isSending
+                    ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
+                    : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
+                }`}
+              >
+                {isSending ? (
+                  <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
+                ) : (
+                  "Send"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPersonalNote('');
+                  setStage(2);
+                }}
+                className="w-[94px] h-9 px-3 py-1.5 rounded-full box-border border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 active:scale-95 text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap transition-all cursor-pointer select-none"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
 
       </div>

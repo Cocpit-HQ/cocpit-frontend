@@ -479,6 +479,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
               <DropdownMenu modal={false} open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <button
+                    type="button"
                     ref={optionsBtnRef}
                     aria-label="More options"
                     onClick={(e) => e.stopPropagation()}
@@ -498,12 +499,12 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                     borderColor: 'var(--ds-border)',
                     width: '135px',
                     minWidth: '135px',
-                    zIndex: (isMobile || Boolean(optionsBtnRef.current?.closest('[data-vaul-drawer]'))) ? 150 : 30,
+                    zIndex: 200,
                   }}
                   onClick={(e) => e.stopPropagation()}
                   className={cn(
                     "w-[135px] min-w-[135px] flex flex-col items-start p-[12px] gap-[16px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[8px] !shadow-none !outline-none !ring-0 font-dmsans data-[state=closed]:!animate-none data-[state=closed]:!duration-0 box-border",
-                    (isMobile || Boolean(optionsBtnRef.current?.closest('[data-vaul-drawer]'))) ? "!z-[150]" : "!z-[30]"
+                    "!z-[200]"
                   )}
                 >
                   <style>{`

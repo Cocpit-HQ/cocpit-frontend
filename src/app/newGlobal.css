@@ -424,6 +424,7 @@
     --ds-media-border: #726B6780;
     --ds-accent: #EC6229;
     --ds-accent-hover: #D85520;
+    --brand-gradient: linear-gradient(90deg, #EC6229 0%, #FDA17B 100%);
     --ds-error: #E5484D;
     --ds-success: #3FB950;
     --ds-warning: #F0A500;
@@ -490,6 +491,7 @@
     --ds-media-border: #726B6780;
     --ds-accent: #EC6229;
     --ds-accent-hover: #D85520;
+    --brand-gradient: linear-gradient(90deg, #EC6229 0%, #FDA17B 100%);
     --ds-error: #E5484D;
     --ds-success: #3FB950;
     --ds-warning: #F0A500;
@@ -582,6 +584,7 @@
     --ds-media-border: #8F8B8780;
     --ds-accent: #EC6229;
     --ds-accent-hover: #D85520;
+    --brand-gradient: linear-gradient(90deg, #EC6229 0%, #FDA17B 100%);
     --ds-error: #D6393E;
     --ds-success: #2E883C;
     --ds-warning: #B86B00;
@@ -713,6 +716,7 @@
     --ds-media-border: #726B6780;
     --ds-accent: #EC6229;
     --ds-accent-hover: #D85520;
+    --brand-gradient: linear-gradient(90deg, #EC6229 0%, #FDA17B 100%);
     --ds-error: #E5484D;
     --ds-success: #3FB950;
     --ds-warning: #F0A500;
@@ -1364,6 +1368,15 @@
 
   .gradient-primary {
     background: var(--gradient-primary);
+  }
+
+  .text-brand-gradient {
+    background-image: var(--brand-gradient, linear-gradient(90deg, #EC6229 0%, #FDA17B 100%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
   }
 
   .shadow-purple {

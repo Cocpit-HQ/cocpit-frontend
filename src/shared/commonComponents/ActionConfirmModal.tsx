@@ -3,6 +3,7 @@
 import React from "react";
 import { Dialog, BareDialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useBodyScrollLock } from "@/hooks";
 
 export type ConfirmPresetType =
   | "unfollow"
@@ -117,7 +118,8 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   const resolvedTitle = title || (preset ? preset.getTitle(targetName) : "Are you sure?");
   const resolvedDescription = description || (preset ? preset.description : "");
   const resolvedConfirmText = confirmText || (preset ? preset.confirmText : "Confirm");
-  const buttonWidthClass = customButtonWidthClass || preset?.buttonWidthClass || "w-[84px]";
+  const buttonWidthClass = customButtonWidthClass || preset?.buttonWidthClass || "w-[98px] md:w-[84px]";
+  useBodyScrollLock(isOpen);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -127,13 +129,13 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         onOpenAutoFocus={(e) => e.preventDefault()}
         overlayClassName={overlayClassName}
         className={cn(
-          "box-border w-fit min-w-[202px] max-w-[280px] min-h-[150px] p-3 gap-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
+          "box-border w-[272px] min-h-[154px] md:w-fit md:min-w-[202px] md:max-w-[280px] md:min-h-[150px] p-3 gap-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
           preset?.modalClassName,
           modalClassName
         )}
       >
         {/* Frame 2609475: Text Container */}
-        <div className="w-full self-stretch flex flex-col items-center gap-[8px]">
+        <div className="w-[246px] md:w-full self-stretch flex flex-col items-center gap-[8px]">
           <DialogTitle
             className={cn(
               "text-ds-text-primary text-center w-full m-0 p-0",
@@ -150,7 +152,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         </div>
 
         {/* Frame 2609476: Action Buttons */}
-        <div className="w-full h-[36px] flex flex-row justify-center items-center gap-2">
+        <div className="w-[204px] md:w-full h-[36px] flex flex-row justify-center items-center gap-2">
           <button
             type="button"
             disabled={isLoading}

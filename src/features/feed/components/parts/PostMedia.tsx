@@ -10,7 +10,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { useFeedUIStore } from '@/store/feed.store';
 
+import { PostMediaItem } from '@/types/entities';
+
 interface PostMediaProps {
+  media?: PostMediaItem[];
   imageSrc?: string;
   images?: string[];
   imageDimensions?: Array<{ width: number; height: number } | null>;
@@ -38,12 +41,47 @@ interface PostMediaProps {
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
+  media, imageSrc, images = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes,
   hideOverlayLikeBar = true, isFullContent = false, isProfileView = false,
   videoOverlay = false, overlayHeader, overlayCaption
 }: PostMediaProps) => {
-  const validImages = images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
+  const resolvedMedia: PostMediaItem[] = React.useMemo(() => {
+    if (media && media.length > 0) return media;
+    if (images && images.length > 0) {
+      return images.map((url, idx) => ({
+        url,
+        media_type: (url.match(/\.(mp4|webm|mov)(\?|#|$)/i) ? 'video' : 'image') as 'image' | 'video',
+        order_index: idx,
+        width: imageDimensions?.[idx]?.width || mediaWidth,
+        height: imageDimensions?.[idx]?.height || mediaHeight,
+      }));
+    }
+    if (imageSrc) {
+      return [{
+        url: imageSrc,
+        media_type: 'image' as const,
+        order_index: 0,
+        width: mediaWidth,
+        height: mediaHeight,
+      }];
+    }
+    if (videoSrc) {
+      return [{
+        url: videoSrc,
+        media_type: 'video' as const,
+        order_index: 0,
+        width: mediaWidth,
+        height: mediaHeight,
+      }];
+    }
+    return [];
+  }, [media, images, imageSrc, videoSrc, imageDimensions, mediaWidth, mediaHeight]);
+
+  const hasMultipleItems = resolvedMedia.length > 1;
+  const singleItem = resolvedMedia.length === 1 ? resolvedMedia[0] : null;
+  const effectiveVideoSrc = singleItem && singleItem.media_type === 'video' ? singleItem.url : videoSrc;
+  const validImages = resolvedMedia.map(m => m.thumbnail_url || m.url);
   const hasMultipleImages = validImages.length > 1;
   const contentImgSrc = validImages[0];
 
@@ -91,9 +129,9 @@ export const PostMedia = ({
     };
   }, [videoRef, videoSrc]);
 
-  const isVideoOverlayMode = videoOverlay && !!videoSrc;
+  const isVideoOverlayMode = videoOverlay && !!effectiveVideoSrc && !hasMultipleItems;
 
-  if (validImages.length === 0 && !videoSrc) return null;
+  if (validImages.length === 0 && !effectiveVideoSrc) return null;
 
   const showTagBadge = tags && tags.length > 0;
 
@@ -166,8 +204,9 @@ export const PostMedia = ({
           className={`relative w-full ${isFullContent ? 'max-w-full' : 'max-w-[442px]'} flex flex-col items-center select-none overflow-visible ${onClick ? 'cursor-pointer' : ''}`}
         >
           <PostCarousel
+            media={resolvedMedia}
             images={validImages}
-            imageDimensions={imageDimensions}
+            imageDimensions={resolvedMedia.map(m => (m.width && m.height ? { width: m.width, height: m.height } : null))}
             priority={priority}
             onImageLoad={onLoad}
             imageFit="cover"
@@ -194,13 +233,13 @@ export const PostMedia = ({
             aspectRatio: activeDims ? `${activeDims.aspectRatio}` : undefined,
           }}
         >
-          {videoSrc ? (
+          {effectiveVideoSrc ? (
             isVideoOverlayMode ? (
               /* Video overlay mode: no native controls, custom overlays */
               <>
                 <video
                   ref={videoRef}
-                  src={videoSrc}
+                  src={effectiveVideoSrc}
                   muted={isMuted}
                   loop
                   playsInline
@@ -274,7 +313,7 @@ export const PostMedia = ({
               >
                 <video
                   ref={videoRef}
-                  src={videoSrc}
+                  src={effectiveVideoSrc}
                   muted={isMuted}
                   loop
                   playsInline

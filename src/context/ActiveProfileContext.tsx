@@ -414,6 +414,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 queryClient.invalidateQueries({ queryKey: ["conversations"] });
                 queryClient.invalidateQueries({ queryKey: ["messages"] });
                 queryClient.invalidateQueries({ queryKey: ["notifications"] });
+                queryClient.invalidateQueries({ queryKey: ["global-search"] });
                 trackActorMetric("switch_start", { type, id });
 
                 // Reset all saved scroll memory on profile/account switch
@@ -424,6 +425,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                             key &&
                             key !== "cocpit_is_deactivating" &&
                             key !== "cocpit_is_deleting" &&
+                            key !== "cocpit_active_profile" &&
                             (key.startsWith("scroll-") || key.startsWith("cocpit_"))
                         ) {
                             sessionStorage.removeItem(key);
@@ -437,6 +439,10 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
                     await setActorContext({ type: "USER" });
 
+                    if (typeof window !== "undefined") {
+                        sessionStorage.setItem("cocpit_active_profile", JSON.stringify(userProfile));
+                        setPreservedUserActorInStorage(userProfile.id);
+                    }
                     setActiveProfile(userProfile);
                     trackActorMetric("switch_complete", { type: "USER", id: session.user.id });
                     window.location.href = "/profile";
@@ -454,6 +460,9 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 });
 
                 const companyProfile = buildCompanyProfile(targetCompany);
+                if (typeof window !== "undefined") {
+                    sessionStorage.setItem("cocpit_active_profile", JSON.stringify(companyProfile));
+                }
                 setActiveProfile(companyProfile);
                 trackActorMetric("switch_complete", { type: "COMPANY", id: companyProfile.id });
                 window.location.href = `/organization/${targetCompany.slug}`;

@@ -67,6 +67,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         notification.type === 'organization_job' ||
         notification.type === 'organization_invite' ||
         notification.type === 'ORGANIZATION_INVITE' ||
+        (notification.type as string) === 'member_role_updated' ||
+        (notification.type as string) === 'company_ownership_transferred' ||
         notification.type === 'company_deactivated' ||
         notification.type === 'company_reactivated' ||
         notification.type === 'company_deleted' ||
@@ -123,7 +125,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   const handleActorClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (actorUrl) {
-      router.push(actorUrl);
+      const sep = actorUrl.includes('?') ? '&' : '?';
+      router.push(`${actorUrl}${sep}returnTo=/notifications`);
     }
   };
 
@@ -206,12 +209,9 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 
   // ── Notification text content ─────────────────────────────────
   const renderText = () => (
-    <div className="ds-text-secondary-2 font-['DM_Sans'] text-ds-text-primary min-w-0 truncate">
+    <div className="ds-text-secondary-2 font-['DM_Sans'] text-ds-text-primary min-w-0 break-words">
       {parsed.prefixText && (
         <span className="font-normal text-ds-text-primary">{parsed.prefixText}</span>
-      )}
-      {parsed.boldTarget && (
-        <span className="font-semibold text-ds-text-primary">{parsed.boldTarget}</span>
       )}
       {parsed.actorName && (
         <span
@@ -227,6 +227,37 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       {parsed.actorSuffix && (
         <span className="font-normal text-ds-text-primary">{parsed.actorSuffix} </span>
       )}
+      {parsed.middleText && (
+        <span className="font-normal text-ds-text-primary">{parsed.middleText}</span>
+      )}
+      {parsed.boldTarget && (
+        parsed.targetUrl ? (
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!notification.is_read && onRead) {
+                onRead(notification.notification_id);
+              }
+              if (parsed.targetUrl) {
+                const sep = parsed.targetUrl.includes('?') ? '&' : '?';
+                const finalTargetUrl =
+                  parsed.targetUrl.includes('returnTo') || parsed.targetUrl.includes('from')
+                    ? parsed.targetUrl
+                    : `${parsed.targetUrl}${sep}returnTo=/notifications`;
+                router.push(finalTargetUrl);
+              }
+            }}
+            className={cn(
+              'font-semibold cursor-pointer',
+              parsed.boldTargetClassName || 'text-ds-accent'
+            )}
+          >
+            {parsed.boldTarget}
+          </span>
+        ) : (
+          <span className="font-semibold text-ds-text-primary">{parsed.boldTarget}</span>
+        )
+      )}
       <span className="font-normal text-ds-text-primary">{parsed.bodyText}</span>
     </div>
   );
@@ -235,7 +266,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
     <div
       onClick={handleItemClick}
       className={cn(
-        "group flex flex-row items-center w-full font-['DM_Sans'] transition-colors duration-[120ms] h-[48px] p-3 gap-2",
+        "group flex flex-row items-start w-full font-['DM_Sans'] transition-colors duration-[120ms] min-h-[48px] p-3 gap-2",
         itemUrl ? "cursor-pointer" : "cursor-default",
         isInsideGroup
           ? 'bg-transparent rounded-none'
@@ -246,20 +277,20 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       {/* 4px slot preserves 24px avatar alignment for read notifications */}
       {isUnread ? (
         <span
-          className="w-1 h-1 rounded-full shrink-0 bg-ds-accent"
+          className="w-1 h-1 rounded-full shrink-0 bg-ds-accent mt-[10px]"
           style={{
             boxShadow: '-1px -1px 4px rgba(255, 236, 230, 0.4), 1px 1px 4px rgba(255, 236, 230, 0.4)',
           }}
           aria-label="Unread notification"
         />
       ) : (
-        <span className="w-1 h-1 shrink-0 invisible" aria-hidden="true" />
+        <span className="w-1 h-1 shrink-0 invisible mt-[10px]" aria-hidden="true" />
       )}
 
       {/* ── Frame 2609748: Inner row (764×24, justify-between) ────── */}
-      <div className="flex flex-row items-center justify-between min-w-0 flex-1 h-6">
+      <div className="flex flex-row items-start justify-between min-w-0 flex-1 gap-4 min-h-[24px]">
         {/* Frame 2609542: Left side (avatar + text, gap: 8px, h: 24px) */}
-        <div className="flex flex-row items-center gap-2 min-w-0 flex-1 mr-4">
+        <div className="flex flex-row items-start gap-2 min-w-0 flex-1">
           {/* Rectangle 31: Avatar / Icon (24×24px, rounded 100px) */}
           <div
             onClick={actorUrl ? handleActorClick : undefined}
@@ -269,13 +300,13 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
           </div>
 
           {/* Notification text — 14px/20px, font-semibold / normal */}
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pt-0.5">
             {renderText()}
           </div>
         </div>
 
         {/* Frame 2609740: Right side (timestamp + menu, gap: 10px, h: 20px) */}
-        <div className="flex flex-row items-center gap-[10px] shrink-0 h-5">
+        <div className="flex flex-row items-center gap-[10px] shrink-0 h-6">
           {/* Frame 2608646: Timestamp (12px/400/16px, text-muted #726B67) */}
           <span className="ds-text-small font-['DM_Sans'] text-ds-text-muted select-none whitespace-nowrap">
             {formatNotificationTime(notification.created_at)}

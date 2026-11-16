@@ -1,9 +1,14 @@
+import { formatPostedTime } from '../../utils/jobs.utils';
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/businessProfile';
 import { useToast } from '@/hooks/use-toast';
+import { useBodyScrollLock } from '@/hooks';
+import { CyphexAIIcon, PdfFileIcon, EyeIcon, UserIcon, LeftArrowIcon, BriefcaseIcon, Icon as CustomIcon } from '@/components/icons';
+import { ApplicantsMobileDrawer } from '../drawers/ApplicantsMobileDrawer';
+import Avatar from '@/components/shared/Avatar';
 import { JobListing } from '../../types/jobs.types';
 import {
   getJobApplicants,
@@ -11,8 +16,7 @@ import {
   getApplicationAnalysis,
   updateApplicationStatus,
   upsertApplicationNote,
-  getJobDetail,
-  triggerApplicationAnalysis
+  triggerApplicationAnalysis,
 } from '../../services/jobs.service';
 
 interface ApplicantsDashboardProps {
@@ -23,31 +27,43 @@ interface ApplicantsDashboardProps {
 
 interface Candidate {
   id: string;
+  applicationId?: string;
+  applicantId?: string;
+  accountName?: string;
+  username?: string;
   name: string;
-  title: string;
-  location: string;
-  avatar: string;
-  score: number | null;
-  status: 'pending' | 'shortlisted' | 'declined';
-  note: string;
-  resume: string;
-  summary: {
+  headline?: string;
+  title?: string;
+  location?: string;
+  avatarUrl?: string;
+  avatar?: string;
+  matchScore?: number | null;
+  score?: number | null;
+  status: 'pending' | 'Shortlisted' | 'Rejected' | 'Applied' | string;
+  selfNote?: string;
+  note?: string;
+  resumeName?: string;
+  resumeFileName?: string;
+  resume_file_name?: string;
+  resumeUrl?: string;
+  resume?: string;
+  summary?: {
     strengths: string[];
     concerns: string[];
     recommendation: string;
   } | null;
-  skills: {
+  skills?: {
     match: number;
     tags: { name: string; matched: boolean }[];
     summary: string;
   } | null;
-  experience: {
+  experience?: {
     status: string;
     required: string;
     actual: string;
     summary: string;
   } | null;
-  qualification: {
+  qualification?: {
     status: string;
     degree: string;
     class: string;
@@ -55,151 +71,65 @@ interface Candidate {
   } | null;
 }
 
-const INITIAL_CANDIDATES: Candidate[] = [
-  {
-    id: 'cand-1',
-    name: 'Mina sina',
-    title: 'UI/UX Designer',
-    location: 'Mumbai, India',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120',
-    score: 94,
-    status: 'pending',
-    note: '"Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We\'d love to have you join our team."',
-    resume: 'Mina.uiux.cv.pdf',
-    summary: {
-      strengths: [
-        'Strong Design Systems background from IIT Bombay.',
-        'Exceptional React knowledge for a designer.',
-      ],
-      concerns: ['Limited experience with consumer-scale apps.'],
-      recommendation: 'High priority interview. Technical alignment is nearly perfect for the Design Engineering hybrid role.',
-    },
-    skills: {
-      match: 94,
-      tags: [
-        { name: 'Figma', matched: true },
-        { name: 'Design Systems', matched: true },
-        { name: 'UI', matched: true },
-        { name: 'UX', matched: true },
-        { name: 'React', matched: true },
-      ],
-      summary: '"Has all required skills with strong proficiency in React and Design Systems."',
-    },
-    experience: {
-      status: 'EXCEEDS',
-      required: '5+ Yrs',
-      actual: '6.2 Yrs',
-      summary: '"Exceeds minimum requirement for this seniority level."',
-    },
-    qualification: {
-      status: 'ALIGNED',
-      degree: 'B.Des from IIT Bombay',
-      class: 'CLASS OF 2018',
-      summary: '"Qualification directly aligns with the role requirements."',
-    },
-  },
-  {
-    id: 'cand-2',
-    name: 'James keno',
-    title: 'UI/UX designer',
-    location: 'New York, NY',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120',
-    score: 92,
-    status: 'pending',
-    note: '"Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We\'d love to have you join our team."',
-    resume: 'James.uiux.cv.pdf',
-    summary: {
-      strengths: [
-        'Strong Design Systems background from IIT Bombay.',
-        'Exceptional React knowledge for a designer.',
-      ],
-      concerns: ['Limited experience with consumer-scale apps.'],
-      recommendation: 'High priority interview. Technical alignment is nearly perfect for the Design Engineering hybrid role.',
-    },
-    skills: {
-      match: 80,
-      tags: [
-        { name: 'Figma', matched: true },
-        { name: 'Design Systems', matched: true },
-        { name: 'UI', matched: true },
-        { name: 'UX', matched: true },
-        { name: 'React', matched: false },
-      ],
-      summary: '"Has 4 of 5 required skills with strong proficiency in Design Systems."',
-    },
-    experience: {
-      status: 'EXCEEDS',
-      required: '5+ Yrs',
-      actual: '6.2 Yrs',
-      summary: '"Exceeds minimum requirement for this seniority level."',
-    },
-    qualification: {
-      status: 'ALIGNED',
-      degree: 'B.Des from IIT Bombay',
-      class: 'CLASS OF 2018',
-      summary: '"Qualification directly aligns with the role requirements."',
-    },
-  },
-  {
-    id: 'cand-3',
-    name: 'Anthony Edmund Bridgerton',
-    title: 'Product Designer',
-    location: 'London, UK',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120',
-    score: 88,
-    status: 'pending',
-    note: '"Hi cocpit, Anthony has a solid design pedigree. Detail-oriented layouts but needs to work more on user-research practices."',
-    resume: 'Anthony.uiux.cv.pdf',
-    summary: {
-      strengths: [
-        'Strong aesthetic sense with detail-oriented design delivery.',
-        'Excellent visual branding experience.',
-      ],
-      concerns: ['Lacks deep design research methodologies.'],
-      recommendation: 'Consider for future visual-heavy projects or secondary interview.',
-    },
-    skills: {
-      match: 75,
-      tags: [
-        { name: 'Figma', matched: true },
-        { name: 'UI', matched: true },
-        { name: 'UX', matched: true },
-        { name: 'Design Systems', matched: false },
-        { name: 'React', matched: false },
-      ],
-      summary: '"Has 3 of 5 skills, lacks systems thinking and frontend coding experience."',
-    },
-    experience: {
-      status: 'ALIGNED',
-      required: '3+ Yrs',
-      actual: '4.5 Yrs',
-      summary: '"Meets requirement for this design role seniority level."',
-    },
-    qualification: {
-      status: 'ALIGNED',
-      degree: 'B.Des from NID Ahmedabad',
-      class: 'CLASS OF 2020',
-      summary: '"Qualification directly aligns with the role requirements."',
-    },
-  },
-  {
-    id: 'cand-4',
-    name: 'G.O.A.T',
-    title: 'Design Engineer',
-    location: 'San Francisco, CA',
-    avatar: '',
-    score: null,
-    status: 'pending',
-    note: '"Pending profile assessment and resume verification."',
-    resume: 'goat_resume_2026.pdf',
-    summary: null,
-    skills: null,
-    experience: null,
-    qualification: null,
-  },
-];
-
 type FilterOption = 'Top match' | 'Recent' | 'Shortlisted' | 'Noted' | 'Pending';
+
+const EMPTY_STATE_CONFIG: Record<
+  FilterOption,
+  { title: string; subtitle: React.ReactNode }
+> = {
+  'Top match': {
+    title: 'No matching candidates yet',
+    subtitle: (
+      <>
+        Candidates that best match this job&apos;s
+        <br />
+        requirements will appear here when available
+      </>
+    ),
+  },
+  'Recent': {
+    title: 'No recent candidates',
+    subtitle: (
+      <>
+        New candidates will appear here when they{' '}
+        <br />
+        apply for this job.
+      </>
+    ),
+  },
+  'Shortlisted': {
+    title: 'No candidates shortlisted yet',
+    subtitle: (
+      <>
+        Shortlist candidates who are a good fit for{' '}
+        <br />
+        this role to find them here
+      </>
+    ),
+  },
+  'Noted': {
+    title: 'No candidates notes yet',
+    subtitle: (
+      <>
+        Add notes to candidates to keep important{' '}
+        <br />
+        observations and hiring feedback in one place
+      </>
+    ),
+  },
+  'Pending': {
+    title: 'No candidates pending review',
+    subtitle: (
+      <>
+        you&apos;re all caught up. Candidates awaiting{' '}
+        <br />
+        review will appear here
+      </>
+    ),
+  },
+};
+
+const applicantsCache = new Map<string, Candidate[]>();
 
 export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   listing,
@@ -213,37 +143,145 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const router = useRouter();
   const { toast } = useToast();
 
-  const [candidates, setCandidates] = useState<any[]>([]);
-  const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterOption>('Top match');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-  const [noteText, setNoteText] = useState('');
-  const [isNoteExpanded, setIsNoteExpanded] = useState(false);
-  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
+  const [isMobileFilterDrawerOpen, setIsMobileFilterDrawerOpen] = useState(false);
+  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
+  const cacheKey = `${listing.id}_${filter}`;
+  const cached = applicantsCache.get(cacheKey);
+  const isKnownZero = listing.applicants_count === 0;
 
-  const t = {
-    bg: isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]',
-    text: isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]',
-    textMuted: isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]',
-    border: isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]',
-    borderLight: isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]',
-    primary: isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]',
-    primaryBg: isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]',
-    primaryHover: isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#818CF8]/90',
-    card: isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]',
-    ultraLight: isCompanyMode ? 'dark:bg-[#2A2D35]' : 'dark:bg-[#2E3445]',
-    modalBg: isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]',
+  const [candidates, setCandidates] = useState<Candidate[]>(cached || []);
+  const [selectedCandId, setSelectedCandId] = useState<string | null>(() => {
+    if (cached && cached.length > 0) return cached[0].applicationId || cached[0].id;
+    return null;
+  });
+  const [isLoadingApplicants, setIsLoadingApplicants] = useState<boolean>(!isKnownZero && !cached);
+  const totalCandidates = candidates.length;
+  const selectedIndex = candidates.findIndex(
+    (c) => (c.applicationId || c.id) === selectedCandId
+  );
+  const currentCandidateIndex = selectedIndex >= 0 ? selectedIndex : (totalCandidates > 0 ? 0 : -1);
+
+  const handleSelectPreviousCandidate = () => {
+    if (currentCandidateIndex > 0) {
+      const prev = candidates[currentCandidateIndex - 1];
+      if (prev) {
+        setSelectedCandId(prev.applicationId || prev.id);
+      }
+    }
   };
+
+  const handleSelectNextCandidate = () => {
+    if (currentCandidateIndex >= 0 && currentCandidateIndex < totalCandidates - 1) {
+      const next = candidates[currentCandidateIndex + 1];
+      if (next) {
+        setSelectedCandId(next.applicationId || next.id);
+      }
+    }
+  };
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  useBodyScrollLock(isNoteModalOpen);
+  const [noteText, setNoteText] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [showAllSkills, setShowAllSkills] = useState(false);
+  const [hasSecondLine, setHasSecondLine] = useState(false);
+  const skillsContainerRef = useRef<HTMLDivElement>(null);
 
   // Real data state
   const [candidateDetail, setCandidateDetail] = useState<any>(null);
   const [candidateAnalysis, setCandidateAnalysis] = useState<any>(null);
-  const [jobDetail, setJobDetail] = useState<any>(null);
-  const [isLoadingList, setIsLoadingList] = useState(true);
-  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+
+  // Reset skills expansion when switching candidate
+  useEffect(() => {
+    setShowAllSkills(false);
+  }, [selectedCandId]);
+
+  // Fetch applicants from API with caching and instant resolution for zero applicants
+  useEffect(() => {
+    let active = true;
+    const currentKey = `${listing.id}_${filter}`;
+
+    if (listing.applicants_count === 0) {
+      applicantsCache.set(currentKey, []);
+      setCandidates([]);
+      setSelectedCandId(null);
+      setIsLoadingApplicants(false);
+      return;
+    }
+
+    const fetchList = async () => {
+      if (!applicantsCache.has(currentKey)) {
+        setIsLoadingApplicants(true);
+      }
+      try {
+        let apiStatus: string | undefined;
+        if (filter === 'Shortlisted') apiStatus = 'Shortlisted';
+        else if (filter === 'Pending') apiStatus = 'Applied';
+
+        const list = await getJobApplicants(listing.id, apiStatus);
+        const resolvedList = Array.isArray(list) ? list : [];
+        applicantsCache.set(currentKey, resolvedList);
+
+        if (active) {
+          if (resolvedList.length > 0) {
+            setCandidates(resolvedList);
+            const firstId = resolvedList[0].applicationId || resolvedList[0].id;
+            setSelectedCandId((prev) => {
+              const exists = resolvedList.some((c: Candidate) => (c.applicationId || c.id) === prev);
+              return exists ? prev : firstId;
+            });
+          } else {
+            setCandidates([]);
+            setSelectedCandId(null);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load job applicants:', err);
+        if (active) {
+          setCandidates([]);
+          setSelectedCandId(null);
+        }
+      } finally {
+        if (active) {
+          setIsLoadingApplicants(false);
+        }
+      }
+    };
+    fetchList();
+    return () => { active = false; };
+  }, [listing.id, listing.applicants_count, filter]);
+
+  // Fetch candidate details and AI analysis when selected candidate changes
+  useEffect(() => {
+    if (!selectedCandId) {
+      setCandidateDetail(null);
+      setCandidateAnalysis(null);
+      return;
+    }
+
+    let active = true;
+    const fetchDetail = async () => {
+      try {
+        const [detail, analysis] = await Promise.all([
+          getApplicationDetail(selectedCandId),
+          getApplicationAnalysis(selectedCandId),
+        ]);
+        if (active) {
+          setCandidateDetail(detail);
+          setCandidateAnalysis(detail?.aiAnalysis || analysis);
+        }
+      } catch (err) {
+        console.error('Failed to load application detail:', err);
+      }
+    };
+    fetchDetail();
+    return () => { active = false; };
+  }, [selectedCandId]);
+
+  const activeCandidate = candidates.find(
+    (c) => (c.applicationId || c.id) === selectedCandId
+  ) || null;
 
   const handleTriggerAI = async () => {
     if (!selectedCandId) return;
@@ -251,15 +289,15 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     setAnalyzeError(null);
     try {
       await triggerApplicationAnalysis(selectedCandId);
-      // Re-fetch normalized analysis to guarantee consistent shape
       const freshAnalysis = await getApplicationAnalysis(selectedCandId);
       setCandidateAnalysis(freshAnalysis);
-      // Update candidate's score in left sidebar list
-      setCandidates(prev => prev.map(c =>
-        c.applicationId === selectedCandId
-          ? { ...c, matchScore: freshAnalysis.matchScore }
-          : c
-      ));
+      setCandidates((prev) =>
+        prev.map((c) =>
+          (c.applicationId || c.id) === selectedCandId
+            ? { ...c, matchScore: freshAnalysis.matchScore }
+            : c
+        )
+      );
     } catch (error: any) {
       console.error('Failed to trigger AI analysis:', error);
       setAnalyzeError(error?.response?.data?.message || 'Analysis failed. Please try again.');
@@ -268,118 +306,41 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     }
   };
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Fetch job details on mount
-  useEffect(() => {
-    let active = true;
-    const fetchJob = async () => {
-      const job = await getJobDetail(listing.id);
-      if (active && job) {
-        setJobDetail(job);
-      }
-    };
-    fetchJob();
-    return () => { active = false; };
-  }, [listing.id]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDropdownOpen]);
-
-  // Fetch list
-  useEffect(() => {
-    let active = true;
-    const fetchList = async () => {
-      setIsLoadingList(true);
-      let apiStatus;
-      if (filter === 'Shortlisted') apiStatus = 'Shortlisted';
-      else if (filter === 'Pending') apiStatus = 'Applied';
-
-      const list = await getJobApplicants(listing.id, apiStatus);
-      if (active) {
-        setCandidates(list || []);
-        if (list?.length > 0 && !selectedCandId) {
-          setSelectedCandId(list[0].applicationId);
-        }
-        setIsLoadingList(false);
-      }
-    };
-    fetchList();
-    return () => { active = false; };
-  }, [listing.id, filter]);
-
-  // Fetch detail
-  useEffect(() => {
-    if (!selectedCandId) return;
-    let active = true;
-    const fetchDetail = async () => {
-      setIsLoadingDetail(true);
-      const [detail, analysis] = await Promise.all([
-        getApplicationDetail(selectedCandId),
-        getApplicationAnalysis(selectedCandId)
-      ]);
-      if (active) {
-        setCandidateDetail(detail);
-        // Safeguard: Prefer the pre-loaded detail.aiAnalysis object to avoid race conditions
-        setCandidateAnalysis(detail.aiAnalysis || analysis);
-        setIsLoadingDetail(false);
-      }
-    };
-    fetchDetail();
-    return () => { active = false; };
-  }, [selectedCandId]);
-
-  // Sync analysis match score back to list
-  useEffect(() => {
-    if (candidateAnalysis && selectedCandId) {
-      setCandidates(prev => prev.map(c =>
-        c.applicationId === selectedCandId
-          ? { ...c, matchScore: candidateAnalysis.matchScore }
-          : c
-      ));
-    }
-  }, [candidateAnalysis, selectedCandId]);
-
-  // Stats Counters
-  const appCount = candidates.length;
-  const shortlistCount = candidates.filter(c => c.status === 'Shortlisted').length;
-
-  const selectedCandidate = candidates.find((c) => c.applicationId === selectedCandId) || candidates[0];
-
   const handleShortlist = async (candId: string) => {
+    if (!candId) return;
     try {
       await updateApplicationStatus(candId, 'Shortlisted');
-      setCandidates(prev => prev.map(c => c.applicationId === candId ? { ...c, status: 'Shortlisted' } : c));
-      if (selectedCandId === candId && candidateDetail) {
+      setCandidates((prev) =>
+        prev.map((c) =>
+          (c.applicationId || c.id) === candId ? { ...c, status: 'Shortlisted' } : c
+        )
+      );
+      if (candidateDetail) {
         setCandidateDetail({ ...candidateDetail, status: 'Shortlisted' });
       }
       toast({ title: 'Candidate Shortlisted', description: 'The candidate has been notified.' });
     } catch (error) {
-      console.error(error);
+      console.error('Shortlist error:', error);
+      toast({ title: 'Error', description: 'Failed to shortlist candidate.' });
     }
   };
 
   const handleDecline = async (candId: string) => {
+    if (!candId) return;
     try {
       await updateApplicationStatus(candId, 'Rejected');
-      setCandidates(prev => prev.map(c => c.applicationId === candId ? { ...c, status: 'Rejected' } : c));
-      if (selectedCandId === candId && candidateDetail) {
+      setCandidates((prev) =>
+        prev.map((c) =>
+          (c.applicationId || c.id) === candId ? { ...c, status: 'Rejected' } : c
+        )
+      );
+      if (candidateDetail) {
         setCandidateDetail({ ...candidateDetail, status: 'Rejected' });
       }
       toast({ title: 'Candidate Declined', description: 'The candidate status has been updated.' });
     } catch (error) {
-      console.error(error);
+      console.error('Decline error:', error);
+      toast({ title: 'Error', description: 'Failed to decline candidate.' });
     }
   };
 
@@ -387,1225 +348,860 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     if (!selectedCandId) return;
     try {
       await upsertApplicationNote(selectedCandId, noteText);
+      setCandidates((prev) =>
+        prev.map((c) =>
+          (c.applicationId || c.id) === selectedCandId
+            ? { ...c, selfNote: noteText, note: noteText }
+            : c
+        )
+      );
       if (candidateDetail) {
         setCandidateDetail({ ...candidateDetail, selfNote: noteText });
       }
+      toast({ title: 'Note Saved', description: 'Your self note has been saved.' });
     } catch (error) {
-      console.error(error);
+      console.error('Save note error:', error);
+      toast({ title: 'Error', description: 'Failed to save note.' });
     }
     setIsNoteModalOpen(false);
   };
 
   const openNoteModal = () => {
-    setNoteText(candidateDetail?.selfNote || '');
+    setNoteText(candidateDetail?.selfNote || activeCandidate?.selfNote || activeCandidate?.note || '');
     setIsNoteModalOpen(true);
   };
 
-  const filteredCandidates = candidates;
+  // Status mapping for job listing card
+  const statusUpper = (listing.status || 'ACTIVE').toUpperCase();
+
+  // Counts
+  const appCount = listing.applicants_count || candidates.length;
+  const shortlistCount = listing.shortlisted_count || candidates.filter(c => c.status === 'Shortlisted').length;
+  const offerCount = listing.offers_count || 0;
+
+  // Resolved candidate fields
+  const displayName = candidateDetail?.name || activeCandidate?.name || '';
+  const displayHeadline = candidateDetail?.headline || activeCandidate?.headline || activeCandidate?.title || '';
+  const displayScore = candidateAnalysis?.matchScore ?? activeCandidate?.matchScore ?? activeCandidate?.score;
+  const displaySelfNote = candidateDetail?.selfNote || activeCandidate?.selfNote || activeCandidate?.note;
+  const rawResume =
+    candidateDetail?.resumeName ||
+    activeCandidate?.resumeName ||
+    activeCandidate?.resume_file_name ||
+    activeCandidate?.resumeFileName ||
+    activeCandidate?.resume;
+
+  const displayResumeName =
+    rawResume ||
+    (candidateDetail?.resumeUrl || activeCandidate?.resumeUrl)?.split('/').pop() ||
+    'Resume.pdf';
+  const displayAvatar = candidateDetail?.avatarUrl || activeCandidate?.avatarUrl || activeCandidate?.avatar;
+  const displaySummary = candidateAnalysis?.summary || activeCandidate?.summary;
+  const displaySkills = candidateAnalysis?.skills || activeCandidate?.skills;
+  const displayExperience = candidateAnalysis?.experience || activeCandidate?.experience;
+  const displayQualification = candidateAnalysis?.qualification || activeCandidate?.qualification;
+
+  // Check if skills wrap to a second line
+  useEffect(() => {
+    const el = skillsContainerRef.current;
+    if (!el) return;
+
+    const checkSecondLine = () => {
+      if (!el || el.children.length === 0) {
+        setHasSecondLine(false);
+        return;
+      }
+      const firstTop = (el.children[0] as HTMLElement).offsetTop;
+      const isMultiLine = Array.from(el.children).some(
+        (c) => (c as HTMLElement).offsetTop > firstTop
+      );
+      if (isMultiLine || el.scrollHeight > 36) {
+        setHasSecondLine(true);
+      } else {
+        setHasSecondLine(false);
+      }
+    };
+
+    checkSecondLine();
+    const timer = setTimeout(checkSecondLine, 50);
+    window.addEventListener('resize', checkSecondLine);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkSecondLine);
+    };
+  }, [displaySkills, activeCandidate, selectedCandId]);
 
   return (
     <>
-      {/* DESKTOP LAYOUT */}
-      <div
-        className={`hidden md:flex w-[998px] bg-white ${t.card} ${t.bg} flex-col items-center pt-0 px-0 pb-[80px] gap-[24px] overflow-y-auto scrollbar-none animate-in fade-in duration-300 mx-auto relative font-['Poppins'] box-border`}
-        style={{
-          height: '1189px',
-          scrollbarWidth: 'none',
-        }}
-      >
-        {/* Back button and message frame (Frame 2608623) */}
-        <div
-          className={`flex flex-row items-center p-0 gap-[16px] w-[998px] h-[48px] flex-none order-0 self-stretch grow-0`}
-        >
-          {/* Same back button that we build everywhere in jobs */}
+      {/* Top-Left Back Button matching Public Profile and MyListingsDashboard */}
+      {onBack && (
+        <>
+          {/* Desktop back button: fixed top-left */}
           <button
-            onClick={onBack}
             type="button"
-            className={`w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] ${t.border} backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 ${t.ultraLight} transition-colors active:scale-95 text-gray-500 ${t.textMuted} shadow-sm flex-shrink-0`}
+            onClick={onBack}
+            aria-label="Back"
+            className="hidden md:inline-flex fixed top-[40px] left-[40px] z-[60] items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
           >
-            <Icon icon="lucide:chevron-left" className={`w-6 h-6 text-gray-500 ${t.textMuted}`} />
+            <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
+            <span className="font-dm-sans font-medium text-base leading-6">Back</span>
           </button>
+          {/* Mobile back button: in-flow at top */}
+          <button
+            type="button"
+            onClick={() => {
+              if (isMobileDetailOpen) {
+                setIsMobileDetailOpen(false);
+              } else if (onBack) {
+                onBack();
+              }
+            }}
+            aria-label="Back"
+            className="flex md:hidden items-center gap-2 p-0 text-ds-text-primary cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent self-start mb-2"
+          >
+            <LeftArrowIcon size={20} className="size-5 text-ds-text-primary shrink-0" />
+            <span className="font-dm-sans font-medium text-base leading-6">Back</span>
+          </button>
+        </>
+      )}
 
-          {/* Message frame (Frame 2608578) */}
-          <div className={`flex flex-col items-start p-0 w-[343px] h-[42px] flex-none order-1 grow-0`}>
-            <span
-              className={`w-[100px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] text-black ${t.text} flex items-center justify-start text-left flex-none order-0 grow-0`}
-            >
-              Applicants
-            </span>
-            <span
-              className={`w-[343px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex items-center justify-start text-left flex-none order-1 grow-0`}
-            >
-              Review and shortlist candidates with AI-powered insights
-            </span>
-          </div>
+      {/* Main 960px Centered Column matching Figma Frame 2609508 */}
+      <div className="w-full max-w-[800px] md:max-w-[960px] mx-auto pt-4 md:pt-[60px] pb-16 px-4 md:px-0 flex flex-col gap-4 md:gap-5 font-dm-sans">
+
+        {/* Header (Title + Subtitle) — desktop only, hidden on mobile per Figma */}
+        <div className="hidden md:flex w-full flex-col items-start gap-1">
+          <h2 className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
+            Applicants
+          </h2>
+          <p className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+            Review and shortlist candidates with AI-powered insights
+          </p>
         </div>
 
-        {/* Horizontal Stats Bar (Frame 2609091) */}
-        <div className={`box-border flex flex-row justify-between items-center p-[16px_0px_24px] gap-[12px] w-[998px] h-[100px] border-b border-[#EEF2FF] ${t.borderLight} flex-none self-stretch grow-0`}>
-
-          {/* Role details (Frame 2608946) */}
-          <div className={`flex flex-col items-start p-0 gap-[8px] flex-1 h-[52px] order-0`}>
-            <span className={`w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${t.text} truncate capitalize`}>
-              {listing.title}
-            </span>
-            <span className={`w-full font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] ${t.textMuted} truncate`}>
-              Posted {listing.posted_at || '2 hours ago'}
-            </span>
-          </div>
-
-          {/* Applications (Frame 2609054) */}
-          <div className={`flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white ${t.card} rounded-[24px] order-1 self-stretch mx-auto`}>
-            <span className={`font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black ${t.text}`}>
-              {appCount}
-            </span>
-            <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] ${t.textMuted}`}>
-              Applications
-            </span>
-          </div>
-
-          {/* Shortlisted (Frame 2609055) */}
-          <div className={`flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white ${t.card} rounded-[24px] order-2 self-stretch mx-auto`}>
-            <span className={`font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black ${t.text}`}>
-              {shortlistCount}
-            </span>
-            <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] ${t.textMuted}`}>
-              Shortlisted
-            </span>
-          </div>
-
-          {/* Offer sent (Frame 2609056) */}
-          <div className={`flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white ${t.card} rounded-[24px] order-3 self-stretch mx-auto`}>
-            <span className={`font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black ${t.text}`}>
-              {listing.offers_count || 0}
-            </span>
-            <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] ${t.textMuted}`}>
-              Offer sent
-            </span>
-          </div>
-
-          {/* Status (Frame 2609057) */}
-          <div className={`flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white ${t.card} rounded-[24px] order-4 self-stretch mx-auto`}>
-            <span className={`font-['Poppins'] font-semibold text-[12px] leading-[20px] text-center text-[#22C55E] uppercase tracking-wide`}>
-              ACTIVE
-            </span>
-            <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] ${t.textMuted}`}>
-              Status
-            </span>
-          </div>
-
-          {/* View job details Button */}
-          <div className={`flex flex-col justify-center items-end p-[8px_16px] flex-1 h-[60px] order-5 self-stretch mx-auto`}>
-            <button
-              onClick={onViewDetails}
-              type="button"
-              className={`box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-auto h-[40px] rounded-[24px] active:scale-95`}
-            >
-              <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center whitespace-nowrap ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
-                View job details
+        {/* Job Listing Summary Card / Row: Job Item Close */}
+        <div className={`${isMobileDetailOpen ? "hidden md:flex" : "flex"} w-full max-w-[960px] min-h-0 md:min-h-[121px] pr-0 md:pr-3 border-b-0 md:border-b border-ds-border flex-col justify-center items-start self-stretch`}>
+          {/* Frame 2609981: Top Row */}
+          <div className="w-full h-[60px] py-2 flex flex-row items-center justify-between gap-4 self-stretch">
+            {/* Frame 2609064: Role + Time */}
+            <div className="flex-1 h-[44px] px-3 flex flex-col justify-center items-start gap-1 self-stretch min-w-0">
+              <h3 className="w-full h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 line-clamp-1 truncate flex items-center">
+                {listing.title}
+              </h3>
+              <span className="h-5 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate flex items-center">
+                {formatPostedTime(listing.posted_at || listing.last_edited)}
               </span>
+            </div>
+
+            {/* Frame 2609239: Status badge on right */}
+            <div className="hidden md:flex h-3 flex-row items-center justify-end shrink-0 gap-2">
+              <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase flex items-center ${statusUpper === 'ACTIVE'
+                  ? 'text-ds-success'
+                  : statusUpper === 'IN REVIEW' || statusUpper === 'IN_REVIEW'
+                    ? 'text-ds-accent'
+                    : statusUpper === 'CLOSED' || statusUpper === 'CLOSE'
+                      ? 'text-ds-warning'
+                      : 'text-ds-text-muted'
+                }`}>
+                {statusUpper === 'CLOSED' ? 'CLOSED' : statusUpper}
+              </span>
+            </div>
+          </div>
+
+          {/* Frame 2609980: Bottom Row */}
+          <div className="w-full flex flex-col md:flex-row md:justify-center md:items-center md:gap-3 self-stretch gap-3 mt-1 md:mt-0">
+            {/* 3 metric columns */}
+            <div className="w-full md:flex-1 h-[61px] flex flex-row items-center gap-3 min-w-0 border-b border-ds-border md:border-b-0 pb-2 md:pb-0">
+              {/* Frame 2608617: Applications */}
+              <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
+                <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                  {appCount}
+                </span>
+                <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                  Applications
+                </span>
+              </div>
+
+              {/* Frame 2609065: Shortlisted */}
+              <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
+                <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                  {shortlistCount}
+                </span>
+                <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                  Shortlisted
+                </span>
+              </div>
+
+              {/* Frame 2609240: Offer sent */}
+              <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
+                <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                  {offerCount}
+                </span>
+                <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                  Offer sent
+                </span>
+              </div>
+            </div>
+
+            {/* secondary button: View job details CTA */}
+            <button
+              type="button"
+              onClick={onViewDetails}
+              className="w-[143px] min-w-[143px] h-9 px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap focus:outline-none transition-all active:scale-95 cursor-pointer shrink-0"
+            >
+              View job details
             </button>
           </div>
         </div>
 
-        {isLoadingList ? (
-          <div className={`w-[998px] h-[300px] flex items-center justify-center bg-white ${t.card} border rounded-[24px] flex-none order-3 self-stretch grow-0 ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`}`}>
-            <Icon icon="svg-spinners:180-ring" className={`w-8 h-8 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`} />
-          </div>
-        ) : candidates.length === 0 ? (
-          <div className={`w-[998px] h-[300px] bg-white ${t.card} border rounded-[24px] flex flex-col items-center justify-center gap-4 text-center flex-none order-3 self-stretch grow-0 ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`}`}>
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isCompanyMode ? 'bg-blue-50 text-[#1A73E8]' : 'bg-indigo-50 text-indigo-500'}`}>
-              <Icon icon="hugeicons:job-search" className={`w-6 h-6`} />
-            </div>
-            <div className={`flex flex-col gap-1`}>
-              <span className={`text-black ${t.text} text-base font-semibold font-['Poppins']`}>No applicants yet</span>
-              <span className={`text-gray-400 text-xs font-['Poppins'] font-normal`}>Candidates who apply to this listing will appear here.</span>
-            </div>
-          </div>
-        ) : (
-          <div
-            className={`flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0`}
-          >
-            {/* Left Column: Candidates list (Frame 2609067) */}
-            <div
-              className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[294px] h-[574px] border rounded-[24px] flex-none order-0 grow-0 ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`}`}
-            >
-              {/* Header Container */}
-              <div
-                className={`flex flex-row justify-between items-center p-0 w-[270px] h-[40px] flex-none order-0 self-stretch grow-0`}
-              >
-                {/* Title and pagination frame (Frame 2609111) */}
-                <div
-                  className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[214px] h-[20px] flex-none order-0 grow-[1]`}
-                >
-                  <span
-                    className={`w-[86px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-[#000000] ${t.text} flex-none order-0 grow-0`}
+        {/* Frame 2609962: Subtabs and Candidates Content */}
+        <div className="w-full max-w-[960px] flex flex-col gap-5">
+          {/* Frame 2609735: Subtabs Bar */}
+          <div className="hidden md:flex w-full max-w-[960px] h-9 items-center justify-between">
+            {/* Frame 2609925: Subtabs Container */}
+            <div className="flex flex-row items-center gap-3 h-9">
+              {([
+                { name: 'Top match', width: 'w-[104px]' },
+                { name: 'Recent', width: 'w-[77px]' },
+                { name: 'Shortlisted', width: 'w-[107px]' },
+                { name: 'Noted', width: 'w-[71px]' },
+                { name: 'Pending', width: 'w-[85px]' },
+              ] as const).map(({ name, width }) => {
+                const isTabActive = filter === name;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setFilter(name as FilterOption)}
+                    className={`${width} h-9 px-3 py-1.5 flex items-center justify-center cursor-pointer focus:outline-none transition-colors shrink-0 drop-shadow-[0px_2px_4px_rgba(255,236,230,0.08)] ${isTabActive
+                        ? 'border-b-[1.5px] border-ds-accent text-ds-text-primary'
+                        : 'border-b-[1.5px] border-transparent text-ds-text-secondary hover:text-ds-text-primary'
+                      }`}
                   >
+                    <span className="text-base font-medium font-dm-sans leading-6 whitespace-nowrap">
+                      {name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Frame 2608633: Candidates Empty State (w: 960px, h: 324px) */}
+          {candidates.length === 0 && !isLoadingApplicants ? (
+            <div className="w-full max-w-[960px] h-[324px] pt-[60px] pb-[120px] flex flex-col items-center justify-start gap-2 select-none">
+              {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
+              <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
+                <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
+              </div>
+
+              {/* Text Container */}
+              <div className="flex flex-col items-center gap-2 text-center">
+                <h3 className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6">
+                  {listing.applicants_count === 0 || totalCandidates === 0 ? 'No applicants yet' : (EMPTY_STATE_CONFIG[filter]?.title ?? 'No applicants found')}
+                </h3>
+                <p className="max-w-[480px] text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 text-center">
+                  {listing.applicants_count === 0 || totalCandidates === 0 ? 'Candidates will appear here when they apply for this job' : (EMPTY_STATE_CONFIG[filter]?.subtitle ?? 'Candidates in this category will appear here when available.')}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full max-w-[960px] flex flex-col md:flex-row items-start justify-center gap-5 self-stretch">
+
+              {/* Frame 2609067: Left Column - Candidates Sidebar */}
+              <div className={`${isMobileDetailOpen ? "hidden md:flex" : "flex"} w-full md:w-[270px] py-3 rounded-3xl flex flex-col gap-4 shrink-0`}>
+                {/* Header: Container + Frame 2609111 */}
+                <div className="w-full flex flex-row justify-between items-center h-6 px-1">
+                  <span className="w-[86px] h-5 font-dm-sans font-normal text-sm leading-5 text-ds-text-primary uppercase tracking-wider flex items-center">
                     CANDIDATES
                   </span>
-
-                  {/* Pagination Next */}
-                  <div
-                    className={`flex flex-row justify-end items-center p-0 gap-[8px] w-[66px] h-[16px] rounded-[8px] flex-none order-1 grow-0`}
-                  >
-                    {/* Arrow Left */}
-                    <button
-                      type="button"
-                      className={`w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 ${t.ultraLight} rounded flex-none order-0 grow-0 text-slate-300`}
-                    >
-                      <Icon icon="lucide:chevron-left" className={`w-[16px] h-[16px]`} />
-                    </button>
-                    {/* Page Count */}
-                    <span
-                      className={`w-[18px] h-[16px] font-['Inter'] font-normal text-[16px] leading-[16px] text-[#1E1E1E] ${t.text} flex items-center justify-center flex-none order-1 grow-0`}
-                    >
-                      01
-                    </span>
-                    {/* Arrow Right */}
-                    <button
-                      type="button"
-                      className={`w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 ${t.ultraLight} rounded flex-none order-2 grow-0 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
-                    >
-                      <Icon icon="lucide:chevron-right" className={`w-[16px] h-[16px]`} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Filter Toggle Icon (Frame 2608536) */}
-                <div ref={dropdownRef} className={`relative flex-none order-1 grow-0`}>
+                  {/* Mobile Filter Button */}
                   <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     type="button"
-                    className={`relative w-[56px] h-[40px] flex items-center justify-center hover:bg-slate-50 ${t.ultraLight} rounded-[24px] transition-all active:scale-95`}
+                    onClick={() => setIsMobileFilterDrawerOpen(true)}
+                    className="flex md:hidden size-6 items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors cursor-pointer bg-transparent border-none outline-none"
+                    aria-label="Filter candidates"
                   >
-                    <Icon icon="iconoir:filter-list" className={`w-[24px] h-[24px] text-black ${t.text}`} />
+                    <CustomIcon name="filter" size={20} className="size-5 text-ds-text-primary" />
                   </button>
-
-                  {/* Candidates List Filter Dropdown */}
-                  {isDropdownOpen && (
-                    <div className={`absolute right-0 top-[45px] z-50 w-32 p-2 bg-white ${t.card} ${t.modalBg} rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${isCompanyMode ? 'outline-blue-50 shadow-[0_12px_32px_rgba(26,115,232,0.1)]' : 'outline-indigo-50 shadow-[0_12px_32px_rgba(99,102,241,0.1)]'
-                      }`}>
-                      {(['Top match', 'Recent', 'Shortlisted', 'Noted', 'Pending'] as FilterOption[]).map(
-                        (opt) => {
-                          const isOptActive = filter === opt;
-                          return (
-                            <button
-                              key={opt}
-                              onClick={() => {
-                                setFilter(opt);
-                                setIsDropdownOpen(false);
-                              }}
-                              className={`w-full flex items-center px-3 py-2 rounded-2xl text-sm font-medium font-['Poppins'] transition-colors ${isOptActive
-                                  ? (isCompanyMode ? 'bg-[#E8F0FE] text-[#1A73E8] dark:bg-[#16365F] dark:text-[#4D9CFF]' : 'bg-indigo-50 text-[#6366F1] dark:bg-[#252E54] dark:text-[#818CF8]')
-                                  : `text-gray-600 ${t.textMuted} hover:bg-slate-50 hover:${t.ultraLight}`
-                                }`}
-                            >
-                              {opt}
-                            </button>
-                          );
-                        }
-                      )}
+                  {/* Candidate Stepper: only show on desktop if candidates are present */}
+                  {totalCandidates > 0 && (
+                    <div className="hidden md:flex w-16 h-6 flex-row justify-end items-center gap-2 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={handleSelectPreviousCandidate}
+                        disabled={currentCandidateIndex <= 0}
+                        className="size-4 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary disabled:text-ds-text-muted disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer focus:outline-none transition-colors"
+                        aria-label="Previous candidate"
+                      >
+                        <Icon icon="solar:arrow-left-linear" className="size-4" />
+                      </button>
+                      <span className="w-5 h-6 font-dm-sans font-normal text-base leading-6 text-ds-text-primary text-center select-none">
+                        {String(currentCandidateIndex + 1).padStart(2, '0')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleSelectNextCandidate}
+                        disabled={currentCandidateIndex >= totalCandidates - 1}
+                        className="size-4 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary disabled:text-ds-text-muted disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer focus:outline-none transition-colors"
+                        aria-label="Next candidate"
+                      >
+                        <Icon icon="solar:arrow-right-linear" className="size-4" />
+                      </button>
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* List of candidate cards */}
-              <div className="flex flex-col items-start p-0 gap-[16px] w-[278px] h-auto flex-none order-1 grow-0">
-                {filteredCandidates.length === 0 ? (
-                  <div className="py-12 flex flex-col items-center justify-center gap-2 text-center w-full">
-                    <span className={`text-sm font-semibold text-gray-500 ${t.textMuted} font-['Poppins']`}>No candidates</span>
-                  </div>
-                ) : (
-                  filteredCandidates.map((cand) => {
-                    const isActive = selectedCandId === cand.applicationId;
-                    return (
+                {/* Frame 2609108: Candidates Card List */}
+                <div className="w-full flex flex-col gap-2">
+                  {isLoadingApplicants ? (
+                    [1, 2, 3].map((n) => (
                       <div
-                        key={cand.applicationId}
-                        onClick={() => setSelectedCandId(cand.applicationId)}
-                        className={`box-border flex flex-row items-center py-[12px] px-[16px] gap-[12px] w-[278px] h-[74px] rounded-[24px] cursor-pointer transition-all active:scale-[0.98] flex-none order-0 self-stretch grow-0 ${isActive
-                            ? (isCompanyMode ? 'bg-[#E8F0FE] border border-[#1A73E8] dark:bg-[#16365F] dark:border-[#4D9CFF]' : 'bg-indigo-50 border border-indigo-500 dark:bg-[#252E54] dark:border-[#818CF8]')
-                            : `bg-[#F9FAFF] ${t.ultraLight} border border-transparent hover:border-gray-200 hover:${t.borderLight}`
-                          }`}
+                        key={n}
+                        className="w-full md:w-[270px] h-[52px] px-3 py-2 rounded-xl bg-ds-surface-1/40 animate-pulse flex items-center gap-2 border border-ds-border/40"
                       >
-                        {cand.avatarUrl ? (
-                          <img
-                            className={`w-[50px] h-[50px] rounded-full object-cover flex-none order-0 grow-0`}
-                            src={cand.avatarUrl}
-                            alt={cand.name}
-                          />
-                        ) : (
-                          <div className={`w-[50px] h-[50px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 ${t.textMuted} font-semibold font-['Poppins'] text-sm flex-none order-0 grow-0`}>
-                            {cand.name.substring(0, 2).toUpperCase()}
-                          </div>
-                        )}
-
-                        {/* Text block */}
-                        <div className={`flex flex-col justify-center items-start p-0 gap-[4px] flex-1 min-w-0 h-[50px]`}>
-                          <span
-                            className={`w-full text-black ${t.text} text-[16px] font-medium font-['Poppins'] leading-[24px] truncate flex items-center capitalize`}
-                          >
-                            {cand.name}
-                          </span>
-
-                          <div className={`flex flex-row items-center p-0 gap-[4px] w-[97px] h-[26px] flex-none`}>
-                            {cand.matchScore != null ? (
-                              <>
-                                <span className={`w-[38px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
-                                  {cand.matchScore}%
-                                </span>
-                                <span className={`w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] ${t.textMuted}`}>
-                                  AI match
-                                </span>
-                              </>
-                            ) : (
-                              <span className={`text-[#6B7280] ${t.textMuted} text-[11px] font-normal font-['Poppins'] leading-[16px] flex items-center`}>
-                                Pending analysis
-                              </span>
-                            )}
-                          </div>
+                        <div className="size-8 rounded-full bg-ds-surface-2 shrink-0" />
+                        <div className="flex-1 flex flex-col gap-1.5">
+                          <div className="h-3 w-24 bg-ds-surface-2 rounded" />
+                          <div className="h-2.5 w-16 bg-ds-surface-2 rounded" />
                         </div>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            {/* Right Column: Candidate detail panel (Frame 2609089) */}
-            <div
-              className={`flex flex-col items-start p-0 gap-[16px] w-[688px] rounded-[24px] flex-none order-1 grow-[1] min-w-0`}
-            >
-              {/* Header metadata row / Frame 2608732 */}
-              <div
-                onClick={() => {
-                  if (candidateDetail?.isDeactivated) return;
-                  if (candidateDetail?.applicantId) {
-                    router.push(`/profile/${candidateDetail.applicantId}?source=job_application_dashboard`);
-                  }
-                }}
-                title={candidateDetail?.isDeactivated ? "User is no longer available" : undefined}
-                className={`flex flex-row justify-between items-center p-0 w-[688px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0 transition-colors ${candidateDetail?.isDeactivated ? 'cursor-default opacity-75' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2A2D35]'}`}
-              >
-                {/* User details / Frame 2608774 */}
-                <div className={`flex flex-row items-center p-0 gap-[8px] w-auto h-[44px] flex-none order-0 grow-0`}>
-                  {/* Ellipse 3 (Avatar) */}
-                  {candidateDetail?.avatarUrl ? (
-                    <img
-                      className={`w-[44px] h-[44px] rounded-full object-cover flex-none order-0 self-stretch grow-0`}
-                      src={candidateDetail?.avatarUrl}
-                      alt={candidateDetail?.name}
-                    />
+                    ))
+                  ) : candidates.length === 0 ? (
+                    <div className="w-full py-8 px-3 text-center text-xs text-ds-text-secondary bg-ds-surface-1/30 rounded-xl border border-ds-border/40 font-dm-sans">
+                      No applicants found
+                    </div>
                   ) : (
-                    <div className={`w-[44px] h-[44px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 ${t.textMuted} font-semibold font-['Poppins'] text-sm flex-none order-0 self-stretch grow-0`}>
-                      {candidateDetail?.name.substring(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                    candidates.map((cand, idx) => {
+                      const candId = cand.applicationId || cand.id || `cand-${idx}`;
+                      const isSelected = selectedCandId === candId;
+                      const score = cand.matchScore ?? cand.score;
 
-                  {/* Frame 2609009 */}
-                  <div className={`flex flex-col items-start p-0 gap-[4px] w-auto h-[44px] flex-none order-1 grow-0`}>
-                    {/* Name */}
-                    <span
-                      className={`w-auto h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${t.text} flex items-center text-left whitespace-nowrap`}
-                    >
-                      {candidateDetail?.name}
-                    </span>
-
-                    {/* Frame 2609097 */}
-                    <div className={`flex flex-row justify-start items-center p-0 gap-[8px] w-auto h-[16px] flex-none order-1 grow-0`}>
-                      {/* Role */}
-                      <span
-                        className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex items-center truncate`}
-                        style={{ maxWidth: '200px' }}
-                      >
-                        {candidateDetail?.headline}
-                      </span>
-                      {/* Badge (Ellipse 15) */}
-                      <div className={`w-[6px] h-[6px] bg-[#6B7280] rounded-full flex-none grow-0`} />
-                      {/* Location */}
-                      <span
-                        className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex items-center truncate`}
-                        style={{ maxWidth: '180px' }}
-                      >
-                        {candidateDetail?.location}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Match count frame (Frame 2609066) */}
-                {candidateAnalysis?.matchScore != null && (
-                  <div className={`flex flex-col justify-center items-start p-0 gap-[4px] w-[55px] h-[52px] flex-none order-1 grow-0`}>
-                    {/* Score text */}
-                    <span
-                      className={`w-[51px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center flex-none order-0 grow-0 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
-                    >
-                      {candidateAnalysis?.matchScore}%
-                    </span>
-                    {/* AI match text */}
-                    <span
-                      className={`w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] ${t.textMuted} flex-none order-1 grow-0`}
-                    >
-                      AI match
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Action frame (Frame 2609102) */}
-              <div
-                className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[688px] h-[40px] flex-none order-1 self-stretch grow-0`}
-              >
-                {/* Add a note button / Frame 2608618 */}
-                <button
-                  onClick={openNoteModal}
-                  type="button"
-                  className={`flex flex-row justify-center items-center p-0 gap-[10px] w-[77px] h-[20px] rounded-[24px] flex-none order-0 grow-0 cursor-pointer`}
-                >
-                  <span
-                    className={`w-[77px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#000000] ${t.text} flex-none order-0 grow-0`}
-                  >
-                    Add a note
-                  </span>
-                </button>
-
-                {/* Action Buttons — conditional on application status */}
-                <div className={`flex flex-row items-center p-0 gap-[16px] w-auto h-[40px] flex-none order-1 grow-0`}>
-                  {candidateDetail?.status === 'Shortlisted' ? (
-                    // Shortlisted: hide Decline, show disabled Shortlisted pill + Chat
-                    <>
-                      {/* Disabled Shortlisted pill */}
-                      <button
-                        disabled
-                        type="button"
-                        className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border border-white rounded-[24px] flex-none order-0 grow-0 opacity-75 cursor-default ${isCompanyMode ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'
-                          }`}
-                      >
-                        <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap`}>
-                          Shortlisted
-                        </span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (!canJobsChat || candidateDetail?.isDeactivated) return;
-                          router.push(`/messaging?userId=${candidateDetail.applicantId}&jobContext=${listing.id}`);
-                        }}
-                        disabled={!canJobsChat || candidateDetail?.isDeactivated}
-                        title={candidateDetail?.isDeactivated ? "User is no longer available" : (!canJobsChat ? "Permission required to chat with job candidates" : "")}
-                        type="button"
-                        className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-1 grow-0 transition-all ${(!canJobsChat || candidateDetail?.isDeactivated)
-                            ? 'opacity-50 cursor-default bg-gray-200 dark:bg-gray-800 text-gray-400 border-gray-300 dark:border-gray-700'
-                            : `hover:bg-slate-50 ${t.ultraLight} active:scale-95 ${isCompanyMode ? 'border-[#1A73E8] text-[#1A73E8]' : 'border-[#818CF8] text-[#818CF8]'
-                            }`
-                          }`}
-                      >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap">
-                          Chat
-                        </span>
-                      </button>
-                    </>
-                  ) : candidateDetail?.status === 'Rejected' ? (
-                    // Rejected: show only disabled Declined button; hide Shortlist
-                    <button
-                      disabled
-                      type="button"
-                      className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-0 grow-0 opacity-50 cursor-default ${isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
-                        }`}
-                    >
-                      <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#818CF8]'
-                        }`}>
-                        Declined
-                      </span>
-                    </button>
-                  ) : (
-                    // Default (Applied / in-review): show Decline + Shortlist
-                    <>
-                      {/* Decline Button */}
-                      <button
-                        onClick={() => handleDecline(selectedCandidate?.applicationId)}
-                        type="button"
-                        className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 ${t.ultraLight} transition-all active:scale-95 ${isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
-                          }`}
-                      >
-                        <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#818CF8]'
-                          }`}>
-                          Decline
-                        </span>
-                      </button>
-
-                      {/* Shortlist Button */}
-                      <button
-                        onClick={() => handleShortlist(selectedCandidate?.applicationId)}
-                        type="button"
-                        className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border border-white rounded-[24px] flex-none order-1 grow-0 transition-all active:scale-95 ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#5558e6]'
-                          }`}
-                      >
-                        <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap`}>
-                          Shortlist
-                        </span>
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Self Note Frame / Frame 2609091 */}
-              {candidateDetail?.selfNote && (
-                <div
-                  className={`flex flex-col items-start p-0 gap-[8px] w-[688px] flex-none order-2 self-stretch grow-0`}
-                >
-                  {/* Title */}
-                  <span
-                    className={`w-[80px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] text-left text-black ${t.text} flex items-center`}
-                  >
-                    Self Note
-                  </span>
-
-                  {/* Note body frame / Frame 2609030 */}
-                  <div
-                    className={`box-border flex flex-col items-start py-[12px] px-[16px] gap-[8px] w-[688px] border-l-2 rounded-tr-[16px] rounded-bl-[16px] rounded-br-[16px] flex-none order-1 self-stretch grow-0 ${isCompanyMode ? 'bg-[#F4F8FF] border-l-[#1A73E8]' : 'bg-[#F9FAFF] border-l-[#6366F1]'
-                      }`}
-                  >
-                    <span
-                      className={`w-[656px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex-none order-0 self-stretch grow-0 whitespace-pre-wrap break-words ${isNoteExpanded ? '' : 'line-clamp-2'}`}
-                    >
-                      {candidateDetail?.selfNote}
-                    </span>
-                    {candidateDetail?.selfNote && candidateDetail.selfNote.length > 150 && (
-                      <button
-                        onClick={() => setIsNoteExpanded(!isNoteExpanded)}
-                        className={`text-[12px] font-medium font-['Poppins'] hover:underline ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
-                      >
-                        {isNoteExpanded ? 'Read less' : 'Read more'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Resume PDF Frame / Frame 2608977 */}
-              <div
-                className={`flex flex-row justify-between items-center py-0 pr-[8px] pl-0 gap-[16px] w-[688px] h-[40px] rounded-[12px] flex-none order-3 self-stretch grow-0`}
-              >
-                {/* Doc Frame / Frame 2608990 */}
-                <div className={`flex flex-row items-center p-0 gap-[8px] w-[178px] h-[40px] flex-none order-0 grow-0`}>
-                  {/* Icon Frame / Frame 2608983 */}
-                  <div
-                    className={`flex flex-row justify-center items-center p-0 gap-[10px] w-[40px] h-[40px] rounded-[12px] bg-[#FFF5F5] flex-none order-0 grow-0 text-[#FF6B6B]`}
-                  >
-                    <Icon icon="lucide:file-text" className={`w-[20px] h-[26px]`} />
-                  </div>
-
-                  {/* Name frame / Frame 2608938 */}
-                  <div className={`flex flex-col justify-center items-start p-0 gap-[4px] w-[130px] h-[40px] flex-none order-1 grow-0`}>
-                    <span
-                      className={`w-[130px] h-[20px] font-['Poppins'] font-semibold text-[14px] text-left leading-[20px] text-black ${t.text} flex items-center truncate`}
-                    >
-                      {candidateDetail?.resumeName}
-                    </span>
-
-                    {/* Frame 2608988 */}
-                    <div className={`flex flex-row justify-start items-center p-0 gap-[8px] w-[63px] h-[16px] flex-none order-1 grow-0`}>
-                      <span className={`text-[#6B7280] ${t.textMuted} text-[10px] font-medium font-['Poppins'] uppercase`}>
-                        Document
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Eye Icon Button / Open eye */}
-                <button
-                  onClick={() => {
-                    if (candidateDetail?.resumeUrl) {
-                      window.open(candidateDetail.resumeUrl, '_blank');
-                    } else if (candidateDetail?.resumeName) {
-                      window.open(`/resumes/${candidateDetail.resumeName}`, '_blank');
-                    }
-                  }}
-                  type="button"
-                  className={`w-[24px] h-[24px] flex items-center justify-center p-0 hover:bg-slate-50 ${t.ultraLight} rounded flex-none order-1 grow-0`}
-                >
-                  <Icon icon="lucide:eye" className={`w-[24px] h-[24px] text-black ${t.text}`} />
-                </button>
-              </div>
-
-              {/* AI Executive Summary Block / Section - AI Executive Summary */}
-              {candidateAnalysis && (
-                <div
-                  className={`flex flex-col items-start p-[16px] gap-[16px] w-[688px] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border ${`${isCompanyMode ? "bg-[#F4F8FF]" : "bg-[#F9FAFF]"} ${t.card}`
-                    }`}
-                >
-                  {/* Title frame */}
-                  <div className={`flex flex-row items-center p-0 gap-[8px] w-[656px] h-auto flex-none order-0 self-stretch grow-0 flex-wrap`}>
-                    {/* AI Icon */}
-                    <img src="/assets/AI 2.svg" alt="AI Icon" className={`w-[20px] h-[20px] flex-none`} />
-
-                    {/* Heading */}
-                    <div className={`flex flex-col items-start p-0 h-[16px] flex-none order-1 grow-0`}>
-                      <span
-                        className={`h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center uppercase tracking-wider whitespace-nowrap ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
-                          }`}
-                      >
-                        AI Executive Summary
-                      </span>
-                    </div>
-
-                    {/* Fallback Badge */}
-                    {candidateAnalysis.analysisType === 'BACKEND' && (
-                      <span className={`text-[10px] text-amber-500 font-medium px-2 py-0.5 bg-amber-50 rounded-full border border-amber-200 ml-2 font-['Poppins']`}>
-                        System Match Fallback
-                      </span>
-                    )}
-                  </div>
-
-                  {candidateAnalysis.summary?.strengths ? (
-                    <>
-                      {/* Details container */}
-                      <div className={`flex flex-row items-start p-0 pb-[8px] gap-[16px] w-[656px] h-auto flex-none order-1 self-stretch grow-0 flex-wrap md:flex-nowrap`}>
-                        {/* Left frame (strengths) */}
-                        <div className={`flex flex-col items-start p-0 gap-[12px] w-[320px] h-auto flex-none order-0 self-stretch grow-[1]`}>
-                          <span
-                            className={`w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#22C55E] uppercase tracking-wider`}
-                          >
-                            Strengths
-                          </span>
-
-                          {/* Frame 2609109 */}
-                          <div className={`flex flex-col items-start p-0 gap-[8px] w-auto h-auto flex-none order-1 grow-[1]`}>
-                            {candidateAnalysis.summary.strengths.map((str: string, idx: number) => (
-                              <span
-                                key={idx}
-                                className={`w-auto font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black ${t.text}`}
-                              >
-                                • {str}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Right frame (concerns) */}
-                        <div className={`flex flex-col items-start p-0 pb-[12px] gap-[12px] w-[320px] h-auto flex-none order-1 self-stretch grow-[1]`}>
-                          <span
-                            className={`w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#FF6B6B] uppercase tracking-wider`}
-                          >
-                            Concerns
-                          </span>
-
-                          <div className={`flex flex-col items-start p-0 gap-[8px] w-auto h-auto flex-none order-1 grow-[1]`}>
-                            {candidateAnalysis.summary.concerns.map((con: string, idx: number) => (
-                              <span
-                                key={idx}
-                                className={`w-auto font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black ${t.text}`}
-                              >
-                                • {con}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Recommendation frame / HorizontalBorder */}
-                      <div
-                        className={`box-border flex flex-col items-start pt-[16px] px-0 pb-0 w-[656px] min-h-[49px] h-auto border-t flex-none order-2 self-stretch grow-0 ${isCompanyMode ? 'border-t-[#E8F0FE]' : 'border-t-[#E0E7FF]'
-                          }`}
-                      >
-                        <div className={`w-[656px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black ${t.text} text-left`}>
-                          <span className={`font-semibold mr-1 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>Recommendation:</span>
-                          <span>{candidateAnalysis.summary.recommendation}</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className={`flex flex-col items-center justify-center py-[24px] gap-[16px] w-[656px] border border-dashed rounded-[16px] bg-white ${t.card} ${isCompanyMode ? 'border-[#ADCCFF]' : 'border-[#C7D2FE]'
-                      }`}>
-                      <div className={`flex flex-row items-center gap-[8px] ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
-                        <Icon icon="lucide:sparkles" className={`w-[20px] h-[20px] animate-pulse`} />
-                        <span className={`font-semibold text-xs uppercase tracking-wider font-['Poppins']`}>AI Insight Pending</span>
-                      </div>
-                      <p className={`text-[12px] text-gray-500 ${t.textMuted} text-center max-w-[420px] font-['Poppins'] leading-[18px] px-[16px]`}>
-                        AI analysis was deferred for this application due to the minimum application pool gate. Generate it manually to see strengths, concerns, and matching recommendations.
-                      </p>
-                      <button
-                        onClick={handleTriggerAI}
-                        disabled={isAnalyzing}
-                        type="button"
-                        className={`flex flex-row justify-center items-center py-[8px] px-[20px] text-white text-[12px] font-semibold rounded-[24px] transition-all disabled:opacity-50 font-['Poppins'] cursor-pointer border-0 outline-0 ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#5558e6]'
-                          }`}
-                      >
-                        {isAnalyzing ? (
-                          <div className={`flex flex-row items-center gap-[8px]`}>
-                            <Icon icon="lucide:loader-2" className={`w-[14px] h-[14px] animate-spin`} />
-                            <span>Analyzing...</span>
-                          </div>
-                        ) : (
-                          <span>Generate AI Summary ✨</span>
-                        )}
-                      </button>
-                      {analyzeError && (
-                        <p className={`text-[11px] text-red-400 text-center font-['Poppins'] mt-[-8px]`}>{analyzeError}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Skills match / Skills Match */}
-              {(candidateAnalysis?.skills || (candidateDetail?.skills && candidateDetail.skills.length > 0)) && (
-                <div
-                  className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[688px] bg-white ${t.card} border rounded-[24px] flex-none order-4 self-stretch grow-0 ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`
-                    }`}
-                >
-                  {/* Title frame / Frame 2609098 */}
-                  <div className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[662px] h-[31px] flex-none self-stretch grow-0`}>
-                    <span
-                      className={`w-[40px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black ${t.text}`}
-                    >
-                      Skills
-                    </span>
-                    {candidateAnalysis?.skills?.match != null && (
-                      <span className={`font-['Poppins'] font-bold text-[11px] leading-[15px] flex items-center uppercase tracking-wider ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
-                        }`}>
-                        {candidateAnalysis.skills.match}% Match
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Skills chip frame / Container */}
-                  <div className={`flex flex-row items-center p-0 gap-[8px] w-[662px] min-h-[32px] h-auto flex-none self-stretch grow-0 flex-wrap`}>
-                    {candidateAnalysis?.skills?.tags
-                      ? candidateAnalysis.skills.tags.map((tag: { name: string; matched: boolean }, idx: number) => (
+                      return (
                         <div
-                          key={idx}
-                          className={`flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none ${tag.matched
-                              ? (isCompanyMode ? 'bg-[#E8F0FE] dark:bg-[#16365F]' : 'bg-[#EEF2FF] dark:bg-[#252E54]')
-                              : 'bg-[#FFF1F1] dark:bg-[#4A1C1C]'
+                          key={candId}
+                          onClick={() => { setSelectedCandId(candId); setIsMobileDetailOpen(true); }}
+                          className={`w-full md:w-[270px] px-3 py-2 rounded-xl flex flex-row items-center gap-2 cursor-pointer transition-all select-none ${isSelected
+                              ? 'bg-ds-surface-2'
+                              : 'hover:bg-ds-surface-1/40'
                             }`}
                         >
-                          <span
-                            className={`font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center ${tag.matched
-                                ? (isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]')
-                                : 'text-[#FF6B6B] dark:text-[#F87171]'
-                              }`}
-                          >
-                            {tag.name}
-                          </span>
-                        </div>
-                      ))
-                      : candidateDetail?.skills?.map((t: string | any, idx: number) => {
-                        const skillName = typeof t === 'string' ? t : t.name;
-                        return (
-                          <div
-                            key={idx}
-                            className={`flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none ${isCompanyMode ? 'bg-[#E8F0FE] dark:bg-[#16365F]' : 'bg-[#EEF2FF] dark:bg-[#252E54]'
-                              }`}
-                          >
-                            <span
-                              className={`font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'
-                                }`}
-                            >
-                              {skillName}
+                          {/* Avatar */}
+                          <Avatar
+                            src={cand.avatarUrl || cand.avatar}
+                            name={cand.name}
+                            isCompany={false}
+                            className="size-8"
+                          />
+                          {/* Frame 2609105: Candidate Info */}
+                          <div className="flex-1 flex flex-col justify-start items-start gap-1 min-w-0">
+                            <span className={`w-full text-base font-medium font-dm-sans leading-6 truncate flex items-center ${score != null ? 'text-ds-text-primary' : 'text-ds-text-secondary'
+                              }`}>
+                              {cand.name || 'Unknown User'}
                             </span>
+                            {/* Frame 2609066 */}
+                            <div className="flex flex-row items-center gap-1 h-6">
+                              {score != null ? (
+                                <>
+                                  <span className={`${score < 20 ? 'text-ds-error font-medium' : 'text-ds-accent'} text-base font-normal font-dm-sans leading-6 flex items-center`}>
+                                    {score}%
+                                  </span>
+                                  <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 flex items-center">
+                                    AI match
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 flex items-center">
+                                  Pending analysis
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        );
-                      })
-                    }
-                  </div>
-
-                  {/* Summary text */}
-                  <span
-                    className={`w-auto font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black ${t.text}`}
-                  >
-                    {candidateAnalysis?.skills?.summary ?? "Candidate's listed skills."}
-                  </span>
-                </div>
-              )}
-
-
-              {/* Meta section (Experience & Qualification side-by-side) / Frame 2609110 */}
-              {candidateAnalysis?.experience && candidateAnalysis?.qualification && (
-                <div className={`flex flex-row items-start p-0 gap-[16px] w-[688px] h-[197px] flex-none order-5 self-stretch grow-0`}>
-                  {/* Left Experience frame / Experience Match */}
-                  <div
-                    className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white ${t.card} border rounded-[16px] flex-none order-0 self-stretch grow-[1] ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`
-                      }`}
-                  >
-                    {/* Title frame */}
-                    <div className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0`}>
-                      <span
-                        className={`w-[88px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black ${t.text}`}
-                      >
-                        Experience
-                      </span>
-
-                      {/* Status */}
-                      <span
-                        className={`w-[47px] h-[15px] font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center uppercase ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
-                          }`}
-                      >
-                        {candidateAnalysis.experience.status}
-                      </span>
-                    </div>
-
-                    {/* Exp match frame */}
-                    <div className={`flex flex-row justify-between items-center py-[8px] px-0 gap-[5.3px] w-[310px] h-[68px] flex-none self-stretch grow-0`}>
-                      {/* Required box */}
-                      <div className={`flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-0 grow-0`}>
-                        <span
-                          className={`font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] ${t.textMuted}`}
-                        >
-                          REQUIRED
-                        </span>
-                        <div className={`flex flex-col items-start p-0 opacity-50 flex-none order-1 grow-0`}>
-                          <span className={`h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black ${t.text} whitespace-nowrap`}>
-                            {candidateAnalysis.experience.required}
-                          </span>
                         </div>
-                      </div>
-
-                      {/* Arrow */}
-                      <div className={`flex flex-col justify-end items-center p-0 pb-[6px] h-[52px] flex-none order-1 grow-0 ${isCompanyMode ? 'text-[#ADCCFF]' : 'text-[#C7D2FE]'}`}>
-                        <Icon icon="lucide:arrow-right" className={`w-5 h-5`} />
-                      </div>
-
-                      {/* Actual box */}
-                      <div className={`flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-2 grow-0`}>
-                        <span
-                          className={`font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#000000] ${t.text}`}
-                        >
-                          ACTUAL
-                        </span>
-                        <span className={`h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black ${t.text} whitespace-nowrap`}>
-                          {candidateAnalysis.experience.actual}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Exceeds text */}
-                    <span
-                      className={`w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black ${t.text}`}
-                    >
-                      {candidateAnalysis.experience.summary}
-                    </span>
-                  </div>
-
-                  {/* Right Qualification frame / Education Match */}
-                  <div
-                    className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white ${t.card} border rounded-[16px] flex-none order-1 self-stretch grow-[1] ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`
-                      }`}
-                  >
-                    {/* Title frame */}
-                    <div className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0`}>
-                      <span
-                        className={`w-[103px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black ${t.text}`}
-                      >
-                        Qualification
-                      </span>
-
-                      {/* Status */}
-                      <span
-                        className={`w-[45px] h-[15px] font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center uppercase ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
-                          }`}
-                      >
-                        PROVIDED
-                      </span>
-                    </div>
-
-                    {/* Top education frame / Margin */}
-                    <div className={`flex flex-col items-start p-0 w-[310px] h-[60px] flex-none self-stretch grow-0`}>
-                      <span
-                        className={`w-[294px] h-[24px] font-['Poppins'] font-normal text-[16px] leading-[24px] flex items-center text-black ${t.text} truncate`}
-                      >
-                        {candidateAnalysis.qualification.degree}
-                      </span>
-                      <span
-                        className={`w-[294px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] ${t.textMuted} uppercase mt-[4px]`}
-                      >
-                        {candidateAnalysis.qualification.class}
-                      </span>
-                    </div>
-
-                    {/* Aligns text */}
-                    <span
-                      className={`w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black ${t.text}`}
-                    >
-                      {candidateAnalysis.qualification.summary}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-      {/* MOBILE LAYOUT */}
-      <div className="flex md:hidden flex-col w-full min-h-[100dvh] bg-white dark:bg-[#0F1115] pb-[100px] animate-in fade-in duration-300">
-        {mobileView === 'list' ? (
-          <>
-            {/* Mobile List Header */}
-            <div className="flex flex-row items-center p-4 gap-4 w-full">
-              <button
-                onClick={onBack}
-                type="button"
-                className={`size-12 p-2 rounded-[100px] border border-zinc-300 ${t.border} flex justify-center items-center gap-2.5 active:scale-95`}
-              >
-                <Icon icon="lucide:chevron-left" className={`w-6 h-6 text-gray-500 ${t.textMuted}`} />
-              </button>
-              <div className="flex flex-col">
-                <span className={`text-lg font-medium ${t.text}`}>Applicants</span>
-                <span className={`text-xs ${t.textMuted}`}>Review and shortlist candidates with AI</span>
-              </div>
-            </div>
-
-            {/* Mobile Job Info Card */}
-            <div className="px-4 w-full mb-6">
-              <div className={`w-full p-4 bg-white ${t.card} ${t.bg} rounded-2xl border border-zinc-200 ${t.border} shadow-sm flex flex-col gap-4`}>
-                {/* Logo & Title */}
-                <div className="flex flex-row items-center gap-3">
-                  <div className="w-12 h-12 bg-black rounded-xl overflow-hidden flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                    {(listing as any).company_logo ? <img src={(listing as any).company_logo} alt="" className="w-full h-full object-cover" /> : '∞'}
-                  </div>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className={`text-base font-medium ${t.text} truncate`}>{listing.title}</span>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-[#22C55E] font-medium">Active</span>
-                      <span className={`${t.textMuted}`}>•</span>
-                      <span className={`${t.textMuted} truncate`}>Posted {listing.posted_at || '2h ago'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="flex flex-row justify-between pt-2">
-                  <div className="flex flex-col">
-                    <span className={`text-base font-semibold ${t.text}`}>{appCount}</span>
-                    <span className={`text-xs ${t.textMuted}`}>Applications</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className={`text-base font-semibold ${t.text}`}>{shortlistCount}</span>
-                    <span className={`text-xs ${t.textMuted}`}>Shortlisted</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className={`text-base font-semibold ${t.text}`}>{listing.offers_count || 0}</span>
-                    <span className={`text-xs ${t.textMuted}`}>Offer sent</span>
-                  </div>
-                </div>
-
-                {/* Action Link */}
-                <div className="w-full text-center mt-2">
-                  <button onClick={onViewDetails} className={`text-sm font-medium ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
-                    View job details
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile Candidates Header */}
-            <div className="flex flex-row items-center justify-between px-4 mb-4">
-              <span className={`text-sm font-medium tracking-wider ${t.text}`}>CANDIDATES</span>
-              <button
-                onClick={() => setIsDropdownOpen(true)}
-                className={`p-2 active:scale-95`}
-              >
-                <Icon icon="iconoir:filter-list" className={`w-6 h-6 ${t.text}`} />
-              </button>
-            </div>
-
-            {/* Mobile Candidates List */}
-            <div className="flex flex-col px-4 gap-4">
-              {filteredCandidates.length === 0 ? (
-                <div className="py-12 flex flex-col items-center justify-center gap-2 text-center w-full">
-                  <span className={`text-xs font-semibold ${t.textMuted}`}>No candidates</span>
-                </div>
-              ) : (
-                filteredCandidates.map((cand) => (
-                  <div
-                    key={cand.applicationId}
-                    onClick={() => {
-                      setSelectedCandId(cand.applicationId);
-                      setMobileView('detail');
-                    }}
-                    className="flex flex-row items-center gap-3 w-full active:scale-95 transition-transform"
-                  >
-                    {cand.avatarUrl ? (
-                      <img src={cand.avatarUrl} alt={cand.name} className="w-[50px] h-[50px] rounded-full object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-[50px] h-[50px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 font-semibold text-sm flex-shrink-0">
-                        {cand.name.substring(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className={`text-base font-medium ${t.text} truncate capitalize`}>{cand.name}</span>
-                      {cand.matchScore != null ? (
-                        <div className="flex items-center gap-1">
-                          <span className={`font-medium text-sm ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>{cand.matchScore}%</span>
-                          <span className={`text-xs ${t.textMuted}`}>AI match</span>
-                        </div>
-                      ) : (
-                        <span className={`text-xs ${t.textMuted}`}>Pending analysis</span>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Mobile Filter Bottom Sheet */}
-            {isDropdownOpen && (
-              <>
-                <div className="fixed inset-0 z-[79] bg-black/50" onClick={() => setIsDropdownOpen(false)} />
-                <div className={`fixed inset-x-0 bottom-0 z-[80] bg-white ${t.card} ${t.bg} rounded-t-[32px] pt-8 pb-12 px-6 flex flex-col gap-6 animate-in slide-in-from-bottom-full duration-300`}>
-                  {(['Top match', 'Recent', 'Shortlisted', 'Noted', 'Pending'] as FilterOption[]).map(opt => (
-                    <button
-                      key={opt}
-                      onClick={() => {
-                        setFilter(opt);
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`text-left text-lg font-medium ${filter === opt ? (isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]') : t.text}`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Mobile Detail View */}
-            <div className="flex flex-row items-center p-4 gap-4 w-full">
-              <button
-                onClick={() => setMobileView('list')}
-                type="button"
-                className={`size-12 p-2 rounded-[100px] border border-zinc-300 ${t.border} flex justify-center items-center gap-2.5 active:scale-95`}
-              >
-                <Icon icon="lucide:chevron-left" className={`w-6 h-6 text-gray-500 ${t.textMuted}`} />
-              </button>
-              <div className="flex flex-col">
-                <span className={`text-lg font-medium ${t.text}`}>Candidate detail</span>
-                <span className={`text-xs ${t.textMuted}`}>Shortlist the best match</span>
-              </div>
-            </div>
-
-            {candidateDetail && (
-              <div className="flex flex-col w-full px-4 gap-6">
-
-                {/* Profile Header */}
-                <div className="flex flex-row justify-between items-start w-full">
-                  <div className="flex flex-row items-center gap-3">
-                    {candidateDetail.avatarUrl ? (
-                      <img src={candidateDetail.avatarUrl} alt={candidateDetail.name} className="w-[50px] h-[50px] rounded-full object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-[50px] h-[50px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 font-semibold text-sm flex-shrink-0">
-                        {candidateDetail.name.substring(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex flex-col">
-                      <span className={`text-base font-medium ${t.text}`}>{candidateDetail.name}</span>
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className={`truncate max-w-[100px] ${t.textMuted}`}>{candidateDetail.headline}</span>
-                        <span className={`${t.textMuted}`}>•</span>
-                        <span className={`truncate max-w-[80px] ${t.textMuted}`}>{candidateDetail.location}</span>
-                      </div>
-                    </div>
-                  </div>
-                  {candidateAnalysis?.matchScore != null && (
-                    <div className="flex flex-col items-end">
-                      <span className={`text-lg font-medium ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>{candidateAnalysis.matchScore}%</span>
-                      <span className={`text-[10px] ${t.textMuted}`}>AI match</span>
-                    </div>
+                      );
+                    })
                   )}
                 </div>
+              </div>
 
-                {/* Mobile Action Row */}
-                <div className="flex flex-row items-center gap-2 w-full">
-                  <button onClick={openNoteModal} className={`text-sm font-medium whitespace-nowrap ${t.text}`}>
-                    Add a note
-                  </button>
-                  <div className="flex-1" />
-                  <button className={`px-4 py-2 rounded-full border border-[#1A73E8] text-[#1A73E8] ${isCompanyMode ? '' : 'border-indigo-500 text-indigo-500'} text-sm font-medium`} onClick={() => handleDecline(selectedCandidate?.applicationId)}>
-                    Decline
-                  </button>
-                  <button className={`px-4 py-2 rounded-full ${isCompanyMode ? 'bg-[#1A73E8]' : 'bg-indigo-500'} text-white text-sm font-medium`} onClick={() => handleShortlist(selectedCandidate?.applicationId)}>
-                    Shortlist
-                  </button>
+              {/* Frame 2609089: Right Column - Candidate Detail Pane */}
+              {isLoadingApplicants ? (
+                <div className={`${isMobileDetailOpen ? 'flex' : 'hidden md:flex'} flex-1 w-full md:w-[670px] max-w-[670px] p-8 rounded-3xl border border-ds-border bg-ds-surface-1/20 flex-col items-center justify-center gap-3 min-h-[360px]`}>
+                  <div className="size-6 border-2 border-ds-accent border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs text-ds-text-secondary font-dm-sans">Loading applicant details...</span>
                 </div>
-
-                {/* Self Note Card (If exists) */}
-                {candidateDetail.selfNote && (
-                  <div className={`w-full p-4 rounded-xl bg-[#F8FAFC] ${t.ultraLight} flex flex-col gap-2`}>
-                    <span className={`text-sm font-semibold ${t.text}`}>Self Note</span>
-                    <span className={`text-sm ${t.textMuted}`}>
-                      {candidateDetail.selfNote}
-                    </span>
+              ) : !activeCandidate || candidates.length === 0 ? (
+                <div className={`${isMobileDetailOpen ? 'flex' : 'hidden md:flex'} flex-1 w-full md:w-[670px] max-w-[670px] p-8 rounded-3xl border border-ds-border bg-ds-surface-1/20 flex-col items-center justify-center text-center gap-3 min-h-[360px]`}>
+                  <div className="size-12 rounded-full bg-ds-surface-2 flex items-center justify-center text-ds-text-muted">
+                    <Icon icon="solar:users-group-two-rounded-linear" className="size-6" />
                   </div>
-                )}
+                  <div className="flex flex-col gap-1">
+                    <h3 className="font-dm-sans font-medium text-base text-ds-text-primary">No Applicant Selected</h3>
+                    <p className="font-dm-sans text-xs text-ds-text-secondary max-w-[280px]">
+                      {filter === 'Shortlisted'
+                        ? 'No candidates have been shortlisted yet.'
+                        : 'There are currently no applicants for this position.'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className={`${isMobileDetailOpen ? 'flex' : 'hidden md:flex'} flex-1 w-full md:w-[670px] max-w-[670px] rounded-3xl flex flex-col gap-5 min-w-0`}>
+                  {/* Frame 2609088: Candidate Header & Actions */}
+                  <div className="w-full flex flex-col gap-2">
+                    {/* Frame 2608732: Top row */}
+                    <div className="w-full h-[52px] rounded-xl flex flex-row justify-between items-center">
+                      {/* Frame 2608774 / 2608571: User details */}
+                      <div
+                        onClick={() => {
+                          const targetId =
+                            candidateDetail?.accountName ||
+                            activeCandidate?.accountName ||
+                            candidateDetail?.username ||
+                            activeCandidate?.username ||
+                            candidateDetail?.applicantId ||
+                            activeCandidate?.applicantId ||
+                            (activeCandidate as any)?.userId ||
+                            (activeCandidate as any)?.user_id;
+                          if (targetId) {
+                            if (typeof window !== "undefined") {
+                              sessionStorage.setItem("coming_from_job_detail", "true");
+                              const returnUrl = (window.location.pathname + window.location.search);
+                              sessionStorage.setItem("nav_memory_jobs", returnUrl);
+                              sessionStorage.setItem("nav_memory_jobs_return", returnUrl);
+                            }
+                            const returnUrl = typeof window !== "undefined" ? (window.location.pathname + window.location.search) : "/jobs";
+                            router.push(`/profile/${targetId}?source=job_application_dashboard&returnTo=${encodeURIComponent(returnUrl)}`);
+                          }
+                        }}
+                        className="flex flex-row items-center gap-2 h-9 cursor-pointer group"
+                      >
+                        <Avatar
+                          src={displayAvatar}
+                          name={displayName}
+                          isCompany={false}
+                          className="size-8"
+                        />
+                        {/* Frame 2608568 */}
+                        <div className="flex flex-col items-start h-9 justify-center">
+                          <span className="text-ds-text-primary group-hover:text-ds-accent text-base font-semibold font-dm-sans leading-6 transition-colors">
+                            {displayName || 'Unknown User'}
+                          </span>
+                          <span className="text-ds-text-primary text-[10px] font-normal font-dm-sans leading-3">
+                            {displayHeadline}
+                          </span>
+                        </div>
+                      </div>
 
-                {/* Resume Card */}
-                {candidateDetail.resume && (
-                  <div className="flex flex-row items-center justify-between w-full" onClick={() => {
-                    if (candidateDetail?.resumeUrl) {
-                      window.open(candidateDetail.resumeUrl, '_blank');
-                    } else if (candidateDetail?.resumeName) {
-                      window.open(`/resumes/${candidateDetail.resumeName}`, '_blank');
-                    }
-                  }}>
-                    <div className="flex flex-row items-center gap-3">
-                      <Icon icon="carbon:document-pdf" className="w-8 h-8 text-[#FF6B6B]" />
-                      <div className="flex flex-col">
-                        <span className={`text-sm font-medium ${t.text}`}>{candidateDetail.name.split(' ')[0]}.cv.pdf</span>
-                        <span className={`text-[10px] uppercase ${t.textMuted}`}>DOCUMENT</span>
+                      {/* Frame 2609066: AI Match Score */}
+                      <div className="flex flex-col justify-center items-end h-[52px] gap-1">
+                        <span className={`${(displayScore ?? 0) < 20 ? 'text-ds-error' : 'text-ds-accent'} font-dm-sans font-semibold text-2xl leading-8 flex items-center`}>
+                          {displayScore != null ? `${displayScore}%` : '--'}
+                        </span>
+                        <span className="text-ds-text-secondary font-dm-sans font-normal text-xs leading-4 flex items-center">
+                          AI match
+                        </span>
                       </div>
                     </div>
-                    <Icon icon="lucide:eye" className={`w-5 h-5 ${t.text} cursor-pointer`} />
+
+                    {/* Frame 2609102: Actions Row */}
+                    <div className="w-full h-9 flex flex-row justify-between items-center gap-2 pt-1">
+                      {/* Frame 2608618: Add a note */}
+                      <button
+                        type="button"
+                        onClick={openNoteModal}
+                        className="text-ds-text-primary hover:text-ds-accent text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer focus:outline-none"
+                      >
+                        Add a note
+                      </button>
+
+                      {/* Frame 2609476: Action buttons */}
+                      <div className="flex flex-row items-center gap-2 h-9">
+                        {activeCandidate?.status === 'Shortlisted' ? (
+                          <>
+                            <button
+                              disabled
+                              type="button"
+                              className="min-w-[112px] h-9 px-4 py-1.5 bg-ds-accent text-ds-text-primary rounded-full text-base font-medium font-dm-sans leading-6 opacity-85 cursor-default text-center whitespace-nowrap"
+                            >
+                              Shortlisted
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!canJobsChat) return;
+                                router.push(`/messaging?jobContext=${listing.id}`);
+                              }}
+                              disabled={!canJobsChat}
+                              className="w-[89px] h-9 px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-colors text-center cursor-pointer whitespace-nowrap"
+                            >
+                              Chat
+                            </button>
+                          </>
+                        ) : activeCandidate?.status === 'Rejected' ? (
+                          <button
+                            disabled
+                            type="button"
+                            className="min-w-[96px] h-9 px-3.5 py-1.5 rounded-full border border-ds-border text-ds-text-secondary text-base font-medium font-dm-sans leading-6 opacity-60 cursor-default text-center whitespace-nowrap"
+                          >
+                            Declined
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleShortlist(activeCandidate?.applicationId || activeCandidate?.id)}
+                              className="w-[89px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary rounded-full text-base font-medium font-dm-sans leading-6 transition-all active:scale-95 text-center cursor-pointer focus:outline-none whitespace-nowrap"
+                            >
+                              Shortlist
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDecline(activeCandidate?.applicationId || activeCandidate?.id)}
+                              className="w-[89px] h-9 px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-all active:scale-95 text-center cursor-pointer focus:outline-none whitespace-nowrap"
+                            >
+                              Decline
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )}
 
-                {/* AI Summary Card */}
-                {candidateAnalysis && (
-                  <div className={`w-full p-4 rounded-xl bg-white ${t.card} border border-[#EEF2FF] ${t.bg} ${t.borderLight} shadow-sm flex flex-col gap-4`}>
-                    <div className="flex items-center gap-2">
-                      <Icon icon="hugeicons:sparkles" className={`w-4 h-4 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500'}`} />
-                      <span className={`text-xs font-semibold tracking-wider uppercase ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500'}`}>AI Executive Summary</span>
+                  {/* Frame 2609091: Self Note Card */}
+                  {displaySelfNote && (
+                    <div className="w-full flex flex-col gap-2">
+                      <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
+                        Self Note
+                      </span>
+                      {/* Frame 2609031 */}
+                      <div className="w-full p-3 bg-ds-surface-1 border-l-2 border-ds-accent rounded-tr-2xl rounded-bl-2xl rounded-br-2xl flex flex-col gap-2">
+                        <p className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 break-words">
+                          {displaySelfNote}
+                        </p>
+                      </div>
                     </div>
+                  )}
 
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-[#22C55E] tracking-wider">STRENGTHS</span>
-                      <ul className={`list-disc pl-4 text-xs leading-5 ${t.text}`}>
-                        {candidateAnalysis.summary.strengths.map((str: string, i: number) => (
-                          <li key={i}>{str}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-[#FF6B6B] tracking-wider">CONCERNS</span>
-                      <ul className={`list-disc pl-4 text-xs leading-5 ${t.text}`}>
-                        {candidateAnalysis.summary.concerns.map((c: string, i: number) => (
-                          <li key={i}>{c}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className={`pt-4 border-t border-[#EEF2FF] ${t.borderLight}`}>
-                      <span className={`text-xs leading-5 ${t.textMuted}`}>
-                        <span className={`font-medium ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500'}`}>Recommendation: </span>
-                        {candidateAnalysis.summary.recommendation}
+                  {/* Frame 2608977: Resume PDF Row */}
+                  <div className="w-full h-5 pr-2 flex flex-row justify-between items-center gap-4">
+                    {/* Frame 2608990 */}
+                    <div className="flex flex-row items-center gap-2 min-w-0 h-5">
+                      <PdfFileIcon className="w-5 h-5 text-ds-text-primary shrink-0" />
+                      <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate">
+                        {displayResumeName}
                       </span>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (candidateDetail?.resumeUrl) {
+                          window.open(candidateDetail.resumeUrl, '_blank');
+                        } else {
+                          toast({ title: 'Resume Preview', description: `Viewing document: ${displayResumeName}` });
+                        }
+                      }}
+                      className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent cursor-pointer focus:outline-none transition-colors shrink-0"
+                      aria-label="View resume"
+                    >
+                      <EyeIcon className="w-5 h-5 text-ds-text-primary hover:text-ds-accent transition-colors" />
+                    </button>
                   </div>
-                )}
 
-                {/* Skills Card */}
-                {candidateAnalysis?.skills && (
-                  <div className="w-full flex flex-col gap-3">
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm font-medium ${t.text}`}>Skills</span>
-                      <span className={`text-[10px] font-bold ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'} tracking-wider uppercase`}>{candidateAnalysis.skills.match}% MATCH</span>
+                  {/* Section - AI Executive Summary */}
+                  <div className="w-full min-h-[211px] p-3 rounded-2xl border border-ds-border flex flex-col gap-3">
+                    <div className="w-full flex items-center justify-between">
+                      {/* Container */}
+                      <div className="flex items-center gap-2">
+                        <CyphexAIIcon className="w-5 h-5 text-ds-accent shrink-0 flex-none" />
+                        <span className="text-ds-accent font-dm-sans font-normal text-xs leading-4 uppercase tracking-wider">
+                          AI EXECUTIVE SUMMARY
+                        </span>
+                      </div>
+                      {displayScore == null && (
+                        <button
+                          type="button"
+                          onClick={handleTriggerAI}
+                          disabled={isAnalyzing}
+                          className="px-2.5 py-1 text-xs font-medium text-ds-text-primary bg-ds-accent rounded-full hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
+                        >
+                          {isAnalyzing ? 'Analyzing...' : 'Generate AI Summary ✨'}
+                        </button>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {candidateAnalysis.skills.tags.map((tag: any, i: number) => (
-                        <div key={i} className={`px-3 py-1 rounded-full text-xs font-medium ${tag.matched ? (isCompanyMode ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-indigo-50 text-indigo-500') : 'bg-red-50 text-red-400'}`}>
-                          {tag.name}
+
+                    {analyzeError && (
+                      <p className="text-xs text-ds-error font-dm-sans">{analyzeError}</p>
+                    )}
+
+                    {displaySummary ? (
+                      <>
+                        <div className="w-full pb-2 flex flex-col sm:flex-row items-start gap-6">
+                          {/* Strengths */}
+                          <div className="flex-1 flex flex-col items-start gap-3 w-full">
+                            <span className="text-ds-success font-dm-sans text-xs font-normal leading-4 uppercase tracking-wider">
+                              STRENGTHS
+                            </span>
+                            <div className="w-full flex flex-col gap-2">
+                              {displaySummary.strengths?.map((str: string, sIdx: number) => (
+                                <p key={sIdx} className="text-ds-text-primary text-xs font-normal font-dm-sans leading-4">
+                                  {str}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Concerns */}
+                          <div className="flex-1 flex flex-col items-start gap-3 w-full">
+                            <span className="text-ds-error font-dm-sans text-xs font-normal leading-4 uppercase tracking-wider">
+                              CONCERNS
+                            </span>
+                            <div className="w-full flex flex-col gap-2">
+                              {displaySummary.concerns?.map((con: string, cIdx: number) => (
+                                <p key={cIdx} className="text-ds-text-primary text-xs font-normal font-dm-sans leading-4">
+                                  {con}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                    <span className={`text-sm ${t.text}`}>{candidateAnalysis.skills.summary}</span>
-                  </div>
-                )}
 
-                {/* Experience Card */}
-                {candidateAnalysis?.experience && (
-                  <div className="w-full flex flex-col gap-3">
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm font-medium ${t.text}`}>Experience</span>
-                      <span className={`text-[10px] font-bold ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'} tracking-wider uppercase`}>{candidateAnalysis.experience.status}</span>
-                    </div>
-                    <div className="flex flex-row items-end justify-between w-full">
-                      <div className="flex flex-col">
-                        <span className={`text-xs ${t.textMuted}`}>REQUIRED</span>
-                        <span className={`text-2xl font-semibold ${t.text}`}>{candidateAnalysis.experience.required}</span>
-                      </div>
-                      <Icon icon="lucide:arrow-right" className="w-5 h-5 text-[#C7D2FE] mb-2" />
-                      <div className="flex flex-col">
-                        <span className={`text-xs ${t.textMuted}`}>ACTUAL</span>
-                        <span className={`text-2xl font-semibold ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500'}`}>{candidateAnalysis.experience.actual}</span>
-                      </div>
-                    </div>
-                    <span className={`text-sm ${t.text}`}>{candidateAnalysis.experience.summary}</span>
+                        {/* Recommendation Banner: HorizontalBorder */}
+                        <div className="w-full pt-4 border-t border-ds-border flex flex-col">
+                          <p className="text-xs leading-4 font-dm-sans">
+                            <span className="text-ds-accent font-medium">Recommendation: </span>
+                            <span className="text-ds-text-primary font-normal">{displaySummary.recommendation}</span>
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-ds-text-secondary font-dm-sans">
+                        AI analysis is pending for this candidate. Click &apos;Generate AI Summary&apos; to view strengths, concerns, and recommendations.
+                      </p>
+                    )}
                   </div>
-                )}
 
-                {/* Education Card */}
-                {candidateAnalysis?.qualification && (
-                  <div className="w-full flex flex-col gap-3 mb-12">
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm font-medium ${t.text}`}>Education</span>
-                      <span className={`text-[10px] font-bold ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'} tracking-wider uppercase`}>{candidateAnalysis.qualification.status}</span>
+                  {/* Skills Match Card */}
+                  {displaySkills && (
+                    <div className="w-full py-3 flex flex-col gap-3">
+                      {/* Frame 2609098 */}
+                      <div className="w-full h-6 flex justify-between items-center gap-2">
+                        <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
+                          Skills
+                        </span>
+                        <div className="h-6 flex items-center justify-center">
+                          <span className={`${displaySkills.match < 20 ? 'text-ds-error' : 'text-ds-success'} text-[10px] font-medium font-dm-sans leading-3 uppercase tracking-wider`}>
+                            {displaySkills.match}% MATCH
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Skills Pill Tags - strictly 1 line when collapsed */}
+                      <div
+                        ref={skillsContainerRef}
+                        className={`w-full flex flex-wrap items-center gap-2 transition-all ${!showAllSkills ? 'h-7 overflow-hidden' : ''
+                          }`}
+                      >
+                        {displaySkills.tags?.map((tag: any, tIdx: number) => (
+                          <div
+                            key={tIdx}
+                            className="h-7 px-2 py-1.5 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0"
+                          >
+                            <span
+                              className={`text-xs font-normal font-dm-sans leading-4 ${tag.matched ? 'text-ds-text-primary' : 'text-ds-error'
+                                }`}
+                            >
+                              {tag.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* See all / See less button: only shown when skills reach a second line */}
+                      {hasSecondLine && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllSkills(!showAllSkills)}
+                          className="text-ds-accent text-xs font-medium font-dm-sans leading-4 hover:opacity-85 cursor-pointer focus:outline-none self-center"
+                        >
+                          {showAllSkills ? 'View less' : 'View more'}
+                        </button>
+                      )}
+
+                      {displaySkills.summary && (
+                        <p className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5">
+                          {displaySkills.summary}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex flex-col">
-                      <span className={`text-base ${t.text}`}>{candidateAnalysis.qualification.degree}</span>
-                      <span className={`text-xs ${t.textMuted} uppercase`}>{candidateAnalysis.qualification.class}</span>
-                    </div>
-                    <span className={`text-sm ${t.text}`}>{candidateAnalysis.qualification.summary}</span>
+                  )}
+
+                  {/* Frame 2610072: Experience & Qualification Stacked (670px each) */}
+                  <div className="w-full flex flex-col items-start gap-4">
+                    {/* Experience Match Card */}
+                    {displayExperience && (
+                      <div className="w-full min-h-[157px] p-3 border border-ds-border rounded-2xl flex flex-col justify-between gap-4 box-border">
+                        <div className="w-full h-7 flex justify-between items-center gap-2">
+                          <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
+                            Experience
+                          </span>
+                          <div className="h-7 px-2 py-1 rounded-full flex items-center justify-center">
+                            <span className="text-ds-accent text-[10px] font-medium font-dm-sans leading-3 uppercase tracking-wider">
+                              {displayExperience.status || 'EXCEEDS'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="w-full flex flex-row justify-between items-center gap-1">
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider">
+                              REQUIRED
+                            </span>
+                            <span className="text-ds-text-primary opacity-50 font-dm-sans font-bold text-2xl leading-8">
+                              {displayExperience.required || '5+ Yrs'}
+                            </span>
+                          </div>
+                          <svg
+                            width="30"
+                            height="14"
+                            viewBox="0 0 30 14"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-[30px] h-[14px] text-ds-text-secondary shrink-0"
+                            aria-hidden="true"
+                          >
+                            <line x1="1" y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                            <path d="M19 2L29 7L19 12V2Z" fill="currentColor" />
+                          </svg>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-ds-text-primary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider">
+                              ACTUAL
+                            </span>
+                            <span className="text-ds-text-primary font-dm-sans font-bold text-2xl leading-8">
+                              {displayExperience.actual || '6.2 Yrs'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 break-words">
+                          &ldquo;{(displayExperience.summary || 'Exceeds minimum requirement for this seniority level.').replace(/^[“"']+|[”"']+$/g, '')}&rdquo;
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Education Match Card */}
+                    {displayQualification && (
+                      <div className="w-full min-h-[166px] p-3 border border-ds-border rounded-2xl flex flex-col justify-between gap-4 box-border">
+                        <div className="w-full h-7 flex justify-between items-center gap-2">
+                          <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
+                            Qualification
+                          </span>
+                          <div className="h-7 px-2 py-1 rounded-full flex items-center justify-center">
+                            <span className="text-ds-accent text-[10px] font-medium font-dm-sans leading-3 uppercase tracking-wider">
+                              {displayQualification.status || 'ALIGNED'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="w-full p-2 flex flex-col justify-center gap-1 rounded-lg">
+                          <span className="text-ds-text-primary text-base font-normal font-dm-sans leading-6 break-words">
+                            {displayQualification.degree || 'B.Des from IIT Bombay'}
+                          </span>
+                          {displayQualification.class && displayQualification.degree !== 'Not specified' && (
+                            <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 uppercase tracking-wider">
+                              {displayQualification.class}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-ds-text-primary text-sm font-normal font-dm-sans leading-5 break-words">
+                          &ldquo;{(displayQualification.summary || 'Qualification directly aligns with the role requirements.').replace(/^[“"']+|[”"']+$/g, '')}&rdquo;
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Add a note modal */}
+      {/* Modal: Add a note (Figma Design) */}
       {isNoteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 px-4">
-          <div className={`w-full max-w-sm md:w-96 p-4 bg-white ${t.modalBg} rounded-3xl inline-flex flex-col justify-start items-center overflow-hidden border border-zinc-100 ${t.border} shadow-2xl animate-in zoom-in-95 duration-200`}>
-            <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 px-4 touch-none">
+          <div className="w-[300px] p-3 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center gap-3 relative shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Frame 2609536: Cancel / Close Button */}
+            <div className="w-full h-5 flex flex-row justify-end items-center">
               <button
-                onClick={() => setIsNoteModalOpen(false)}
                 type="button"
-                className={`w-6 h-6 flex items-center justify-center hover:bg-slate-50 ${isCompanyMode ? 'dark:hover:bg-blue-900/20' : 'dark:hover:bg-indigo-900/20'} rounded-full transition-colors`}
+                onClick={() => setIsNoteModalOpen(false)}
+                aria-label="Close"
+                className="size-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
               >
-                <Icon icon="lucide:x" className="w-[18px] h-[18px] text-[#FF6B6B]" />
+                <Icon icon="lucide:x" className="size-5" />
               </button>
             </div>
-            <div className="w-full md:w-72 flex flex-col justify-start items-center gap-4">
-              <div className="flex flex-col justify-start items-center gap-2">
-                <div className={`text-center justify-start text-lg font-medium font-['Poppins'] leading-6 ${t.text}`}>Add a note</div>
-                <div className={`text-center justify-start text-xs font-normal font-['Poppins'] leading-4 ${t.textMuted}`}>Include a note for reference.</div>
-              </div>
-              <textarea
+
+            {/* Title: Add note */}
+            <h3 className="text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center">
+              Add note
+            </h3>
+
+            {/* input field */}
+            <div className="w-full h-9 py-2 flex items-center border-b border-ds-border focus-within:border-ds-accent transition-colors">
+              <input
+                type="text"
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Add a personal note...."
-                className={`self-stretch h-32 px-4 py-2 bg-white ${t.bg} rounded-2xl outline outline-1 outline-offset-[-1px] outline-zinc-200 ${t.borderLight} text-sm font-normal font-['Poppins'] leading-5 resize-none focus:outline-none ${t.text} ${isCompanyMode ? 'focus:outline-blue-400' : 'focus:outline-indigo-400'
-                  }`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSaveNote();
+                  }
+                }}
+                placeholder="Add a note"
+                autoFocus
+                className="w-full bg-transparent text-sm font-normal font-dm-sans text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none"
               />
-              <div className="self-stretch inline-flex justify-start items-start gap-4">
-                <button
-                  onClick={() => setIsNoteModalOpen(false)}
-                  type="button"
-                  className={`flex-1 h-10 px-4 py-2 bg-white ${t.bg} rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 transition-colors active:scale-95 ${isCompanyMode ? `outline-blue-400 hover:bg-blue-50/10 ${t.primaryHover}` : `outline-indigo-400 hover:bg-indigo-50/10 ${t.primaryHover}`
-                    }`}
-                >
-                  <span className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${t.primary}`}>Cancel</span>
-                </button>
-                <button
-                  onClick={handleSaveNote}
-                  type="button"
-                  className={`flex-1 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white ${t.borderLight} flex justify-center items-center gap-2.5 transition-colors active:scale-95 shadow-sm ${isCompanyMode ? `bg-[#1A73E8] hover:bg-[#1557B0]` : `bg-indigo-500 hover:bg-indigo-600`
-                    }`}
-                >
-                  <span className="text-center justify-start text-white text-sm font-normal font-['Poppins'] leading-5">Save</span>
-                </button>
-              </div>
+            </div>
+
+            {/* Frame 2609476: Action Buttons */}
+            <div className="w-[162px] h-9 flex flex-row justify-center items-center gap-2">
+              {/* Primary emphasis button: Save */}
+              <button
+                type="button"
+                onClick={handleSaveNote}
+                className="w-[77px] h-9 px-3 py-1.5 flex items-center justify-center rounded-full bg-ds-surface-1 hover:bg-ds-surface-2 transition-all active:scale-95 cursor-pointer focus:outline-none"
+              >
+                <span className={`text-base font-medium font-dm-sans leading-6 transition-colors ${noteText.trim() ? 'text-ds-text-primary' : 'text-ds-text-muted'}`}>
+                  Save
+                </span>
+              </button>
+
+              {/* Secondary button: Cancel */}
+              <button
+                type="button"
+                onClick={() => setIsNoteModalOpen(false)}
+                className="w-[77px] h-9 px-3 py-1.5 flex items-center justify-center rounded-full border border-ds-border hover:bg-ds-surface-1 transition-all active:scale-95 cursor-pointer focus:outline-none"
+              >
+                <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
+                  Cancel
+                </span>
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Mobile Filters Drawer */}
+      <ApplicantsMobileDrawer
+        isOpen={isMobileFilterDrawerOpen}
+        onClose={() => setIsMobileFilterDrawerOpen(false)}
+        selectedFilter={filter}
+        setSelectedFilter={(f: FilterOption) => setFilter(f)}
+      />
     </>
   );
 };
+
 export default ApplicantsDashboard;

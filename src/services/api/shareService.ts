@@ -85,7 +85,7 @@ export const generateEntityUrl = (entityType: EntityType, entityId: string): str
     const patterns: Record<EntityType, string> = {
         post: `/post/${entityId}`,
         profile: `/profile/${entityId}`,
-        company: `/company/${entityId}`,
+        company: `/organization/${entityId}`,
         job: `/jobs/${entityId}`,
         event: `/events/${entityId}`,
         offer: `/offer/${entityId}`,

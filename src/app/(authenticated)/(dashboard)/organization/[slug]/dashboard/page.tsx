@@ -1,5 +1,8 @@
-"use client";
-
+// "use client";
+// 
+// THIS IS OLD / DEPRECATED DASHBOARD PAGE CODE - COMMENTED OUT AS REQUESTED
+// 
+/*
 import React, { useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -32,16 +35,10 @@ export default function CompanyDashboardPage() {
 
     const isMobile = useIsMobile();
     const [currentTab, setCurrentTab] = useState(activeTab);
-    // On mobile, we start in 'menu' unless a specific tab (other than overview?) is requested... 
-    // actually, let's start in 'menu' normally, unless deep linking? 
-    // For now simple: default to menu if isMobile.
     const [mobileView, setMobileView] = useState<"menu" | "detail">("menu");
 
-    // Sync tab with URL
     React.useEffect(() => {
         setCurrentTab(activeTab);
-        // If we land on a specific unique tab on mobile via URL, maybe show detail?
-        // But 'overview' is default. Let's say if it's NOT overview, maybe show detail.
         if (activeTab !== 'overview' && isMobile) {
             setMobileView("detail");
         }
@@ -83,7 +80,6 @@ export default function CompanyDashboardPage() {
         );
     }
 
-    // Basic permission check (Client-side visual only)
     if (!company?.viewer_role_data) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-4">
@@ -99,7 +95,6 @@ export default function CompanyDashboardPage() {
     const canManageRoles = isOwner || checkPermission("MANAGE_ROLES");
     const canViewSettings = isOwner || checkPermission("MANAGE_COMPANY");
 
-    // Check if institution
     const isInstitution = (company as any)?.entity_type === 'INSTITUTION';
 
     const handleTabChange = (value: string) => {
@@ -107,9 +102,6 @@ export default function CompanyDashboardPage() {
         if (isMobile) {
             setMobileView("detail");
         }
-        // Optional: Update URL without full reload? 
-        // router.push(`?tab=${value}`, { scroll: false }); 
-        // usage: router.replace or shallow update if feasible, but local state is fine for now.
     };
 
     const handleBackToMenu = () => {
@@ -118,7 +110,6 @@ export default function CompanyDashboardPage() {
 
     return (
         <div className="container max-w-7xl mx-auto py-8 px-4">
-            {/* Header - Visible in Menu view (Mobile) or Always (Desktop) */}
             {(!isMobile || mobileView === "menu") && (
                 <div className="flex items-center gap-4 mb-8">
                     <Button variant="ghost" size="icon" onClick={() => router.push(`/organization/${slug}`)}>
@@ -132,7 +123,6 @@ export default function CompanyDashboardPage() {
             )}
 
             <Tabs value={currentTab} onValueChange={handleTabChange} className="flex flex-col md:flex-row gap-8">
-                {/* Sidebar / Menu List */}
                 <aside className={`w-full md:w-64 flex-shrink-0 md:sticky md:top-8 md:self-start ${isMobile && mobileView === "detail" ? "hidden" : "block"}`}>
                     <TabsList className="flex flex-col h-auto w-full space-y-2 bg-transparent p-0 justify-start">
                         <TabsTrigger
@@ -155,7 +145,6 @@ export default function CompanyDashboardPage() {
                             <TabsTrigger
                                 value="members"
                                 className="w-full justify-start px-4 py-3 md:py-2 text-base md:text-sm data-[state=active]:bg-muted hover:bg-muted/50 transition-colors border rounded-lg md:border-0 md:rounded-sm mb-2 md:mb-0"
-
                             >
                                 <Users className="mr-3 h-5 w-5 md:h-4 md:w-4" /> Members
                             </TabsTrigger>
@@ -199,16 +188,12 @@ export default function CompanyDashboardPage() {
                     </TabsList>
                 </aside>
 
-                {/* Main Content / Detail View */}
                 <div className={`flex-1 min-w-0 ${isMobile && mobileView === "menu" ? "hidden" : "block"}`}>
-
-                    {/* Mobile Back Button */}
                     {isMobile && (
                         <div className="mb-4 flex items-center gap-2">
                             <Button variant="ghost" size="sm" className="pl-0 hover:bg-transparent" onClick={handleBackToMenu}>
                                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
                             </Button>
-                            {/* Optionally show current tab title here? */}
                         </div>
                     )}
 
@@ -290,4 +275,9 @@ export default function CompanyDashboardPage() {
             </Tabs>
         </div>
     );
+}
+*/
+
+export default function CompanyDashboardPage() {
+    return null;
 }
