@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "prepare": "husky"
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production') { try { require('child_process').execSync('npx husky', { stdio: 'inherit' }); } catch {} }\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
