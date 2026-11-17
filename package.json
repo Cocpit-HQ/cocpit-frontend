@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint .",
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production') { try { require('child_process').execSync('npx husky', { stdio: 'inherit' }); } catch {} }\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -102,5 +103,14 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5",
     "uuid": "^13.0.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }
