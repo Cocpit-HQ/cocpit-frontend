@@ -176,12 +176,18 @@ export const useJobDetail = (jobId: string) => {
           formData.append('resume_url', resumeId);
           if (resumeUrlOrName) formData.append('resume_file_name', resumeUrlOrName);
         }
-        if (sanitizedCoverLetter) formData.append('cover_note', sanitizedCoverLetter);
+        if (sanitizedCoverLetter) {
+          formData.append('cover_note', sanitizedCoverLetter);
+          formData.append('message', sanitizedCoverLetter);
+          formData.append('note', sanitizedCoverLetter);
+        }
       } else if (resumeUrlOrName || resumeId) {
         jsonBody = {
           resume_url: resumeUrlOrName || resumeId,
           resume_file_name: resumeUrlOrName || null,
-          cover_note: sanitizedCoverLetter
+          cover_note: sanitizedCoverLetter,
+          message: sanitizedCoverLetter,
+          note: sanitizedCoverLetter
         };
       }
 
