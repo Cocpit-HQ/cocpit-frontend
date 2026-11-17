@@ -210,7 +210,10 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         meta.followerOrgId
     );
 
-    const isUserDocVerification = notification.type === 'doc_verification_success' || notification.type === 'doc_verification_rejected';
+    const isUserDocVerification =
+      (notification.type as string) === 'doc_verification_success' ||
+      (notification.type as string) === 'doc_verification_rejected' ||
+      (notification.type as string) === 'user_identity_verification';
     const effectiveAvatar = notification.actor_avatar || (isUserDocVerification && !isCompany ? (activeProfile?.avatar_url || (activeProfile as any)?.avatar) : null);
 
     if (visualKind === 'company' && !effectiveAvatar) {

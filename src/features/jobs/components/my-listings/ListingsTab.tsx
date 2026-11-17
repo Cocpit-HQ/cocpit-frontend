@@ -464,7 +464,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                     <div className="w-full my-1.5 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-ds-error font-dm-sans flex items-start gap-1.5">
                       <Icon icon="solar:danger-triangle-linear" className="w-4 h-4 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-semibold">Listing Rejected by Admin: </span>
+                        <span className="font-semibold">Job Rejected by Admin: </span>
                         <span className="text-ds-text-secondary">{item.rejection_reason}</span>
                       </div>
                     </div>
@@ -533,7 +533,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         )}
 
         {/* Infinite scroll loader trigger */}
-        {hasMore ? (
+        {hasMore && (
           <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center">
             {isFetchingMore ? (
               <div className="flex items-center gap-2 text-ds-accent font-medium ds-text-small font-dm-sans">
@@ -544,13 +544,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
               <div className="h-4 w-full" />
             )}
           </div>
-        ) : listings.length > 0 ? (
-          <div className="w-full py-4 flex justify-center items-center">
-            <span className="text-ds-text-secondary ds-text-meta bg-ds-surface-1 border border-ds-border px-3 py-1 rounded-full">
-              You've reached the end of your listings.
-            </span>
-          </div>
-        ) : null}
+        )}
       </div>
 
       {/* Mobile Filter Drawer Sheet: Exact Figma (393px x 260px) */}

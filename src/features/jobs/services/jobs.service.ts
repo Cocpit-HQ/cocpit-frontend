@@ -1305,9 +1305,9 @@ export const createJobListing = async (
       let backendJob;
 
       if (isCompany) {
-        // For companies, PUT /organizations/:orgId/jobs/:jobId handles both updating and changing status directly
-        updatePayload.status = status;
-        if (status === 'ACTIVE') {
+        // For companies, PUT /organizations/:orgId/jobs/:jobId handles updating and transitions to UNDER_REVIEW
+        updatePayload.status = status === 'ACTIVE' ? 'UNDER_REVIEW' : status;
+        if (status === 'ACTIVE' || status === 'UNDER_REVIEW') {
           updatePayload.is_active = true;
         }
         
@@ -1340,10 +1340,13 @@ export const createJobListing = async (
         }
       }
 
+      const finalStatus = backendJob.status || (status === 'ACTIVE' ? 'UNDER_REVIEW' : status);
+
       return {
         id: backendJob.job_id || backendJob.id,
         title: backendJob.title,
-        status: status,
+        status: finalStatus,
+        moderation_status: backendJob.moderation_status || (status === 'ACTIVE' ? 'UNDER_REVIEW' : undefined),
         published_at: backendJob.published_at || (status === 'ACTIVE' ? new Date().toISOString() : undefined),
         posted_at: status === 'ACTIVE' ? 'Just now' : getRelativeTime(backendJob.created_at),
         last_edited: 'Last edited just now'

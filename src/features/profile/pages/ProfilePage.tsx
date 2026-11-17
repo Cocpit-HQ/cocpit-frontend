@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -172,49 +172,68 @@ export default function ProfilePage() {
     return (userPostsData?.posts || []).map(mapProfilePostToPost);
   }, [userPostsData]);
 
-  // Restore scroll position when profile and posts are loaded
-  useScrollRestoration(!isLoading && (userPostsData !== undefined || isPostsError));
+  const searchParams = useSearchParams();
+  const sectionParam = searchParams?.get("section");
 
-  // Auto-scroll to Experience or Education section when arriving from organization onboarded notification
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const section = urlParams.get("section");
-      const hash = window.location.hash;
-      const targetId =
-        section === "education" || hash === "#education-section"
-          ? "education-section"
-          : section === "experience" || hash === "#experience-section"
-          ? "experience-section"
-          : null;
-
-      if (targetId) {
-        // Clear stored scroll positions to prevent useScrollRestoration from resetting to top
-        sessionStorage.removeItem("scroll-/profile");
-        sessionStorage.removeItem("cocpit_scroll_y");
-        sessionStorage.removeItem("cocpit_profile_scroll_y");
-
-        const scrollToTarget = () => {
-          const el = document.getElementById(targetId);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        };
-
-        scrollToTarget();
-        const t1 = setTimeout(scrollToTarget, 100);
-        const t2 = setTimeout(scrollToTarget, 300);
-        const t3 = setTimeout(scrollToTarget, 600);
-        const t4 = setTimeout(scrollToTarget, 1000);
-        return () => {
-          clearTimeout(t1);
-          clearTimeout(t2);
-          clearTimeout(t3);
-          clearTimeout(t4);
-        };
-      }
+  // Determine target section from query param (?section=experience) or URL fragment (#experience-section)
+  const targetId = useMemo(() => {
+    let section = sectionParam;
+    if (!section && typeof window !== "undefined") {
+      section = new URLSearchParams(window.location.search).get("section");
     }
-  }, [isLoading]);
+    if (section === "education") return "education-section";
+    if (section === "experience") return "experience-section";
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash || "";
+      if (hash.includes("education-section")) return "education-section";
+      if (hash.includes("experience-section")) return "experience-section";
+    }
+    return null;
+  }, [sectionParam]);
+
+  const hasTargetSection = Boolean(targetId);
+
+  // Clear stored scroll positions immediately so useScrollRestoration doesn't force scroll(0)
+  if (typeof window !== "undefined" && hasTargetSection) {
+    sessionStorage.removeItem("scroll-/profile");
+    sessionStorage.removeItem("cocpit_scroll_y");
+    sessionStorage.removeItem("cocpit_profile_scroll_y");
+  }
+
+  // Restore scroll position when profile and posts are loaded (only if NOT deep-linking to an explicit section)
+  useScrollRestoration(!hasTargetSection && !isLoading && (userPostsData !== undefined || isPostsError));
+
+  const hasScrolledRef = useRef(false);
+  const lastTargetRef = useRef<string | null>(null);
+
+  if (lastTargetRef.current !== targetId) {
+    lastTargetRef.current = targetId;
+    hasScrolledRef.current = false;
+  }
+
+  // Auto-scroll to Experience or Education section in ONE single smooth scroll
+  useEffect(() => {
+    if (!targetId || hasScrolledRef.current || isLoading) return;
+
+    const performScroll = () => {
+      if (hasScrolledRef.current) return;
+      const el = document.getElementById(targetId);
+      if (el) {
+        hasScrolledRef.current = true;
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+
+    // If posts are already loaded or errored, the DOM is stable — scroll once now!
+    if (userPostsData !== undefined || isPostsError) {
+      const timer = setTimeout(performScroll, 80);
+      return () => clearTimeout(timer);
+    }
+
+    // Fallback: If posts take longer than 600ms, don't leave the user stuck at the top
+    const fallbackTimer = setTimeout(performScroll, 600);
+    return () => clearTimeout(fallbackTimer);
+  }, [targetId, isLoading, userPostsData, isPostsError]);
 
   // Always refetch fresh user posts on mount so posts published elsewhere appear immediately
   useEffect(() => {

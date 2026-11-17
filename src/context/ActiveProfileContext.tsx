@@ -85,7 +85,7 @@ const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: str
         slug: company.slug,
         avatar_url: company.logo_url,
         viewer_role_data: company.viewer_role_data || null,
-        verification_status: company.verification_status,
+        verification_status: rawStatus,
         is_identity_verified: isVerified,
         rejection_reason: (company as any).rejection_reason || (company as any).rejectionReason || undefined,
         review_notes: (company as any).review_notes || (company as any).reviewNotes || undefined,

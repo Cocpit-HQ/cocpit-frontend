@@ -376,6 +376,13 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       company.isVerified ||
       company.verified
     ),
+    verificationStatus: (
+      company.verification_status ||
+      company.verificationStatus ||
+      activeProfile?.verification_status ||
+      (activeProfile as any)?.verificationStatus ||
+      'UNVERIFIED'
+    ),
     tagline: company.headline || company.slogan || "",
     industry: (isEdu ? (company.institution_type || company.industry) : company.industry) || (isEdu ? "Higher Education" : ""),
     location: company.location || company.city || "",

@@ -656,12 +656,23 @@ export const parseNotificationText = (
     };
   }
 
+  // User verification notification (redirects to privacy settings)
+  if (type === 'user_identity_verification' || /user verification|identity verification/i.test(rawNotifText)) {
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: null,
+      prefixText: '',
+      bodyText: rawNotifText.replace(/Your identity verification was not approved/i, 'Your user verification is rejected'),
+      targetUrl: '/settings/privacy',
+    };
+  }
+
   // Job rejected: "Your job [Job Title] wasn’t approved. Reason: [Reason]."
   const isJobRejected =
     type === 'job_rejected' ||
     type === 'job_moderation_rejected' ||
-    /wasn[’']t approved/i.test(rawNotifText) ||
-    /was not approved/i.test(rawNotifText);
+    /(?:Your job posting|Your job)\s+[“"']?.*?was(?:n[’']t|\s+not)\s+approved/i.test(rawNotifText);
 
   if (isJobRejected) {
     const ext = notification as unknown as ExtendedNotificationFields;
@@ -679,10 +690,7 @@ export const parseNotificationText = (
     jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
     const reasonMatch = rawNotifText.match(/Reason:\s*(.+?)(?:\.|\s*)$/i);
     const reason = (meta.rejection_reason as string) || (meta.rejectionReason as string) || (reasonMatch ? reasonMatch[1].trim().replace(/\.$/, '') : 'Not specified');
-    const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
-    const targetUrl = jobId
-      ? `/jobs?tab=My+Listings&view=view-listing&filter=Rejected&jobId=${jobId}&returnTo=/notifications`
-      : '/jobs?tab=My+Listings&returnTo=/notifications&filter=Rejected';
+    const targetUrl = '/jobs?tab=My+Listings&filter=Rejected';
 
     return {
       actorName: null,
@@ -939,28 +947,24 @@ export const getNotificationRoute = (
     return orgQuery ? `/team${orgQuery}` : '/team';
   }
 
-  // Redirect rejected job notification to My Listings -> Rejected tab with highlight
+  // Redirect user identity / document verification notification to Privacy Settings
+  if (
+    type === 'user_identity_verification' ||
+    type === 'doc_verification_rejected' ||
+    type === 'doc_verification_success' ||
+    /identity verification/i.test(notification.text || '') ||
+    /user verification/i.test(notification.text || '')
+  ) {
+    return '/settings/privacy';
+  }
+
+  // Redirect rejected job notification to My Listings -> Rejected tab
   if (
     type === 'job_rejected' ||
     type === 'job_moderation_rejected' ||
-    notification.text?.includes('was not approved') ||
-    notification.text?.includes("wasn't approved") ||
-    notification.text?.includes("wasn’t approved")
+    /(?:Your job posting|Your job)\s+[“"']?.*?was(?:n[’']t|\s+not)\s+approved/i.test(notification.text || '')
   ) {
-    let jobId = notification.reference_id;
-    if (!jobId) {
-      try {
-        if (typeof ext.metadata === 'string') {
-          const parsed = JSON.parse(ext.metadata);
-          jobId = parsed.jobId || parsed.job_id;
-        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
-          jobId = (ext.metadata as any).jobId || (ext.metadata as any).job_id;
-        }
-      } catch {}
-    }
-    return jobId
-      ? `/jobs?tab=My+Listings&filter=Rejected&jobId=${jobId}`
-      : '/jobs?tab=My+Listings&filter=Rejected';
+    return '/jobs?tab=My+Listings&filter=Rejected';
   }
 
   // Redirect submitted / in-review job notification

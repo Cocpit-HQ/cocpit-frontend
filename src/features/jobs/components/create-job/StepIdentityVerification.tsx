@@ -24,19 +24,21 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
   const isCompanyMode = activeProfile?.type === 'COMPANY';
   const router = useRouter();
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Check if current user or company is in a pending verification review state
-  const status = activeProfile?.verification_status || (myProfile?.user as any)?.verification_status;
-  const isPending = status === 'PENDING' || status === 'UNDER_REVIEW' || status === 'DOCUMENT_PENDING';
+  const rawStatus = activeProfile?.verification_status || (myProfile?.user as any)?.verification_status;
+  const normalizedStatus = String(rawStatus || '').toUpperCase();
+  const isPending =
+    hasSubmitted ||
+    normalizedStatus === 'PENDING' ||
+    normalizedStatus === 'UNDER_REVIEW' ||
+    normalizedStatus === 'DOCUMENT_PENDING' ||
+    normalizedStatus === 'IN_REVIEW';
 
   const handleVerifyClick = () => {
-    // Only redirect to settings when the user is in pending state
+    // If under review/pending, do not redirect
     if (isPending) {
-      if (isCompanyMode) {
-        router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`);
-      } else {
-        router.push('/settings/privacy');
-      }
       return;
     }
 
@@ -89,12 +91,6 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
       <div className="w-full max-w-[360px] md:max-w-[640px] flex flex-col items-center px-0 md:px-5 pt-0 md:pt-5 pb-6 md:pb-10 gap-5 my-auto text-center font-dm-sans">
         {/* Headings: Frame 2609237 */}
         <div className="w-full max-w-[360px] md:max-w-[578px] flex flex-col items-center gap-3">
-          {isPending && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              Under Review by Admin
-            </div>
-          )}
           {/* Title: 32px on mobile (leading 40px), 40px on desktop (leading 48px), bold, text-ds-text-primary */}
           <h1 className="w-full text-ds-text-primary text-[32px] md:text-[40px] font-bold leading-[40px] md:leading-[48px] font-dm-sans text-center">
             Identity Verification Required
@@ -107,14 +103,19 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
 
         {/* Buttons Container: width: 300px, height: 88px, gap: 16px */}
         <div className="w-full max-w-[300px] flex flex-col justify-center items-center gap-4 shrink-0">
-          {/* Primary emphasis button: width 203px, height 36px, px-3 py-1.5, bg-ds-accent, rounded-full */}
+          {/* Primary emphasis button */}
           <button
             type="button"
             onClick={handleVerifyClick}
-            className="w-[203px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 transition-all shadow-sm cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 font-dm-sans"
+            disabled={isPending}
+            className={`min-w-[203px] w-auto h-9 px-4 py-1.5 text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 transition-all shadow-sm border-none outline-none shrink-0 font-dm-sans ${
+              isPending
+                ? 'bg-ds-accent opacity-90 cursor-default'
+                : 'bg-ds-accent hover:opacity-90 active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-ds-accent'
+            }`}
           >
             <span className="font-dm-sans font-medium text-base leading-6 text-ds-text-primary whitespace-nowrap">
-              Verify Now
+              {isPending ? 'Under Review by Admin' : 'Verify Now'}
             </span>
           </button>
           {/* Secondary button: width 203px, height 36px, px-3 py-1.5, border border-ds-border, rounded-full */}
@@ -191,8 +192,7 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         onClose={() => setIsVerifyModalOpen(false)}
         onSuccess={() => {
           setIsVerifyModalOpen(false);
-          // Advance wizard to role-input step after completing verification
-          onVerifySuccess();
+          setHasSubmitted(true);
         }}
       />
     </div>

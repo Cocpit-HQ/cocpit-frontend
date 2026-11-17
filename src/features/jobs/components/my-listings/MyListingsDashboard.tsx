@@ -245,7 +245,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         if (status === 'ACTIVE') {
           setActiveSubTabLocal('Job listings');
           transitionTo('dashboard');
-          toast.success('Job listing published successfully!');
+          toast.success('Job submitted for review!');
         } else {
           toast.success('Job draft saved successfully!');
         }
