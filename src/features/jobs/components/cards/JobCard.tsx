@@ -285,8 +285,8 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             )}
           </div>
 
-          {/* Posted time - Desktop only inside left column */}
-          <span className="hidden md:inline text-ds-text-secondary ds-text-secondary font-normal">
+          {/* Posted time - visible inside left column on both mobile and desktop */}
+          <span className="text-xs text-ds-text-secondary font-normal font-dm-sans">
             {job.posted_at || (job.created_at ? getRelativeTime(job.created_at) : "Recently posted")}
           </span>
         </div>
@@ -311,13 +311,6 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
           </div>
         )}
       </div>
-
-      {/* Posted time - Mobile only below middle content */}
-      {job.posted_at && (
-        <span className="md:hidden text-ds-text-secondary ds-text-secondary font-normal">
-          {job.posted_at}
-        </span>
-      )}
     </div>
   );
 });

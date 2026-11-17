@@ -385,6 +385,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     ),
     tagline: company.headline || company.slogan || "",
     industry: (isEdu ? (company.institution_type || company.industry) : company.industry) || (isEdu ? "Higher Education" : ""),
+    sector: company.sector || "",
     location: company.location || company.city || "",
     employeeCount: company.size || "",
     websiteUrl: company.website || "",

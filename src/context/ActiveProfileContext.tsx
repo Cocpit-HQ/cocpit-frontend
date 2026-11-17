@@ -110,8 +110,9 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const companies = bootstrappedCompanies;
     const bootstrapLockRef = React.useRef<string | null>(null);
 
-    const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] | string; is_owner?: boolean; name?: string } | null; role?: string; is_suspended?: boolean }) => {
+    const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] | string; is_owner?: boolean; name?: string } | null; role?: string; status?: string; is_suspended?: boolean }) => {
         if (company.is_suspended) return false;
+        if (company.status && company.status !== 'ACTIVE') return false;
         if (company.viewer_role_data?.is_owner) return true;
         const roleName = company.viewer_role_data?.name || company.role || '';
         if (!roleName || roleName.toLowerCase().includes('_deleted_')) return false;
@@ -119,6 +120,77 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     };
 
     const switchableCompanies = companies.filter(canSwitchToCompany);
+
+    const resolveActorProfile = (
+        actorContext: { actor: { type: string; id: string }; organizations: any[] },
+        normalizedCompanies: (Company & { role: string })[],
+        userProfile: ActiveProfile
+    ): ActiveProfile => {
+        if (actorContext.actor.type === "ORGANIZATION") {
+            const targetCompany = normalizedCompanies.find(
+                (company) => String(company.org_id || company.company_id).toLowerCase() === String(actorContext.actor.id).toLowerCase()
+            );
+
+            if (targetCompany && canSwitchToCompany(targetCompany)) {
+                const mergedCompany = {
+                    ...targetCompany,
+                    verification_status: (actorContext.actor as any).verification_status || targetCompany.verification_status,
+                };
+                return buildCompanyProfile(mergedCompany);
+            }
+
+            // Fallback: If normalized list didn't include it (e.g. pagination or delay),
+            // build directly from the verified backend actor object
+            const a = actorContext.actor as any;
+            return {
+                type: "COMPANY",
+                entityType: (a.entity_type || a.entityType || "COMPANY") as "COMPANY" | "INSTITUTION",
+                id: a.id || a.org_id || a.company_id,
+                name: a.name || "Organization",
+                slug: a.slug,
+                avatar_url: a.avatar_url || a.logo_url,
+                viewer_role_data: a.viewer_role_data || null,
+                verification_status: a.verification_status,
+                is_identity_verified: Boolean(a.is_identity_verified || a.verification_status === "VERIFIED"),
+            };
+        }
+
+        // If backend returned USER, check if the client already has an active COMPANY in sessionStorage
+        if (typeof window !== "undefined") {
+            try {
+                const stored = sessionStorage.getItem("cocpit_active_profile");
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed?.type === "COMPANY" && parsed.id) {
+                        const matchedCompany = normalizedCompanies.find(
+                            (c) => String(c.org_id || c.company_id).toLowerCase() === String(parsed.id).toLowerCase()
+                        );
+                        if (matchedCompany && canSwitchToCompany(matchedCompany)) {
+                            return buildCompanyProfile({
+                                ...matchedCompany,
+                                verification_status: parsed.verification_status || matchedCompany.verification_status,
+                            });
+                        }
+                    }
+                }
+            } catch {}
+        }
+
+        const actorData = actorContext.actor as any;
+        const isActorVerified = Boolean(
+            actorData.is_identity_verified ||
+            actorData.is_verified ||
+            actorData.isVerified ||
+            actorData.verification_status === "VERIFIED" ||
+            actorData.verification_status === "approved" ||
+            userProfile.is_identity_verified
+        );
+        return {
+            ...userProfile,
+            verification_status: actorData.verification_status || (isActorVerified ? "VERIFIED" : userProfile.verification_status),
+            is_identity_verified: isActorVerified,
+        };
+    };
 
     const refreshProfile = React.useCallback(async () => {
         if (!session?.user) return;
@@ -133,34 +205,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
             );
             setBootstrappedCompanies(uniqueCompanies);
 
-            let nextProfile = userProfile;
-            if (actorContext.actor.type === "ORGANIZATION") {
-                const targetCompany = normalizedCompanies.find(
-                    (company) => (company.org_id || company.company_id) === actorContext.actor.id
-                );
-                if (targetCompany && canSwitchToCompany(targetCompany)) {
-                    const mergedCompany = {
-                        ...targetCompany,
-                        verification_status: (actorContext.actor as any).verification_status || targetCompany.verification_status,
-                    };
-                    nextProfile = buildCompanyProfile(mergedCompany);
-                }
-            } else if (actorContext.actor.type === "USER") {
-                const actorData = actorContext.actor as any;
-                const isActorVerified = Boolean(
-                    actorData.is_identity_verified ||
-                    actorData.is_verified ||
-                    actorData.isVerified ||
-                    actorData.verification_status === "VERIFIED" ||
-                    actorData.verification_status === "approved" ||
-                    userProfile.is_identity_verified
-                );
-                nextProfile = {
-                    ...userProfile,
-                    verification_status: actorData.verification_status || (isActorVerified ? "VERIFIED" : userProfile.verification_status),
-                    is_identity_verified: isActorVerified,
-                };
-            }
+            const nextProfile = resolveActorProfile(actorContext, normalizedCompanies, userProfile);
             setActiveProfile(nextProfile);
         } catch (error) {
             console.warn("[ActorContext] Refresh profile failed.", error);
@@ -215,35 +260,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
                 setBootstrappedCompanies(uniqueCompanies);
 
-                let nextProfile = userProfile;
-                if (actorContext.actor.type === "ORGANIZATION") {
-                    const targetCompany = normalizedCompanies.find(
-                        (company) => (company.org_id || company.company_id) === actorContext.actor.id
-                    );
-
-                    if (targetCompany && canSwitchToCompany(targetCompany)) {
-                        const mergedCompany = {
-                            ...targetCompany,
-                            verification_status: (actorContext.actor as any).verification_status || targetCompany.verification_status,
-                        };
-                        nextProfile = buildCompanyProfile(mergedCompany);
-                    }
-                } else if (actorContext.actor.type === "USER") {
-                    const actorData = actorContext.actor as any;
-                    const isActorVerified = Boolean(
-                        actorData.is_identity_verified ||
-                        actorData.is_verified ||
-                        actorData.isVerified ||
-                        actorData.verification_status === "VERIFIED" ||
-                        actorData.verification_status === "approved" ||
-                        userProfile.is_identity_verified
-                    );
-                    nextProfile = {
-                        ...userProfile,
-                        verification_status: actorData.verification_status || (isActorVerified ? "VERIFIED" : userProfile.verification_status),
-                        is_identity_verified: isActorVerified,
-                    };
-                }
+                const nextProfile = resolveActorProfile(actorContext, normalizedCompanies, userProfile);
 
                 setActiveProfile(nextProfile);
                 setIsInitialized(true);
@@ -505,11 +522,19 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         });
     }, []);
 
+    const isCompanyActor = Boolean(
+        activeProfile?.type === "COMPANY" ||
+        (activeProfile as any)?.type === "ORGANIZATION" ||
+        (activeProfile as any)?.type === "ORG" ||
+        activeProfile?.entityType === "COMPANY" ||
+        activeProfile?.entityType === "INSTITUTION"
+    );
+
     const value = {
         activeProfile,
         isLoading: !isInitialized,
         switchProfile,
-        isCompany: activeProfile?.type === "COMPANY",
+        isCompany: isCompanyActor,
         userCompanies: companies,
         switchableCompanies,
         refreshCompanies,

@@ -32,7 +32,13 @@ export function getActorHeadersFromStorage() {
     const profile = JSON.parse(storedProfile) as ActorAwareProfile;
     if (!profile) return null;
     
-    const actorType = profile.type === "COMPANY" ? "ORGANIZATION" : "USER";
+    const isOrg =
+      profile.type === "COMPANY" ||
+      (profile as any).type === "ORGANIZATION" ||
+      (profile as any).type === "ORG" ||
+      (profile as any).entityType === "COMPANY" ||
+      (profile as any).entityType === "INSTITUTION";
+    const actorType = isOrg ? "ORGANIZATION" : "USER";
     return {
       type: actorType,
       id: profile.id

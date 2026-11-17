@@ -5,16 +5,22 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Search, Loader2, X } from 'lucide-react';
 import { SearchPillChevron } from '../SearchPillChevron';
 import { CursorPaginatedResult } from '@/features/jobs/services/jobs.service';
+import {
+  getCachedFilterOptions,
+  fetchWithFilterCache,
+} from '../../utils/filterOptionsCache';
 
 export interface SearchableCursorFilterChipProps {
   title: string;
   paramKey: string;
+  cacheKey?: string;
   selectedValues: string[];
   fetchData: (query?: string, cursor?: string) => Promise<CursorPaginatedResult<string>>;
   onToggle: (paramKey: string, opt: string) => void;
   widthClass?: string;
   buttonWidthClass?: string;
   zIndexClass?: string;
+  allowCustomValue?: boolean;
 }
 
 const getNormKey = (s: string) => s.toLowerCase().replace(/_/g, ' ').trim();
@@ -22,13 +28,16 @@ const getNormKey = (s: string) => s.toLowerCase().replace(/_/g, ' ').trim();
 export const SearchableCursorFilterChip: React.FC<SearchableCursorFilterChipProps> = ({
   title,
   paramKey,
+  cacheKey,
   selectedValues,
   fetchData,
   onToggle,
   widthClass = 'w-auto min-w-[200px] max-w-[320px]',
   buttonWidthClass = 'w-auto',
   zIndexClass = 'z-[130]',
+  allowCustomValue = false,
 }) => {
+  const facetKey = cacheKey || paramKey;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<string[]>([]);
@@ -50,17 +59,52 @@ export const SearchableCursorFilterChip: React.FC<SearchableCursorFilterChipProp
     }
   }, [open]);
 
-  // Load initial items on open or debounced query change
+  // Load initial items on open or debounced query change with SWR caching & instant 0ms render
   useEffect(() => {
     if (!open) return;
+
+    const trimmed = query.trim();
+
+    // 1. Synchronous Instant Read from cache (0ms delay, no loading spinner)
+    const cached = getCachedFilterOptions(facetKey, trimmed);
+    if (cached) {
+      const seenNorm = new Set<string>();
+      const dedupedCached = (cached.items || []).filter((i) => {
+        const k = getNormKey(i);
+        if (!k || seenNorm.has(k)) return false;
+        seenNorm.add(k);
+        return true;
+      });
+      setItems(dedupedCached);
+      setNextCursor(cached.nextCursor);
+      setHasMore(cached.hasMore);
+      setIsLoading(false);
+      return;
+    }
+
     let isCurrent = true;
     setIsLoading(true);
 
+    // If searching (typed query), debounce by 200ms; if initial browse open, fetch immediately (0ms delay)
+    const delay = trimmed ? 200 : 0;
+
     const timer = setTimeout(async () => {
       try {
-        const res = await fetchData(query.trim() || undefined, undefined);
+        const res = await fetchWithFilterCache(
+          facetKey,
+          trimmed || undefined,
+          () => fetchData(trimmed || undefined, undefined)
+        );
         if (isCurrent) {
-          setItems(res.items || []);
+          const rawItems = res.items || [];
+          const seenNorm = new Set<string>();
+          const dedupedItems = rawItems.filter((i) => {
+            const k = getNormKey(i);
+            if (!k || seenNorm.has(k)) return false;
+            seenNorm.add(k);
+            return true;
+          });
+          setItems(dedupedItems);
           setNextCursor(res.nextCursor || null);
           setHasMore(Boolean(res.hasMore));
         }
@@ -69,13 +113,13 @@ export const SearchableCursorFilterChip: React.FC<SearchableCursorFilterChipProp
       } finally {
         if (isCurrent) setIsLoading(false);
       }
-    }, 200);
+    }, delay);
 
     return () => {
       isCurrent = false;
       clearTimeout(timer);
     };
-  }, [open, query, fetchData, title]);
+  }, [open, query, fetchData, facetKey, title]);
 
   // Infinite scroll on reaching bottom of options list
   const handleScroll = async () => {
@@ -102,27 +146,44 @@ export const SearchableCursorFilterChip: React.FC<SearchableCursorFilterChipProp
   };
 
   const displayItems = useMemo(() => {
+    let sourceList: string[];
     if (query.trim()) {
-      return items;
-    }
-    const snapshot =
-      openSnapshotRef.current.length > 0 ? openSnapshotRef.current : selectedValues;
-    const topItems: string[] = [];
-    const seenNorm = new Set<string>();
-
-    snapshot.forEach((val) => {
-      const norm = getNormKey(val);
-      if (!norm) return;
-      if (!seenNorm.has(norm)) {
-        seenNorm.add(norm);
-        const matching = items.find((i) => getNormKey(i) === norm);
-        topItems.push(matching || val);
+      const qNorm = getNormKey(query);
+      const hasExact = items.some((i) => getNormKey(i) === qNorm);
+      if (allowCustomValue && !hasExact && qNorm.length > 0) {
+        sourceList = [...items, query.trim()];
+      } else {
+        sourceList = items;
       }
-    });
+    } else {
+      const snapshot =
+        openSnapshotRef.current.length > 0 ? openSnapshotRef.current : selectedValues;
+      const topItems: string[] = [];
+      const seenNorm = new Set<string>();
 
-    const bottomItems = items.filter((opt) => !seenNorm.has(getNormKey(opt)));
-    return [...topItems, ...bottomItems];
-  }, [items, query, selectedValues]);
+      snapshot.forEach((val) => {
+        const norm = getNormKey(val);
+        if (!norm) return;
+        if (!seenNorm.has(norm)) {
+          seenNorm.add(norm);
+          const matching = items.find((i) => getNormKey(i) === norm);
+          topItems.push(matching || val);
+        }
+      });
+
+      const bottomItems = items.filter((opt) => !seenNorm.has(getNormKey(opt)));
+      sourceList = [...topItems, ...bottomItems];
+    }
+
+    // Defensive guarantee: Never emit multiple items with identical normalized keys
+    const seen = new Set<string>();
+    return sourceList.filter((opt) => {
+      const norm = getNormKey(opt);
+      if (!norm || seen.has(norm)) return false;
+      seen.add(norm);
+      return true;
+    });
+  }, [items, query, selectedValues, allowCustomValue]);
 
   return (
     <Popover

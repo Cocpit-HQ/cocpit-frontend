@@ -252,7 +252,7 @@ export function ActivitySettingsPage() {
                   </span>
                 </div>
                 {isSelected ? (
-                  <div className="self-stretch mx-[1%] h-[3px] bg-ds-accent rounded-full transition-all" />
+                  <div className="self-stretch mx-[1%] h-[3px] bg-ds-accent rounded-full transition-all shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                 ) : (
                   <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
                 )}

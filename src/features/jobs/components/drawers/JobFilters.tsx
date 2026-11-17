@@ -76,6 +76,43 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
   // Do not sync quick tabs into popup localFilters; keep them decoupled
 
+  // Synchronize activeQuickTab with incoming filters prop
+  useEffect(() => {
+    if (filters.job_type === "Full time") {
+      setActiveQuickTab({ key: "job_type", val: "Full time" });
+    } else if (filters.work_mode === "Remote") {
+      setActiveQuickTab({ key: "work_mode", val: "Remote" });
+    } else if (filters.experience === "Fresher") {
+      setActiveQuickTab({ key: "experience", val: "Fresher" });
+    } else {
+      setActiveQuickTab(null);
+    }
+  }, [filters.job_type, filters.work_mode, filters.experience]);
+
+  // If all filters are cleared externally or when drawer is not open and props are empty, ensure local filters reset
+  useEffect(() => {
+    const hasAnyProp = Boolean(
+      filters.job_type ||
+      filters.experience ||
+      filters.work_mode ||
+      filters.salary_range ||
+      filters.date_posted ||
+      filters.industry
+    );
+    if (!hasAnyProp && !isOpen) {
+      setLocalFilters({
+        job_type: "",
+        experience: "",
+        work_mode: "",
+        salary_range: "",
+        date_posted: "",
+        industry: "",
+      });
+      setCustomMinSalary("");
+      setCustomMaxSalary("");
+    }
+  }, [filters, isOpen]);
+
   // Reset expanded section when popover closes so all sections remain closed by default
   useEffect(() => {
     if (!isOpen) {
@@ -267,6 +304,17 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
     if (onMultipleFilterChange) {
       onMultipleFilterChange(finalFilters);
+      // Reset localFilters so returning to /jobs doesn't keep lingering search drawer filters
+      setLocalFilters({
+        job_type: "",
+        experience: "",
+        work_mode: "",
+        salary_range: "",
+        date_posted: "",
+        industry: "",
+      });
+      setCustomMinSalary("");
+      setCustomMaxSalary("");
     } else {
       Object.entries(finalFilters).forEach(([key, val]) => {
         onFilterChange(key as keyof JobsFilter, val as string);

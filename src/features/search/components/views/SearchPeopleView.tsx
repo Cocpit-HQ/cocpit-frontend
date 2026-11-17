@@ -43,7 +43,7 @@ export const SearchPeopleView: React.FC<SearchPeopleViewProps> = ({
 
   if (!isLoading && items.length === 0) {
     return (
-      <div className="w-full max-w-[540px] mx-auto py-16 text-center">
+      <div className="w-full max-w-[540px] mx-auto px-4 py-16 text-center">
         <h3 className="text-ds-text-primary text-[16px] font-medium leading-[24px] font-dm-sans mb-1">
           {query.trim()
             ? `No people found for \u201C${query}\u201D`
@@ -59,7 +59,7 @@ export const SearchPeopleView: React.FC<SearchPeopleViewProps> = ({
   }
 
   return (
-    <div className="w-full max-w-[540px] mx-auto flex flex-col items-center gap-[12px] px-2 sm:px-0">
+    <div className="w-full max-w-[540px] mx-auto flex flex-col items-center gap-[12px] px-4 sm:px-0">
       {/* Header */}
       <h2 className="w-full h-[24px] text-[16px] font-medium leading-[24px] text-ds-text-primary text-left font-dm-sans">
         People

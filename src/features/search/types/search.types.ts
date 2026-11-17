@@ -20,6 +20,7 @@ export interface SearchPersonItem {
   context_signal?: string | null;
   location?: string | null;
   location_city?: string | null;
+  open_to?: string | null;
   mutual_avatars?: string[];
   context_type?: 'mutuals' | 'education' | 'company' | 'skill' | 'location' | null;
 }
@@ -32,6 +33,7 @@ export interface SearchCompanyItem {
   logo?: string | null;
   logo_url?: string | null;
   industry?: string | null;
+  sector?: string | null;
   location?: string | null;
   is_verified?: boolean;
   is_following?: boolean;
@@ -147,6 +149,15 @@ export interface SearchFilterState {
   posted_by?: string | string[];
   hashtag?: string[];
   sort_by?: string;
+  // Org Specific Filters (Additive)
+  skills?: string[];
+  experience?: string[];
+  open_to?: string[];
+  sector?: string[];
+  specific_search?: string;
+  mentions_org?: boolean;
+  mentions_company?: boolean;
+  scope?: 'network' | 'within_org';
 }
 
 export interface GlobalSearchParams {

@@ -369,11 +369,11 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   }
 
   return {
-    id: backendPost.post_id,
+    id: backendPost.post_id || (backendPost as any).id,
     authorId: (backendPost.is_organization_post || backendPost.author_org_id)
       ? (backendPost.author_org_id || backendPost.author_id)
-      : backendPost.author_id,
-    author: backendPost.author_name,
+      : (backendPost.author_id || (backendPost as any).authorId),
+    author: backendPost.author_name || (backendPost as any).author || '',
     authorAvatar: (backendPost.author_avatar && backendPost.author_avatar !== '/images/companyonboarding/companyprofileDefault.jpg') ? backendPost.author_avatar : undefined,
     title: backendPost.title || "",
     timeAgo: shortTimeAgo,

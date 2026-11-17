@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronDownIcon } from "@/components/icons";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DropdownOption {
@@ -20,6 +21,11 @@ interface ProfileEditDropdownProps {
   labelClassName?: string;
   emptyText?: string;
   error?: string;
+  searchable?: boolean;
+  onSearchChange?: (query: string) => void;
+  onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
+  isLoadingMore?: boolean;
+  isSearching?: boolean;
 }
 
 export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
@@ -33,19 +39,34 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
   labelClassName,
   emptyText = "No options available",
   error,
+  searchable = false,
+  onSearchChange,
+  onScroll,
+  isLoadingMore = false,
+  isSearching = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchQueryRef = useRef(searchQuery);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        if (searchQueryRef.current) {
+          setSearchQuery("");
+          onSearchChange?.("");
+        }
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [onSearchChange]);
 
   const normalizedOptions: DropdownOption[] = options.map((opt) =>
     typeof opt === "string" ? { id: opt, label: opt } : opt
@@ -82,7 +103,15 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
         {/* Trigger */}
         <button
           type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
+          onClick={() => {
+            setIsOpen((prev) => {
+              if (prev && searchQueryRef.current) {
+                setSearchQuery("");
+                onSearchChange?.("");
+              }
+              return !prev;
+            });
+          }}
           className="w-full flex items-center justify-between text-left cursor-pointer focus:outline-none bg-transparent h-5 flex-none order-1 grow-0"
         >
         <span
@@ -103,42 +132,74 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
         </div>
       </button>
 
-      {/* Dropdown Popover styled like OnboardingDropdown */}
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-xl py-2 px-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-          <div className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
-            {normalizedOptions.length > 0 ? (
-              normalizedOptions.map((opt, idx) => {
-                const isSelected = opt.id === value;
-                return (
-                  <button
-                    key={`drop-opt-${idx}-${opt.id}`}
-                    type="button"
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => {
-                      onSelect(isSelected ? "" : opt.id);
-                      setIsOpen(false);
-                    }}
-                    className={cn(
-                      "self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none bg-transparent",
-                      isSelected
-                        ? "text-[var(--ds-accent)] font-medium"
-                        : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
-                    )}
-                  >
-                    <span className="truncate">{opt.label}</span>
-                  </button>
-                );
-              })
-            ) : (
-              <div className="py-3 text-center text-xs text-[var(--ds-text-muted)] font-['DM_Sans']">
-                {emptyText}
+        {/* Dropdown Popover styled like OnboardingDropdown */}
+        {isOpen && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-xl py-2 px-2 shadow-2xl z-50 animate-in fade-in duration-100 flex flex-col gap-2">
+            {searchable && (
+              <div className="w-full flex items-center gap-2 border-b border-[var(--ds-border)] pb-2 px-1">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (onSearchChange) onSearchChange(e.target.value);
+                  }}
+                  placeholder="Search industries..."
+                  className="w-full bg-transparent text-sm text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] font-['DM_Sans'] outline-none py-0.5"
+                  autoFocus
+                />
+                {isSearching && (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--ds-accent)] shrink-0" />
+                )}
               </div>
             )}
+            <div
+              onScroll={onScroll}
+              className="w-full max-h-[220px] min-h-[140px] overflow-y-auto flex flex-col gap-1.5 scrollbar-hide pr-1"
+              role="listbox"
+            >
+              {normalizedOptions.length > 0 ? (
+                <>
+                  {normalizedOptions.map((opt, idx) => {
+                    const isSelected = opt.id === value || opt.label === value;
+                    return (
+                      <button
+                        key={`drop-opt-${idx}-${opt.id}`}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          onSelect(isSelected ? "" : opt.id);
+                          setIsOpen(false);
+                          setSearchQuery("");
+                          if (onSearchChange) onSearchChange("");
+                        }}
+                        className={cn(
+                          "self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none bg-transparent",
+                          isSelected
+                            ? "text-[var(--ds-accent)] font-medium"
+                            : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
+                        )}
+                      >
+                        <span className="truncate">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                  {isLoadingMore && (
+                    <div className="w-full py-1.5 flex items-center justify-center gap-1.5 text-xs text-[var(--ds-text-muted)] font-['DM_Sans']">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--ds-accent)]" />
+                      <span>Loading more...</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="py-4 text-center text-xs text-[var(--ds-text-muted)] font-['DM_Sans']">
+                  {isSearching ? "Searching..." : emptyText}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
       {error && (
         <span className="font-['DM_Sans'] text-[12px] text-red-500 leading-tight">

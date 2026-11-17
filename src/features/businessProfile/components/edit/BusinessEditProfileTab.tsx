@@ -24,6 +24,7 @@ import { CocpitUserProfileImageEditor } from "@/shared/commonComponents/CocpitUs
 import { CocpitUserCoverImageEditor } from "@/shared/commonComponents/CocpitUserCoverImageEditor";
 import { BusinessBuildingIcon, ProfileEditIcon } from "@/components/icons";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useSectorOptions } from "@/features/search/hooks/useOrgSearchMeta";
 import { cn } from "@/lib/utils";
 
 interface BusinessEditProfileTabProps {
@@ -104,6 +105,7 @@ export default function BusinessEditProfileTab({
   const [initialData, setInitialData] = useState<{
     name: string;
     industry: string;
+    sector: string;
     foundedYear: string;
     size: string;
     website: string;
@@ -127,6 +129,12 @@ export default function BusinessEditProfileTab({
   const [isLoadingIndustries, setIsLoadingIndustries] = useState(false);
   const [isIndustryDropdownOpen, setIsIndustryDropdownOpen] = useState(false);
   const [industrySearchQuery, setIndustrySearchQuery] = useState(formData.industry || "");
+  const [industryCursor, setIndustryCursor] = useState<string | null>(null);
+  const [hasMoreIndustries, setHasMoreIndustries] = useState(false);
+  const [isLoadingMoreIndustries, setIsLoadingMoreIndustries] = useState(false);
+  const [isSearchingIndustries, setIsSearchingIndustries] = useState(false);
+
+  const debouncedIndustrySearch = useDebounce(industrySearchQuery, 250);
   const industryDropdownRef = useRef<HTMLDivElement>(null);
   const industryInputRef = useRef<HTMLInputElement>(null);
 
@@ -134,7 +142,12 @@ export default function BusinessEditProfileTab({
   const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
   const sizeDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch industries from onboarding API for companies
+  // Sector custom dropdown states (Matching StepPresence)
+  const { data: sectorOptions = [] } = useSectorOptions();
+  const [isSectorDropdownOpen, setIsSectorDropdownOpen] = useState(false);
+  const sectorDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch initial batch of 25 industries from onboarding API for companies
   useEffect(() => {
     if (isInstitution) return;
     let isCancelled = false;
@@ -142,12 +155,13 @@ export default function BusinessEditProfileTab({
     const fetchIndustries = async () => {
       setIsLoadingIndustries(true);
       try {
-        const slug = isInstitution ? "institution-types" : "industries";
-        const data = await getOnboardingOptions(slug);
-        if (!isCancelled && Array.isArray(data) && data.length > 0) {
+        const data = await getOnboardingOptions("industries", undefined, undefined, 25);
+        if (!isCancelled && Array.isArray(data)) {
           setBackendIndustries(
             data.map((item) => ({ id: item.slug || item.id || item.label, label: item.label }))
           );
+          setIndustryCursor(data.nextCursor || null);
+          setHasMoreIndustries(Boolean(data.hasMore));
         }
       } catch (err) {
         console.error("Failed to load options from backend API:", err);
@@ -162,10 +176,74 @@ export default function BusinessEditProfileTab({
     };
   }, [isInstitution]);
 
-  // Sync industrySearchQuery when industry in store changes
+  // Live debounced search when user types in edit profile
   useEffect(() => {
-    if (formData.industry && !isIndustryDropdownOpen) {
-      setIndustrySearchQuery(formData.industry);
+    if (isInstitution || !isIndustryDropdownOpen) return;
+    let isCancelled = false;
+
+    const searchIndustries = async () => {
+      setIsSearchingIndustries(true);
+      try {
+        const queryParam = debouncedIndustrySearch.trim() || undefined;
+        const data = await getOnboardingOptions("industries", queryParam, undefined, 25);
+        if (!isCancelled && Array.isArray(data)) {
+          setBackendIndustries(
+            data.map((item) => ({ id: item.slug || item.id || item.label, label: item.label }))
+          );
+          setIndustryCursor(data.nextCursor || null);
+          setHasMoreIndustries(Boolean(data.hasMore));
+        }
+      } catch (err) {
+        console.error("Failed to search industries in edit profile:", err);
+      } finally {
+        if (!isCancelled) setIsSearchingIndustries(false);
+      }
+    };
+
+    searchIndustries();
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedIndustrySearch, isIndustryDropdownOpen, isInstitution]);
+
+  // Infinite scroll on reaching bottom of industries list in edit profile
+  const handleIndustryScroll = async (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (!el || isLoadingMoreIndustries || !hasMoreIndustries || !industryCursor || isInstitution) return;
+
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+      setIsLoadingMoreIndustries(true);
+      try {
+        const queryParam = debouncedIndustrySearch.trim() || undefined;
+        const res = await getOnboardingOptions("industries", queryParam, industryCursor, 25);
+        if (Array.isArray(res) && res.length > 0) {
+          const newItems = res.map((item) => ({
+            id: item.slug || item.id || item.label,
+            label: item.label,
+          }));
+          setBackendIndustries((prev) => {
+            const existingIds = new Set(prev.map((p) => p.label));
+            const unique = newItems.filter((m) => !existingIds.has(m.label));
+            return [...prev, ...unique];
+          });
+          setIndustryCursor(res.nextCursor || null);
+          setHasMoreIndustries(Boolean(res.hasMore));
+        } else {
+          setHasMoreIndustries(false);
+          setIndustryCursor(null);
+        }
+      } catch (err) {
+        console.error("Failed to load more industries in edit profile:", err);
+      } finally {
+        setIsLoadingMoreIndustries(false);
+      }
+    }
+  };
+
+  // Sync industrySearchQuery when industry in store changes (only when dropdown is closed)
+  useEffect(() => {
+    if (!isIndustryDropdownOpen) {
+      setIndustrySearchQuery(formData.industry || "");
     }
   }, [formData.industry, isIndustryDropdownOpen]);
 
@@ -179,11 +257,15 @@ export default function BusinessEditProfileTab({
     return INDUSTRY_OPTIONS.map((opt) => ({ id: opt.value, label: opt.label }));
   }, [isInstitution, backendIndustries]);
 
+  // Options filtering: client filter for static institution types, server-searched for companies
   const filteredIndustries = useMemo(() => {
-    if (!industrySearchQuery.trim()) return activeIndustryOptions;
-    const q = industrySearchQuery.toLowerCase().trim();
-    return activeIndustryOptions.filter((opt) => opt.label.toLowerCase().includes(q));
-  }, [activeIndustryOptions, industrySearchQuery]);
+    if (isInstitution) {
+      if (!industrySearchQuery.trim()) return activeIndustryOptions;
+      const q = industrySearchQuery.toLowerCase().trim();
+      return activeIndustryOptions.filter((opt) => opt.label.toLowerCase().includes(q));
+    }
+    return activeIndustryOptions;
+  }, [isInstitution, activeIndustryOptions, industrySearchQuery]);
 
   const handleSelectIndustry = useCallback((val: string) => {
     setProfileDraft({ industry: val });
@@ -212,6 +294,12 @@ export default function BusinessEditProfileTab({
         !sizeDropdownRef.current.contains(event.target as Node)
       ) {
         setIsSizeDropdownOpen(false);
+      }
+      if (
+        sectorDropdownRef.current &&
+        !sectorDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsSectorDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -358,6 +446,7 @@ export default function BusinessEditProfileTab({
       const newForm = {
         name: org.name || "",
         industry: normalizeIndustry(isInst ? org.institution_type : org.industry, isInst),
+        sector: org.sector || "",
         foundedYear: org.established_year?.toString() || org.founded?.toString() || "",
         size: getCompanySizeLabel(org.size || org.employeeCount),
         website: org.website || org.websiteUrl || "",
@@ -463,6 +552,7 @@ export default function BusinessEditProfileTab({
     initialData && (
       (profileDraft.name || "").trim() !== (initialData.name || "").trim() ||
       (profileDraft.industry || "").trim() !== (initialData.industry || "").trim() ||
+      (profileDraft.sector || "").trim() !== (initialData.sector || "").trim() ||
       (profileDraft.foundedYear || "").trim() !== (initialData.foundedYear || "").trim() ||
       (profileDraft.size || "").trim() !== (initialData.size || "").trim() ||
       (profileDraft.website || "").trim() !== (initialData.website || "").trim() ||
@@ -514,6 +604,7 @@ export default function BusinessEditProfileTab({
           headline: formData.headline,
           org_type: isInstitution ? "INSTITUTION" : "COMPANY",
           industry: isInstitution ? null : formData.industry,
+          sector: isInstitution ? null : (formData.sector?.trim() || null),
           institution_type: isInstitution ? formData.industry : null,
           size: formData.size,
           website: formData.website,
@@ -537,6 +628,7 @@ export default function BusinessEditProfileTab({
             ...prevOrg,
             ...serverOrg,
             industry: isInstitution ? null : (serverOrg?.industry || formData.industry),
+            sector: isInstitution ? null : (serverOrg?.sector !== undefined ? serverOrg.sector : (formData.sector ? formData.sector.trim() : null)),
             institution_type: isInstitution ? (serverOrg?.institution_type || formData.industry) : null,
             city: displayLoc,
             location: displayLoc,
@@ -558,6 +650,7 @@ export default function BusinessEditProfileTab({
             ...prevOrg,
             ...serverOrg,
             industry: isInstitution ? null : (serverOrg?.industry || formData.industry),
+            sector: isInstitution ? null : (serverOrg?.sector !== undefined ? serverOrg.sector : (formData.sector ? formData.sector.trim() : null)),
             institution_type: isInstitution ? (serverOrg?.institution_type || formData.industry) : null,
             city: displayLoc,
             location: displayLoc,
@@ -574,6 +667,7 @@ export default function BusinessEditProfileTab({
           const prevAbout = old.about || old;
           const nextAbout = {
             ...prevAbout,
+            sector: isInstitution ? null : (formData.sector ? formData.sector.trim() : null),
             city: locationFormatted,
             location: locationFormatted,
             headquarter: locationFormatted,
@@ -598,6 +692,7 @@ export default function BusinessEditProfileTab({
       setInitialData({
         name: formData.name,
         industry: formData.industry,
+        sector: formData.sector || "",
         foundedYear: formData.foundedYear,
         size: formData.size,
         website: formData.website,
@@ -610,6 +705,7 @@ export default function BusinessEditProfileTab({
         {
           name: formData.name,
           industry: formData.industry,
+          sector: formData.sector || "",
           foundedYear: formData.foundedYear,
           size: formData.size,
           website: formData.website,
@@ -745,7 +841,7 @@ export default function BusinessEditProfileTab({
       {/* Form Fields: Minimalist Underline Style matching Figma ref (w-full within 616px) */}
       <div className="w-full max-w-[616px] mx-auto flex flex-col justify-start items-start gap-10">
         
-        {/* Row 1: Organization Name & Industry */}
+        {/* Row 1: Organization Name */}
         <div className="self-stretch inline-flex flex-col sm:flex-row justify-start items-center gap-10">
           {/* Organization Name */}
           <div className="w-full sm:w-72 py-2 border-b border-ds-border inline-flex flex-col justify-center items-start gap-2.5">
@@ -764,7 +860,11 @@ export default function BusinessEditProfileTab({
               className="w-full text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 bg-transparent focus:outline-none placeholder:text-ds-text-muted"
             />
           </div>
+          <div className="hidden sm:block sm:w-72" />
+        </div>
 
+        {/* Row 2: Industry & Sectors */}
+        <div className="self-stretch inline-flex flex-col sm:flex-row justify-start items-center gap-10">
           {/* Industry Selection with Search & Custom Dropdown matching StepIdentity */}
           <div
             ref={industryDropdownRef}
@@ -819,12 +919,16 @@ export default function BusinessEditProfileTab({
                   }}
                   className="p-1 -mr-1 flex items-center justify-center cursor-pointer text-ds-text-primary focus:outline-none"
                 >
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 transition-transform duration-200",
-                      isIndustryDropdownOpen ? "rotate-180" : ""
-                    )}
-                  />
+                  {isSearchingIndustries ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-ds-accent" />
+                  ) : (
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 transition-transform duration-200",
+                        isIndustryDropdownOpen ? "rotate-180" : ""
+                      )}
+                    />
+                  )}
                 </button>
               </div>
             </div>
@@ -832,56 +936,143 @@ export default function BusinessEditProfileTab({
             {/* Industry Dropdown Menu */}
             {isIndustryDropdownOpen && (
               <div
-                className="absolute top-full left-0 mt-2 w-full p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl inline-flex flex-col justify-start items-center gap-3 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+                className="absolute top-full left-0 mt-2 w-full p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl inline-flex flex-col justify-start items-center gap-3 overflow-hidden z-50 animate-in fade-in duration-100"
               >
                 <div
                   role="listbox"
-                  className="self-stretch flex flex-col justify-start items-start gap-1 max-h-48 overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+                  onScroll={handleIndustryScroll}
+                  className="self-stretch flex flex-col justify-start items-start gap-1 max-h-48 min-h-[160px] overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
-                  {isLoadingIndustries ? (
-                    <div className="w-full py-3 text-center text-ds-text-muted text-sm font-['DM_Sans']">
+                  {isLoadingIndustries && backendIndustries.length === 0 ? (
+                    <div className="w-full h-36 flex items-center justify-center text-ds-text-muted text-sm font-['DM_Sans']">
+                      <Loader2 className="w-4 h-4 animate-spin text-ds-accent mr-2" />
                       Loading industries...
                     </div>
                   ) : filteredIndustries.length > 0 ? (
-                    filteredIndustries.map((opt) => {
-                      const isSelected =
-                        (formData.industry || "").toLowerCase() === opt.label.toLowerCase() ||
-                        (formData.industry || "").toLowerCase() === opt.id.toLowerCase();
-                      return (
-                        <div
-                          key={opt.id}
-                          role="option"
-                          aria-selected={isSelected}
-                          onClick={() => handleSelectIndustry(opt.label)}
-                          className="self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer group select-none"
-                        >
-                          <span
-                            title={opt.label}
-                            className={cn(
-                              "justify-start text-sm font-normal font-['DM_Sans'] leading-5 transition-colors cursor-pointer truncate",
-                              isSelected
-                                ? "text-ds-accent font-medium"
-                                : "text-ds-text-secondary group-hover:text-ds-text-primary"
-                            )}
+                    <>
+                      {filteredIndustries.map((opt) => {
+                        const isSelected =
+                          (formData.industry || "").toLowerCase() === opt.label.toLowerCase() ||
+                          (formData.industry || "").toLowerCase() === opt.id.toLowerCase();
+                        return (
+                          <div
+                            key={opt.id}
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={() => handleSelectIndustry(opt.label)}
+                            className="self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer group select-none"
                           >
-                            {opt.label}
-                          </span>
+                            <span
+                              title={opt.label}
+                              className={cn(
+                                "justify-start text-sm font-normal font-['DM_Sans'] leading-5 transition-colors cursor-pointer truncate",
+                                isSelected
+                                  ? "text-ds-accent font-medium"
+                                  : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                              )}
+                            >
+                              {opt.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {isLoadingMoreIndustries && (
+                        <div className="w-full py-2 flex items-center justify-center gap-1.5 text-xs text-ds-text-muted font-['DM_Sans']">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-ds-accent" />
+                          <span>Loading more...</span>
                         </div>
-                      );
-                    })
+                      )}
+                    </>
                   ) : (
-                    <div className="w-full py-3 text-center text-ds-text-muted text-sm font-['DM_Sans']">
-                      No options found
+                    <div className="w-full h-36 flex items-center justify-center text-ds-text-muted text-sm font-['DM_Sans']">
+                      {isSearchingIndustries ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-ds-accent" />
+                          <span>Searching...</span>
+                        </div>
+                      ) : (
+                        <span>No options found</span>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
             )}
           </div>
+
+          {/* Sector Selection (Companies only) */}
+          {!isInstitution ? (
+            <div ref={sectorDropdownRef} className="w-full sm:w-72 relative">
+              <div
+                onClick={() => setIsSectorDropdownOpen((prev) => !prev)}
+                className={cn(
+                  "w-full py-2 border-b flex flex-col justify-center items-start gap-2.5 cursor-pointer transition-colors",
+                  isSectorDropdownOpen ? "border-ds-accent" : "border-ds-border hover:border-ds-text-muted"
+                )}
+              >
+                <span className="text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
+                  Sectors
+                </span>
+                <div className="w-full inline-flex justify-between items-center">
+                  <span
+                    className={cn(
+                      "text-sm font-normal font-['DM_Sans'] leading-5",
+                      formData.sector ? "text-ds-text-primary" : "text-ds-text-muted"
+                    )}
+                  >
+                    {formData.sector || "Select sector"}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 text-ds-text-primary transition-transform duration-200",
+                      isSectorDropdownOpen ? "rotate-180" : ""
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Dropdown Options */}
+              {isSectorDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 z-50 w-full p-1.5 bg-ds-bg rounded-xl border border-ds-border inline-flex flex-col justify-start items-center gap-1 overflow-hidden shadow-2xl animate-in fade-in duration-150">
+                  <div
+                    className="self-stretch flex flex-col justify-start items-start gap-1 max-h-56 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
+                    {sectorOptions.map((sec) => {
+                      const isSelected = formData.sector === sec;
+                      return (
+                        <div
+                          key={sec}
+                          onClick={() => {
+                            setProfileDraft({ sector: isSelected ? "" : sec });
+                            setIsSectorDropdownOpen(false);
+                          }}
+                          className="self-stretch h-9 px-3 rounded-lg inline-flex justify-between items-center cursor-pointer group select-none"
+                        >
+                          <span
+                            className={cn(
+                              "text-sm font-['DM_Sans'] leading-5 truncate transition-colors cursor-pointer",
+                              isSelected
+                                ? "text-ds-accent font-medium"
+                                : "text-ds-text-secondary group-hover:text-ds-text-primary font-normal"
+                            )}
+                          >
+                            {sec}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="hidden sm:block sm:w-72" />
+          )}
         </div>
 
-        {/* Row 2: Founded Year & Organization Size */}
+        {/* Row 3: Founded Year & Organization Size */}
         <div className="self-stretch inline-flex flex-col sm:flex-row justify-start items-center gap-10">
           {/* Founded Year */}
           <div className="w-full sm:w-72 py-2 border-b border-ds-border inline-flex flex-col justify-center items-start gap-2.5">
@@ -967,7 +1158,7 @@ export default function BusinessEditProfileTab({
           </div>
         </div>
 
-        {/* Row 3: Headline with character counter */}
+        {/* Row 4: Headline with character counter */}
         <div className="self-stretch flex flex-col justify-start items-end gap-2">
           <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
             <label className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
@@ -978,13 +1169,13 @@ export default function BusinessEditProfileTab({
               name="headline"
               value={formData.headline}
               onChange={handleChange}
-              maxLength={255}
+              maxLength={120}
               placeholder="SaaS and Fintech Solutions"
               className="self-stretch text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 bg-transparent focus:outline-none placeholder:text-ds-text-muted"
             />
           </div>
           <div className="text-ds-text-muted text-xs font-normal font-['DM_Sans'] leading-4">
-            {formData.headline?.length || 0}/255
+            {formData.headline?.length || 0}/120
           </div>
         </div>
 

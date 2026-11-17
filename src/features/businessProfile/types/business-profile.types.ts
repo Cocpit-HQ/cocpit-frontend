@@ -75,6 +75,7 @@ export interface BusinessProfileData {
   verificationStatus?: string;
   tagline: string;
   industry: string;
+  sector?: string;
   location: string;
   employeeCount: string;
   websiteUrl: string;

@@ -375,7 +375,7 @@ export function ProfileAllPostsScreen({
                   {tab.label}
                 </span>
                 {isActive && (
-                  <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] bg-ds-accent rounded-full" />
+                  <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] bg-ds-accent rounded-full shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                 )}
               </button>
             );

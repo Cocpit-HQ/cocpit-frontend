@@ -120,7 +120,7 @@ export const SearchOrgFilters: React.FC<SearchOrgFiltersProps> = ({
     : [];
 
   return (
-    <div className="flex items-center gap-3 shrink-0">
+    <>
       {/* 1. Location Filter */}
       <SearchableLocationFilterChip
         selectedValues={locationSelections}
@@ -194,6 +194,6 @@ export const SearchOrgFilters: React.FC<SearchOrgFiltersProps> = ({
           {filters.actively_hiring && <Check className="size-4 text-ds-accent" />}
         </button>
       )}
-    </div>
+    </>
   );
 };

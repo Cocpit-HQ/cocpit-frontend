@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SearchPillChevron } from '../SearchPillChevron';
 import { SearchFilterState } from '../../types/search.types';
-import { PeopleFilterPopover } from './PeopleFilterPopover';
-import { getTrendingHashtags, searchHashtags } from '@/services/api/hashtags';
+import { SearchableCursorFilterChip } from './SearchableCursorFilterChip';
+import { getPaginatedHashtags } from '../../services/search.service';
 
 interface SearchPostFiltersProps {
   filters: SearchFilterState;
@@ -55,8 +55,15 @@ const PostFilterMenu: React.FC<PostFilterMenuProps> = ({
   onSelect,
 }) => {
   const [open, setOpen] = useState(false);
-
   const isActive = Boolean(selectedValue);
+
+  // Float active selection to the top
+  const displayOptions = useMemo(() => {
+    if (!selectedValue) return options;
+    const selectedOpt = options.find((opt) => opt.value?.toLowerCase() === selectedValue.toLowerCase());
+    const otherOpts = options.filter((opt) => opt.value?.toLowerCase() !== selectedValue.toLowerCase());
+    return selectedOpt ? [selectedOpt, ...otherOpts] : options;
+  }, [options, selectedValue]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -81,7 +88,7 @@ const PostFilterMenu: React.FC<PostFilterMenuProps> = ({
         sideOffset={6}
         className="p-[12px] w-auto min-w-[80px] bg-ds-bg border border-ds-border rounded-[8px] flex flex-col items-start gap-[16px] shadow-2xl z-[120] focus:outline-none focus:ring-0"
       >
-        {options.map((opt) => {
+        {displayOptions.map((opt) => {
           const isSelected = opt.value
             ? selectedValue?.toLowerCase() === opt.value.toLowerCase()
             : !selectedValue;
@@ -132,16 +139,30 @@ const MultiSelectPostFilterMenu: React.FC<MultiSelectPostFilterMenuProps> = ({
   const [open, setOpen] = useState(false);
 
   const currentSelections: string[] = useMemo(() => {
-    if (Array.isArray(selectedValues)) return selectedValues;
+    if (Array.isArray(selectedValues)) {
+      return selectedValues.map((s) => String(s).trim().toLowerCase()).filter(Boolean);
+    }
     if (typeof selectedValues === 'string' && selectedValues.trim()) {
       return selectedValues.includes(',')
-        ? selectedValues.split(',').map((s) => s.trim().toLowerCase())
+        ? selectedValues.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
         : [selectedValues.trim().toLowerCase()];
     }
     return [];
   }, [selectedValues]);
 
   const isActive = currentSelections.length > 0;
+
+  // Float all selected options to the top together
+  const displayOptions = useMemo(() => {
+    if (currentSelections.length === 0) return options;
+    const isOptionSelected = (opt: { label: string; value: string }) =>
+      currentSelections.some(
+        (val) => val === opt.value.toLowerCase() || val === opt.label.toLowerCase()
+      );
+    const selected = options.filter(isOptionSelected);
+    const unselected = options.filter((opt) => !isOptionSelected(opt));
+    return [...selected, ...unselected];
+  }, [options, currentSelections]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -166,7 +187,7 @@ const MultiSelectPostFilterMenu: React.FC<MultiSelectPostFilterMenuProps> = ({
         sideOffset={6}
         className="p-[12px] w-auto min-w-[110px] bg-ds-bg border border-ds-border rounded-[8px] flex flex-col items-start gap-[16px] shadow-2xl z-[120] focus:outline-none focus:ring-0"
       >
-        {options.map((opt) => {
+        {displayOptions.map((opt) => {
           const isSelected = currentSelections.some(
             (val) => val.toLowerCase() === opt.value.toLowerCase()
           );
@@ -196,40 +217,33 @@ export const SearchPostFilters: React.FC<SearchPostFiltersProps> = ({
   onSetFilter,
   onToggleFilter,
 }) => {
-  const [initialHashtags, setInitialHashtags] = useState<string[]>([]);
-
-  // Prefetch initial trending hashtags for the hashtag filter popover
-  useEffect(() => {
-    let cancelled = false;
-    getTrendingHashtags()
-      .then((tags) => {
-        if (!cancelled && Array.isArray(tags) && tags.length > 0) {
-          setInitialHashtags(tags.map((t) => t.tag));
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Dynamic live hashtag search query
-  const handleLoadHashtags = useCallback(async (term: string): Promise<string[]> => {
-    try {
-      const cleanTerm = term.trim().replace(/^#/, '');
-      const res = await searchHashtags(cleanTerm);
-      if (res?.tags && Array.isArray(res.tags)) {
-        return res.tags.map((t) => t.tag);
-      }
-      return [];
-    } catch {
-      return [];
+  const hashtagSelections = useMemo(() => {
+    if (Array.isArray(filters.hashtag)) return filters.hashtag;
+    if (typeof filters.hashtag === 'string' && filters.hashtag) {
+      return (filters.hashtag as string).includes(',')
+        ? (filters.hashtag as string).split(',').map((s) => s.trim().replace(/^#/, '')).filter(Boolean)
+        : [(filters.hashtag as string).trim().replace(/^#/, '')];
     }
+    return [];
+  }, [filters.hashtag]);
+
+  const handleHashtagToggle = useCallback((val: string) => {
+    const clean = val.replace(/^#/, '');
+    if (onToggleFilter) {
+      onToggleFilter('hashtag', clean);
+    } else {
+      const exists = hashtagSelections.includes(clean);
+      const next = exists ? hashtagSelections.filter((x) => x !== clean) : [...hashtagSelections, clean];
+      onSetFilter('hashtag', next.length > 0 ? (next as any) : null);
+    }
+  }, [hashtagSelections, onToggleFilter, onSetFilter]);
+
+  const fetchHashtags = useCallback((q?: string, cursor?: string) => {
+    return getPaginatedHashtags(q, cursor, 25);
   }, []);
 
   return (
-    <div className="flex items-center gap-3 shrink-0">
+    <>
       {/* 1. Posted by Filter (Multi-select: Connections, Followers, Others) */}
       <MultiSelectPostFilterMenu
         title="Posted by"
@@ -240,13 +254,16 @@ export const SearchPostFilters: React.FC<SearchPostFiltersProps> = ({
         }
       />
 
-      {/* 2. Hashtags Filter (Searchable popover) */}
-      <PeopleFilterPopover
+      {/* 2. Hashtags Filter (Cursor-paginated infinite scroll popover) */}
+      <SearchableCursorFilterChip
         title="Hashtags"
-        options={initialHashtags}
-        selectedValues={filters.hashtag || []}
-        onToggle={(val) => onToggleFilter?.('hashtag', val)}
-        loadOptions={handleLoadHashtags}
+        paramKey="hashtag"
+        selectedValues={hashtagSelections}
+        fetchData={fetchHashtags}
+        onToggle={(_, val) => handleHashtagToggle(val)}
+        allowCustomValue={true}
+        buttonWidthClass="w-auto"
+        widthClass="w-auto min-w-[200px] max-w-[320px]"
       />
 
       {/* 3. Date posted Filter (Single select) */}
@@ -266,6 +283,6 @@ export const SearchPostFilters: React.FC<SearchPostFiltersProps> = ({
           onToggleFilter ? onToggleFilter('content_type', val) : onSetFilter('content_type', val)
         }
       />
-    </div>
+    </>
   );
 };

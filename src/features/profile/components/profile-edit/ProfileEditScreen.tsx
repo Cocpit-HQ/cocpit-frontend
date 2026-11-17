@@ -20,7 +20,8 @@ import {
   uploadResume,
   deleteResume,
 } from "@/features/profile/services/profile.service";
-import { getIndustries } from "@/features/jobs/services/jobs.service";
+import { getPaginatedIndustries } from "@/features/jobs/services/jobs.service";
+import { useDebounce } from "@/hooks/use-debounce";
 import { checkAccountNameAvailability } from "@/services/api/onboarding";
 import { EditAvatarModal } from "@/features/profile/components/EditAvatarModal";
 import { EditCoverPhoto } from "@/features/profile/components/EditCoverPhoto";
@@ -191,6 +192,12 @@ export function ProfileEditScreen({
 
   // Industries
   const [availableIndustries, setAvailableIndustries] = useState<{ industry_name: string }[]>([]);
+  const [industrySearch, setIndustrySearch] = useState("");
+  const [industryCursor, setIndustryCursor] = useState<string | null>(null);
+  const [hasMoreIndustries, setHasMoreIndustries] = useState(false);
+  const [isLoadingMoreIndustries, setIsLoadingMoreIndustries] = useState(false);
+  const [isSearchingIndustries, setIsSearchingIndustries] = useState(false);
+  const debouncedIndustrySearch = useDebounce(industrySearch, 250);
 
   // Username availability
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(true);
@@ -249,17 +256,89 @@ export function ProfileEditScreen({
     }
   }, [user]);
 
-  // Fetch industries
+  // Initial fetch: 25 industries
   useEffect(() => {
-    const fetchIndustries = async () => {
+    let isCancelled = false;
+    const fetchInitialIndustries = async () => {
       try {
-        const data = await getIndustries();
-        setAvailableIndustries(data || []);
+        const res = await getPaginatedIndustries(undefined, undefined, 25);
+        if (!isCancelled && Array.isArray(res.items)) {
+          setAvailableIndustries(res.items.map((name: string) => ({ industry_name: name })));
+          setIndustryCursor(res.nextCursor || null);
+          setHasMoreIndustries(Boolean(res.hasMore));
+        }
       } catch (err) {
-        console.error("Failed to fetch industries", err);
+        console.error("Failed to fetch initial industries in ProfileEditScreen", err);
       }
     };
-    fetchIndustries();
+    fetchInitialIndustries();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  // Live debounced server search for industries
+  useEffect(() => {
+    let isCancelled = false;
+    const searchIndustries = async () => {
+      setIsSearchingIndustries(true);
+      try {
+        const trimmed = debouncedIndustrySearch.trim() || undefined;
+        const res = await getPaginatedIndustries(trimmed, undefined, 25);
+        if (!isCancelled && Array.isArray(res.items)) {
+          setAvailableIndustries(res.items.map((name: string) => ({ industry_name: name })));
+          setIndustryCursor(res.nextCursor || null);
+          setHasMoreIndustries(Boolean(res.hasMore));
+        }
+      } catch (err) {
+        console.error("Failed to search industries in ProfileEditScreen:", err);
+      } finally {
+        if (!isCancelled) setIsSearchingIndustries(false);
+      }
+    };
+
+    searchIndustries();
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedIndustrySearch]);
+
+  // Cursor-based infinite scroll: load next 25 on reaching bottom of list
+  const handleIndustryScroll = useCallback(
+    async (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
+      if (!el || isLoadingMoreIndustries || !hasMoreIndustries || !industryCursor) return;
+
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+        setIsLoadingMoreIndustries(true);
+        try {
+          const queryParam = debouncedIndustrySearch.trim() || undefined;
+          const res = await getPaginatedIndustries(queryParam, industryCursor, 25);
+          if (Array.isArray(res.items) && res.items.length > 0) {
+            const newItems = res.items.map((name: string) => ({ industry_name: name }));
+            setAvailableIndustries((prev) => {
+              const existing = new Set(prev.map((p) => p.industry_name));
+              const unique = newItems.filter((m) => !existing.has(m.industry_name));
+              return [...prev, ...unique];
+            });
+            setIndustryCursor(res.nextCursor || null);
+            setHasMoreIndustries(Boolean(res.hasMore));
+          } else {
+            setHasMoreIndustries(false);
+            setIndustryCursor(null);
+          }
+        } catch (err) {
+          console.error("Failed to load more industries in ProfileEditScreen:", err);
+        } finally {
+          setIsLoadingMoreIndustries(false);
+        }
+      }
+    },
+    [isLoadingMoreIndustries, hasMoreIndustries, industryCursor, debouncedIndustrySearch]
+  );
+
+  const handleIndustrySearchChange = useCallback((query: string) => {
+    setIndustrySearch(query);
   }, []);
 
   // Check username availability on change
@@ -747,6 +826,10 @@ export function ProfileEditScreen({
               isUsernameAvailable={isUsernameAvailable}
               isCheckingUsername={isCheckingUsername}
               availableIndustries={availableIndustries}
+              onIndustrySearchChange={handleIndustrySearchChange}
+              onIndustryScroll={handleIndustryScroll}
+              isLoadingMoreIndustries={isLoadingMoreIndustries}
+              isSearchingIndustries={isSearchingIndustries}
               errors={errors}
             />
           </div>

@@ -38,6 +38,10 @@ interface ProfileEditFormProps {
   isCheckingUsername?: boolean;
   availableIndustries?: { industry_name: string }[];
   errors?: Record<string, string>;
+  onIndustrySearchChange?: (query: string) => void;
+  onIndustryScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
+  isLoadingMoreIndustries?: boolean;
+  isSearchingIndustries?: boolean;
 }
 
 const FALLBACK_LOOKING_FOR_OPTIONS = [
@@ -84,11 +88,21 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   isCheckingUsername = false,
   availableIndustries = [],
   errors = {},
+  onIndustrySearchChange,
+  onIndustryScroll,
+  isLoadingMoreIndustries = false,
+  isSearchingIndustries = false,
 }) => {
-  const industryOptions = availableIndustries.map((ind) => ({
-    id: ind.industry_name,
-    label: ind.industry_name,
-  }));
+  const industryOptions = React.useMemo(() => {
+    const list = availableIndustries.map((ind) => ({
+      id: ind.industry_name,
+      label: ind.industry_name,
+    }));
+    if (formData.industry && !list.some((item) => item.id === formData.industry)) {
+      list.unshift({ id: formData.industry, label: formData.industry });
+    }
+    return list;
+  }, [availableIndustries, formData.industry]);
 
   const [dropdownOptions, setDropdownOptions] = useState<{
     status: { id: number; label: string }[];
@@ -266,6 +280,11 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           onSelect={(val) => onChange("industry", val)}
           placeholder="Select"
           emptyText="No industries available"
+          searchable={true}
+          onSearchChange={onIndustrySearchChange}
+          onScroll={onIndustryScroll}
+          isLoadingMore={isLoadingMoreIndustries}
+          isSearching={isSearchingIndustries}
           className="w-full sm:w-[380px] max-w-full sm:flex-1"
         />
       </div>

@@ -35,6 +35,7 @@ export interface CompanyOnboardingState {
   isPhoneVerified: boolean;
   website: string;
   organizationSize: string;
+  sector?: string;
   
   // HQ Location
   hqCountry: string;

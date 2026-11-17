@@ -568,7 +568,17 @@ export default function BusinessProfileHeader({
                 {data.industry}
               </span>
             )}
-            {data.industry && data.location && (
+            {data.sector && (
+              <>
+                {data.industry && (
+                  <span className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
+                )}
+                <span className="text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4 text-center">
+                  {data.sector}
+                </span>
+              </>
+            )}
+            {(data.industry || data.sector) && data.location && (
               <span className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
             )}
             {data.location && (

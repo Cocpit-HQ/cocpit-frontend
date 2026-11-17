@@ -368,7 +368,7 @@ export function BusinessVerificationPage() {
                 Verification
               </span>
             </div>
-            <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent" />
+            <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
           </button>
         </div>
 

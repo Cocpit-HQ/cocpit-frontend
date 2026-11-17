@@ -19,7 +19,8 @@ const initialStagesFieldsState = {
   isPhoneVerified: false,
   website: '',
   organizationSize: '1–10 members',
-
+  sector: '',
+  
   // HQ Location
   hqCountry: '',
   hqCity: '',

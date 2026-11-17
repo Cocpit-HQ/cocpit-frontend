@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { LeftArrowIcon } from '@/components/icons';
+import { GlobalSearch } from '@/features/navigation/components/GlobalSearch';
+import { MobileSearchScreen } from '@/features/navigation/components/MobileSearchScreen';
+import { SearchCategory } from '../types/search.types';
 
 interface SearchHeaderBarProps {
   initialQuery: string;
@@ -11,6 +14,7 @@ interface SearchHeaderBarProps {
   onBack?: () => void;
   onClose?: () => void;
   placeholder?: string;
+  category?: SearchCategory;
 }
 
 export const isSafeExitUrl = (url: string | null | undefined): boolean => {
@@ -30,11 +34,12 @@ export const SearchHeaderBar: React.FC<SearchHeaderBarProps> = ({
   onBack,
   onClose,
   placeholder = 'hr',
+  category,
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [localQuery, setLocalQuery] = useState(initialQuery);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     setLocalQuery(initialQuery);
@@ -57,11 +62,6 @@ export const SearchHeaderBar: React.FC<SearchHeaderBarProps> = ({
       }
     }
   }, []);
-
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    onSearch(localQuery.trim());
-  };
 
   const handleExitSearch = () => {
     let targetDestination: string | null = null;
@@ -157,51 +157,94 @@ export const SearchHeaderBar: React.FC<SearchHeaderBarProps> = ({
   };
 
   return (
-    <div className="w-full flex items-center justify-center relative px-4 sm:px-10 pt-[40px] pb-1">
-      {/* Back Button (Top Left) */}
-      <button
-        type="button"
-        onClick={handleBack}
-        className="absolute left-4 sm:left-10 md:left-[40px] top-[40px] h-10 flex items-center gap-2 cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity bg-transparent border-none outline-none font-dm-sans select-none z-10 focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm"
-        aria-label="Back"
-      >
-        <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
-        <span className="hidden sm:inline text-base font-medium leading-6">Back</span>
-      </button>
+    <>
+      {/* Mobile Header Bar (< md) */}
+      <div className="md:hidden flex items-center gap-3 px-4 pt-3 pb-2 w-full bg-ds-bg">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="text-ds-text-primary hover:opacity-80 transition-opacity bg-transparent border-none outline-none p-0 cursor-pointer shrink-0"
+          aria-label="Back"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div
+          className="flex-1 flex justify-between items-center border-b border-ds-text-primary pb-1 bg-transparent min-w-0 cursor-text"
+          onClick={() => setIsMobileSearchOpen(true)}
+        >
+          <input
+            type="text"
+            readOnly
+            value={localQuery}
+            onFocus={() => setIsMobileSearchOpen(true)}
+            placeholder={placeholder === 'hr' ? 'Search' : (placeholder || 'Search')}
+            className="bg-transparent text-ds-text-primary placeholder:text-ds-text-muted text-base w-full focus:outline-none font-dm-sans cursor-text"
+          />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMobileSearchOpen(true);
+            }}
+            className="text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none p-0 cursor-pointer shrink-0 ml-2"
+            aria-label="Search"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </div>
 
-      {/* Center Search Bar */}
-      <form
-        onSubmit={handleSubmit}
-        className="flex justify-between items-center px-[12px] py-[6px] gap-[10px] w-full max-w-[442px] h-[40px] border-b border-ds-text-primary box-border transition-colors z-10"
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          value={localQuery}
-          onChange={(e) => setLocalQuery(e.target.value)}
+        <MobileSearchScreen
+          isOpen={isMobileSearchOpen}
+          onClose={() => setIsMobileSearchOpen(false)}
+          initialQuery={localQuery}
+          onSearch={(newQuery) => {
+            setLocalQuery(newQuery);
+            onSearch(newQuery);
+          }}
           placeholder={placeholder}
-          aria-label="Search"
-          className="bg-transparent border-none outline-none text-ds-text-primary text-[16px] leading-[24px] w-full placeholder:text-ds-text-muted font-dm-sans truncate"
+          category={category}
+        />
+      </div>
+
+      {/* Desktop Header Bar (>= md) */}
+      <div className="hidden md:flex w-full items-center justify-center relative px-4 sm:px-10 pt-[40px] pb-1">
+        {/* Back Button (Top Left) */}
+        <button
+          type="button"
+          onClick={handleBack}
+          className="absolute left-4 sm:left-10 md:left-[40px] top-[40px] h-10 flex items-center gap-2 cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity bg-transparent border-none outline-none font-dm-sans select-none z-10 focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm"
+          aria-label="Back"
+        >
+          <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
+          <span className="hidden sm:inline text-base font-medium leading-6">Back</span>
+        </button>
+
+        {/* Center Search Bar */}
+        <GlobalSearch
+          variant="embedded"
+          initialQuery={localQuery}
+          onSearch={(newQuery) => {
+            setLocalQuery(newQuery);
+            onSearch(newQuery);
+          }}
+          placeholder={placeholder}
+          category={category}
         />
 
+        {/* Cancel/Close Button (Top Right) */}
         <button
-          type="submit"
-          className="w-[20px] h-[20px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
-          aria-label="Submit search"
+          type="button"
+          onClick={handleClose}
+          className="absolute right-4 sm:right-10 md:right-[40px] top-[40px] h-10 w-10 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer bg-transparent border-none outline-none select-none z-10 focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm"
+          aria-label="Close search"
         >
-          <Search className="w-[20px] h-[20px] shrink-0 text-ds-text-primary" />
+          <X className="w-5 h-5 text-ds-text-primary shrink-0" />
         </button>
-      </form>
-
-      {/* Cancel/Close Button (Top Right) */}
-      <button
-        type="button"
-        onClick={handleClose}
-        className="absolute right-4 sm:right-10 md:right-[40px] top-[40px] h-10 w-10 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer bg-transparent border-none outline-none select-none z-10 focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm"
-        aria-label="Close search"
-      >
-        <X className="w-5 h-5 text-ds-text-primary shrink-0" />
-      </button>
-    </div>
+      </div>
+    </>
   );
 };

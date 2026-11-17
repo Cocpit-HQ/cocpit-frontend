@@ -23,6 +23,7 @@ import {
   confirmPhoneOTP,
 } from "../services/company-onboarding.api";
 
+
 interface StepPresenceProps {
   onNext: () => void;
   onBack?: () => void;
@@ -157,6 +158,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
     isPhoneVerified,
     website,
     organizationSize,
+    sector,
     hqCity,
     hqCountry,
     hqLatitude,
