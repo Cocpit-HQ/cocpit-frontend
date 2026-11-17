@@ -450,10 +450,11 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                     if (typeof window !== "undefined") {
                         sessionStorage.setItem("cocpit_active_profile", JSON.stringify(userProfile));
                         setPreservedUserActorInStorage(userProfile.id);
+                        trackActorMetric("switch_complete", { type: "USER", id: session.user.id });
+                        window.location.href = "/profile";
+                        return;
                     }
                     setActiveProfile(userProfile);
-                    trackActorMetric("switch_complete", { type: "USER", id: session.user.id });
-                    window.location.href = "/profile";
                     return;
                 }
 
@@ -477,10 +478,11 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 const companyProfile = buildCompanyProfile(targetCompany);
                 if (typeof window !== "undefined") {
                     sessionStorage.setItem("cocpit_active_profile", JSON.stringify(companyProfile));
+                    trackActorMetric("switch_complete", { type: "COMPANY", id: companyProfile.id });
+                    window.location.href = `/organization/${targetCompany.slug}`;
+                    return;
                 }
                 setActiveProfile(companyProfile);
-                trackActorMetric("switch_complete", { type: "COMPANY", id: companyProfile.id });
-                window.location.href = `/organization/${targetCompany.slug}`;
             } catch (error: any) {
                 console.error("[ActorContext] Failed to switch actor.", error);
                 trackActorMetric("switch_error", { type, id });

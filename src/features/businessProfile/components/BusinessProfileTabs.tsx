@@ -116,9 +116,9 @@ export function BusinessProfileTabs({
                 </span>
               </div>
               {isSelected ? (
-                <div className="self-stretch w-full h-[2px] bg-[var(--ds-accent)]" />
+                <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent" />
               ) : (
-                <div className="self-stretch w-full h-[2px] bg-transparent" />
+                <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
               )}
             </Tabs.Trigger>
           );

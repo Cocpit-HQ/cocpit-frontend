@@ -53,9 +53,9 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
                 </span>
               </div>
               {isSelected ? (
-                <div className="w-full h-0 outline outline-[1.5px] outline-[var(--ds-accent)]" />
+                <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent" />
               ) : (
-                <div className="w-full h-0 outline outline-[1.5px] outline-transparent" />
+                <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
               )}
             </button>
           );

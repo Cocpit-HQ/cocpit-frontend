@@ -102,7 +102,20 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   const [isSendOfferModalOpen, setIsSendOfferModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const [selectedListing, setSelectedListing] = useState<JobListing | null>(null);
+  const [selectedListing, setSelectedListing] = useState<JobListing | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem('cocpit_selected_job_listing');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && urlJobId && parsed.id === urlJobId) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+    }
+    return null;
+  });
   const [listingReferrer, setListingReferrer] = useState<'dashboard' | 'applicants'>('dashboard');
   const { selectedOfferGroup, setSelectedOfferGroup } = useJobStore();
   const inFlightJobIdRef = useRef<string | null>(null);
@@ -112,6 +125,20 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     setView(nextView);
     if (nextView === 'dashboard') {
       setSelectedListing(null);
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.removeItem('cocpit_selected_job_listing');
+        } catch (e) {}
+      }
+    }
+    if (nextView === 'create-job' && !nextJobId) {
+      setSelectedListing(null);
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.removeItem('cocpit_selected_job_listing');
+        } catch (e) {}
+      }
+      useJobStore.getState().resetCreateJobFlow();
     }
     const params = new URLSearchParams(window.location.search);
     if (nextView === 'dashboard') {
@@ -162,30 +189,50 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     if (view !== 'dashboard' && !urlJobId) return;
 
     if (urlJobId) {
-      // Prevent redundant fetching if already selected or already in-flight
-      if (selectedListing?.id === urlJobId) return;
-      if (inFlightJobIdRef.current === urlJobId) return;
-
       const matched = listings.find(l => l.id === urlJobId);
       if (matched) {
-        setSelectedListing(matched);
-      } else {
-        inFlightJobIdRef.current = urlJobId;
-        jobsService.getJobById(urlJobId)
-          .then(j => {
-            if (j) setSelectedListing(j as any);
-          })
-          .catch(err => {
-            console.error('Failed to resolve listing by ID:', err);
-          })
-          .finally(() => {
-            inFlightJobIdRef.current = null;
-          });
+        setSelectedListing(prev => ({ ...(prev || {}), ...matched }));
+        if (typeof window !== 'undefined') {
+          try {
+            sessionStorage.setItem('cocpit_selected_job_listing', JSON.stringify(matched));
+          } catch (e) {}
+        }
+        return;
       }
+
+      // If selectedListing is already fully populated with counts, no need to re-fetch
+      if (selectedListing?.id === urlJobId && selectedListing.offers_count !== undefined && selectedListing.shortlisted_count !== undefined) {
+        return;
+      }
+      if (inFlightJobIdRef.current === urlJobId) return;
+
+      inFlightJobIdRef.current = urlJobId;
+      jobsService.getJobById(urlJobId)
+        .then(j => {
+          if (j) {
+            const resolved = {
+              ...j,
+              id: j.id || urlJobId,
+              status: j.is_closed ? 'CLOSED' : ((j as any).status || 'ACTIVE'),
+            } as JobListing;
+            setSelectedListing(prev => ({ ...resolved, ...(prev || {}) }));
+            if (typeof window !== 'undefined') {
+              try {
+                sessionStorage.setItem('cocpit_selected_job_listing', JSON.stringify(resolved));
+              } catch (e) {}
+            }
+          }
+        })
+        .catch(err => {
+          console.error('Failed to resolve listing by ID:', err);
+        })
+        .finally(() => {
+          inFlightJobIdRef.current = null;
+        });
     } else if (!urlJobId && view === 'dashboard' && selectedListing !== null) {
       setSelectedListing(null);
     }
-  }, [urlJobId, listings, view, selectedListing?.id]);
+  }, [urlJobId, listings, view, selectedListing?.id, selectedListing?.offers_count, selectedListing?.shortlisted_count]);
 
   const handleCreateJob = useCallback(async (title: string, status: string, details?: Partial<JobListing>) => {
     try {
@@ -297,6 +344,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     }
 
     setSelectedListing(listing);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('cocpit_selected_job_listing', JSON.stringify(listing));
+      } catch (e) {}
+    }
     const isDraft = statusUpper === 'DRAFT';
     if (isDraft) {
       transitionTo('create-job', listing.id);
@@ -321,6 +373,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     }
 
     setSelectedListing(listing);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('cocpit_selected_job_listing', JSON.stringify(listing));
+      } catch (e) {}
+    }
     const isDraft = statusUpper === 'DRAFT';
     if (isDraft) {
       transitionTo('create-job', listing.id);
@@ -332,9 +389,29 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   const handleSelectOfferGroup = useCallback((group: any) => {
     setSelectedOfferGroup(group);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('cocpit_selected_offer_group', JSON.stringify(group));
+      } catch (e) {}
+    }
     // Persist jobId in query parameters for offer-details view
     transitionTo('offer-details', group.id || group.job_id);
-  }, [transitionTo]);
+  }, [transitionTo, setSelectedOfferGroup]);
+
+  // Render OfferDetailsScreen when viewing offer details either from in-memory selection, sessionStorage, or direct URL link
+  const storedOfferGroup = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const cached = sessionStorage.getItem('cocpit_selected_offer_group');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && (parsed.id === urlJobId || parsed.job_id === urlJobId)) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return null;
+  }, [urlJobId]);
 
   if (view === 'create-job') {
     return (
@@ -347,12 +424,19 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     );
   }
 
-  // Render OfferDetailsScreen when viewing offer details either from in-memory selection or via direct URL link
-  const offerGroup = selectedOfferGroup || (urlJobId ? { id: urlJobId, title: '', company: '', sentCount: 0, acceptedCount: 0, pendingCount: 0, declinedCount: 0 } : null);
-  if (view === 'offer-details' && offerGroup) {
+  const rawOfferGroup = selectedOfferGroup || storedOfferGroup || (urlJobId ? { id: urlJobId, title: '', company: '', sentCount: 0, acceptedCount: 0, pendingCount: 0, declinedCount: 0 } : null);
+  if (view === 'offer-details' && rawOfferGroup) {
     const matchingListing = listings.find(
-      (l) => l.id === offerGroup.id || l.title?.toLowerCase() === offerGroup.title?.toLowerCase()
+      (l) => l.id === rawOfferGroup.id || (rawOfferGroup.title && l.title?.toLowerCase() === rawOfferGroup.title?.toLowerCase())
     );
+    const offerGroup = {
+      ...rawOfferGroup,
+      title: rawOfferGroup.title || matchingListing?.title || '',
+      company: rawOfferGroup.company || matchingListing?.company || '',
+      sentCount: rawOfferGroup.sentCount || matchingListing?.offers_count || 0,
+      shortlistedCount: rawOfferGroup.shortlistedCount ?? matchingListing?.shortlisted_count,
+      applicationsCount: rawOfferGroup.applicationsCount ?? matchingListing?.applicants_count,
+    };
     return (
       <OfferDetailsScreen
         offerGroup={offerGroup}
@@ -362,6 +446,9 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         onBack={() => {
           transitionTo('dashboard');
           setSelectedOfferGroup(null);
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('cocpit_selected_offer_group');
+          }
         }}
         onViewListingDetails={() => {
           const matched = listings.find(
@@ -385,7 +472,24 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   if (view === 'view-listing') {
     const matchedFromListings = urlJobId ? listings.find(l => l.id === urlJobId) : null;
-    const listingToUse = selectedListing || matchedFromListings || (urlJobId ? ({ id: urlJobId, title: 'Job Listing', status: 'ACTIVE' } as JobListing) : null);
+    const storedListing = typeof window !== 'undefined' ? (() => {
+      try {
+        const item = sessionStorage.getItem('cocpit_selected_job_listing');
+        if (item) {
+          const parsed = JSON.parse(item);
+          if (parsed && urlJobId && parsed.id === urlJobId) return parsed;
+        }
+      } catch (e) {}
+      return null;
+    })() : null;
+    const listingToUse = selectedListing || matchedFromListings || storedListing;
+    if (!listingToUse && urlJobId) {
+      return (
+        <div className="w-full max-w-[800px] md:max-w-[960px] mx-auto pt-4 md:pt-[60px] pb-16 px-4 md:px-0 flex flex-col gap-4 md:gap-5 font-dm-sans">
+          <div className="w-full h-[121px] rounded-xl bg-ds-surface-1/40 animate-pulse border border-ds-border/40" />
+        </div>
+      );
+    }
     if (listingToUse) {
       return (
         <ListingDetailsScreen
@@ -420,7 +524,24 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   if (view === 'applicants') {
     const matchedFromListings = urlJobId ? listings.find(l => l.id === urlJobId) : null;
-    const listingToUse = selectedListing || matchedFromListings || (urlJobId ? ({ id: urlJobId, title: 'Job Listing', status: 'ACTIVE' } as JobListing) : null);
+    const storedListing = typeof window !== 'undefined' ? (() => {
+      try {
+        const item = sessionStorage.getItem('cocpit_selected_job_listing');
+        if (item) {
+          const parsed = JSON.parse(item);
+          if (parsed && urlJobId && parsed.id === urlJobId) return parsed;
+        }
+      } catch (e) {}
+      return null;
+    })() : null;
+    const listingToUse = selectedListing || matchedFromListings || storedListing;
+    if (!listingToUse && urlJobId) {
+      return (
+        <div className="w-full max-w-[800px] md:max-w-[960px] mx-auto pt-4 md:pt-[60px] pb-16 px-4 md:px-0 flex flex-col gap-4 md:gap-5 font-dm-sans">
+          <div className="w-full h-[121px] rounded-xl bg-ds-surface-1/40 animate-pulse border border-ds-border/40" />
+        </div>
+      );
+    }
     if (listingToUse) {
       // Guard against opening draft jobs in applicants view
       if ((listingToUse.status || '').toUpperCase() === 'DRAFT') {
@@ -644,7 +765,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 }
               }}
               onSelectOfferGroup={handleSelectOfferGroup}
-              onOpenSendOfferModal={() => setIsSendOfferModalOpen(true)}
+              onOpenSendOfferModal={() => {
+                setInitialOfferJobId(undefined);
+                setIsSendOfferModalOpen(true);
+              }}
+              onClearInitialOfferJobId={() => setInitialOfferJobId(undefined)}
               isCompanyMode={isCompanyMode}
               refreshTrigger={refreshTrigger}
             />

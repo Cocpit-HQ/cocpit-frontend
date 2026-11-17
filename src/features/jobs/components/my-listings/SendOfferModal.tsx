@@ -49,6 +49,11 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
       setNextCursor(null);
       setHasMore(false);
       setIsLoadingMoreJobs(false);
+      setStage(initialJobId ? 2 : 1);
+      setSelectedJobId(initialJobId || '');
+      setSelectedCandidates([]);
+      setPersonalNote('');
+      setSearchQuery('');
       return;
     }
 
@@ -167,6 +172,18 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   // Lock body scroll when modal is open to prevent background scrolling
   useBodyScrollLock(isOpen);
 
+  // Close and clean up on Escape key press
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCancelClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
@@ -282,6 +299,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     setSelectedJobId('');
     setSelectedCandidates([]);
     setPersonalNote('');
+    setSearchQuery('');
     onClose();
   };
 
@@ -329,6 +347,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
       setSelectedJobId('');
       setSelectedCandidates([]);
       setPersonalNote('');
+      setSearchQuery('');
       onClose();
     } catch (error: any) {
       console.error('Failed to send offers:', error);

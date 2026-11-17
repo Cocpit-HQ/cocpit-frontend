@@ -134,6 +134,21 @@ const createEmptyList = <T>(): CachedList<T> => ({
   lastFetched: undefined,
 });
 
+const getInitialStats = (): { totalApplied: number; shortlisted: number } => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('cocpit_application_stats');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed.totalApplied === 'number') {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+  }
+  return { totalApplied: 0, shortlisted: 0 };
+};
+
 export const useJobStore = create<JobsUIState>()(
   persist(
     (set) => ({
@@ -170,7 +185,7 @@ export const useJobStore = create<JobsUIState>()(
         industry: '',
       },
       applications: {
-        stats: { totalApplied: 0, shortlisted: 0 },
+        stats: getInitialStats(),
       },
       recruiter: {
         published: createEmptyList<Job>(),
@@ -261,10 +276,16 @@ export const useJobStore = create<JobsUIState>()(
             [listKey]: { ...state.recruiter[listKey], ...updates },
           },
         })),
-      setApplicationStats: (stats) =>
+      setApplicationStats: (stats) => {
+        if (typeof window !== 'undefined' && stats) {
+          try {
+            localStorage.setItem('cocpit_application_stats', JSON.stringify(stats));
+          } catch (e) {}
+        }
         set((state) => ({
           applications: { ...state.applications, stats },
-        })),
+        }));
+      },
 
       // ─── Mutation and Optimistic Update Actions ───────────────
       addSavedId: (id) =>
@@ -462,6 +483,7 @@ export const useJobStore = create<JobsUIState>()(
         createJobDetails: state.createJobDetails,
         isDrafting: state.isDrafting,
         selectedOfferGroup: state.selectedOfferGroup,
+        applications: state.applications,
       }),
     }
   )

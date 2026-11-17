@@ -194,9 +194,9 @@ export function BusinessProfileEditPage() {
               </div>
             </div>
             {activeTab === "profile" ? (
-              <div className="self-stretch h-[2px] bg-[var(--ds-accent)]" />
+              <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent" />
             ) : (
-              <div className="self-stretch h-[2px] bg-transparent" />
+              <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
             )}
           </button>
 
@@ -221,9 +221,9 @@ export function BusinessProfileEditPage() {
               </div>
             </div>
             {activeTab === "about" ? (
-              <div className="self-stretch h-[2px] bg-[var(--ds-accent)]" />
+              <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent" />
             ) : (
-              <div className="self-stretch h-[2px] bg-transparent" />
+              <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
             )}
           </button>
 
@@ -245,7 +245,7 @@ export function BusinessProfileEditPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="self-stretch h-[2px] bg-transparent" />
+                      <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
                     </button>
                   </span>
                 </TooltipTrigger>
@@ -267,7 +267,7 @@ export function BusinessProfileEditPage() {
                   </span>
                 </div>
               </div>
-              <div className="self-stretch h-[2px] bg-transparent" />
+              <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
             </button>
           )}
         </div>

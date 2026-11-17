@@ -23,6 +23,7 @@ import Avatar from '@/components/shared/Avatar';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { formatJobLocation } from '@/features/jobs/utils/location.utils';
 import { cleanSalary } from '@/features/jobs/utils/currency.utils';
+import { formatExperience } from '@/features/jobs/services/jobs.service';
 
 interface SearchAllViewProps {
   data?: StageAResponse;
@@ -141,13 +142,12 @@ function CompactJobCard({
       : job.salary_min || job.salary_max || '')
   );
 
-  const experienceText =
-    job.experience_label ||
-    (job.experience_min !== undefined && job.experience_max !== undefined
-      ? `${job.experience_min}-${job.experience_max}Yrs`
-      : job.experience_min !== undefined
-      ? `${job.experience_min}+ Yrs`
-      : '');
+  const experienceText = formatExperience(
+    job.experience_min,
+    job.experience_max,
+    job.experience_level,
+    job.experience_label || job.experience
+  );
 
   const isApplied = Boolean(job.is_applied || job.hasApplied);
 

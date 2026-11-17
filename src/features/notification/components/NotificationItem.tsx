@@ -109,16 +109,18 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         (meta.follower_slug as string);
       if (slug) return `/organization/${slug}`;
       const orgId =
-        (meta.org_id as string) ||
-        (meta.orgId as string) ||
         (meta.followerOrgId as string) ||
         (meta.follower_org_id as string) ||
-        (notification.type === 'company_follower'
-          ? (meta.followerId as string) || (meta.follower_id as string) || notification.sender_id
+        (meta.followerId as string) ||
+        (meta.follower_id as string) ||
+        (notification.type === 'company_follower' || notification.type === 'follow'
+          ? notification.sender_id
           : null) ||
         ((notification.type as string) === 'ORG_ONBOARDED'
           ? notification.reference_id
-          : null);
+          : null) ||
+        (meta.org_id as string) ||
+        (meta.orgId as string);
       if (orgId) return `/organization/${orgId}`;
       if (
         notification.reference_id &&

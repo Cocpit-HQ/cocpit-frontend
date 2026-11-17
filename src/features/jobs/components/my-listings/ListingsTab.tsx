@@ -176,15 +176,15 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
 
   const getCurrentTabInfo = () => {
     const s = statusFilter.toLowerCase();
-    if (s === 'active') return { title: 'Active Jobs', count: counts?.active ?? 0 };
-    if (s === 'close' || s === 'closed') return { title: 'Closed Jobs', count: counts?.closed ?? 0 };
-    if (s === 'in review' || s === 'in_review') return { title: 'In Review Jobs', count: counts?.inReview ?? 0 };
-    if (s === 'draft' || s === 'drafts') return { title: 'Draft Jobs', count: counts?.draft ?? 0 };
+    if (s === 'active') return { title: 'Active Jobs', count: counts?.active || (s === 'active' ? listings.length : 0) };
+    if (s === 'close' || s === 'closed') return { title: 'Closed Jobs', count: counts?.closed || (s === 'close' || s === 'closed' ? listings.length : 0) };
+    if (s === 'in review' || s === 'in_review') return { title: 'In Review Jobs', count: counts?.inReview || (s === 'in review' || s === 'in_review' ? listings.length : 0) };
+    if (s === 'draft' || s === 'drafts') return { title: 'Draft Jobs', count: counts?.draft || (s === 'draft' || s === 'drafts' ? listings.length : 0) };
     if (s === 'rejected') return { title: 'Rejected Jobs', count: counts?.rejected ?? 0 };
-    return { title: 'All Jobs', count: counts?.all ?? listings.length };
+    return { title: 'All Jobs', count: counts?.all || listings.length };
   };
 
-  const { title: tabTitle } = getCurrentTabInfo();
+  const { title: tabTitle, count: tabCount } = getCurrentTabInfo();
 
   const currentCount = filterChips.find(
     c => c.key.toLowerCase() === statusFilter.toLowerCase() ||
@@ -226,7 +226,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
           {tabTitle}
         </h3>
         <span className="text-ds-text-secondary ds-text-small font-normal">
-          Total jobs - {currentCount}
+          {tabCount > 0 ? `Total jobs - ${tabCount}` : (isLoading ? 'Total jobs' : `Total jobs - ${currentCount}`)}
         </span>
       </div>
 

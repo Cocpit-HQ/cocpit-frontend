@@ -17,6 +17,7 @@ import {
   updateApplicationStatus,
   upsertApplicationNote,
   triggerApplicationAnalysis,
+  getJobById,
 } from '../../services/jobs.service';
 
 interface ApplicantsDashboardProps {
@@ -192,6 +193,26 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   // Real data state
   const [candidateDetail, setCandidateDetail] = useState<any>(null);
   const [candidateAnalysis, setCandidateAnalysis] = useState<any>(null);
+  const [extraCounts, setExtraCounts] = useState<{ shortlisted_count?: number; offers_count?: number; applicants_count?: number }>({
+    shortlisted_count: listing.shortlisted_count,
+    offers_count: listing.offers_count,
+    applicants_count: listing.applicants_count,
+  });
+
+  useEffect(() => {
+    if (listing.id && (listing.offers_count === undefined || listing.shortlisted_count === undefined)) {
+      getJobById(listing.id).then((j: any) => {
+        if (j) {
+          setExtraCounts((prev) => ({
+            ...prev,
+            shortlisted_count: j.shortlisted_count ?? prev.shortlisted_count,
+            offers_count: j.offers_count ?? prev.offers_count,
+            applicants_count: j.applicants_count ?? prev.applicants_count,
+          }));
+        }
+      }).catch(() => {});
+    }
+  }, [listing.id, listing.offers_count, listing.shortlisted_count]);
 
   // Reset skills expansion when switching candidate
   useEffect(() => {
@@ -393,9 +414,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const statusUpper = (listing.status || 'ACTIVE').toUpperCase();
 
   // Counts
-  const appCount = listing.applicants_count || candidates.length;
-  const shortlistCount = listing.shortlisted_count || candidates.filter(c => c.status === 'Shortlisted').length;
-  const offerCount = listing.offers_count || 0;
+  const appCount = listing.applicants_count ?? extraCounts.applicants_count ?? candidates.length;
+  const shortlistCount = listing.shortlisted_count ?? extraCounts.shortlisted_count ?? candidates.filter(c => c.status === 'Shortlisted').length;
+  const offerCount = listing.offers_count ?? extraCounts.offers_count ?? 0;
 
   // Resolved candidate fields
   const displayName = candidateDetail?.name || activeCandidate?.name || '';

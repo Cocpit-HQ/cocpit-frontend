@@ -115,8 +115,10 @@ export function ReportsSettingsPage() {
                     {tab.label}
                   </span>
                 </div>
-                {isSelected && (
-                  <div className="self-stretch h-[2px] bg-ds-accent rounded-full transition-all" />
+                {isSelected ? (
+                  <div className="self-stretch mx-[1%] h-[3px] bg-ds-accent rounded-full transition-all" />
+                ) : (
+                  <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
                 )}
               </button>
             );

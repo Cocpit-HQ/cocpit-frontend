@@ -134,37 +134,41 @@ export const parseNotificationText = (
   // Company follower notification: e.g. "radha started following dyp university"
   const followerText = notification.text || bodyText || '';
 
-  const isCompanyFollower =
+  const ext = notification as unknown as ExtendedNotificationFields;
+  let meta: Record<string, any> = {};
+  try {
+    if (typeof ext.metadata === 'string') {
+      meta = JSON.parse(ext.metadata);
+    } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+      meta = ext.metadata as Record<string, any>;
+    }
+  } catch {}
+
+  const isCompanyActor = Boolean(
+    notification.is_company_actor ||
+    ext.isCompanyActor ||
+    meta.isCompanyActor ||
+    meta.is_company_actor ||
+    meta.follower_org_id ||
+    meta.followerOrgId
+  );
+
+  const isFollowerNotification =
     type === 'company_follower' ||
-    (type !== 'follow' && /.+?\s+started following\s+.+/i.test(followerText.trim()));
+    (isCompanyActor && (type === 'follow' || /started following/i.test(followerText))) ||
+    (type !== 'follow' && /.+?\s+started following(?:\s+.+)?/i.test(followerText.trim()));
 
-  if (isCompanyFollower) {
-    const match = followerText.trim().match(/^(.*?)\s+started following\s+(.+?)(?:\.|\s*)$/i);
+  if (isFollowerNotification) {
+    const match = followerText.trim().match(/^(.*?)\s+started following(?:\s+(.+?))?(?:\.|\s*)$/i);
     const parsedFollower = match && match[1] ? match[1].trim() : null;
-    const ext = notification as unknown as ExtendedNotificationFields;
-    let meta: Record<string, any> = {};
-    try {
-      if (typeof ext.metadata === 'string') {
-        meta = JSON.parse(ext.metadata);
-      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
-        meta = ext.metadata as Record<string, any>;
-      }
-    } catch {}
-
-    const isCompanyActor = Boolean(
-      notification.is_company_actor ||
-      ext.isCompanyActor ||
-      meta.isCompanyActor ||
-      meta.is_company_actor ||
-      meta.follower_org_id ||
-      meta.followerOrgId
-    );
 
     const followerId =
       (meta.followerOrgId as string) ||
       (meta.follower_org_id as string) ||
       (meta.followerId as string) ||
       (meta.follower_id as string) ||
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
       notification.sender_id;
 
     const followerSlug =
@@ -172,13 +176,9 @@ export const parseNotificationText = (
       (meta.followerSlug as string) ||
       (meta.follower_slug as string);
 
-    const targetUrl = followerSlug
-      ? `/organization/${followerSlug}`
-      : isCompanyActor && followerId
-        ? `/organization/${followerId}`
-        : followerId
-          ? `/profile/${followerId}`
-          : null;
+    const targetUrl = isCompanyActor
+      ? (followerSlug ? `/organization/${followerSlug}` : (followerId ? `/organization/${followerId}` : null))
+      : (followerId ? `/profile/${followerId}` : null);
 
     const followerName =
       parsedFollower ||
@@ -188,7 +188,13 @@ export const parseNotificationText = (
       'Someone';
 
     const rawOrgName = match && match[2] ? match[2].trim().replace(/\.$/, '') : '';
-    const orgName = /^you$/i.test(rawOrgName) ? '' : rawOrgName;
+    const isTargetCurrentUserOrOrg =
+      !rawOrgName ||
+      /^you$/i.test(rawOrgName) ||
+      /^your\s+company$/i.test(rawOrgName) ||
+      Boolean(activeProfileName && rawOrgName.toLowerCase() === activeProfileName.trim().toLowerCase());
+
+    const orgName = isTargetCurrentUserOrOrg ? '' : rawOrgName;
 
     return {
       actorName: followerName,
@@ -768,7 +774,7 @@ export const getNotificationRoute = (
   if (type === 'like' && postReferenceId) {
     return `/post/${postReferenceId}?returnTo=/notifications`;
   }
-  if (type === 'company_follower') {
+  if (type === 'company_follower' || type === 'follow') {
     let meta: Record<string, any> = {};
     try {
       if (typeof ext.metadata === 'string') {
@@ -797,20 +803,23 @@ export const getNotificationRoute = (
       (meta.follower_org_id as string) ||
       (meta.followerId as string) ||
       (meta.follower_id as string) ||
-      notification.sender_id;
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
+      notification.sender_id ||
+      notification.reference_id;
 
-    if (followerSlug) {
-      return `/organization/${followerSlug}`;
+    if (isCompanyActor) {
+      if (followerSlug) {
+        return `/organization/${followerSlug}`;
+      }
+      if (followerId) {
+        return `/organization/${followerId}`;
+      }
+    } else {
+      if (followerId) {
+        return `/profile/${followerId}`;
+      }
     }
-    if (isCompanyActor && followerId) {
-      return `/organization/${followerId}`;
-    }
-    if (followerId) {
-      return `/profile/${followerId}`;
-    }
-  }
-  if (type === 'follow' && notification.reference_id) {
-    return `/profile/${notification.reference_id}`;
   }
   if (type === 'repost' && postReferenceId) {
     return `/post/${postReferenceId}?returnTo=/notifications`;

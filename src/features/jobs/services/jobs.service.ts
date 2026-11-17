@@ -7,14 +7,98 @@ import { formatSalaryRange } from '../utils/currency.utils';
 // Service layer holds zero client-side UI states.
 // All states are managed reactively inside useJobStore.
 
-export const formatExperience = (min?: number, max?: number, level?: string, label?: string): string => {
-  if (label) return label;
-  if (min != null) {
-    if (min >= 5 && (max == null || max >= 10 || max === 0)) return '5+ Yrs';
-    if (max != null) return `${min}-${max} Yrs`;
-    return `${min}+ Yrs`;
+const parseExpNum = (val: unknown): number | null => {
+  if (val === undefined || val === null || val === '') return null;
+  const n = typeof val === 'number' ? val : Number(val);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+};
+
+export const formatExperience = (
+  min?: number | null,
+  max?: number | null,
+  level?: string,
+  label?: string
+): string => {
+  const cleanLabel = (label || level || '').trim();
+  let minNum = parseExpNum(min);
+  let maxNum = parseExpNum(max);
+
+  // If min and max are inverted, swap them safely
+  if (minNum !== null && maxNum !== null && minNum > maxNum) {
+    const temp = minNum;
+    minNum = maxNum;
+    maxNum = temp;
   }
-  return level || '0-1 Yrs';
+
+  // Parse numeric bounds from string if min/max not passed directly
+  if (minNum === null && maxNum === null && cleanLabel) {
+    const rangeMatch = cleanLabel.match(/(\d+)\s*[-–]\s*(\d+)/);
+    if (rangeMatch) {
+      minNum = parseExpNum(rangeMatch[1]);
+      maxNum = parseExpNum(rangeMatch[2]);
+    } else {
+      const plusMatch = cleanLabel.match(/(\d+)\s*\+/);
+      if (plusMatch) {
+        minNum = parseExpNum(plusMatch[1]);
+      }
+    }
+  }
+
+  // Derive level name (strictly 4 tiers: Fresher, Junior, Mid-level, Senior)
+  let derivedLevel = '';
+  const lowerLabel = cleanLabel.toLowerCase();
+  if (lowerLabel.includes('fresher') || lowerLabel.includes('entry')) {
+    derivedLevel = 'Fresher';
+  } else if (lowerLabel.includes('junior')) {
+    derivedLevel = 'Junior';
+  } else if (lowerLabel.includes('mid')) {
+    derivedLevel = 'Mid-level';
+  } else if (lowerLabel.includes('senior')) {
+    derivedLevel = 'Senior';
+  } else if (minNum !== null) {
+    if (minNum <= 1 && (maxNum === null || maxNum <= 1)) derivedLevel = 'Fresher';
+    else if (minNum < 3) derivedLevel = 'Junior';
+    else if (minNum < 5) derivedLevel = 'Mid-level';
+    else derivedLevel = 'Senior';
+  } else if (maxNum !== null) {
+    if (maxNum <= 1) derivedLevel = 'Fresher';
+    else if (maxNum <= 3) derivedLevel = 'Junior';
+    else if (maxNum <= 5) derivedLevel = 'Mid-level';
+    else derivedLevel = 'Senior';
+  }
+
+  // Derive range string
+  let rangeStr = '';
+  // Fresher preset range
+  if (derivedLevel === 'Fresher' && (minNum === null || minNum === 0) && (maxNum === null || maxNum <= 1)) {
+    rangeStr = '0-1 years';
+  } else if (minNum === 5 && (maxNum === 10 || maxNum === null)) {
+    // 5-10 or 5+ maps to the canonical '5+ years' Senior display
+    rangeStr = '5+ years';
+  } else if (minNum !== null && maxNum !== null) {
+    rangeStr = minNum === maxNum ? `${minNum} years` : `${minNum}-${maxNum} years`;
+  } else if (minNum !== null) {
+    rangeStr = `${minNum}+ years`;
+  } else if (maxNum !== null) {
+    rangeStr = `0-${maxNum} years`;
+  } else if (derivedLevel === 'Fresher') {
+    rangeStr = '0-1 years';
+  } else if (derivedLevel === 'Junior') {
+    rangeStr = '1-3 years';
+  } else if (derivedLevel === 'Mid-level') {
+    rangeStr = '3-5 years';
+  } else if (derivedLevel === 'Senior') {
+    rangeStr = '5+ years';
+  }
+
+  if (derivedLevel && rangeStr) {
+    return `${derivedLevel} (${rangeStr})`;
+  } else if (derivedLevel) {
+    return derivedLevel;
+  } else if (rangeStr) {
+    return rangeStr;
+  }
+  return cleanLabel || 'Fresher (0-1 years)';
 };
 
 // Inverse of formatExperience: parses an experience label (e.g. "0 - 2 years",
@@ -191,9 +275,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       published_at: job.published_at,
       created_at: job.created_at,
       description: job.description,
-      experience: (job.experience_min != null && job.experience_max != null) 
-        ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_label || job.experience_level || '0-1Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: job.is_offer || false,
@@ -408,9 +490,7 @@ export const getRecommendations = async (): Promise<Job[]> => {
       published_at: job.published_at,
       created_at: job.created_at,
       description: job.description,
-      experience: (job.experience_min != null && job.experience_max != null) 
-        ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_label || job.experience_level || '0-1Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: false,
@@ -578,9 +658,7 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       published_at: job.published_at,
       created_at: job.created_at,
       description: job.description,
-      experience: (job.experience_min != null && job.experience_max != null) 
-        ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_label || job.experience_level || '0-1Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience),
       is_saved: true,
       is_applied: job.hasApplied || false,
       is_offer: job.is_offer || false,
@@ -722,7 +800,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       work_mode: job.work_mode || 'Hybrid',
       salary_min: job.salary_min,
       salary_max: job.salary_max,
-      salary_currency: job.salary_currency || 'USD',
+      salary_currency: job.salary_currency || 'INR',
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.published_at || job.created_at),
       published_at: job.published_at,
@@ -762,6 +840,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       match_reason: job.match_reason || '',
       match_score: job.match_score || null,
       profile_match_text: job.profile_match_text || job.match_reason || '',
+      applicants_count: job.applicants_count != null ? Number(job.applicants_count) : (job.applicants != null ? Number(job.applicants) : undefined),
+      shortlisted_count: job.shortlisted_count != null ? Number(job.shortlisted_count) : undefined,
+      offers_count: job.offers_count != null ? Number(job.offers_count) : undefined,
     };
 
     return formattedJob;
@@ -853,9 +934,7 @@ export const getMyApplications = async (status: string = 'all', cursor?: string)
       applied_at: job.applied_at,
       created_at: job.created_at,
       description: job.description,
-      experience: (job.experience_min != null && job.experience_max != null) 
-        ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_label || job.experience_level || '0-1Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience),
       is_saved: job.isSaved || job.is_saved || false,
       is_applied: true,
       is_offer: false,
@@ -995,7 +1074,7 @@ export const getMyOffers = async (): Promise<Job[]> => {
         work_mode: job.work_mode || '',
         salary_min: job.salary_min,
         salary_max: job.salary_max,
-        salary_currency: job.salary_currency || 'USD',
+        salary_currency: job.salary_currency || 'INR',
         salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
         posted_at: getRelativeTime(job.published_at || job.created_at),
         published_at: job.published_at,

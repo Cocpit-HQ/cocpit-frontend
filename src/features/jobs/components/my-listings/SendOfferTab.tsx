@@ -16,6 +16,8 @@ export interface SentOfferGroup {
   acceptedCount: number;
   pendingCount: number;
   declinedCount: number;
+  applicationsCount?: number;
+  shortlistedCount?: number;
 }
 
 interface SendOfferTabProps {
@@ -29,9 +31,9 @@ interface SendOfferTabProps {
   refreshTrigger?: number;
 }
 
-export const SendOfferTab: React.FC<SendOfferTabProps> = ({ 
-  listings, 
-  onSelectListing, 
+export const SendOfferTab: React.FC<SendOfferTabProps> = ({
+  listings,
+  onSelectListing,
   onSelectOfferGroup,
   initialOfferJobId,
   onClearInitialOfferJobId,
@@ -62,30 +64,32 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
       setIsLoadingOffers(true);
     }
     try {
-      const endpoint = companyId 
-        ? `/jobs/companies/${companyId}/offers/sent` 
+      const endpoint = companyId
+        ? `/jobs/companies/${companyId}/offers/sent`
         : `/jobs/offers/sent`;
       const response = await api.get(endpoint);
       const mapped: SentOfferGroup[] = (response.data || [])
         .filter((item: any) => Number(item.total_offers || 0) > 0)
         .map((item: any) => ({
-        id: item.job_id,
-        title: item.title,
-        company: item.company_display_name || item.company_name || '',
-        sentCount: Number(item.total_offers || 0),
-        acceptedCount: Number(item.accepted_count || 0),
-        pendingCount: Number(item.pending_count || 0),
-        declinedCount: Number(item.declined_count || 0),
-        // Pass original job details for details page
-        job_type: item.job_type || 'Full time',
-        work_mode: item.work_mode || 'Remote',
-        location: item.location || 'Remote',
-        experience_level: item.experience_level || '0-1Yrs',
-        salary_min: item.salary_min,
-        salary_max: item.salary_max,
-        salary_currency: item.salary_currency || 'USD',
-        salary_period: item.salary_period || 'YEARLY'
-      }));
+          id: item.job_id,
+          title: item.title,
+          company: item.company_display_name || item.company_name || '',
+          sentCount: Number(item.total_offers || 0),
+          acceptedCount: Number(item.accepted_count || 0),
+          pendingCount: Number(item.pending_count || 0),
+          declinedCount: Number(item.declined_count || 0),
+          applicationsCount: Number(item.applicants_count || 0),
+          shortlistedCount: Number(item.shortlisted_count || 0),
+          // Pass original job details for details page
+          job_type: item.job_type || 'Full time',
+          work_mode: item.work_mode || 'Remote',
+          location: item.location || 'Remote',
+          experience_level: item.experience_level || '0-1Yrs',
+          salary_min: item.salary_min,
+          salary_max: item.salary_max,
+          salary_currency: item.salary_currency || 'INR',
+          salary_period: item.salary_period || 'YEARLY'
+        }));
       setSentOffers(mapped);
     } catch (error) {
       console.error('Failed to fetch sent offers:', error);
@@ -178,7 +182,16 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
               disabledMessage="Sending job offers is temporarily disabled by admin."
             >
               <button
-                onClick={() => onOpenSendOfferModal ? onOpenSendOfferModal() : setIsSendOpen(true)}
+                onClick={() => {
+                  if (onClearInitialOfferJobId) {
+                    onClearInitialOfferJobId();
+                  }
+                  if (onOpenSendOfferModal) {
+                    onOpenSendOfferModal();
+                  } else {
+                    setIsSendOpen(true);
+                  }
+                }}
                 type="button"
                 className="w-[260px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary rounded-[100px] inline-flex justify-center items-center gap-2.5 ds-text-body-1 font-medium font-dm-sans text-base leading-6 transition-all shadow-sm cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
               >

@@ -340,7 +340,7 @@ export function ProfileAllPostsScreen({
         type="button"
         onClick={handleClose}
         aria-label="Close"
-        className="fixed top-6 right-5 sm:top-[40px] sm:right-[40px] z-[60] w-[20px] h-[20px] flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EC6229] rounded-sm"
+        className="fixed top-6 right-5 sm:top-[40px] sm:right-[40px] z-[60] w-[20px] h-[20px] flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm"
       >
         <CloseIcon size={20} className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
       </button>
@@ -364,7 +364,7 @@ export function ProfileAllPostsScreen({
                 }}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className="relative h-[36px] py-[6px] px-[12px] flex flex-col items-center justify-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EC6229] shrink-0"
+                className="relative h-[36px] py-[6px] px-[12px] flex flex-col items-center justify-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0"
               >
                 <span
                   className={cn(
@@ -375,7 +375,7 @@ export function ProfileAllPostsScreen({
                   {tab.label}
                 </span>
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#EC6229] rounded-full" />
+                  <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] bg-ds-accent rounded-full" />
                 )}
               </button>
             );
