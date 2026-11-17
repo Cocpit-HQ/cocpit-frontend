@@ -110,8 +110,17 @@ export const clearReaction = async (messageId: string) => {
   return response.data;
 };
 
-export const muteGroup = async (conversationId: string, muted: boolean = true, mutedUntil?: string | null) => {
-  const response = await api.patch(`/conversations/${conversationId}/mute`, { muted, mutedUntil });
+export const muteGroup = async (
+  conversationId: string,
+  muted: boolean = true,
+  mutedUntil?: string | null,
+  hours?: number | null
+) => {
+  const response = await api.patch(`/conversations/${conversationId}/mute`, {
+    muted,
+    mutedUntil,
+    hours,
+  });
   return response.data;
 };
 
@@ -143,6 +152,32 @@ export const checkContextSent = async (conversationId: string, entityId: string,
 
 export const updateJobChatStatus = async (conversationId: string, isJobChat: boolean) => {
   const response = await api.patch(`/conversations/${conversationId}/job-status`, { isJobChat });
+  return response.data;
+};
+
+export const pinConversation = async (
+  conversationId: string,
+  pinned: boolean,
+  companyId?: string
+): Promise<{ conversationId: string; is_pinned: boolean; message: string }> => {
+  const response = await api.patch(`/conversations/${conversationId}/pin`, {
+    pinned,
+    companyId,
+  });
+  return response.data;
+};
+
+export const pinMessage = async (
+  conversationId: string,
+  messageId: string | null,
+  pinned: boolean,
+  companyId?: string
+): Promise<{ success: boolean; conversationId: string; pinnedMessageId: string | null; is_pinned: boolean; message: string }> => {
+  const response = await api.patch(`/conversations/${conversationId}/pin-message`, {
+    messageId,
+    pinned,
+    companyId,
+  });
   return response.data;
 };
 

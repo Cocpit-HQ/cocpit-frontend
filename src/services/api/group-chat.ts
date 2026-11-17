@@ -143,3 +143,8 @@ export const cancelInvitation = async (groupId: string, invitationId: string) =>
     return response.data;
 };
 
+export const getGroupSharedContent = async (groupId: string): Promise<import("../../types/group-chat").GroupSharedContent> => {
+    const response = await api.get(`/groups/${groupId}/shared-content`);
+    return response.data;
+};
+

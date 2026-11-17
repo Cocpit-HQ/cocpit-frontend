@@ -11,6 +11,7 @@ import { CocpitSelectedUserChips } from "@/shared/commonComponents/CocpitSelecte
 import { Check, Loader2, Search, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGroupChat } from "./groupChat.context";
+import { MAX_GROUP_MEMBERS } from "@/constants/messaging";
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -116,12 +117,32 @@ export default function AddMemberModal({
     [handleLoadMore],
   );
 
+  const currentMemberCount = activeGroup?.members?.length || 0;
+  const availableSlots = Math.max(0, MAX_GROUP_MEMBERS - currentMemberCount);
+
   const toggleUserSelection = (userId: string) => {
-    setSelectedUserIds((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId],
-    );
+    setSelectedUserIds((prev) => {
+      if (prev.includes(userId)) {
+        return prev.filter((id) => id !== userId);
+      }
+      if (availableSlots <= 0) {
+        toast({
+          title: "Group is full",
+          description: `Group has reached the maximum limit of ${MAX_GROUP_MEMBERS} members.`,
+          variant: "destructive",
+        });
+        return prev;
+      }
+      if (prev.length >= availableSlots) {
+        toast({
+          title: "Limit reached",
+          description: `You can only add up to ${availableSlots} more member${availableSlots === 1 ? "" : "s"}.`,
+          variant: "destructive",
+        });
+        return prev;
+      }
+      return [...prev, userId];
+    });
   };
 
   const handleConfirm = () => {

@@ -49,13 +49,13 @@ const PRESETS: Record<
     getTitle: () => "Unfollow this account?",
     description: "You’ll no longer see their updates in your following feed",
     confirmText: "Unfollow",
-    buttonWidthClass: "w-[84px]",
+    buttonWidthClass: "min-w-[84px] w-auto",
   },
   remove_connection: {
     getTitle: () => "Remove connection?",
     description: "You’ll no longer be connected with them",
     confirmText: "Remove",
-    buttonWidthClass: "w-[84px]",
+    buttonWidthClass: "min-w-[84px] w-auto",
   },
   block_profile: {
     getTitle: (name) => (
@@ -65,32 +65,32 @@ const PRESETS: Record<
     ),
     description: "They won’t be able to view your profile, follow you, or connect with you",
     confirmText: "Block",
-    buttonWidthClass: "w-[84px]",
+    buttonWidthClass: "min-w-[84px] w-auto",
     titleClassName: "font-['Poppins'] font-normal text-[14px] leading-[20px]",
   },
   remove_follower: {
     getTitle: () => "Remove follower?",
     description: "You’ll no longer have them in your followers list",
     confirmText: "Remove",
-    buttonWidthClass: "w-[84px]",
+    buttonWidthClass: "min-w-[84px] w-auto",
   },
   delete_post: {
     getTitle: () => "Delete post?",
     description: "This action cannot be undone and will permanently remove this post",
     confirmText: "Delete",
-    buttonWidthClass: "w-[84px]",
+    buttonWidthClass: "min-w-[84px] w-auto",
   },
   logout: {
     getTitle: () => "Log out?",
     description: "Are you sure you want to log out of your account?",
     confirmText: "Log out",
-    buttonWidthClass: "w-[84px]",
+    buttonWidthClass: "min-w-[84px] w-auto",
   },
   remove_tag: {
     getTitle: () => "Remove this tag?",
     description: "This tag will be removed from the post.",
     confirmText: "Remove",
-    buttonWidthClass: "w-[84px]",
+    buttonWidthClass: "min-w-[84px] w-auto",
     modalClassName: "w-[202px]",
   },
 };
@@ -118,7 +118,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   const resolvedTitle = title || (preset ? preset.getTitle(targetName) : "Are you sure?");
   const resolvedDescription = description || (preset ? preset.description : "");
   const resolvedConfirmText = confirmText || (preset ? preset.confirmText : "Confirm");
-  const buttonWidthClass = customButtonWidthClass || preset?.buttonWidthClass || "w-[98px] md:w-[84px]";
+  const buttonWidthClass = customButtonWidthClass || preset?.buttonWidthClass || "min-w-[84px] w-auto";
   useBodyScrollLock(isOpen);
 
   return (
@@ -129,16 +129,16 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         onOpenAutoFocus={(e) => e.preventDefault()}
         overlayClassName={overlayClassName}
         className={cn(
-          "box-border w-[272px] min-h-[154px] md:w-fit md:min-w-[202px] md:max-w-[280px] md:min-h-[150px] p-3 gap-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
+          "box-border w-[calc(100vw-32px)] max-w-[340px] sm:max-w-[360px] min-h-[148px] p-4 gap-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
           preset?.modalClassName,
           modalClassName
         )}
       >
         {/* Frame 2609475: Text Container */}
-        <div className="w-[246px] md:w-full self-stretch flex flex-col items-center gap-[8px]">
+        <div className="w-full self-stretch flex flex-col items-center gap-2">
           <DialogTitle
             className={cn(
-              "text-ds-text-primary text-center w-full m-0 p-0",
+              "text-ds-text-primary text-center w-full m-0 p-0 font-['DM_Sans'] font-medium text-[16px] leading-[24px]",
               customTitleClassName || preset?.titleClassName || "ds-text-body-1"
             )}
           >
@@ -152,14 +152,14 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         </div>
 
         {/* Frame 2609476: Action Buttons */}
-        <div className="w-[204px] md:w-full h-[36px] flex flex-row justify-center items-center gap-2">
+        <div className="w-full flex flex-row justify-center items-center gap-2.5 sm:gap-3 flex-wrap">
           <button
             type="button"
             disabled={isLoading}
             onClick={onConfirm}
             className={cn(
               buttonWidthClass,
-              "h-[36px] px-3 py-1.5 rounded-[100px] border-0 outline-none flex justify-center items-center ds-text-body-1 text-ds-text-primary hover:opacity-90 active:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 select-none whitespace-nowrap ds-focus-ring",
+              "h-[36px] px-4 py-1.5 rounded-[100px] border-0 outline-none flex justify-center items-center font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-ds-text-primary hover:opacity-90 active:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 select-none whitespace-nowrap ds-focus-ring shrink-0",
               confirmColor === 'red' ? 'bg-ds-error' : 'bg-ds-accent'
             )}
           >
@@ -171,7 +171,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
             onClick={onClose}
             className={cn(
               buttonWidthClass,
-              "h-[36px] px-3 py-1.5 bg-transparent border border-ds-border rounded-[100px] outline-none flex justify-center items-center ds-text-body-1 hover:bg-ds-surface-1 active:bg-ds-surface-2 transition-colors cursor-pointer disabled:opacity-50 select-none whitespace-nowrap ds-focus-ring",
+              "h-[36px] px-4 py-1.5 bg-transparent border border-ds-border rounded-[100px] outline-none flex justify-center items-center font-['DM_Sans'] font-medium text-[14px] leading-[20px] hover:bg-ds-surface-1 active:bg-ds-surface-2 transition-colors cursor-pointer disabled:opacity-50 select-none whitespace-nowrap ds-focus-ring shrink-0",
               cancelTextColor === 'secondary'
                 ? "text-ds-text-secondary hover:text-ds-text-primary"
                 : "text-ds-text-primary"

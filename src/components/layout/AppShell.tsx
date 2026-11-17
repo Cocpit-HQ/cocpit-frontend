@@ -96,19 +96,20 @@ export function AppShell({
   const isJobSearchPage = Boolean(pathname?.startsWith('/jobs/search'));
   const isJobExplorePage = Boolean(pathname?.startsWith('/jobs/explore'));
   const isGlobalSearchPage = Boolean(pathname?.startsWith('/search'));
+  const isMessagingPage = Boolean(pathname?.startsWith('/messaging'));
   const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage || isJobExplorePage || isGlobalSearchPage;
-  const shouldHideBottomNav = hideBottomNav || (isDistractionFree && !isGlobalSearchPage) || isSettingsSubpage || activeModal === 'create-post';
+  const shouldHideBottomNav = hideBottomNav || (isDistractionFree && !isGlobalSearchPage) || isSettingsSubpage || isMessagingPage || activeModal === 'create-post';
 
   return (
-    <div className={`relative flex flex-col ${isSettingsRoute ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground ${isGlobalSearchPage ? 'overflow-x-clip' : 'overflow-x-hidden'}`}>
+    <div className={`relative flex flex-col ${(isSettingsRoute || isMessagingPage) ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground ${isGlobalSearchPage ? 'overflow-x-clip' : 'overflow-x-hidden'}`}>
       {!isDistractionFree && (
         <div className="hidden sm:block fixed left-0 top-0 h-screen z-40">
           <Sidebar />
         </div>
       )}
 
-      {/* Top Header - hidden on distraction-free pages and settings routes */}
-      {!isDistractionFree && !isSettingsRoute && (
+      {/* Top Header - hidden on distraction-free pages, settings routes, and messaging */}
+      {!isDistractionFree && !isSettingsRoute && !isMessagingPage && (
         <>
           <div className="hidden sm:block">
             <TopHeader />
@@ -123,7 +124,7 @@ export function AppShell({
       <main className={
         isDistractionFree
           ? "min-w-0 flex-1 w-full relative"
-          : isSettingsRoute
+          : (isSettingsRoute || isMessagingPage)
             ? `min-w-0 flex-1 w-full h-full overflow-hidden sm:pl-[280px] lg:pl-[320px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative`
             : `min-w-0 flex-1 w-full sm:pl-[220px] pt-[60px] sm:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative`
       }>

@@ -15,6 +15,7 @@ import type { NotificationPreferences } from '@/services/api/settings';
 import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
 import type { BackendChat, ChatThread } from '@/types/messaging';
+import { stripMentionSyntax } from '@/lib/mentions';
 
 type TargetedMessageNotification = NotificationPayload & {
   targetProfileType?: 'USER' | 'COMPANY';
@@ -286,7 +287,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       const isMessage = type === 'message' || (type.includes('message') && type !== 'message_reaction');
-      const isJobMessage = isMessage && payload.isJobChat;
+      const isJobMessage = isMessage && Boolean(payload.is_job_chat ?? payload.isJobChat);
       const isRegularMessage = isMessage && !isJobMessage;
       const isPost = ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention'].includes(type) || type.includes('post');
       const isJob = type.includes('job') || type.includes('application') || type.includes('offer');
@@ -394,11 +395,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
 
-        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        if (currentPath === '/feed' || currentPath === '/') {
-          console.log("[DEBUG] Suppressed: on feed path", currentPath);
-          return;
-        }
+        // Suppress message toast on feed screen (uncomment if QuickChatWidget is re-enabled in the future):
+        // const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        // if (currentPath === '/feed' || currentPath === '/') {
+        //   console.log("[DEBUG] Suppressed: on feed path", currentPath);
+        //   return;
+        // }
 
         console.log("[DEBUG] Firing standard message toast!");
 
@@ -423,7 +425,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
               )}
               */}
               <span className="text-sm">
-                {payload.text || `You have a message from ${payload.senderName || "someone"}`}
+                {stripMentionSyntax(payload.text) || `You have a message from ${payload.senderName || "someone"}`}
               </span>
             </div>
           ),
@@ -542,14 +544,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else {
         if (payload.text) {
-          // If it's a message, don't show the standard toast on the feed screen
-          if ((payload.type === 'message' || payload.type === 'new_message') && (pathname === '/feed' || pathname === '/')) {
-            return;
-          }
+          // If it's a message, don't show the standard toast on the feed screen (uncomment if QuickChatWidget is re-enabled in the future):
+          // if ((payload.type === 'message' || payload.type === 'new_message') && (pathname === '/feed' || pathname === '/')) {
+          //   return;
+          // }
 
           toast({
             title: payload.type === 'message' || payload.type === 'new_message' ? 'New Message' : payload.title,
-            description: payload.text,
+            description: stripMentionSyntax(payload.text),
             duration: 5000,
           });
         }
@@ -664,24 +666,38 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         currentProfile?.id ?? "me",
       ];
 
-      if (conversationId) {
-        queryClient.setQueryData(
-          queryKey,
+      if (conversationId || otherPartyId) {
+        queryClient.setQueriesData<any[]>(
+          { queryKey: ["conversations"] },
           (oldData: any[] | undefined) => {
             if (!oldData) return oldData;
             return oldData.map((c) => {
-              if (String(c.id) === String(conversationId)) {
+              if (
+                (conversationId && String(c.id) === String(conversationId)) ||
+                (otherPartyId && String(c.otherUserId) === String(otherPartyId))
+              ) {
+                const isCompany = c.otherUserType === "COMPANY";
+                const fallbackName = isCompany ? "Unknown Page" : "Unknown User";
+                const fallbackRole = isCompany ? "Page unavailable" : "User unavailable";
                 return {
                   ...c,
                   isBlockedByMe: isMeBlocker ? true : c.isBlockedByMe,
                   isBlockedByOther: !isMeBlocker ? true : c.isBlockedByOther,
+                  rawName: c.rawName || c.name,
+                  rawRole: c.rawRole || c.role,
+                  rawAvatar: c.rawAvatar || c.avatar,
+                  name: fallbackName,
+                  role: fallbackRole,
+                  avatar: undefined,
                 };
               }
               return c;
             });
           }
         );
-        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        if (conversationId) {
+          queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        }
       }
 
       queryClient.resetQueries({ queryKey: ['sharedPost'], exact: false });
@@ -742,24 +758,32 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         currentProfile?.id ?? "me",
       ];
 
-      if (conversationId) {
-        queryClient.setQueryData(
-          queryKey,
+      if (conversationId || otherPartyId) {
+        queryClient.setQueriesData<any[]>(
+          { queryKey: ["conversations"] },
           (oldData: any[] | undefined) => {
             if (!oldData) return oldData;
             return oldData.map((c) => {
-              if (String(c.id) === String(conversationId)) {
+              if (
+                (conversationId && String(c.id) === String(conversationId)) ||
+                (otherPartyId && String(c.otherUserId) === String(otherPartyId))
+              ) {
                 return {
                   ...c,
                   isBlockedByMe: isMeUnblocker ? false : c.isBlockedByMe,
                   isBlockedByOther: !isMeUnblocker ? false : c.isBlockedByOther,
+                  name: isMeUnblocker ? (c.rawName || c.name) : c.name,
+                  role: isMeUnblocker ? (c.rawRole || c.role) : c.role,
+                  avatar: isMeUnblocker ? (c.rawAvatar || c.avatar) : c.avatar,
                 };
               }
               return c;
             });
           }
         );
-        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        if (conversationId) {
+          queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        }
       }
 
       queryClient.resetQueries({ queryKey: ['sharedPost'], exact: false });
@@ -1115,6 +1139,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('post_deleted', handlePostUpdated);
       newSocket.off('feed_updated', handlePostCreated);
       newSocket.disconnect();
+      tokenRef.current = null;
+      socketRef.current = null;
       setTypingConversations({});
     };
   }, [session?.user?.accessToken, session?.user?.error, session?.user?.id, toast, router, queryClient, refreshProfile, handleRealtimeUpdate, switchProfile]);

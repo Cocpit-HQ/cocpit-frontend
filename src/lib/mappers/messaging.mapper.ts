@@ -76,7 +76,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
   const isCompany = backendChat.other_user_type === 'COMPANY';
   const fallbackName = isCompany ? "Unknown Page" : "Unknown User";
 
-  const isBlocked = Boolean(backendChat.is_blocked_by_other);
+  const isBlocked = Boolean(backendChat.is_blocked_by_other || backendChat.is_blocked_by_me);
   const isDeleted = Boolean(
     backendChat.is_deleted_user ||
     backendChat.other_user_name === "Deleted User" ||
@@ -140,12 +140,18 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     isDeleted: isDeleted,
     isDeactivated: isDeactivated,
     is_requesting: backendChat.is_requesting ?? (backendChat as any).is_requesting ?? (backendChat as any).isRequesting ?? false,
+    created_by: backendChat.created_by ?? (backendChat as any).created_by,
+    last_sender_message_at: backendChat.last_sender_message_at ?? (backendChat as any).last_sender_message_at ?? null,
     invitation_id: backendChat.invitation_id || (backendChat as any).invitation_id,
     request_source: backendChat.request_source || (backendChat as any).request_source,
     is_read: backendChat.is_read ?? (backendChat as any).is_read ?? (backendChat as any).isRead ?? true,
     is_muted: backendChat.is_muted ?? (backendChat as any).is_muted ?? (backendChat as any).isMuted ?? false,
     muted_until: backendChat.muted_until ?? (backendChat as any).muted_until ?? (backendChat as any).mutedUntil ?? null,
+    is_pinned: backendChat.is_pinned ?? (backendChat as any).is_pinned ?? (backendChat as any).isPinned ?? false,
     isJobChat: backendChat.is_job_chat ?? (backendChat as any).isJobChat ?? false,
+    rawName: backendChat.other_user_name || (backendChat as any).name,
+    rawRole: backendChat.other_user_headline || (backendChat as any).role,
+    rawAvatar: backendChat.other_user_avatar || (backendChat as any).avatar,
   };
 };
 
@@ -180,7 +186,7 @@ export const mapBackendMessageToMessage = (
   currentUserId?: string,
   companyId?: string
 ): Message => {
-  const authorOrgId = backendMessage.author_org_id || backendMessage.author_company_id;
+  const authorOrgId = backendMessage.author_org_id;
   const isOrgMessage = Boolean(authorOrgId);
   const messageSenderId = isOrgMessage
     ? authorOrgId
@@ -215,11 +221,11 @@ export const mapBackendMessageToMessage = (
         : (backendMessage.shared_post.author || backendMessage.shared_post.author_name || "Unknown"),
       authorAvatar: typeof backendMessage.shared_post.author === 'object' && backendMessage.shared_post.author
         ? backendMessage.shared_post.author.avatar_url
-        : (backendMessage.shared_post.author_avatar || backendMessage.shared_post.authorAvatar || null),
+        : (backendMessage.shared_post.author_avatar || null),
       authorHeadline: typeof backendMessage.shared_post.author === 'object' && backendMessage.shared_post.author
         ? (backendMessage.shared_post.author.headline || backendMessage.shared_post.author.display_headline || null)
-        : (backendMessage.shared_post.author_headline || backendMessage.shared_post.authorHeadline || null),
-      isOrganizationPost: backendMessage.shared_post.is_organization_post || backendMessage.shared_post.isOrganizationPost || false,
+        : (backendMessage.shared_post.author_headline || null),
+      isOrganizationPost: backendMessage.shared_post.is_organization_post || false,
       media: backendMessage.shared_post.media?.map(m => ({ url: m.url, type: m.media_type as 'image' | 'video' })),
       post_type: backendMessage.shared_post.post_type,
       title: backendMessage.shared_post.title,
@@ -244,23 +250,29 @@ export const mapBackendMessageToMessage = (
     shared_post_id: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.shared_post_id || undefined),
     entityType: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.entity_type || undefined),
     entityId: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.entity_id || undefined),
-    replied_msg_id: backendMessage.reply_message?.message_id || backendMessage.replied_msg_id || backendMessage.replyMessageId || null,
-    repliedMessage: (backendMessage.reply_message || backendMessage.replied_msg_id || backendMessage.replyMessageId) ? {
-      messageId: backendMessage.reply_message?.message_id || backendMessage.replied_msg_id || backendMessage.replyMessageId!,
+    replied_msg_id: backendMessage.reply_message?.message_id || backendMessage.replied_msg_id || null,
+    repliedMessage: (backendMessage.reply_message || backendMessage.replied_msg_id) ? {
+      messageId: backendMessage.reply_message?.message_id || backendMessage.replied_msg_id!,
       senderName: backendMessage.reply_message?.sender_name || backendMessage.replied_sender_name || "",
-      content: backendMessage.reply_message?.text_content || backendMessage.replyMessageContent || backendMessage.replied_content || "",
+      content: backendMessage.reply_message?.text_content || backendMessage.replied_content || "",
       isDeleted: backendMessage.replied_is_deleted || false,
       mediaType: (backendMessage.reply_message as any)?.media?.[0]?.media_type || (backendMessage.reply_message as any)?.media_type || (backendMessage.reply_message as any)?.message_type || (backendMessage.reply_message as any)?.type || null,
       mediaName: (backendMessage.reply_message as any)?.media?.[0]?.filename || (backendMessage.reply_message as any)?.filename || (backendMessage.reply_message as any)?.media_name || null,
       mediaUrl: (backendMessage.reply_message as any)?.media?.[0]?.url || (backendMessage.reply_message as any)?.media_url || null,
+      sharedPostId: (backendMessage.reply_message as any)?.shared_post_id || null,
+      sharedProfileId: (backendMessage.reply_message as any)?.shared_profile_id || null,
+      sharedProfileType: (backendMessage.reply_message as any)?.shared_profile_type || null,
+      entityType: (backendMessage.reply_message as any)?.entity_type || null,
+      entityId: (backendMessage.reply_message as any)?.entity_id || null,
     } : null,
     created_at: backendMessage.created_at,
     reactions: backendMessage.reactions || [],
     active_member_count: backendMessage.active_member_count,
     delivered_count: backendMessage.delivered_count,
     seen_count: backendMessage.seen_count,
-    is_unavailable: (backendMessage as any).is_unavailable === true,
-    is_edited: backendMessage.is_edited === true || (backendMessage as any).isEdited === true,
-    mentioned_users: (backendMessage as any).mentioned_users,
+    seen_by: backendMessage.seen_by || [],
+    is_unavailable: backendMessage.is_unavailable === true,
+    is_edited: backendMessage.is_edited === true,
+    mentioned_users: backendMessage.mentioned_users,
   };
 };

@@ -28,6 +28,7 @@ import { useCompanyPermissions } from "@/features/businessProfile";
 import { useToast } from "@/hooks/use-toast";
 import { DUMMY_JOB_CHATS } from "@/features/messaging/data/companyMessagingMockData";
 import { companyService } from "@/services/organization.service";
+import { getPinnedChatId, isChatPinned, setPinnedChatId } from "./utils/pinUtils";
 import ChatWindowSkeleton from "./components/skeletons/ChatWindowSkeleton";
 
 const routes: Record<string, string> = {
@@ -168,7 +169,16 @@ export default function MessagingPage() {
             }
           : {};
       const backendChats = await getConversations(params);
-      return backendChats.map(mapBackendChatToChatThread);
+      const pinnedId = getPinnedChatId(activeProfile?.type, activeProfile?.id);
+      return backendChats.map((b) => {
+        const thread = mapBackendChatToChatThread(b);
+        if (pinnedId && String(thread.id) === String(pinnedId)) {
+          thread.is_pinned = true;
+        } else {
+          thread.is_pinned = false;
+        }
+        return thread;
+      });
     },
     staleTime: 0,
     refetchOnWindowFocus: false,
@@ -181,14 +191,16 @@ export default function MessagingPage() {
   // to prevent React "duplicate key" errors in the chat list.
   const chats = React.useMemo(() => {
     const all = rawChatsQuery.data || [];
+    const pinnedId = getPinnedChatId(activeProfile?.type, activeProfile?.id);
     const seen = new Map<string, (typeof all)[number]>();
     for (const c of all) {
       if (!seen.has(c.id)) {
-        seen.set(c.id, c);
+        const isPinned = pinnedId ? String(c.id) === String(pinnedId) : Boolean(c.is_pinned);
+        seen.set(c.id, { ...c, is_pinned: isPinned });
       }
     }
     return Array.from(seen.values());
-  }, [rawChatsQuery.data]);
+  }, [rawChatsQuery.data, activeProfile?.type, activeProfile?.id]);
   const isLoading = rawChatsQuery.isLoading;
   const error = rawChatsQuery.error;
 
@@ -201,12 +213,14 @@ export default function MessagingPage() {
         : null);
 
     if (foundChat) {
+      const isPinned = isChatPinned(foundChat.id, activeProfile?.type, activeProfile?.id);
       return {
         ...selectedChat,
         ...foundChat,
-        name: foundChat.name || selectedChat.name,
-        role: foundChat.role || selectedChat.role,
-        avatar: foundChat.avatar || selectedChat.avatar,
+        is_pinned: isPinned,
+        name: foundChat.name ?? selectedChat.name,
+        role: foundChat.role ?? selectedChat.role,
+        avatar: foundChat.avatar ?? (foundChat.isBlockedByMe || foundChat.isBlockedByOther || foundChat.isDeactivated || foundChat.isDeleted ? undefined : selectedChat.avatar),
         otherUserId: foundChat.otherUserId || selectedChat.otherUserId,
         otherUserSlug: foundChat.otherUserSlug || selectedChat.otherUserSlug,
       };
@@ -216,6 +230,7 @@ export default function MessagingPage() {
 
   const { user } = useAuth();
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [createGroupInitialView, setCreateGroupInitialView] = useState<'personalChat' | 'addMembers' | 'createGroup'>('personalChat');
 
   const { socket } = useSocket();
   const queryClient = useQueryClient();
@@ -294,13 +309,18 @@ export default function MessagingPage() {
 
     // Handle groupId param — works for all chat types and profile types
     if (groupId) {
-      if (groupId === processedUserIdRef.current) return;
+      if (groupId === processedUserIdRef.current && selectedChat) return;
       const groupChat = chats.find((c) => String(c.id) === String(groupId));
       if (groupChat) {
         setSelectedChat(groupChat);
         processedUserIdRef.current = groupId;
         if (!isMobile && typeof window !== 'undefined') {
-          window.history.replaceState(null, "", `/messaging?groupId=${groupId}`);
+          const currentUrl = new URL(window.location.href);
+          // Preserve view=info, tab=posts, and any other auxiliary query params
+          if (currentUrl.searchParams.get("groupId") !== String(groupId)) {
+            currentUrl.searchParams.set("groupId", String(groupId));
+            window.history.replaceState(null, "", currentUrl.pathname + currentUrl.search);
+          }
         }
       }
       return;
@@ -430,9 +450,6 @@ export default function MessagingPage() {
       if (groupChat) {
         safelySetSelectedChat(groupChat);
         processedUserIdRef.current = groupId;
-        if (!isMobile && typeof window !== 'undefined') {
-          window.history.replaceState(null, "", "/messaging");
-        }
       }
     } else if (companyId && activeProfile?.type !== "COMPANY") {
       const existingChat = chats.find(
@@ -945,6 +962,28 @@ export default function MessagingPage() {
       );
     };
 
+    const handleConversationPinned = (payload: {
+      conversationId: string;
+      is_pinned: boolean;
+    }) => {
+      setPinnedChatId(payload.is_pinned ? String(payload.conversationId) : null, activeProfile?.type, activeProfile?.id);
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations"] },
+        (oldData) => {
+          if (!oldData || !Array.isArray(oldData)) return oldData;
+          return oldData.map((c) => {
+            if (String(c.id) === String(payload.conversationId)) {
+              return { ...c, is_pinned: payload.is_pinned };
+            }
+            if (payload.is_pinned && c.is_pinned) {
+              return { ...c, is_pinned: false };
+            }
+            return c;
+          });
+        }
+      );
+    };
+
     const handleAccountStateChanged = () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["messages"] });
@@ -973,6 +1012,7 @@ export default function MessagingPage() {
     socket.on("user_unblocked", handleUnblock);
     socket.on("unblock_confirmed", handleUnblock);
     socket.on("conversation_preference_updated", handlePreferenceUpdated);
+    socket.on("conversation_pinned", handleConversationPinned);
     socket.on("user_deactivated", handleAccountStateChanged);
     socket.on("USER_DEACTIVATED", handleAccountStateChanged);
     socket.on("user_reactivated", handleAccountStateChanged);
@@ -1000,6 +1040,7 @@ export default function MessagingPage() {
       socket.off("user_unblocked", handleUnblock);
       socket.off("unblock_confirmed", handleUnblock);
       socket.off("conversation_preference_updated", handlePreferenceUpdated);
+      socket.off("conversation_pinned", handleConversationPinned);
       socket.off("user_deactivated", handleAccountStateChanged);
       socket.off("USER_DEACTIVATED", handleAccountStateChanged);
       socket.off("user_reactivated", handleAccountStateChanged);
@@ -1027,15 +1068,17 @@ export default function MessagingPage() {
 
   return (
     <div
-      className="h-full w-full bg-background flex flex-col"
-      style={{ height: isMobile ? "100dvh" : "calc(100vh - 64px)" }}
+      className="w-full h-full max-h-[100dvh] pt-4 pb-4 md:pt-[40px] md:pb-[40px] bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex justify-start items-start overflow-hidden box-border"
     >
-      <div className="flex-1 w-full h-full bg-[var(--background)] dark:bg-background overflow-hidden p-4">
-        <div className="flex w-full h-full gap-4">
-          {/* Chat List - on mobile, hidden if we have a selected chat */}
+      {/* Chat container: full width with 74px right padding on desktop */}
+      <div className="w-full h-full max-h-full p-0 md:pr-[74px] flex flex-col items-start gap-0 overflow-hidden">
+        {/* Inner box: full width flex row */}
+        <div className="w-full h-full max-h-full p-0 flex flex-col md:flex-row items-stretch gap-0 overflow-hidden">
+          {/* Chat List - kept as it is: fixed 380px on desktop */}
           <div
-            className={`${isMobile && selectedChat ? "hidden" : "flex flex-col"
-              } h-full overflow-hidden w-full md:w-[380px] shrink-0`}
+            className={`${
+              isMobile && selectedChat ? "hidden" : "flex flex-col"
+            } h-full overflow-hidden w-full md:w-[380px] md:max-w-[380px] shrink-0 md:order-0`}
           >
             <ChatList
               selectedChatId={selectedChat?.id}
@@ -1058,93 +1101,115 @@ export default function MessagingPage() {
               chats={chats}
               isLoading={isLoading}
               error={error}
-              onCreateGroup={() => setIsCreateGroupOpen(true)}
+              onCreateGroup={() => {
+                setCreateGroupInitialView('personalChat');
+                setIsCreateGroupOpen(true);
+              }}
+              onSelectNewChat={(type) => {
+                setCreateGroupInitialView(type === 'group' ? 'addMembers' : 'personalChat');
+                setIsCreateGroupOpen(true);
+              }}
               isCompany={activeProfile?.type === "COMPANY"}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
             />
           </div>
 
-          {/* Chat Window - on mobile, only shown if selectedChat */}
+          {/* Line 191: Divider between Chat List and Chat Window */}
+          {/* Starts at Search/Avatar center (top: 35px) and ends at Attachment Icon center (bottom: 24px) */}
+          {/* Separated by: list -> 8px -> divider -> 0px -> chat window (chat window has internal 16px padding) */}
           <div
-            className={`${isMobile && selectedChat
-              ? "fixed inset-0 z-50 bg-[var(--card)] w-full h-[100dvh] flex flex-col"
-              : "hidden md:flex flex-col flex-1 h-full overflow-hidden bg-[var(--card)] rounded-[24px]"
-              }`}
+            role="separator"
+            aria-orientation="vertical"
+            aria-hidden="true"
+            className="hidden md:flex flex-col shrink-0 md:order-1 h-full w-px ml-2 mr-0 flex-none grow-0"
           >
-            {activeChat ? (
-              (activeChat.isGroup && !activeChat.is_requesting) ? (
-                <GroupChatProvider groupId={activeChat.id}>
-                  <GroupChat
-                    groupId={activeChat.id}
-                    currentUser={user || UNKNOWN_USER}
-                    unreadCount={activeChat.unread}
-                    isMuted={activeChat.is_muted}
-                    onBack={() => {
-                      setSelectedChat(null);
-                      processedUserIdRef.current = null;
-                      router.push("/messaging");
-                    }}
-                  />
-                </GroupChatProvider>
-              ) : (
-                <ChatWindow
-                  chat={activeChat}
-                  isMobile={!!isMobile}
-                  activeTab={activeTab}
+            <div className="w-full flex-1 mt-[35px] mb-[24px] bg-[var(--ds-border)]" />
+          </div>
+
+          {/* Frame 2608632: Chat Window - fills available width (flex-1), padding: 16px, background: var(--ds-bg), border-radius: 24px, NO outer border */}
+          <div
+            className={`${
+              isMobile && selectedChat
+                ? "fixed inset-0 z-50 bg-[var(--ds-bg)] w-full h-[100dvh] flex flex-col"
+                : "hidden md:flex flex-col flex-1 min-w-0 h-full overflow-hidden bg-[var(--ds-bg)] border-none md:order-2"
+            }`}
+          >
+          {activeChat ? (
+            (activeChat.isGroup && !activeChat.is_requesting) ? (
+              <GroupChatProvider groupId={activeChat.id}>
+                <GroupChat
+                  groupId={activeChat.id}
+                  currentUser={user || UNKNOWN_USER}
+                  unreadCount={activeChat.unread}
+                  isMuted={activeChat.is_muted}
+                  mutedUntil={activeChat.muted_until}
                   onBack={() => {
                     setSelectedChat(null);
                     processedUserIdRef.current = null;
                     router.push("/messaging");
                   }}
-                  onChatCreated={(createdChat) => {
-                    setSelectedChat(createdChat);
-                    processedUserIdRef.current = createdChat.id;
-                  }}
-                  onAcceptSuccess={() => {
-                    setActiveTab('chat');
-                  }}
-                  initialEntityContext={initialEntityContext || undefined}
                 />
-              )
+              </GroupChatProvider>
             ) : (
-              (isLoading || searchParams.get("userId") || searchParams.get("groupId") || searchParams.get("conversationId")) ? (
-                <ChatWindowSkeleton />
-              ) : (
-                <div className="hidden md:flex items-center justify-center h-full flex-col text-center px-8 bg-background">
-                  <div className="w-20 h-20 mb-4 flex items-center justify-center bg-transparent">
-                    <svg
-                      width="72"
-                      height="72"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-foreground"
-                    >
-                      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-                      <path d="M8 12h8" />
-                      <path d="M8 8h5" />
-                    </svg>
-                  </div>
-                  <p className="font-semibold text-foreground text-[17px] tracking-tight mb-2">
-                    Select a conversation to start messaging
-                  </p>
-                  <p className="text-[13px] text-muted-foreground/80 max-w-[260px] leading-relaxed">
-                    Chats from your network and requests will appear here
-                  </p>
+              <ChatWindow
+                chat={activeChat}
+                isMobile={!!isMobile}
+                activeTab={activeTab}
+                onBack={() => {
+                  setSelectedChat(null);
+                  processedUserIdRef.current = null;
+                  router.push("/messaging");
+                }}
+                onChatCreated={(createdChat) => {
+                  setSelectedChat(createdChat);
+                  processedUserIdRef.current = createdChat.id;
+                }}
+                onAcceptSuccess={() => {
+                  setActiveTab('chat');
+                }}
+                initialEntityContext={initialEntityContext || undefined}
+              />
+            )
+          ) : (
+            (isLoading || searchParams.get("userId") || searchParams.get("groupId") || searchParams.get("conversationId")) ? (
+              <ChatWindowSkeleton />
+            ) : (
+              <div className="hidden md:flex items-center justify-center h-full flex-col text-center px-8 bg-[var(--ds-bg)]">
+                <div className="w-20 h-20 mb-4 flex items-center justify-center bg-transparent">
+                  <svg
+                    width="72"
+                    height="72"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-[var(--ds-text-primary)]"
+                  >
+                    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+                    <path d="M8 12h8" />
+                    <path d="M8 8h5" />
+                  </svg>
                 </div>
-              )
-            )}
-          </div>
+                <p className="font-semibold text-[var(--ds-text-primary)] text-[17px] tracking-tight mb-2">
+                  Select a conversation to start messaging
+                </p>
+                <p className="text-[13px] text-[var(--ds-text-muted)] max-w-[260px] leading-relaxed">
+                  Chats from your network and requests will appear here
+                </p>
+              </div>
+            )
+          )}
         </div>
+      </div>
       </div>
       <GroupChatProvider>
         <CreateGroupModal
           isOpen={isCreateGroupOpen}
           onClose={() => setIsCreateGroupOpen(false)}
+          initialView={createGroupInitialView}
         />
       </GroupChatProvider>
     </div>

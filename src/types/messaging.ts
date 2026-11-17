@@ -20,12 +20,16 @@ export interface BackendChat {
   is_deleted_user?: boolean; // Added for deleted user handling
   is_deactivated?: boolean;
   is_requesting?: boolean;
+  created_by?: string;
+  last_sender_message_at?: string | null;
   invitation_id?: string;
   request_source?: string;
   is_read?: boolean;
   is_muted?: boolean;
   muted_until?: string | null;
+  is_pinned?: boolean;
   is_job_chat?: boolean;
+  replied_msg_id?: string | null;
 }
 
 export interface BackendMessage {
@@ -35,7 +39,6 @@ export interface BackendMessage {
   text_content: string;
   created_at: string;
   read_at: string | null;
-  author_company_id?: string | null; // Added for company messaging
   author_org_id?: string | null;
   sender_name?: string;
   sender_member_name?: string;
@@ -45,19 +48,19 @@ export interface BackendMessage {
   action_type?: string;
   target_id?: string;
   is_blocked?: boolean; // Blocked status from backend
+  is_unavailable?: boolean;
   is_deleted_for_everyone?: boolean; // Deleted status from backend
   is_deleted_for_me?: boolean;
   replied_is_deleted?: boolean;
   replied_msg_id?: string | null;
   replied_sender_name?: string | null;
   replied_content?: string | null;
-  replyMessageId?: string | null;
-  replyMessageContent?: string | null;
   reply_message?: {
     message_id: string;
     text_content: string;
     sender_name: string;
     message_type: string;
+    media?: { url: string; media_type?: string; filename?: string }[];
   } | null;
   shared_post?: {
     post_id: string;
@@ -70,11 +73,8 @@ export interface BackendMessage {
     } | null;
     author_name?: string;
     author_avatar?: string;
-    authorAvatar?: string;
     author_headline?: string;
-    authorHeadline?: string;
     is_organization_post?: boolean;
-    isOrganizationPost?: boolean;
     media?: { url: string; media_type: string }[] | null;
     post_type?: string;
     title?: string | null;
@@ -105,8 +105,10 @@ export interface BackendMessage {
   active_member_count?: number;
   delivered_count?: number;
   seen_count?: number;
+  seen_by?: { user_id: string; full_name?: string; avatar_url?: string; avatar?: string; is_company?: boolean }[];
   is_edited?: boolean;
-  isEdited?: boolean;
+  edited_at?: string;
+  mentioned_users?: { user_id: string; full_name: string; account_name: string }[];
 }
 
 // Frontend entity types
@@ -131,14 +133,20 @@ export interface ChatThread {
   isDeleted?: boolean; // Frontend flag to filter out
   isDeactivated?: boolean;
   is_requesting?: boolean;
+  created_by?: string;
+  last_sender_message_at?: string | null;
   invitation_id?: string;
   request_source?: string;
   is_read?: boolean;
   is_muted?: boolean;
   muted_until?: string | null;
+  is_pinned?: boolean;
   jobIds?: string[];
   isJobChat?: boolean;
   isMock?: boolean;
+  rawName?: string;
+  rawRole?: string;
+  rawAvatar?: string;
 }
 
 export interface Message {
@@ -206,8 +214,14 @@ export interface Message {
     mediaType?: 'image' | 'video' | 'document' | string | null;
     mediaName?: string | null;
     mediaUrl?: string | null;
+    sharedPostId?: string | null;
+    sharedProfileId?: string | null;
+    sharedProfileType?: string | null;
+    entityType?: string | null;
+    entityId?: string | null;
+    isAttachment?: boolean;
   } | null;
-  status?: 'sending' | 'sent' | 'delivered' | 'read';
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   media?: { url: string; type: 'image' | 'video' | 'document'; name?: string | null }[];
   reactions?: {
     user_id: string;
@@ -219,6 +233,7 @@ export interface Message {
   active_member_count?: number;
   delivered_count?: number;
   seen_count?: number;
+  seen_by?: { user_id: string; full_name?: string; avatar_url?: string; avatar?: string; is_company?: boolean }[];
   is_unavailable?: boolean;
 }
 

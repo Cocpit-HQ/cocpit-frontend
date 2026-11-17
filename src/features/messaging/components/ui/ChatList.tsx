@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Search, Plus } from "lucide-react"
+import { Search } from "lucide-react"
+import { AddIcon } from "@/components/icons"
 import { toast } from "sonner"
 import { ChatThread } from "@/types/messaging"
 import ChatListItem from "./ChatListItem"
@@ -21,28 +22,13 @@ import ConversationListSkeleton from "../skeletons/ConversationListSkeleton"
 import { FeatureDisabledTooltip } from "@/components/feature-flags"
 import { useFeatureFlags } from "@/context/FeatureFlagContext"
 import { ChatFilterDropdown, ChatFilterOption } from "./ChatFilterDropdown"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-// Reusable exact tag component
-const TagChip = ({ active, label, hasIndicator, onClick, disabled }: { active: boolean, label: string, hasIndicator?: boolean, onClick: () => void, disabled?: boolean }) => (
-  <button
-    onClick={disabled ? undefined : onClick}
-    disabled={disabled}
-    title={disabled ? (label === 'Jobs' ? "Permission required to access job chat" : "Permission required to access chat") : undefined}
-    className={`flex flex-row justify-center items-center px-[16px] py-[6px] gap-[8px] h-[32px] rounded-[24px] flex-none order-0 ${disabled
-        ? "opacity-50 cursor-default bg-gray-100 border border-gray-300"
-        : active
-          ? "bg-[#EEF2FF] border border-[#EEF2FF]"
-          : "bg-transparent border border-[#6366F1]"
-      }`}
-  >
-    <span className={`h-[20px] font-['Poppins'] font-medium text-[14px] leading-[20px] flex items-center text-center tracking-[0.1px] ${disabled ? 'text-gray-400' : 'text-[#6366F1]'} flex-none order-0`}>
-      {label}
-    </span>
-    {hasIndicator && !disabled && (
-      <span className={`w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none order-1`} />
-    )}
-  </button>
-)
 
 interface ChatListProps {
   selectedChatId?: string // Updated to string
@@ -52,11 +38,12 @@ interface ChatListProps {
   isLoading: boolean;
   error: Error | null;
   onCreateGroup?: () => void;
+  onSelectNewChat?: (type: 'personal' | 'group') => void;
   isCompany?: boolean;
   activeTab?: 'chat' | 'jobs' | 'requests';
   setActiveTab?: (tab: 'chat' | 'jobs' | 'requests') => void;
   isQuickChat?: boolean;
-  chatFilter?: 'All' | 'Groups';
+  chatFilter?: ChatFilterOption;
 }
 
 export function ChatList({
@@ -67,6 +54,7 @@ export function ChatList({
   isLoading,
   error,
   onCreateGroup,
+  onSelectNewChat,
   isCompany = false,
   activeTab: propActiveTab,
   setActiveTab: propSetActiveTab,
@@ -223,23 +211,32 @@ export function ChatList({
         if (effectiveTab === 'jobs') return isJob;
         return true;
       } else {
-        if (effectiveTab === 'chat') return !chat.is_requesting;
-        if (effectiveTab === 'requests') return Boolean(chat.is_requesting);
+        const isIncomingRequest = Boolean(
+          chat.is_requesting &&
+          (!chat.created_by || String(chat.created_by) !== String(session?.user?.id))
+        );
+        if (effectiveTab === 'chat') return !isIncomingRequest;
+        if (effectiveTab === 'requests') return isIncomingRequest;
         return true;
       }
     });
 
-    // Step 2: Then apply dropdown filter (All | Groups) and search on that tab basis
+    // Step 2: Then apply dropdown filter (All | Group | Unread) and search on that tab basis
     const filteredList = tabBaseChats.filter((chat) => {
-      if (isUserActor && selectedFilter === 'Groups') {
-        if (effectiveTab === 'requests') {
-          const isGroupInvitation = Boolean(
-            chat.isGroup || (chat as any).is_group || chat.request_source === 'group_invitation'
-          );
-          if (!isGroupInvitation) return false;
-        } else {
-          const isGroupChat = Boolean(chat.isGroup || (chat as any).is_group);
-          if (!isGroupChat) return false;
+      if (isUserActor) {
+        if (selectedFilter === 'Group' || selectedFilter === 'Groups') {
+          if (effectiveTab === 'requests') {
+            const isGroupInvitation = Boolean(
+              chat.isGroup || (chat as any).is_group || chat.request_source === 'group_invitation'
+            );
+            if (!isGroupInvitation) return false;
+          } else {
+            const isGroupChat = Boolean(chat.isGroup || (chat as any).is_group);
+            if (!isGroupChat) return false;
+          }
+        } else if (selectedFilter === 'Unread') {
+          const unreadCount = Number(chat.unread || (chat as any).unread_count || 0);
+          if (unreadCount <= 0) return false;
         }
       }
 
@@ -247,8 +244,11 @@ export function ChatList({
       return (chat.name || "").toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-    // Sort strictly by latest message timestamp (most recent first)
+    // Pinned chat stays strictly at the top (like other messaging platforms), then sort by latest message timestamp
     return [...filteredList].sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+
       const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
       const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
       const validTimeA = isNaN(timeA) ? 0 : timeA;
@@ -261,161 +261,172 @@ export function ChatList({
   const rowVirtualizer = useVirtualizer({
     count: filteredChats.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => isQuickChat ? 68 : 88, // 68px for Quick Chat, 88px (80+8) for main list
+    estimateSize: () => isQuickChat ? 68 : 84, // 68px for Quick Chat, 84px (76+8) for main list matching Frame 2610026
     overscan: 6,
   });
 
   return (
-    <div className={`box-border flex flex-col items-start w-full h-full bg-[#FFFFFF] ${isQuickChat ? 'p-0 gap-0 border-none rounded-none' : 'p-[16px] gap-[16px] border border-[#EEF2FF] rounded-[24px]'} overflow-hidden`}>
-      <div className={`w-full flex flex-col ${isQuickChat ? 'gap-0' : 'gap-[16px]'} shrink-0`}>
-        {/* Chat List Header (Frame 43) */}
-        {!isQuickChat && (
-          <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-full h-[42px] self-stretch">
-            {/* Left Group — Avatar + Text */}
-            <div className="flex flex-row items-center p-0 gap-[8px] min-w-0 flex-1">
-              <div className="w-[40px] h-[40px] flex-none">
-                <Avatar
-                  url={
-                    activeProfile?.type === 'COMPANY'
-                      ? ((activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar)
-                      : ((activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar || session?.user?.image)
-                  }
-                  name={activeProfile?.name || session?.user?.name || "User"}
-                  size="md"
-                  isCompany={activeProfile?.type === 'COMPANY'}
-                />
-              </div>
-              <div className="flex flex-col items-start p-0 min-w-0 flex-1 overflow-hidden">
-                <h2
-                  title={activeProfile?.name || session?.user?.name || "Cocpit"}
-                  className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] truncate w-full block"
-                >
-                  {activeProfile?.name || session?.user?.name || "Cocpit"}
-                </h2>
-                <p
-                  title={`@${activeProfile?.type === 'COMPANY'
-                    ? ((activeProfile as any)?.slug || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")
-                    : ((activeProfile as any)?.slug || (activeProfile as any)?.account_name || (session?.user as any)?.username || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")}`}
-                  className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate w-full block"
-                >
-                  @{activeProfile?.type === 'COMPANY'
-                    ? ((activeProfile as any)?.slug || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")
-                    : ((activeProfile as any)?.slug || (activeProfile as any)?.account_name || (session?.user as any)?.username || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")}
-                </p>
-              </div>
-            </div>
-            {/* Right Controls — Filter (User only) & Plus Button */}
-            <div className="flex flex-row items-center gap-[8px] shrink-0">
-              {isUserActor && (
-                <ChatFilterDropdown value={selectedFilter} onChange={setSelectedFilter} />
-              )}
-              <FeatureDisabledTooltip featureKey="enableNewChatCreation" position="left">
-                <button
-                  onClick={onCreateGroup}
-                  className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
-                >
-                  <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
-                </button>
-              </FeatureDisabledTooltip>
-            </div>
-          </div>
-        )}
-
-        {/* Search Bar (Frame 2608500) */}
-        <div className={isQuickChat ? "px-[16px] pb-[8px] pt-[0px]" : ""}>
-          <div className="box-border flex flex-row justify-between items-center px-[16px] py-[8px] gap-[10px] w-full h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] relative">
-            <Search className="w-[20px] h-[20px] text-[#6B7280]" />
-            <input
-              type="text"
-              placeholder="Search messages, people, roles.."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-transparent font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] placeholder-[#6B7280] focus:outline-none"
-            />
-          </div>
+    <div className={`box-border flex flex-col items-stretch w-full h-full bg-[var(--ds-bg)] ${isQuickChat ? 'p-0 gap-0 border-none rounded-none' : 'py-4 px-0 gap-4 border-none'} overflow-hidden`}>
+      <div className="w-full flex flex-col gap-4 shrink-0">
+        {/* search: 380px x 40px, padding: 6px 12px, gap: 10px, border-bottom: 1px solid #FFECE6 */}
+        <div className="box-border flex flex-row items-center justify-between px-3 py-1.5 gap-2.5 w-full h-10 self-stretch shrink-0 flex-none order-0 grow-0 border-b border-[var(--ds-text-primary)] focus-within:border-[var(--ds-accent)] transition-colors">
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 min-w-0 bg-transparent font-['DM_Sans'] text-base font-normal text-[var(--ds-text-primary)] placeholder-[var(--ds-text-muted)] focus:outline-none leading-6 order-0 grow"
+            aria-label="Search conversations"
+          />
+          <Search
+            className="w-5 h-5 text-[var(--ds-text-primary)] shrink-0 flex-none order-1 grow-0"
+            strokeWidth={1.5}
+            aria-hidden="true"
+          />
         </div>
 
-        {isQuickChat && (
-          <div className="relative w-full h-[36px] border-b border-[#EEF2FF] mt-0 mb-0">
+        {/* Frame 2609925: Tabs Row + Action Button */}
+        <div className="self-stretch px-3 flex justify-between items-center h-9 gap-3">
+          {/* Frame 2610064: Tabs group */}
+          <div className="flex flex-row items-center gap-3 h-9">
+            {/* Sub tab 1: Chat */}
             <button
               onClick={() => { if (canChat) setActiveTab('chat'); }}
               disabled={!canChat}
-              title={!canChat ? "Permission required to access chat" : undefined}
-              className={`absolute left-[16px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'chat' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors ${!canChat ? 'cursor-default opacity-50' : ''}`}
+              className="w-[69px] h-9 inline-flex flex-col justify-start items-center cursor-pointer transition-all p-0"
             >
-              <span className="font-['Poppins'] text-[14px] leading-[20px]">Chat</span>
-              {hasUnreadChats && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
+              {/* Frame 724 */}
+              <div className="w-[69px] h-9 flex flex-col justify-center items-center px-3 py-1.5 gap-2.5 [filter:drop-shadow(0px_2px_4px_rgba(255,236,230,0.08))]">
+                {/* Frame 2609499 */}
+                <div className="flex flex-row justify-center items-center p-0 gap-1 h-6">
+                  {/* Ellipse 15: Unread badge shown only when unread messages are present */}
+                  {hasUnreadChats && (
+                    <div className="w-1 h-1 rounded-full bg-[var(--ds-accent)] shadow-[-1px_-1px_4px_rgba(255,236,230,0.4),1px_1px_4px_rgba(255,236,230,0.4)] shrink-0" />
+                  )}
+                  <span className={`font-['DM_Sans'] text-base leading-6 ${effectiveTab === 'chat' ? 'text-[var(--ds-text-primary)] font-medium' : 'text-[var(--ds-text-secondary)] font-normal'}`}>
+                    Chat
+                  </span>
+                </div>
+              </div>
+              {/* Line 1: Active accent underline */}
+              {effectiveTab === 'chat' && (
+                <div className="self-stretch w-[69px] h-0 border-b-[1.5px] border-[var(--ds-accent)]" />
+              )}
             </button>
+
+            {/* Sub tab 2: Request / Jobs */}
             {!isCompany ? (
-              <button
-                onClick={() => setActiveTab('requests')}
-                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'requests' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
-              >
-                <span className="font-['Poppins'] text-[14px] leading-[20px]">Requests</span>
-                {hasUnreadRequests && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
-              </button>
+              (flags?.enableMessageRequests ?? true) && (
+                <button
+                  onClick={() => setActiveTab('requests')}
+                  className="w-[94px] h-9 inline-flex flex-col justify-start items-center cursor-pointer transition-all p-0"
+                >
+                  {/* Frame 724 */}
+                  <div className="w-[94px] h-9 flex flex-col justify-center items-center px-3 py-1.5 gap-2.5 [filter:drop-shadow(0px_2px_4px_rgba(255,236,230,0.08))]">
+                    {/* Frame 2609500 */}
+                    <div className="flex flex-row justify-center items-center p-0 gap-1 h-6">
+                      {/* Ellipse 15: Unread badge shown only when unread requests are present */}
+                      {hasUnreadRequests && (
+                        <div className="w-1 h-1 rounded-full bg-[var(--ds-accent)] shadow-[-1px_-1px_4px_rgba(255,236,230,0.4),1px_1px_4px_rgba(255,236,230,0.4)] shrink-0" />
+                      )}
+                      <span className={`font-['DM_Sans'] text-base leading-6 ${effectiveTab === 'requests' ? 'text-[var(--ds-text-primary)] font-medium' : 'text-[var(--ds-text-secondary)] font-normal'}`}>
+                        Request
+                      </span>
+                    </div>
+                  </div>
+                  {/* Line 1: Active accent underline */}
+                  {effectiveTab === 'requests' && (
+                    <div className="self-stretch w-[94px] h-0 border-b-[1.5px] border-[var(--ds-accent)]" />
+                  )}
+                </button>
+              )
             ) : (
               <button
                 onClick={() => { if (canJobsChat) setActiveTab('jobs'); }}
                 disabled={!canJobsChat}
-                title={!canJobsChat ? "Permission required to access job chat" : undefined}
-                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'jobs' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors ${!canJobsChat ? 'cursor-default opacity-50' : ''}`}
+                className="w-[94px] h-9 inline-flex flex-col justify-start items-center cursor-pointer transition-all p-0"
               >
-                <span className="font-['Poppins'] text-[14px] leading-[20px]">Jobs</span>
-                {hasUnreadJobChats && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
+                {/* Frame 724 */}
+                <div className="w-[94px] h-9 flex flex-col justify-center items-center px-3 py-1.5 gap-2.5 [filter:drop-shadow(0px_2px_4px_rgba(255,236,230,0.08))]">
+                  {/* Frame 2609500 */}
+                  <div className="flex flex-row justify-center items-center p-0 gap-1 h-6">
+                    {/* Ellipse 15: Unread badge shown only when unread job chats are present */}
+                    {hasUnreadJobChats && (
+                      <div className="w-1 h-1 rounded-full bg-[var(--ds-accent)] shadow-[-1px_-1px_4px_rgba(255,236,230,0.4),1px_1px_4px_rgba(255,236,230,0.4)] shrink-0" />
+                    )}
+                    <span className={`font-['DM_Sans'] text-base leading-6 ${effectiveTab === 'jobs' ? 'text-[var(--ds-text-primary)] font-medium' : 'text-[var(--ds-text-secondary)] font-normal'}`}>
+                      Jobs
+                    </span>
+                  </div>
+                </div>
+                {/* Line 1: Active accent underline */}
+                {effectiveTab === 'jobs' && (
+                  <div className="self-stretch w-[94px] h-0 border-b-[1.5px] border-[var(--ds-accent)]" />
+                )}
               </button>
             )}
           </div>
-        )}
 
-        {/* Tags Row (Frame 2608634) */}
-        {!isQuickChat && (
-          <>
-            <div className="flex flex-row items-start p-0 gap-[16px] w-[298px] h-[40px] overflow-x-auto scrollbar-hide shrink-0">
-              <TagChip
-                active={effectiveTab === 'chat'}
-                label="Chat"
-                hasIndicator={hasUnreadChats}
-                disabled={!canChat}
+          {/* Frame 2610103: Create new button with AddIcon & Dropdown matching Figma */}
+          <DropdownMenu modal={false}>
+            <FeatureDisabledTooltip featureKey="enableNewChatCreation" position="left">
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="box-border flex flex-row items-center justify-center px-3 py-1.5 w-[46px] h-[34px] border border-[var(--ds-border)] rounded-[99px] hover:bg-[var(--ds-surface-1)] transition-colors cursor-pointer shrink-0 outline-none"
+                  aria-label="New Chat or Group"
+                  title="New Chat or Group"
+                >
+                  <AddIcon className="w-5 h-5 text-[var(--ds-text-primary)] shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+            </FeatureDisabledTooltip>
+
+            {/* Dropdown Menu - Frame: add icon (114px x 80px, padding 12px, gap 16px) */}
+            <DropdownMenuContent
+              align="end"
+              sideOffset={6}
+              className="box-border flex flex-col items-start p-3 gap-4 w-[114px] min-w-[114px] h-[80px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-lg !shadow-none z-[100] outline-none"
+            >
+              <DropdownMenuItem
                 onClick={() => {
-                  if (canChat) {
-                    setActiveTab('chat');
+                  if (onSelectNewChat) {
+                    onSelectNewChat('personal');
+                  } else if (onCreateGroup) {
+                    onCreateGroup();
                   }
                 }}
-              />
-              {isCompany ? (
-                <TagChip
-                  active={effectiveTab === 'jobs'}
-                  label="Jobs"
-                  hasIndicator={hasUnreadJobChats}
-                  disabled={!canJobsChat}
-                  onClick={() => {
-                    if (canJobsChat) {
-                      setActiveTab('jobs');
-                    }
-                  }}
-                />
-              ) : (
-                (flags?.enableMessageRequests ?? true) && (
-                  <TagChip
-                    active={effectiveTab === 'requests'}
-                    label="Requests"
-                    hasIndicator={hasUnreadRequests}
-                    onClick={() => setActiveTab('requests')}
-                  />
-                )
-              )}
-            </div>
+                className="!p-0 m-0 h-5 w-[90px] font-['DM_Sans'] font-normal text-sm leading-5 whitespace-nowrap cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-0"
+              >
+                Personal Chat
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  if (onSelectNewChat) {
+                    onSelectNewChat('group');
+                  } else if (onCreateGroup) {
+                    onCreateGroup();
+                  }
+                }}
+                className="!p-0 m-0 h-5 w-[86px] font-['DM_Sans'] font-normal text-sm leading-5 whitespace-nowrap cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-1"
+              >
+                Create group
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
-            {/* Inbox Count */}
-            <div className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ">
-              Inbox - {filteredChats.length}
-            </div>
-          </>
-        )}
+        {/* Inbox Count & Filter Row */}
+        <div className="self-stretch px-3 flex justify-between items-center">
+          <div className="font-['DM_Sans'] text-xs font-normal text-[var(--ds-text-secondary)] leading-4">
+            Inbox - {filteredChats.length}
+          </div>
+          {isUserActor && (
+            <ChatFilterDropdown value={selectedFilter} onChange={setSelectedFilter} />
+          )}
+        </div>
       </div>
 
-      <div ref={parentRef} className={`flex flex-col flex-1 w-full overflow-y-auto ${isQuickChat ? 'pb-[20px]' : 'pb-24 md:pb-0'} scrollbar-hide relative gap-[8px]`}>
+      <div ref={parentRef} className={`flex flex-col flex-1 w-full overflow-y-auto px-2 ${isQuickChat ? 'pb-[20px]' : 'pb-24 md:pb-0'} scrollbar-hide relative gap-[8px]`}>
         {/* ... */}
         {isLoading && <ConversationListSkeleton />}
         {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}

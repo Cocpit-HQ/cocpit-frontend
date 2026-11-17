@@ -23,23 +23,40 @@ export function Mention({ username, isMe, children }: MentionProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [fetchAttempted, setFetchAttempted] = useState(false);
 
+  const prefixMatch = (username || "").match(/^(user|org|company):(.+)$/i);
+  const explicitType = prefixMatch ? prefixMatch[1].toLowerCase() : null;
+  const cleanIdentifier = prefixMatch ? prefixMatch[2] : (username || "");
+
+  const isCompany = explicitType === 'org' || explicitType === 'company' || Boolean(
+    userData?.is_company ||
+    userData?.type?.toUpperCase() === 'COMPANY' ||
+    userData?.account_type?.toUpperCase() === 'COMPANY' ||
+    Boolean(userData?.org_id)
+  );
+
+  const isEveryone = cleanIdentifier?.toLowerCase() === 'everyone' || cleanIdentifier?.toLowerCase() === 'all';
+
+  if (isEveryone) {
+    return <>{children}</>;
+  }
+
   const handleOpenChange = async (open: boolean) => {
     if (open && !userData && !isLoading && !fetchAttempted) {
       setIsLoading(true);
       try {
-        // 1. Try direct profile lookup (most reliable — backend resolves account_name)
-        let match = await getUserByUsername(username);
+        // 1. Try direct profile lookup (most reliable — backend resolves account_name or uuid)
+        let match = await getUserByUsername(cleanIdentifier);
 
         // 2. Fallback to search if direct lookup fails (handles old full_name format mentions)
         if (!match) {
-          const results = await searchUsers(username);
-          // Exact match by account_name
-          match = results.find(u => u.account_name.toLowerCase() === username.toLowerCase()) || null;
+          const results = await searchUsers(cleanIdentifier);
+          // Exact match by account_name or id
+          match = results.find(u => u.account_name?.toLowerCase() === cleanIdentifier.toLowerCase() || u.id === cleanIdentifier) || null;
           // Fallback: startsWith (for partial captures from old @full_name mentions)
           if (!match) {
             match = results.find(u =>
-              u.full_name.toLowerCase().startsWith(username.toLowerCase()) ||
-              u.account_name.toLowerCase().startsWith(username.toLowerCase())
+              u.full_name?.toLowerCase().startsWith(cleanIdentifier.toLowerCase()) ||
+              u.account_name?.toLowerCase().startsWith(cleanIdentifier.toLowerCase())
             ) || null;
           }
           // Single result = strong match
@@ -62,7 +79,12 @@ export function Mention({ username, isMe, children }: MentionProps) {
 
   const handleNavigateToProfile = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    router.push(`/profile/${username}`);
+    const identifier = userData?.slug || userData?.account_name || userData?.id || cleanIdentifier;
+    if (isCompany) {
+      router.push(`/organization/${identifier}`);
+    } else {
+      router.push(`/profile/${identifier}`);
+    }
   };
 
   const handleMessage = (e: React.MouseEvent) => {

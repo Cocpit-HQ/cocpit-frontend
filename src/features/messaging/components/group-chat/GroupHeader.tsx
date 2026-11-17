@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGroupChat } from "./groupChat.context";
 import { useAuth } from "@/hooks/use-auth";
+import { useSocket } from "@/context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { muteGroup, unmuteGroup } from "@/services/api/messaging";
+import { muteGroup, unmuteGroup, pinConversation } from "@/services/api/messaging";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MoreVertical, BellOff, Bell, LogOut, Trash2 } from "lucide-react";
-import { UserCog, Share2, Info, Ban } from "lucide-react";
-import { Icon } from "@iconify/react";
+import { ArrowLeft } from "lucide-react";
+import { MenuIcon } from "@/components/icons";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -20,6 +20,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { isChatMuted, formatMuteToastMessage } from "../../utils/muteUtils";
+import { setPinnedChatId, isChatPinned } from "../../utils/pinUtils";
 
 interface GroupHeaderProps {
     onOpenDetails: () => void;
@@ -29,9 +31,11 @@ interface GroupHeaderProps {
     onLeaveGroup: () => void;
     isMessageSelected?: boolean;
     selectedMessage?: Message | null;
+    selectedMessages?: Message[];
     onMessageAction?: (action: string) => void;
     currentUserId?: string;
     isMuted?: boolean;
+    mutedUntil?: string | null;
 }
 
 export default function GroupHeader({
@@ -42,148 +46,202 @@ export default function GroupHeader({
     onLeaveGroup,
     isMessageSelected,
     selectedMessage,
+    selectedMessages,
     onMessageAction,
     currentUserId,
-    isMuted = false
+    isMuted = false,
+    mutedUntil = null
 }: GroupHeaderProps) {
     const { activeGroup, isInactive, deleteGroup } = useGroupChat();
     const { activeProfile } = useActiveProfile();
     const isMobile = useIsMobile();
     const { user } = useAuth();
     const { toast } = useToast();
+    const { socket } = useSocket();
     const queryClient = useQueryClient();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [showMuteConfirm, setShowMuteConfirm] = useState(false);
+    const [menuView, setMenuView] = useState<"main" | "mute">("main");
     const [showUnmuteConfirm, setShowUnmuteConfirm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const isMutedActive = isChatMuted({ is_muted: isMuted, muted_until: mutedUntil });
+
+    const [isPinned, setIsPinned] = useState<boolean>(() => {
+        if (!activeGroup?.conversation_id) return false;
+        return isChatPinned(activeGroup.conversation_id, activeProfile?.type, activeProfile?.id);
+    });
+
+    useEffect(() => {
+        if (!activeGroup?.conversation_id) return;
+        setIsPinned(Boolean(isChatPinned(activeGroup.conversation_id, activeProfile?.type, activeProfile?.id)));
+    }, [activeGroup?.conversation_id, activeProfile?.type, activeProfile?.id]);
+
+    useEffect(() => {
+        if (!socket || !activeGroup?.conversation_id) return;
+        const handlePinned = (payload: { conversationId: string; is_pinned: boolean }) => {
+            if (String(payload.conversationId) === String(activeGroup.conversation_id)) {
+                setIsPinned(Boolean(payload.is_pinned));
+            } else if (payload.is_pinned) {
+                setIsPinned(false);
+            }
+        };
+        socket.on("conversation_pinned", handlePinned);
+        return () => {
+            socket.off("conversation_pinned", handlePinned);
+        };
+    }, [socket, activeGroup?.conversation_id]);
+
+    const handleMuteWithDuration = async (hours: number | null) => {
+        if (!activeGroup?.conversation_id) return;
+        try {
+            const calculatedMutedUntil = hours
+                ? new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+                : null;
+
+            const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
+            queryClient.setQueryData(queryKey, (oldChats: any[] | undefined) => {
+                if (!oldChats) return [];
+                return oldChats.map(c => 
+                    String(c.id) === String(activeGroup.conversation_id)
+                        ? { ...c, is_muted: true, muted_until: calculatedMutedUntil }
+                        : c
+                );
+            });
+            await muteGroup(activeGroup.conversation_id, true, calculatedMutedUntil, hours);
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            toast({ description: formatMuteToastMessage(hours, true) });
+        } catch (err: any) {
+            const errorMsg = err?.response?.data?.message || err?.message || "Failed to mute group";
+            toast({
+                title: "Error",
+                description: errorMsg,
+                variant: "destructive"
+            });
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        }
+    };
+
+    const handleTogglePin = async () => {
+        if (!activeGroup?.conversation_id) return;
+        const newPinned = !isPinned;
+        setIsPinned(newPinned);
+        const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+        setPinnedChatId(newPinned ? String(activeGroup.conversation_id) : null, activeProfile?.type, activeProfile?.id);
+        queryClient.setQueriesData<any[]>(
+            { queryKey: ['conversations'] },
+            (oldChats) => {
+                if (!oldChats || !Array.isArray(oldChats)) return oldChats;
+                return oldChats.map(c => {
+                    const isTarget = String(c.id) === String(activeGroup.conversation_id);
+                    if (isTarget) {
+                        return { ...c, is_pinned: newPinned };
+                    }
+                    if (newPinned && c.is_pinned) {
+                        return { ...c, is_pinned: false };
+                    }
+                    return c;
+                });
+            }
+        );
+        setIsDropdownOpen(false);
+        toast({ description: newPinned ? "Group pinned successfully" : "Group unpinned successfully" });
+
+        try {
+            await pinConversation(String(activeGroup.conversation_id), newPinned, companyId);
+        } catch (err) {
+            console.error("Failed to persist pin on server:", err);
+            setIsPinned(!newPinned);
+            toast({
+                title: "Error",
+                description: "Failed to update pin state on server",
+                variant: "destructive"
+            });
+        }
+    };
 
     if (!activeGroup) return null;
 
+    const allSelected =
+        selectedMessages && selectedMessages.length > 0
+            ? selectedMessages
+            : selectedMessage
+                ? [selectedMessage]
+                : [];
+    const selectedCount = allSelected.length;
+    const isSingle = selectedCount === 1;
+
+    const isMyMessage = (m: Message) =>
+        m.sender === 'me' ||
+        m.senderId === currentUserId ||
+        m.senderId === 'me';
+
+    const allAreMine = allSelected.length > 0 && allSelected.every(isMyMessage);
+    const anyHasMedia = allSelected.some((m) => hasMessageMedia(m));
+
     const isAdmin = activeGroup.members.some(m => String(m.user_id) === String(currentUserId) && m.role === 'admin') || String((activeGroup as any).admin_id) === String(currentUserId);
     const memberCount = activeGroup.members.length;
+    const hasHeadline = Boolean(activeGroup.group_headline && activeGroup.group_headline.trim());
 
     return (
-        <div className={`flex items-center justify-between border-b border-border bg-[var(--card)] shrink-0 h-[72px] ${isMobile ? "px-3" : "px-6"}`}>
-            {isMessageSelected && selectedMessage ? (
-                <>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => onMessageAction?.('close')}
-                            className="p-1 hover:bg-[var(--primary-tint)] rounded-full transition-colors"
-                        >
-                            <Icon icon="mdi:close" className="h-6 w-6 text-[var(--foreground)]" />
-                        </button>
-                        <div className="font-['Poppins'] font-medium text-[16px] text-[var(--foreground)]">1 Selected</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <DropdownMenu onOpenChange={setIsDropdownOpen}>
-                            <DropdownMenuTrigger asChild>
-                                <button className="p-1 outline-none transition-colors">
-                                    <Icon
-                                        icon="mdi-light:dots-vertical"
-                                        width={24}
-                                        height={24}
-                                        style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
-                                    />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className="w-[204px] p-[8px] mr-4 bg-[var(--card)] border border-[var(--border)]"
-                                style={{ borderRadius: '24px 0px 24px 24px' }}
-                            >
-                                {((selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me')) && (
-                                    <DropdownMenuItem
-                                        onClick={() => onMessageAction?.('edit')}
-                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
-                                    >
-                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Edit</span>
-                                        <Icon icon="fluent:edit-16-regular" width={24} height={24} color="var(--foreground)" />
-                                    </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                    onClick={() => onMessageAction?.('delete_for_me')}
-                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
-                                >
-                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete for me</span>
-                                    <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
-                                </DropdownMenuItem>
-                                {((selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me')) && (
-                                    <DropdownMenuItem
-                                        onClick={() => onMessageAction?.('delete_for_everyone')}
-                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
-                                    >
-                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete for everyone</span>
-                                        <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
-                                    </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                    onClick={() => onMessageAction?.('info')}
-                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
-                                >
-                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Info</span>
-                                    <Icon icon="fluent:info-16-regular" width={24} height={24} color="var(--foreground)" />
-                                </DropdownMenuItem>
-                                {!hasMessageMedia(selectedMessage) && (
-                                    <DropdownMenuItem
-                                        onClick={() => onMessageAction?.('copy')}
-                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
-                                    >
-                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Copy</span>
-                                        <Icon icon="fluent:copy-16-regular" width={24} height={24} color="var(--foreground)" />
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </>
-            ) : (
-                <>
-                    <div className="flex items-center gap-3 overflow-hidden flex-1">
+        <div className={`flex items-center justify-between bg-[var(--ds-bg)] shrink-0 h-[72px] ${isMobile ? "px-3" : "px-6"}`}>
+            <div className="flex items-center gap-3 overflow-hidden flex-1">
                         {isMobile && onBack && (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onBack();
                                 }}
-                                className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[var(--primary-tint)] text-muted-foreground hover:text-foreground shrink-0"
+                                className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[var(--ds-surface-1)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] shrink-0"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
                         )}
 
+                        {/* Outer Box: Frame 2610104 (flex-row, gap 8px, height 36px) */}
                         <div
-                            className={`flex items-center gap-3 transition-all min-w-0 ${!isInactive ? "cursor-pointer group" : "cursor-default"}`}
+                            className={`flex flex-row items-center p-0 gap-2 h-9 min-w-0 max-w-full transition-all ${!isInactive ? "cursor-pointer group" : "cursor-default"}`}
                             onClick={!isInactive ? onOpenDetails : undefined}
                             role={!isInactive ? "button" : undefined}
                             tabIndex={!isInactive ? 0 : undefined}
                         >
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted shrink-0">
+                            {/* Avatar: Rectangle 82 (32px x 32px rounded-full) */}
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[var(--ds-surface-1)] shrink-0 flex-none order-0">
                                 {activeGroup.group_avatar && (activeGroup.group_avatar.startsWith('http') || activeGroup.group_avatar.startsWith('/')) ? (
                                     <Image src={activeGroup.group_avatar} alt={activeGroup.conversation_name} fill className="object-cover" />
                                 ) : (
-                                    <div className="flex items-center justify-center h-full w-full bg-primary/10 text-primary font-bold">
+                                    <div className="flex items-center justify-center h-full w-full bg-[var(--ds-accent)]/10 text-[var(--ds-accent)] font-semibold font-['DM_Sans'] text-xs">
                                         {(activeGroup.conversation_name || "G").substring(0, 2).toUpperCase()}
                                     </div>
                                 )}
                             </div>
-                            <div className="min-w-0 flex flex-col justify-center flex-1">
-                                <h2 className="font-medium text-[16px] leading-[24px] text-[var(--foreground)] truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
+
+                            {/* Text Box: Frame 2609904 (flex-col, height 36px) */}
+                            <div className="flex flex-col items-start justify-center p-0 h-9 min-w-0 flex-1 flex-none order-1">
+                                {/* Group Name: 16px/24px font-semibold text primary */}
+                                <h2 className="font-['DM_Sans'] font-semibold text-base leading-6 text-[var(--ds-text-primary)] truncate max-w-full">
                                     {activeGroup.conversation_name}
                                 </h2>
                                 {typingStatus ? (
-                                    <p className="text-[12px] leading-[16px] text-primary italic font-medium animate-pulse truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                                    <p className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-accent)] italic truncate max-w-full">
                                         {typingStatus}
                                     </p>
                                 ) : (
-                                    <div className="flex items-center gap-0 min-w-0">
-                                        {activeGroup.group_headline && (
-                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] truncate">
-                                                {activeGroup.group_headline}
-                                            </span>
+                                    /* Subtitle Row: Frame 2608645 (flex-row, gap 4px, height 12px) */
+                                    <div className="flex flex-row items-center p-0 gap-1 h-3 min-w-0 max-w-full">
+                                        {hasHeadline && (
+                                            <>
+                                                {/* Group Headline: 10px/12px font-normal text secondary */}
+                                                <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-text-secondary)] truncate flex items-center min-w-0">
+                                                    {activeGroup.group_headline}
+                                                </span>
+                                                {/* Badge: Ellipse 15 (6px x 6px) - only shown when headline is present */}
+                                                <span
+                                                    className="w-1.5 h-1.5 rounded-full bg-[var(--ds-text-secondary)] shrink-0 flex-none"
+                                                    aria-hidden="true"
+                                                />
+                                            </>
                                         )}
-                                        <span className="w-[6px] h-[6px] rounded-full bg-[var(--muted-foreground)] mx-2 shrink-0" />
-                                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] shrink-0">
+                                        {/* Member Count: 10px/12px font-normal text secondary */}
+                                        <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-text-secondary)] shrink-0 flex items-center">
                                             {memberCount} Members
                                         </span>
                                     </div>
@@ -192,96 +250,182 @@ export default function GroupHeader({
                         </div>
                     </div>
 
-                    <DropdownMenu onOpenChange={setIsDropdownOpen}>
-                        <DropdownMenuTrigger asChild>
-                            <button className="p-1 outline-none transition-colors">
-                                <Icon
-                                    icon="mdi-light:dots-vertical"
-                                    width={24}
-                                    height={24}
-                                    style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
-                                />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            align="end"
-                            className=" p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)]"
-                            style={{ borderRadius: '24px 0px 24px 24px' }}>
-                            {isMuted ? (
-                                <DropdownMenuItem
-                                    onClick={() => setShowUnmuteConfirm(true)}
-                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors"
+                    {!isMessageSelected && (
+                        <DropdownMenu
+                            open={isDropdownOpen}
+                            onOpenChange={(open) => {
+                                setIsDropdownOpen(open);
+                                if (!open) setMenuView("main");
+                            }}
+                        >
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity outline-none cursor-pointer p-0"
+                                    aria-label="Group actions"
                                 >
-                                    <span className="text-sm font-normal">Unmute Group</span>
-                                    <Bell className="w-4 h-4" />
-                                </DropdownMenuItem>
-                            ) : (
-                                <DropdownMenuItem
-                                    onClick={() => setShowMuteConfirm(true)}
-                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors"
-                                >
-                                    <span className="text-sm font-normal">Mute Group</span>
-                                    <BellOff className="w-4 h-4" />
-                                </DropdownMenuItem>
-                            )}
-                            {(!isInactive && activeGroup.members.some(m => String(m.user_id) === String(currentUserId))) && (
-                                <DropdownMenuItem
-                                    onClick={onLeaveGroup}
-                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] text-[var(--destructive)] focus:text-[var(--destructive)] rounded-md transition-colors"
-                                >
-                                    <span className="text-sm font-normal">Leave Group</span>
-                                    <LogOut className="w-4 h-4" />
-                                </DropdownMenuItem>
-                            )}
-                            {(isAdmin || isInactive || !activeGroup.members.some(m => String(m.user_id) === String(currentUserId))) && (
-                                <DropdownMenuItem
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] text-[var(--destructive)] focus:text-[var(--destructive)] rounded-md transition-colors"
-                                >
-                                    <span className="text-sm font-normal">Delete Group</span>
-                                    <Trash2 className="w-4 h-4" />
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </>
-            )}
-
-            <CocpitConfirmBox
-                isOpen={showMuteConfirm}
-                title="Mute group notifications?"
-                message="You won’t receive notifications from this group."
-                confirmText="Mute"
-                cancelText="Cancel"
-                onConfirm={async () => {
-                    try {
-                        // Optimistic Cache Update
-                        const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
-                        queryClient.setQueryData(queryKey, (oldChats: any[] | undefined) => {
-                            if (!oldChats) return [];
-                            return oldChats.map(c => 
-                                String(c.id) === String(activeGroup.conversation_id)
-                                    ? { ...c, is_muted: true, muted_until: null }
-                                    : c
-                            );
-                        });
-                        await muteGroup(activeGroup.conversation_id, true);
-                        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                        toast({ description: "Group muted successfully" });
-                    } catch (err: any) {
-                        const errorMsg = err?.response?.data?.message || err?.message || "Failed to mute group";
-                        toast({
-                            title: "Error",
-                            description: errorMsg,
-                            variant: "destructive"
-                        });
-                        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                    } finally {
-                        setShowMuteConfirm(false);
-                    }
-                }}
-                onCancel={() => setShowMuteConfirm(false)}
-            />
+                                    <MenuIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                sideOffset={6}
+                                className={
+                                    menuView === "mute"
+                                        ? "chat-mute-menu box-border flex flex-col items-center p-3 gap-4 w-[159px] min-w-[159px] h-[188px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-lg !shadow-none z-[200] outline-none overflow-hidden"
+                                        : "chat-group-menu box-border flex flex-col items-start p-3 gap-4 w-[111px] min-w-[111px] h-[152px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-lg !shadow-none z-[200] outline-none overflow-hidden"
+                                }
+                                style={{ borderRadius: '8px' }}
+                            >
+                                {menuView === "mute" ? (
+                                    <>
+                                        <DropdownMenuItem
+                                            onSelect={() => {
+                                                handleMuteWithDuration(1);
+                                                setIsDropdownOpen(false);
+                                                setMenuView("main");
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-0 grow-0"
+                                        >
+                                            For 1 hours
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={() => {
+                                                handleMuteWithDuration(8);
+                                                setIsDropdownOpen(false);
+                                                setMenuView("main");
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-1 grow-0"
+                                        >
+                                            For 8 hours
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={() => {
+                                                handleMuteWithDuration(24);
+                                                setIsDropdownOpen(false);
+                                                setMenuView("main");
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-2 grow-0"
+                                        >
+                                            For 24 hours
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={() => {
+                                                handleMuteWithDuration(null);
+                                                setIsDropdownOpen(false);
+                                                setMenuView("main");
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-3 grow-0"
+                                        >
+                                            Until I turn it back on
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={(e) => {
+                                                e.preventDefault();
+                                                setMenuView("main");
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-4 grow-0"
+                                        >
+                                            Cancel
+                                        </DropdownMenuItem>
+                                    </>
+                                ) : isAdmin ? (
+                                    /* group admin: Pin group, Mute group, Leave group, Delete Group */
+                                    <>
+                                        <DropdownMenuItem
+                                            onSelect={handleTogglePin}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-0 grow-0"
+                                        >
+                                            {isPinned ? "Unpin group" : "Pin group"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={(e) => {
+                                                if (isMutedActive) {
+                                                    setShowUnmuteConfirm(true);
+                                                } else {
+                                                    e.preventDefault();
+                                                    setMenuView("mute");
+                                                }
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-1 grow-0"
+                                        >
+                                            {isMutedActive ? "Unmute group" : "Mute group"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={() => {
+                                                setIsDropdownOpen(false);
+                                                onLeaveGroup();
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-2 grow-0"
+                                        >
+                                            Leave group
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={() => {
+                                                setIsDropdownOpen(false);
+                                                setShowDeleteConfirm(true);
+                                            }}
+                                            className="chat-action-item danger-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:!text-[var(--ds-error)] data-[highlighted]:!opacity-80 flex-none order-3 grow-0"
+                                        >
+                                            Delete Group
+                                        </DropdownMenuItem>
+                                    </>
+                                ) : (
+                                    /* groupUser: Group info, Pin group, Mute group, Leave group */
+                                    <>
+                                        <DropdownMenuItem
+                                            onSelect={() => {
+                                                setIsDropdownOpen(false);
+                                                onOpenDetails();
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-0 grow-0"
+                                        >
+                                            Group info
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={handleTogglePin}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-1 grow-0"
+                                        >
+                                            {isPinned ? "Unpin group" : "Pin group"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onSelect={(e) => {
+                                                if (isMutedActive) {
+                                                    setShowUnmuteConfirm(true);
+                                                } else {
+                                                    e.preventDefault();
+                                                    setMenuView("mute");
+                                                }
+                                            }}
+                                            className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-2 grow-0"
+                                        >
+                                            {isMutedActive ? "Unmute group" : "Mute group"}
+                                        </DropdownMenuItem>
+                                        {isInactive ? (
+                                            <DropdownMenuItem
+                                                onSelect={() => {
+                                                    setIsDropdownOpen(false);
+                                                    setShowDeleteConfirm(true);
+                                                }}
+                                                className="chat-action-item danger-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:!text-[var(--ds-error)] data-[highlighted]:!opacity-80 flex-none order-3 grow-0"
+                                            >
+                                                Delete Group
+                                            </DropdownMenuItem>
+                                        ) : (
+                                            <DropdownMenuItem
+                                                onSelect={() => {
+                                                    setIsDropdownOpen(false);
+                                                    onLeaveGroup();
+                                                }}
+                                                className="chat-action-item danger-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-start !text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:!text-[var(--ds-error)] data-[highlighted]:!opacity-80 flex-none order-3 grow-0"
+                                            >
+                                                Leave group
+                                            </DropdownMenuItem>
+                                        )}
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
 
             <CocpitConfirmBox
                 isOpen={showUnmuteConfirm}

@@ -3,6 +3,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { UserIcon, BusinessBuildingIcon } from "@/components/icons";
+import { Users } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -44,6 +45,12 @@ export interface CocpitMentionListCardProps {
      * and a non-empty query has been typed.
      */
     showNoResults?: boolean;
+    /** Has more results for cursor pagination */
+    hasMore?: boolean;
+    /** Called when scrolled near bottom to fetch next cursor page */
+    onLoadMore?: () => void;
+    /** Custom container class */
+    className?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -108,6 +115,9 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
     onHoverIndex,
     onDismiss,
     showNoResults = false,
+    hasMore = false,
+    onLoadMore,
+    className,
 }) => {
     const listRef = React.useRef<HTMLDivElement>(null);
 
@@ -119,22 +129,38 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
         }
     }, [activeIndex]);
 
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const el = e.currentTarget;
+        if (el.scrollHeight - el.scrollTop - el.clientHeight < 32) {
+            if (hasMore && !isLoading && onLoadMore) {
+                onLoadMore();
+            }
+        }
+    };
+
     return (
         <div 
             ref={listRef} 
-            className="w-[274px] h-[256px] self-stretch flex flex-col items-start p-0 gap-2 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden box-border"
+            onScroll={handleScroll}
+            className={cn(
+                "w-full max-w-[560px] h-[168px] self-stretch flex flex-col items-start pl-[12px] pr-0 py-0 gap-[8px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden box-border",
+                className
+            )}
         >
-            {/* ── User rows ── */}
+            {/* ── User rows (Frame 2609539: 548px × 36px, gap 8px) ── */}
             {users.map((user, index) => {
                 const isActive = index === activeIndex;
                 const displayName = user.full_name || user.account_name || "User";
+                const isEveryone = user.id === "everyone" || user.type === "GROUP" || displayName.toLowerCase() === "everyone";
                 const isCompany =
-                    user.type === "company" ||
-                    user.type === "COMPANY" ||
-                    user.account_type === "company" ||
-                    user.account_type === "COMPANY" ||
-                    Boolean(user.org_id) ||
-                    Boolean(user.is_company);
+                    !isEveryone && (
+                        user.type === "company" ||
+                        user.type === "COMPANY" ||
+                        user.account_type === "company" ||
+                        user.account_type === "COMPANY" ||
+                        Boolean(user.org_id) ||
+                        Boolean(user.is_company)
+                    );
                 const roundedClass = isCompany ? "rounded-[4px]" : "rounded-[100px]";
 
                 return (
@@ -143,28 +169,33 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                         onMouseEnter={() => onHoverIndex(index)}
                         onClick={() => onSelect(user)}
                         className={cn(
-                            "w-[274px] h-9 self-stretch shrink-0 flex flex-row justify-between items-center p-0 gap-2 cursor-pointer transition-colors duration-150 box-border group",
+                            "w-full max-w-[548px] h-[36px] self-stretch shrink-0 flex flex-row justify-between items-center p-0 gap-[8px] cursor-pointer transition-colors duration-150 box-border group",
                             isActive
-                                ? "text-ds-text-primary"
-                                : "text-ds-text-secondary hover:text-ds-text-primary"
+                                ? "opacity-100"
+                                : "opacity-80 hover:opacity-100"
                         )}
                     >
-                        {/* User Information Container */}
-                        <div className="flex flex-row items-center p-0 gap-2 h-5 min-w-0 flex-1">
-                            {/* Avatar: 20px × 20px, rounded-[4px] for companies, rounded-[100px] for users */}
+                        {/* Frame 2609542: User Information Container (h: 20px, gap: 12px) */}
+                        <div className="flex flex-row items-center p-0 gap-[12px] h-[20px] min-w-0 flex-1">
+                            {/* Rectangle 31: Avatar (20px × 20px, rounded-[100px]) */}
                             <div className={cn(
-                                "relative w-5 h-5 shrink-0 overflow-hidden flex items-center justify-center bg-ds-surface-1 text-ds-text-secondary border border-ds-border text-[10px] font-medium",
+                                "relative w-[20px] h-[20px] shrink-0 overflow-hidden flex items-center justify-center border text-[10px] font-medium",
+                                isEveryone
+                                    ? "rounded-[100px] bg-[var(--ds-accent)]/15 border-[var(--ds-accent)]/30 text-[var(--ds-accent)]"
+                                    : "bg-[var(--ds-surface-1)] text-[var(--ds-text-secondary)] border-[var(--ds-border)]",
                                 roundedClass
                             )}>
                                 {/* Fallback Icon */}
-                                {isCompany ? (
+                                {isEveryone ? (
+                                    <Users className="w-3 h-3 text-[var(--ds-accent)]" strokeWidth={2} />
+                                ) : isCompany ? (
                                     <BusinessBuildingIcon className="w-[60%] h-[60%] text-current" />
                                 ) : (
                                     <UserIcon className="w-[60%] h-[60%] text-current" />
                                 )}
                                 
                                 {/* Image overlay */}
-                                {user.avatar_url && (
+                                {!isEveryone && user.avatar_url && (
                                     <img
                                         src={user.avatar_url}
                                         alt={displayName}
@@ -176,10 +207,11 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                                 )}
                             </div>
 
-                            {/* User Name */}
+                            {/* User Name (DM Sans 14px / 20px LH, color: #FFECE6 / var(--ds-text-primary)) */}
                             <span className={cn(
-                                "font-['DM_Sans'] font-normal text-[14px] leading-5 truncate",
-                                isActive ? "text-ds-text-primary" : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                                "font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-primary)] truncate",
+                                isActive ? "text-[var(--ds-text-primary)] font-medium" : "text-[var(--ds-text-primary)]",
+                                isEveryone && "text-[var(--ds-accent)] font-medium"
                             )}>
                                 {highlightMatch(displayName, query)}
                             </span>
@@ -190,14 +222,14 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
 
             {/* ── Loading state ── */}
             {isLoading && (
-                <div className="w-full py-3 text-xs text-ds-text-muted animate-pulse text-center">
+                <div className="w-full py-2 text-xs text-[var(--ds-text-muted)] animate-pulse text-left pl-[32px]">
                     Searching...
                 </div>
             )}
 
             {/* ── No results ── */}
             {showNoResults && !isLoading && (
-                <div className="w-full py-3 text-xs text-ds-text-muted italic text-center">
+                <div className="w-full py-2 text-xs text-[var(--ds-text-muted)] italic text-left pl-[32px]">
                     No results found
                 </div>
             )}

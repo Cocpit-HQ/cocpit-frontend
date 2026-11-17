@@ -147,7 +147,7 @@ export default function MediaPreviewModal({
                 {mediaType === "document" && (
                     <div className="w-full h-full max-w-5xl pt-16 pb-4 md:py-0" onClick={(e) => e.stopPropagation()}>
                         <iframe
-                            src={isWordDoc ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(mediaUrl)}` : mediaUrl}
+                            src={isWordDoc ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(mediaUrl)}` : `${mediaUrl}${mediaUrl.includes('#') ? '&' : '#'}toolbar=0&navpanes=0`}
                             className="w-full h-full rounded-lg bg-white shadow-2xl border-none"
                             title="Document Preview"
                         />

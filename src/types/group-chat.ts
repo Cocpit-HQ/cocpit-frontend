@@ -58,3 +58,45 @@ export interface CreateGroupPayload {
     members: string[]; // user IDs
     avatar?: File | null;
 }
+
+export interface SharedMediaItem {
+    media_id: string;
+    url: string;
+    media_type: 'image' | 'video' | 'document' | string;
+    filename?: string | null;
+    created_at?: string;
+    message_id?: string;
+}
+
+export interface SharedPostItem {
+    post_id: string;
+    caption?: string | null;
+    title?: string | null;
+    post_type?: string;
+    created_at?: string;
+    author_id?: string;
+    author_name?: string;
+    author_avatar?: string | null;
+    media?: Array<{ url: string; media_type?: string }>;
+    poll?: {
+        question?: string;
+        options?: Array<{ option_id?: string; option_text?: string; text?: string }>;
+    } | null;
+    shared_at?: string;
+    message_id?: string;
+}
+
+export interface SharedLinkItem {
+    id: string;
+    message_id?: string;
+    url: string;
+    domain: string;
+    title?: string;
+    created_at?: string;
+}
+
+export interface GroupSharedContent {
+    media: SharedMediaItem[];
+    posts: SharedPostItem[];
+    links: SharedLinkItem[];
+}

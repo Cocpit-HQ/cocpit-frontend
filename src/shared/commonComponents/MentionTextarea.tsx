@@ -15,11 +15,16 @@ export interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLT
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     onMentionSelect?: (user: UserMention) => void;
     onMentionsChange?: (mentions: UserMention[]) => void;
-    searchUsersFn?: (query: string, forTagging?: boolean) => Promise<UserMention[]>;
+    searchUsersFn?: (query: string, forTagging?: boolean, cursor?: string) => Promise<any>;
     placeholder?: string;
     className?: string;
     initialMentions?: UserMention[];
     zIndex?: number;
+    maxHeight?: number;
+    enableHashtags?: boolean;
+    enableLinkHighlight?: boolean;
+    placement?: 'top' | 'bottom' | 'auto';
+    popupClassName?: string;
 }
 
 export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaProps>(({ 
@@ -31,6 +36,11 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
     className, 
     initialMentions,
     zIndex,
+    maxHeight,
+    enableHashtags = true,
+    enableLinkHighlight = true,
+    placement = 'auto',
+    popupClassName,
     ...props 
 }, ref) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -78,8 +88,10 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         users, hashtags,
         activeIndex, setActiveIndex,
         isLoading,
+        hasMore,
+        loadMoreUsers,
         handleKeyDown: mentionKeyDown
-    } = useMentions({ searchUsersFn });
+    } = useMentions({ searchUsersFn: searchUsersFn as any });
 
     // Helper to calculate caret coordinates for absolute positioning
     const getCaretCoordinates = (element: HTMLTextAreaElement, position: number) => {
@@ -122,48 +134,57 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         };
     };
 
+    const prevValueLengthRef = useRef(value?.length || 0);
+
     const adjustHeight = () => {
         const el = textareaRef.current;
         if (!el) return;
 
-        // If content is overflowing, expand height directly without collapsing to 'auto'
-        if (el.scrollHeight > el.clientHeight) {
-            el.style.height = `${el.scrollHeight}px`;
+        const maxH = maxHeight || (props.style?.maxHeight ? parseInt(String(props.style.maxHeight), 10) : undefined);
+        const prevLength = prevValueLengthRef.current;
+        const currentLength = el.value.length;
+        prevValueLengthRef.current = currentLength;
+
+        const isAtEnd = el.selectionEnd >= currentLength - 1;
+        const isAlreadyClamped = Boolean(maxH && el.clientHeight >= maxH);
+
+        // Optimization: If content is already clamped at maxH and length is increasing,
+        // avoid expensive 'height: auto' layout reflow. Just maintain maxH and auto-scroll to end if typing at end.
+        if (isAlreadyClamped && currentLength >= prevLength) {
+            if (isAtEnd) {
+                el.scrollTop = el.scrollHeight;
+            }
+            handleScroll();
             return;
         }
 
-        // Collect all scrollable ancestor containers and their scroll positions
-        const scrollParents: { el: HTMLElement; top: number }[] = [];
-        let curr: HTMLElement | null = el.parentElement;
-        while (curr) {
-            if (curr.scrollHeight > curr.clientHeight) {
-                const overflowY = window.getComputedStyle(curr).overflowY;
-                if (overflowY === 'auto' || overflowY === 'scroll') {
-                    scrollParents.push({ el: curr, top: curr.scrollTop });
-                }
-            }
-            curr = curr.parentElement;
-        }
-        const winTop = window.scrollY || document.documentElement.scrollTop;
-
-        // Recalculate height safely
-        const currentHeight = el.offsetHeight;
+        const prevScrollTop = el.scrollTop;
         el.style.height = 'auto';
-        const newHeight = el.scrollHeight;
+        const scrollH = el.scrollHeight;
 
-        if (newHeight === currentHeight) {
-            el.style.height = `${currentHeight}px`;
+        if (maxH && scrollH > maxH) {
+            el.style.height = `${maxH}px`;
+            el.style.overflowY = 'auto';
+            if (backdropRef.current) {
+                backdropRef.current.style.height = `${maxH}px`;
+                backdropRef.current.style.maxHeight = `${maxH}px`;
+            }
+            if (isAtEnd) {
+                el.scrollTop = scrollH;
+            } else {
+                el.scrollTop = prevScrollTop;
+            }
         } else {
-            el.style.height = `${newHeight}px`;
+            const newH = Math.max(scrollH, 20);
+            el.style.height = `${newH}px`;
+            el.style.overflowY = 'hidden';
+            if (backdropRef.current) {
+                backdropRef.current.style.height = 'auto';
+                backdropRef.current.style.maxHeight = 'none';
+            }
+            el.scrollTop = 0;
         }
-
-        // Restore scroll positions synchronously
-        for (const sp of scrollParents) {
-            sp.el.scrollTop = sp.top;
-        }
-        if ((window.scrollY || document.documentElement.scrollTop) !== winTop) {
-            window.scrollTo(window.scrollX, winTop);
-        }
+        handleScroll();
     };
 
     useEffect(() => {
@@ -216,7 +237,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         const textBeforeCursor = currentText.substring(0, cursor);
 
         const mentionMatch = textBeforeCursor.match(/(?:^|[\s\u200B])@([a-zA-Z0-9_]*)$/);
-        const hashtagMatch = textBeforeCursor.match(/(?:^|[\s\u200B])#([a-zA-Z0-9_]*)$/);
+        const hashtagMatch = enableHashtags ? textBeforeCursor.match(/(?:^|[\s\u200B])#([a-zA-Z0-9_]*)$/) : null;
 
         if (mentionMatch || hashtagMatch) {
             const nextMode = mentionMatch ? 'mention' : 'hashtag';
@@ -233,6 +254,15 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
             setMode(null);
             setQuery('');
         }
+
+        requestAnimationFrame(() => {
+            const el = textareaRef.current;
+            if (!el) return;
+            if (el.selectionEnd >= el.value.length - 1) {
+                el.scrollTop = el.scrollHeight;
+                handleScroll();
+            }
+        });
     };
 
     const onSelect = (item: UserMention | HashtagSuggestion) => {
@@ -395,23 +425,9 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                 textareaRef.current.focus();
                 adjustHeight();
 
-                const textBeforeCursor = newValue.substring(0, newCursorPos);
-                const mentionMatch = textBeforeCursor.match(/(?:^|[\s\u200B])@([a-zA-Z0-9_]*)$/);
-                const hashtagMatch = textBeforeCursor.match(/(?:^|[\s\u200B])#([a-zA-Z0-9_]*)$/);
-
-                if (mentionMatch || hashtagMatch) {
-                    const nextMode = mentionMatch ? 'mention' : 'hashtag';
-                    const triggerPos = newCursorPos - (mentionMatch ? mentionMatch[1].length : hashtagMatch![1].length);
-                    const coords = getCaretCoordinates(textareaRef.current, triggerPos);
-                    setSuggestionPosition(coords);
-                    setQuery(mentionMatch ? mentionMatch[1] : hashtagMatch![1]);
-                    setMode(nextMode);
-                    setShowSuggestions(true);
-                } else {
-                    setShowSuggestions(false);
-                    setMode(null);
-                    setQuery('');
-                }
+                setShowSuggestions(false);
+                setMode(null);
+                setQuery('');
             }
         }, 0);
     };
@@ -497,7 +513,8 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
             .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
             .sort((a, b) => b.length - a.length);
         const nameRegexPart = escapedNames.length > 0 ? `\u200B(?:${escapedNames.join('|')})|` : '';
-        const regex = new RegExp(`(${nameRegexPart}\u200B[^\\s\u200B]+|@\\[[^\\]]+\\]\\([^)]+\\)|(?:^|\\s)#[a-zA-Z0-9_]+)`, 'g');
+        const linkRegexPart = enableLinkHighlight ? `|(?:https?:\\/\\/|www\\.)[^\\s]+` : '';
+        const regex = new RegExp(`(${nameRegexPart}\u200B[^\\s\u200B]+|@\\[[^\\]]+\\]\\([^)]+\\)${linkRegexPart}|(?:^|\\s)#[a-zA-Z0-9_]+)`, 'g');
 
         const parts = text.split(regex);
         return (
@@ -509,6 +526,17 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                                 key={i} 
                                 className="mention-token text-[var(--ds-accent)] !text-[var(--ds-accent)]"
                                 style={{ color: 'var(--ds-accent)' }}
+                            >
+                                {part}
+                            </span>
+                        );
+                    }
+                    if (enableLinkHighlight && /^(?:https?:\/\/|www\.)[^\s]+$/.test(part)) {
+                        return (
+                            <span 
+                                key={i} 
+                                className="link-token text-[var(--ds-accent)] !text-[var(--ds-accent)]"
+                                style={{ color: 'var(--ds-accent)', WebkitTextFillColor: 'var(--ds-accent)' }}
                             >
                                 {part}
                             </span>
@@ -600,16 +628,24 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
 
             const textareaRect = textareaRef.current.getBoundingClientRect();
             const popupEl = popupRef.current;
-            const popupHeight = popupEl.offsetHeight || 282;
-            const popupWidth = popupEl.offsetWidth || 300;
+            const popupHeight = popupEl.offsetHeight || 168;
+            const popupWidth = popupEl.offsetWidth || 560;
 
-            const currentTop = textareaRect.top + (suggestionPositionRef.current?.top ?? 0);
-            const currentLeft = textareaRect.left + (suggestionPositionRef.current?.left ?? 0);
+            const isTop = placement === 'top' || (textareaRect.bottom + popupHeight > window.innerHeight && textareaRect.top > popupHeight);
+
+            // Exactly 8px above input box when placement is 'top' / flipped
+            const currentTop = isTop
+                ? textareaRect.top - popupHeight - 8
+                : textareaRect.top + (suggestionPositionRef.current?.top ?? 24);
+
+            const currentLeft = isTop
+                ? Math.max(12, Math.min(textareaRect.left - 32, window.innerWidth - popupWidth - 12))
+                : textareaRect.left + (suggestionPositionRef.current?.left ?? 0);
 
             // Close the modal only when it has scrolled completely outside of the viewport
             const isOutOfViewport =
-                currentTop + popupHeight <= 0 ||
-                currentTop >= window.innerHeight ||
+                textareaRect.bottom < 0 ||
+                textareaRect.top > window.innerHeight ||
                 currentLeft + popupWidth <= 0 ||
                 currentLeft >= window.innerWidth;
 
@@ -618,7 +654,6 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                 return;
             }
 
-            // Keep the modal anchored to the input/caret as the page/container scrolls
             popupEl.style.top = `${currentTop}px`;
             popupEl.style.left = `${currentLeft}px`;
         };
@@ -643,7 +678,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
             window.removeEventListener('scroll', handleScrollOrResize, true);
             window.removeEventListener('resize', handleScrollOrResize);
         };
-    }, [showSuggestions, setShowSuggestions]);
+    }, [showSuggestions, setShowSuggestions, placement]);
 
     return (
         <div ref={containerRef} className="flex flex-col w-full relative">
@@ -652,15 +687,26 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     ref={popupRef}
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
-                    className="fixed pointer-events-auto shadow-2xl rounded-2xl w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3 bg-ds-bg border border-ds-border overflow-hidden animate-in fade-in-0 zoom-in-95"
+                    className={cn(
+                        "fixed pointer-events-auto shadow-2xl rounded-xl w-full max-w-[560px] h-[168px] p-0 box-border flex flex-col items-start bg-[var(--ds-bg)] border border-[var(--ds-border)] overflow-hidden animate-in fade-in-0 zoom-in-95",
+                        popupClassName
+                    )}
                     style={{
                         zIndex: computedZIndex,
-                        top: typeof suggestionPosition.top === 'number'
-                            ? `${(textareaRef.current?.getBoundingClientRect().top || 0) + suggestionPosition.top}px` 
-                            : '40px',
-                        left: typeof suggestionPosition.left === 'number'
-                            ? `${(textareaRef.current?.getBoundingClientRect().left || 0) + suggestionPosition.left}px` 
-                            : '10px',
+                        top: (() => {
+                            if (!textareaRef.current) return '40px';
+                            const rect = textareaRef.current.getBoundingClientRect();
+                            const isTop = placement === 'top' || (rect.bottom + 168 > window.innerHeight && rect.top > 168);
+                            return isTop ? `${rect.top - 168 - 8}px` : `${rect.top + (suggestionPosition.top ?? 24)}px`;
+                        })(),
+                        left: (() => {
+                            if (!textareaRef.current) return '10px';
+                            const rect = textareaRef.current.getBoundingClientRect();
+                            const isTop = placement === 'top' || (rect.bottom + 168 > window.innerHeight && rect.top > 168);
+                            return isTop 
+                                ? `${Math.max(12, Math.min(rect.left - 32, window.innerWidth - 560 - 12))}px`
+                                : `${rect.left + (suggestionPosition.left ?? 0)}px`;
+                        })(),
                     }}
                 >
                     <CocpitMentionListCard
@@ -672,12 +718,14 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                         onHoverIndex={setActiveIndex}
                         onDismiss={() => setShowSuggestions(false)}
                         showNoResults={!isLoading && showSuggestions && users.length === 0 && !!query}
+                        hasMore={hasMore}
+                        onLoadMore={loadMoreUsers}
                     />
                 </div>,
                 document.body
             )}
 
-            {showSuggestions && mode === 'hashtag' && typeof document !== 'undefined' && createPortal(
+            {enableHashtags && showSuggestions && mode === 'hashtag' && typeof document !== 'undefined' && createPortal(
                 <div
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
@@ -783,7 +831,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                         ...props.style,
                         color: value.length > 0 ? 'transparent' : 'inherit',
                         WebkitTextFillColor: value.length > 0 ? 'transparent' : 'inherit',
-                        caretColor: 'var(--foreground, currentColor)',
+                        caretColor: 'var(--ds-text-primary)',
                     }}
                 />
             </div>

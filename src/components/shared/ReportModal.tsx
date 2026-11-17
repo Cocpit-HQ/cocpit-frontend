@@ -27,7 +27,7 @@ interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  targetType: 'POST' | 'USER' | 'COMMENT' | 'COMPANY' | 'THOUGHT';
+  targetType: 'POST' | 'USER' | 'COMMENT' | 'COMPANY' | 'THOUGHT' | 'GROUP';
   targetId: string | number;
   reportedAuthorName?: string | null;
   reportedTitle?: string | null;
@@ -130,6 +130,7 @@ export function ReportModal({
       case 'THOUGHT': return 'thought';
       case 'USER': return 'profile';
       case 'COMPANY': return 'company';
+      case 'GROUP': return 'group';
       default: return 'content';
     }
   };

@@ -35,8 +35,8 @@ export default function SystemMessage({ message, currentUserId }: SystemMessageP
     }
 
     return (
-        <div className="flex justify-center my-4">
-            <span className="bg-muted/50 text-muted-foreground text-xs px-3 py-1 rounded-full border border-border/50">
+        <div className="w-full flex justify-center items-center py-2 shrink-0 self-stretch my-2">
+            <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-[var(--ds-text-secondary)] flex items-center justify-center">
                 {displayText}
             </span>
         </div>

@@ -1,29 +1,32 @@
 import React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { ArrowLeft, MoreVertical, Phone, Video, X, Copy, Pencil, Info as InfoIcon, Trash2 } from "lucide-react"
+import { ArrowLeft, MoreVertical, X, Copy, Pencil, Info as InfoIcon, Trash2 } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
 import Avatar from "@/components/shared/Avatar"
+import { MenuIcon } from "@/components/icons"
 import { hasMessageMedia } from "./MessageBubble"
 import { Button } from "@/components/ui/button"
-import { Icon } from "@iconify/react"
+import ActionDropdownMenu from "@/shared/commonComponents/ActionDropdownMenu"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { isChatMuted } from "../../utils/muteUtils"
 
 interface MobileChatHeaderProps {
   chat: ChatThread;
   onBack: () => void;
   selectedMessage?: Message | null;
+  selectedMessages?: Message[];
   onMessageAction?: (action: string) => void;
   currentUserId?: string;
   onMuteClick?: () => void;
   onUnmuteClick?: () => void;
   onDeleteClick?: () => void;
   onLeaveClick?: () => void;
+  onTogglePin?: () => void;
   isQuickChat?: boolean;
 }
 
@@ -31,22 +34,38 @@ export default function MobileChatHeader({
   chat,
   onBack,
   selectedMessage,
+  selectedMessages,
   onMessageAction,
   currentUserId,
   onMuteClick,
   onUnmuteClick,
   onDeleteClick,
   onLeaveClick,
+  onTogglePin,
   isQuickChat
 }: MobileChatHeaderProps) {
-  const router = useRouter()
-  const isMyMessage = selectedMessage && (selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me');
+  const allSelected =
+    selectedMessages && selectedMessages.length > 0
+      ? selectedMessages
+      : selectedMessage
+        ? [selectedMessage]
+        : [];
+  const selectedCount = allSelected.length;
+  const isSingle = selectedCount === 1;
+
+  const isMyMessage = (m: Message) =>
+    m.sender === "me" ||
+    m.senderId === currentUserId ||
+    m.senderId === "me";
+
+  const allAreMine = allSelected.length > 0 && allSelected.every(isMyMessage);
+  const anyHasMedia = allSelected.some((m) => hasMessageMedia(m));
 
   return (
     <div
       className={isQuickChat 
-        ? "w-full px-[16px] py-[12px] bg-white flex items-center justify-between shrink-0 h-[59px]" 
-        : "w-full px-3 py-2.5 border-b flex items-center justify-between bg-background border-border overflow-hidden shrink-0"}
+        ? "w-full px-4 py-3 bg-[var(--ds-bg)] flex items-center justify-between shrink-0 h-[59px]" 
+        : "w-full px-3 py-2.5 border-b flex items-center justify-between bg-[var(--ds-bg)] border-[var(--ds-border)] overflow-hidden shrink-0"}
     >
       <div className={`flex items-center gap-2 overflow-hidden flex-1`}>
         <div className={`flex items-center gap-2.5 overflow-hidden flex-1`}>
@@ -56,7 +75,7 @@ export default function MobileChatHeader({
                 e.stopPropagation();
                 onBack();
               }}
-              className="w-6 h-6 flex items-center justify-center transition-colors text-black hover:opacity-70 shrink-0"
+              className="w-6 h-6 flex items-center justify-center transition-colors text-[var(--ds-text-primary)] hover:opacity-70 shrink-0"
             >
               <ArrowLeft className="w-6 h-6" strokeWidth={1.5} />
             </button>
@@ -67,7 +86,7 @@ export default function MobileChatHeader({
                 e.stopPropagation();
                 onBack();
               }}
-              className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-muted text-muted-foreground hover:text-foreground shrink-0"
+              className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[var(--ds-surface-1)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -83,10 +102,10 @@ export default function MobileChatHeader({
                     size="sm"
                   />
                   <div className={`flex-1 min-w-0 flex flex-col justify-center`}>
-                    <h3 className={`${isQuickChat ? "font-['Poppins'] font-normal text-[14px] leading-[20px] text-black" : "font-semibold text-sm text-foreground truncate leading-tight"}`}>
+                    <h3 className={`${isQuickChat ? "font-['DM_Sans'] font-medium text-sm leading-5 text-[var(--ds-text-primary)]" : "font-['DM_Sans'] font-semibold text-sm text-[var(--ds-text-primary)] truncate leading-tight"}`}>
                       {chat.name}
                     </h3>
-                    <p className={`${isQuickChat ? "font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280]" : "text-xs text-muted-foreground truncate"}`}>
+                    <p className={`${isQuickChat ? "font-['DM_Sans'] font-normal text-[10px] leading-[14px] text-[var(--ds-text-secondary)]" : "font-['DM_Sans'] text-xs text-[var(--ds-text-secondary)] truncate"}`}>
                       {chat.role ? chat.role : "Group Chat"}
                     </p>
                   </div>
@@ -131,19 +150,11 @@ export default function MobileChatHeader({
                     )}
                   </div>
                   <div className={`flex-1 min-w-0 flex flex-col justify-center`}>
-                    <h3 className={`${isQuickChat ? "font-['Poppins'] font-normal text-[14px] leading-[20px] text-black truncate" : "font-semibold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors"}`}>
+                    <h3 className={`${isQuickChat ? "font-['DM_Sans'] font-medium text-sm leading-5 text-[var(--ds-text-primary)] truncate" : "font-['DM_Sans'] font-semibold text-sm text-[var(--ds-text-primary)] truncate leading-tight transition-colors"}`}>
                       {chat.name}
                     </h3>
-                    {chat.role ? (
-                      <p className={`${isQuickChat ? "font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate" : "text-xs text-muted-foreground truncate"}`}>{chat.role}</p>
-                    ) : (
-                      <p className={`${isQuickChat ? "font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate" : "text-xs truncate"}`}>
-                        {!chat.is_requesting && (
-                          chat.online 
-                            ? <span className={`${isQuickChat ? "text-[#6B7280]" : "text-emerald-500 font-medium"}`}>Active now</span>
-                            : <span className={`${isQuickChat ? "text-[#6B7280]" : "text-muted-foreground"}`}>Offline</span>
-                        )}
-                      </p>
+                    {chat.role && (
+                      <p className={`${isQuickChat ? "font-['DM_Sans'] font-normal text-[10px] leading-[14px] text-[var(--ds-text-secondary)] truncate" : "font-['DM_Sans'] text-xs text-[var(--ds-text-secondary)] truncate"}`}>{chat.role}</p>
                     )}
                   </div>
                 </Link>
@@ -151,7 +162,9 @@ export default function MobileChatHeader({
             </div>
           ) : (
             <div className={`flex items-center gap-2 overflow-hidden flex-1 ${isQuickChat ? "pl-8" : ""}`}>
-              <span className="font-medium text-sm text-foreground truncate">1 Selected</span>
+              <span className="font-['DM_Sans'] font-medium text-sm text-[var(--ds-text-primary)] truncate">
+                {selectedCount} Selected
+              </span>
             </div>
           )}
         </div>
@@ -161,17 +174,17 @@ export default function MobileChatHeader({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (onMessageAction && selectedMessage) {
+                if (onMessageAction && (selectedMessage || selectedCount > 0)) {
                   onMessageAction('close');
                 } else if (onBack) {
                   onBack();
                 }
               }}
-              className="w-6 h-6 flex items-center justify-center transition-colors text-black hover:opacity-70"
+              className="w-6 h-6 flex items-center justify-center transition-colors text-[var(--ds-text-primary)] hover:opacity-70"
             >
               <X className="w-6 h-6" strokeWidth={1.5} />
             </button>
-          ) : selectedMessage ? (
+          ) : (selectedMessage || selectedCount > 0) ? (
             <>
               <Button variant="ghost" size="icon" onClick={() => onMessageAction?.('close')} title="Close Selection">
                 <X className="h-5 w-5" />
@@ -183,81 +196,107 @@ export default function MobileChatHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {!hasMessageMedia(selectedMessage) && (
+                  {isSingle && !anyHasMedia && (
                     <DropdownMenuItem onClick={() => onMessageAction?.('copy')}>
                       <Copy className="w-4 h-4 mr-2" /> Copy
                     </DropdownMenuItem>
                   )}
-                  {isMyMessage && (
-                    <>
-                      <DropdownMenuItem onClick={() => onMessageAction?.('info')}>
-                        <InfoIcon className="w-4 h-4 mr-2" /> Info
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onMessageAction?.('edit')}>
-                        <Pencil className="w-4 h-4 mr-2" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onMessageAction?.('delete')} className="text-destructive focus:text-destructive">
-                        <Trash2 className="w-4 h-4 mr-2" /> Delete
-                      </DropdownMenuItem>
-                    </>
+                  {isSingle && (
+                    <DropdownMenuItem onClick={() => onMessageAction?.('info')}>
+                      <InfoIcon className="w-4 h-4 mr-2" /> Info
+                    </DropdownMenuItem>
+                  )}
+                  {isSingle && allAreMine && (
+                    <DropdownMenuItem onClick={() => onMessageAction?.('edit')}>
+                      <Pencil className="w-4 h-4 mr-2" /> Edit
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => onMessageAction?.('delete_for_me')} className="text-destructive focus:text-destructive">
+                    <Trash2 className="w-4 h-4 mr-2" /> Delete for me
+                  </DropdownMenuItem>
+                  {allAreMine && (
+                    <DropdownMenuItem onClick={() => onMessageAction?.('delete_for_everyone')} className="text-destructive focus:text-destructive">
+                      <Trash2 className="w-4 h-4 mr-2" /> Delete for everyone
+                    </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
           </>
         ) : (
-          <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground outline-none transition-colors">
-                  <MoreVertical className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-[204px] p-[8px] mr-4 bg-[var(--popover)] border border-[var(--border)]"
-                style={{ borderRadius: '24px 0px 24px 24px' }}
-              >
-                {chat.isGroup ? (
-                  <>
-                    {chat.is_muted ? (
-                      <DropdownMenuItem
-                        onClick={onUnmuteClick}
-                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
-                      >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unmute group</span>
-                        <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="var(--foreground)" />
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem
-                        onClick={onMuteClick}
-                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
-                      >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Mute group</span>
-                        <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="var(--foreground)" />
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem
-                      onClick={onLeaveClick}
-                      className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
-                    >
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
-                      <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="var(--destructive)" />
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem
-                      onClick={onDeleteClick}
-                      className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
-                    >
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete chat</span>
-                      <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
+          <ActionDropdownMenu
+            items={
+              chat.isGroup
+                ? [
+                    ...(onTogglePin
+                      ? [
+                          {
+                            key: "pin",
+                            label: chat.is_pinned ? "Unpin group" : "Pin group",
+                            icon: "fluent:pin-16-regular",
+                            onClick: onTogglePin,
+                          },
+                        ]
+                      : []),
+                    isChatMuted(chat)
+                      ? {
+                          key: "unmute",
+                          label: "Unmute group",
+                          icon: "fluent:speaker-2-16-regular",
+                          onClick: onUnmuteClick,
+                        }
+                      : {
+                          key: "mute",
+                          label: "Mute group",
+                          icon: "fluent:speaker-mute-16-regular",
+                          onClick: onMuteClick,
+                        },
+                    {
+                      key: "leave",
+                      label: "Leave group",
+                      icon: "fluent:door-arrow-left-16-regular",
+                      variant: "destructive",
+                      onClick: onLeaveClick,
+                    },
+                  ]
+                : [
+                    ...(onTogglePin
+                      ? [
+                          {
+                            key: "pin",
+                            label: chat.is_pinned ? "Unpin" : "Pin",
+                            icon: "fluent:pin-16-regular",
+                            onClick: onTogglePin,
+                          },
+                        ]
+                      : []),
+                    isChatMuted(chat)
+                      ? {
+                          key: "unmute",
+                          label: "Unmute",
+                          icon: "fluent:speaker-2-16-regular",
+                          onClick: onUnmuteClick,
+                        }
+                      : {
+                          key: "mute",
+                          label: "Mute",
+                          icon: "fluent:speaker-mute-16-regular",
+                          onClick: onMuteClick,
+                        },
+                    {
+                      key: "delete",
+                      label: "Delete chat",
+                      icon: "fluent:delete-16-regular",
+                      variant: "destructive",
+                      onClick: onDeleteClick,
+                    },
+                  ]
+            }
+            trigger={
+              <button className="p-2 rounded-full text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-1)] outline-none transition-colors cursor-pointer">
+                <MenuIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
+              </button>
+            }
+          />
         )}
       </div>
     </div>

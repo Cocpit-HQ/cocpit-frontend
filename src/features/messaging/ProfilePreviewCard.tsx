@@ -39,25 +39,33 @@ export function ProfilePreviewCard({ profile, profileId, profileType, isUnavaila
 
     return (
         <div
-            className="flex flex-col justify-center items-start p-[16px] gap-[10px] w-[200px] h-[72px] bg-[#F3F5F7] dark:bg-zinc-800/80 rounded-[12px_12px_12px_0px] cursor-pointer hover:bg-[#E5E7EB] dark:hover:bg-zinc-700/80 transition-colors shrink-0"
+            className="box-border flex flex-row items-center justify-center px-3 py-2 gap-2.5 h-[54px] w-fit min-w-[178px] max-w-[288px] sm:max-w-[340px] rounded-[16px] border border-[var(--ds-border)] bg-transparent hover:bg-[var(--ds-surface-1)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] cursor-pointer transition-colors shrink-0 select-none"
             onClick={(e) => { e.stopPropagation(); router.push(profileUrl); }}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(profileUrl);
+                }
+            }}
             role="button"
             tabIndex={0}
+            aria-label={`View ${profile.name}'s profile`}
         >
-            <div className="flex flex-row items-center p-0 gap-[8px] w-full h-[40px]">
+            <div className="flex flex-row items-center p-0 gap-2 h-9 w-full min-w-0">
                 <Avatar
                     url={profile.avatar || undefined}
                     name={profile.name}
-                    size="md"
+                    size="sm"
                     isCompany={profileType === "company"}
-                    className="w-[40px] h-[40px]"
+                    className="w-8 h-8 shrink-0"
                 />
-                <div className="flex flex-col items-start p-0 flex-1 min-w-0 justify-center">
-                    <span className="font-['Poppins'] font-medium text-[14px] leading-[20px] text-[#000000] dark:text-zinc-100 truncate w-full block text-left">
+                <div className="flex flex-col items-start justify-center p-0 h-9 min-w-[112px] flex-1 overflow-hidden">
+                    <span className="font-['DM_Sans'] ds-text-body-2 font-semibold text-base leading-6 text-[var(--ds-text-primary)] whitespace-nowrap truncate max-w-full text-left">
                         {profile.name}
                     </span>
                     {profile.headline && profile.headline !== "Cocpit Member" ? (
-                        <span className="font-['Poppins'] font-normal text-[10px] leading-[14px] text-[#6B7280] dark:text-gray-400 truncate w-full block text-left">
+                        <span className="font-['DM_Sans'] ds-text-meta font-normal text-[10px] leading-3 text-[var(--ds-text-secondary)] w-0 min-w-full truncate text-left">
                             {profile.headline}
                         </span>
                     ) : null}

@@ -2,38 +2,55 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogTitle
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 import { searchUsersForMessaging } from "@/services/api/messaging";
-import { Check, Loader2, Search, X, Users, Trash2, User, Plus } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Loader2, Search } from "lucide-react";
+import { CloseIcon, DeleteIcon, PlusIcon, ProfileIcon } from "@/components/icons";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGroupChat } from "./groupChat.context";
 import { useRouter } from "next/navigation";
-import { FeatureDisabledTooltip } from "@/components/feature-flags";
-import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { MAX_GROUP_MEMBERS } from "@/constants/messaging";
 
-interface CreateGroupModalProps {
+export type ModalView = 'personalChat' | 'addMembers' | 'createGroup';
+
+export interface CreateGroupModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialView?: ModalView;
+    title?: string;
+    mode?: 'create' | 'addMembers';
+    groupId?: string;
+    excludeUserIds?: string[];
+    onAddMembers?: (userIds: string[]) => Promise<void> | void;
 }
-
-type ModalView = 'newMessage' | 'createGroup';
 
 export default function CreateGroupModal({
     isOpen,
     onClose,
+    initialView = 'personalChat',
+    title,
+    mode = 'create',
+    groupId,
+    excludeUserIds,
+    onAddMembers,
 }: CreateGroupModalProps) {
     const router = useRouter();
     const { toast } = useToast();
-    const { createGroup } = useGroupChat();
-    const { activeProfile } = useActiveProfile();
-    const isOrgContext = activeProfile?.type === "COMPANY";
+    const { user } = useAuth();
+    const { createGroup, activeGroup, sentInvitations, inviteMember } = useGroupChat();
 
     // Navigation & View State
-    const [currentView, setCurrentView] = useState<ModalView>('newMessage');
-    const [isGroupMode, setIsGroupMode] = useState(false);
+    const [currentView, setCurrentView] = useState<ModalView>(initialView);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setCurrentView(initialView);
+        }
+    }, [isOpen, initialView]);
 
     // Search State
     const [searchTerm, setSearchTerm] = useState("");
@@ -41,7 +58,6 @@ export default function CreateGroupModal({
     const [isSearching, setIsSearching] = useState(false);
     const [searchCursor, setSearchCursor] = useState<string | null>(null);
     const [hasMoreUsers, setHasMoreUsers] = useState(false);
-    const [searchError, setSearchError] = useState<string | null>(null);
 
     // Group Creation State
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -54,6 +70,68 @@ export default function CreateGroupModal({
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Compute excluded user IDs (self, explicit excludes, active members, pending invitations)
+    const excludedIds = useMemo(() => {
+        const set = new Set<string>();
+
+        // 1. Current user is always excluded from member selection
+        const currentUid = user?.id || (user as any)?.user_id;
+        if (currentUid) set.add(String(currentUid));
+
+        // 2. Explicitly passed excluded IDs
+        if (excludeUserIds && Array.isArray(excludeUserIds)) {
+            excludeUserIds.forEach((id) => {
+                if (id) set.add(String(id));
+            });
+        }
+
+        // 3. If in 'addMembers' mode (or if activeGroup is present), exclude active members & pending invitations
+        if (mode === 'addMembers' || activeGroup) {
+            // Exclude active members
+            if (activeGroup?.members) {
+                activeGroup.members.forEach((m: any) => {
+                    const mId = m.user_id || m.id;
+                    if (mId && !m.left_at) {
+                        set.add(String(mId));
+                    }
+                });
+            }
+
+            // Exclude pending invitations
+            if (sentInvitations) {
+                sentInvitations.forEach((inv: any) => {
+                    const invId = inv.invitee_id || inv.user_id;
+                    if (invId && (inv.status === 'pending' || !inv.status)) {
+                        set.add(String(invId));
+                    }
+                });
+            }
+        }
+
+        return set;
+    }, [user, excludeUserIds, mode, activeGroup, sentInvitations]);
+
+    // Filter search results against excludedIds
+    const filteredResults = useMemo(() => {
+        return searchResults.filter((u) => {
+            const uid = String(u.user_id || u.id);
+            return !excludedIds.has(uid);
+        });
+    }, [searchResults, excludedIds]);
+
+    // Personal chat excludes current logged-in user
+    const personalChatResults = useMemo(() => {
+        const currentUid = String(user?.id || (user as any)?.user_id || "");
+        return searchResults.filter((u) => {
+            const uid = String(u.user_id || u.id);
+            return uid !== currentUid;
+        });
+    }, [searchResults, user]);
+
+    // Available slots calculation
+    const currentMemberCount = activeGroup?.members?.filter((m: any) => !m.left_at)?.length || 0;
+    const availableSlots = Math.max(0, MAX_GROUP_MEMBERS - currentMemberCount);
 
     // Update selectedUsersData when selections change
     useEffect(() => {
@@ -75,7 +153,6 @@ export default function CreateGroupModal({
     const runSearch = useCallback(
         async (query: string, cursor?: string, append = false) => {
             setIsSearching(true);
-            setSearchError(null);
             try {
                 const result = await searchUsersForMessaging(
                     query || undefined,
@@ -93,7 +170,6 @@ export default function CreateGroupModal({
                 setHasMoreUsers(result.hasMore);
             } catch (err: any) {
                 const msg = err?.response?.data?.message || err?.message || "Failed to search users";
-                setSearchError(msg);
                 toast({ title: "Error", description: msg, variant: "destructive" });
             } finally {
                 setIsSearching(false);
@@ -131,22 +207,73 @@ export default function CreateGroupModal({
     );
 
     const toggleUserSelection = (userId: string) => {
-        setSelectedUserIds((prev) =>
-            prev.includes(userId)
-                ? prev.filter((id) => id !== userId)
-                : [...prev, userId],
-        );
+        setSelectedUserIds((prev) => {
+            if (prev.includes(userId)) {
+                return prev.filter((id) => id !== userId);
+            }
+            if (mode === 'addMembers') {
+                if (availableSlots <= 0) {
+                    toast({
+                        title: "Group is full",
+                        description: `Group has reached the maximum limit of ${MAX_GROUP_MEMBERS} members.`,
+                        variant: "destructive"
+                    });
+                    return prev;
+                }
+                if (prev.length >= availableSlots) {
+                    toast({
+                        title: "Limit reached",
+                        description: `You can only add up to ${availableSlots} more member${availableSlots === 1 ? "" : "s"}.`,
+                        variant: "destructive"
+                    });
+                    return prev;
+                }
+            } else {
+                if (prev.length >= MAX_GROUP_MEMBERS - 1) {
+                    toast({
+                        title: "Limit reached",
+                        description: `A group can have a maximum of ${MAX_GROUP_MEMBERS} members (including you).`,
+                        variant: "destructive"
+                    });
+                    return prev;
+                }
+            }
+            return [...prev, userId];
+        });
     };
 
-    const handleUserClick = (user: any) => {
-        const userId = user.user_id || user.id;
-        if (isGroupMode) {
-            toggleUserSelection(userId);
+    const handleAddClick = async () => {
+        if (selectedUserIds.length === 0 || isSubmitting) return;
+
+        if (mode === 'addMembers') {
+            setIsSubmitting(true);
+            try {
+                if (onAddMembers) {
+                    await onAddMembers(selectedUserIds);
+                } else {
+                    for (const uid of selectedUserIds) {
+                        await inviteMember(uid);
+                    }
+                }
+                handleClose();
+            } catch (error: any) {
+                toast({
+                    title: "Error",
+                    description: error?.response?.data?.message || error?.message || "Failed to add members",
+                    variant: "destructive",
+                });
+            } finally {
+                setIsSubmitting(false);
+            }
         } else {
-            // VIEW 1 Behavior: Open chat directly
-            router.push(`/messaging?userId=${userId}`);
-            onClose();
+            setCurrentView('createGroup');
         }
+    };
+
+    const handlePersonalChatSelect = (user: any) => {
+        const userId = user.user_id || user.id;
+        router.push(`/messaging?userId=${userId}`);
+        handleClose();
     };
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,16 +296,14 @@ export default function CreateGroupModal({
                 name: groupName,
                 description: "",
                 members: selectedUserIds,
-                avatar: groupAvatar
+                avatar: groupAvatar,
             });
-            // Reset state and close
             handleClose();
         } catch (error: any) {
-            console.error("Failed to create group", error);
             toast({
                 title: "Error",
                 description: error.response?.data?.message || "Failed to create group",
-                variant: "destructive"
+                variant: "destructive",
             });
         } finally {
             setIsCreating(false);
@@ -186,266 +311,404 @@ export default function CreateGroupModal({
     };
 
     const handleClose = () => {
-        setCurrentView('newMessage');
-        setIsGroupMode(false);
+        setCurrentView(initialView);
         setSearchTerm("");
         setSelectedUserIds([]);
         setSelectedUsersData([]);
         setGroupName("");
         setGroupAvatar(null);
         setGroupAvatarPreview(null);
+        setIsSubmitting(false);
         onClose();
     };
 
-    const renderUserList = () => (
-        <div
-            ref={listRef}
-            onScroll={handleScroll}
-            className="w-[368px] h-[350px] flex flex-col items-start p-0 gap-[8px] flex-none self-stretch mt-[16px] overflow-y-auto scrollbar-hide"
-        >
-            {isSearching && searchResults.length === 0 ? (
-                <div className="flex flex-col items-center justify-center w-full h-full gap-2">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#6366F1]" />
-                    <p className="text-xs text-[#6B7280] font-['Poppins']">Searching users...</p>
-                </div>
-            ) : searchResults.length === 0 ? (
-                <div className="flex flex-col items-center justify-center w-full h-full text-center">
-                    <p className="text-sm text-[#6B7280] font-['Poppins']">
-                        {searchTerm.length === 0 ? "Type to search for users" : "No users found"}
-                    </p>
-                </div>
-            ) : (
-                searchResults.map((user: any) => {
-                    const userId = user.user_id || user.id;
-                    const isSelected = selectedUserIds.includes(userId);
-                    return (
-                        <div
-                            key={userId}
-                            onClick={() => handleUserClick(user)}
-                            className="w-[368px] h-[48px] flex flex-row justify-between items-center p-0 gap-[16px] flex-none order-0 self-stretch grow-0 mb-[8px] cursor-pointer hover:bg-[#F9FAFB] rounded-lg transition-colors group"
-                        >
-                            <div className="flex flex-row items-center gap-[16px]">
-                                <div className="relative w-[32px] h-[32px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-none font-['Poppins'] select-none">
-                                    <span>{(user.full_name || user.account_name || "U").charAt(0).toUpperCase()}</span>
-                                    {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
-                                        <img
-                                            src={user.avatar_url}
-                                            alt={user.full_name}
-                                            className="absolute inset-0 w-full h-full object-cover"
-                                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                                        />
-                                    ) : null}
-                                </div>
-                                <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-black">
-                                    {user.full_name || user.account_name || "cocpit user"}
-                                </span>
-                            </div>
-
-                            {isGroupMode && (
-                                <div className="relative w-[24px] h-[24px] flex-none mr-[8px]">
-                                    <div
-                                        className={cn(
-                                            "w-full h-full rounded-[4px] border flex items-center justify-center transition-all",
-                                            isSelected ? "bg-[#6366F1] border-[#6366F1]" : "border-[#6B7280] bg-white"
-                                        )}
-                                    >
-                                        {isSelected && <Check className="w-4 h-4 text-white" />}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })
-            )}
-            {isSearching && searchResults.length > 0 && (
-                <div className="flex justify-center py-2 w-full">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#6366F1]" />
-                </div>
-            )}
-        </div>
-    );
+    // Modal height per view:
+    // View 1 (Personal Chat): 392px
+    // View 2 (Add Members): 440px
+    // View 3 (Create Group): 454px
+    const modalHeightClass =
+        currentView === 'personalChat'
+            ? 'h-[392px]'
+            : currentView === 'addMembers'
+            ? 'h-[440px]'
+            : 'h-[454px]';
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent
-                className="
-                    shadow-none border-none outline-none
-                    p-0 !gap-0 [&>button]:hidden
-                    fixed bottom-0 top-auto left-0 right-0 translate-x-0 translate-y-0 w-full max-w-full h-[85dvh] rounded-t-[24px] rounded-b-none
-                    data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300
-                    sm:left-[50%] sm:top-[50%] sm:right-auto sm:bottom-auto sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[400px] sm:h-[620px] sm:rounded-[24px] sm:max-w-[400px]
-                    data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:sm:slide-in-from-bottom-0
-                    overflow-hidden bg-white
-                "
+                className={`
+                    shadow-none outline-none p-3 !gap-3 [&>button]:hidden
+                    fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]
+                    w-[calc(100vw-32px)] sm:w-[400px] sm:min-w-[400px] sm:max-w-[400px] ${modalHeightClass}
+                    rounded-[16px] border border-[var(--ds-border)]
+                    bg-[var(--ds-bg)] text-[var(--ds-text-primary)]
+                    font-['DM_Sans'] flex flex-col items-center justify-start overflow-hidden
+                    data-[state=open]:animate-in data-[state=open]:fade-in-90 data-[state=open]:zoom-in-95
+                `}
             >
-                <div className="w-full h-full flex flex-col items-center pt-[10px] px-[16px] pb-[16px] rounded-t-[24px] rounded-b-none sm:rounded-[24px] overflow-hidden bg-white">
-
-                    {/* CLOSE ICON ROW */}
-                    <div className="flex flex-col items-end flex-none self-stretch">
-                        <button onClick={handleClose} className="w-6 h-6 flex items-center justify-center hover:bg-gray-50 rounded-full transition-colors">
-                            <X className="w-5 h-5 text-[#F87171]" />
+                {/* Header (Frame 2609688: 376px x 56px, gap: 12px) */}
+                <div className="w-full max-w-[376px] h-[56px] flex flex-col items-center p-0 gap-3 shrink-0">
+                    {/* Top Row: Close button (Frame 2609536: 376px x 20px) */}
+                    <div className="w-full max-w-[376px] h-5 flex flex-row justify-end items-center p-0 gap-2.5 shrink-0">
+                        <button
+                            type="button"
+                            onClick={handleClose}
+                            className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer p-0 bg-transparent border-none outline-none"
+                            aria-label="Close"
+                            title="Close"
+                        >
+                            <CloseIcon className="w-5 h-5 text-[var(--ds-text-primary)]" size={20} fill="currentColor" />
                         </button>
                     </div>
 
-                    <div className="w-full max-w-[368px] py-[8px] flex flex-col items-center rounded-[24px] bg-white">
+                    {/* Centered Title */}
+                    <DialogTitle className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-[var(--ds-text-primary)] p-0 m-0 min-w-[100px] h-[24px] flex items-center justify-center">
+                        {title || (currentView === 'personalChat' ? 'Personal Chat' : 'Create group')}
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        {currentView === 'personalChat'
+                            ? 'Search and start a personal 1-on-1 chat.'
+                            : currentView === 'addMembers'
+                            ? 'Select members to add to the group.'
+                            : 'Enter group name, photo, and review members.'}
+                    </DialogDescription>
+                </div>
 
-                        {/* HEADER TITLE */}
-                        <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-center text-black mt-[8px]">
-                            {currentView === 'newMessage' ? 'New message' : 'Create group'}
-                        </DialogTitle>
-                        <DialogDescription className="sr-only">
-                            {currentView === 'newMessage' ? 'Start a new conversation or create a group chat.' : 'Enter group details and select members.'}
-                        </DialogDescription>
+                {/* VIEW 1: Personal Chat */}
+                {currentView === 'personalChat' && (
+                    <div className="w-full max-w-[376px] h-[300px] flex flex-col items-start p-0 gap-2 shrink-0">
+                        {/* Search Bar (Component 10: 376px x 36px) */}
+                        <div className="w-full max-w-[376px] h-9 py-2 px-0 flex flex-row justify-between items-center gap-1 border-b border-[var(--ds-text-primary)] shrink-0 box-border">
+                            <input
+                                placeholder="Search"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-transparent border-none outline-none p-0 font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)]"
+                            />
+                            <Search className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0" strokeWidth={1.5} />
+                        </div>
 
-                        {currentView === 'newMessage' ? (
-                            <>
-                                {/* SEARCH BOX */}
-                                <div className="w-[368px] h-[40px] px-[16px] py-[8px] flex flex-row justify-between items-center gap-[10px] border border-[#6B7280] rounded-[24px] mt-[16px] box-border">
-                                    <input
-                                        placeholder="Search"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full bg-transparent border-none outline-none text-[14px] font-['Poppins'] placeholder:text-[#6B7280] text-black"
-                                    />
-                                    <Search className="w-4 h-4 text-[#6B7280]" />
+                        {/* User List (Frame 2609544: 376px x 256px - 6 users visible then hidden scroll) */}
+                        <div
+                            ref={listRef}
+                            onScroll={handleScroll}
+                            className="w-full max-w-[376px] h-[256px] flex flex-col items-start p-0 gap-2 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0"
+                        >
+                            {isSearching && personalChatResults.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center w-full h-full gap-2">
+                                    <Loader2 className="w-5 h-5 animate-spin text-[var(--ds-accent)]" />
+                                    <p className="text-xs text-[var(--ds-text-muted)] font-['DM_Sans']">Searching users...</p>
                                 </div>
-
-                                {/* GROUP CHAT TOGGLE (Hidden for Org context) */}
-                                {!isOrgContext && (
-                                    <FeatureDisabledTooltip featureKey="enableGroupChats">
-                                        <button
-                                            onClick={() => setIsGroupMode(!isGroupMode)}
-                                            className={cn(
-                                                "w-[368px] h-[40px] px-[16px] py-[8px] flex flex-row justify-between items-center rounded-[24px] border transition-all mt-[8px]",
-                                                isGroupMode ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1]" : "bg-white border-[#818CF8] text-[#818CF8]"
-                                            )}
+                            ) : personalChatResults.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center w-full h-full text-center">
+                                    <p className="text-sm text-[var(--ds-text-muted)] font-['DM_Sans']">
+                                        {searchTerm.length === 0 ? "Type to search for users" : "No users found"}
+                                    </p>
+                                </div>
+                            ) : (
+                                personalChatResults.map((u) => {
+                                    const userId = u.user_id || u.id;
+                                    const name = u.full_name || u.account_name || u.name || "Cocpit user";
+                                    const avatar = u.avatar_url || u.avatar;
+                                    return (
+                                        <div
+                                            key={userId}
+                                            onClick={() => handlePersonalChatSelect(u)}
+                                            className="w-full max-w-[376px] h-9 flex flex-row justify-between items-center p-0 gap-2 shrink-0 cursor-pointer hover:bg-[var(--ds-surface-1)]/50 rounded-lg transition-colors"
                                         >
-                                            <span className="font-['Poppins'] font-normal text-[14px]">Group chat</span>
-                                            <Users className="w-5 h-5" />
-                                        </button>
-                                    </FeatureDisabledTooltip>
-                                )}
-
-                                {/* USER LIST */}
-                                {renderUserList()}
-
-                                {/* CREATE GROUP BUTTON (Only in Group Mode) */}
-                                {isGroupMode && (
-                                    <button
-                                        disabled={selectedUserIds.length === 0}
-                                        onClick={() => setCurrentView('createGroup')}
-                                        className={cn(
-                                            "w-[368px] h-[40px] border border-white rounded-[24px] flex items-center justify-center font-['Poppins'] font-normal text-[14px] text-white mt-[16px] transition-all",
-                                            selectedUserIds.length > 0 ? "bg-[#6366F1] cursor-pointer" : "bg-[#C7D2FE] cursor-default"
-                                        )}
-                                    >
-                                        Create group
-                                    </button>
-                                )}
-                            </>
-                        ) : (
-                            /* VIEW 3: CREATE GROUP FORM */
-                            <div className="w-full mt-[16px] flex flex-col items-center">
-                                {/* AVATAR UPLOAD */}
-                                <div className="relative flex flex-col items-center gap-[8px]">
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-[80px] h-[80px] rounded-full bg-[#E5E7EB] flex items-center justify-center cursor-pointer overflow-hidden border border-gray-200"
-                                    >
-                                        {groupAvatarPreview ? (
-                                            <img src={groupAvatarPreview} alt="Group Avatar" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <User className="w-10 h-10 text-gray-400" />
-                                        )}
-                                    </div>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={handleAvatarChange}
-                                    />
-                                    <span className="font-['Poppins'] font-normal text-[12px] text-[#6B7280]">Add photo</span>
+                                            <div className="flex flex-row items-center gap-2 h-5">
+                                                <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex items-center justify-center text-[10px] text-[var(--ds-text-primary)]">
+                                                    {avatar && avatar !== '/assets/pngegg.png' ? (
+                                                        <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span>{name.charAt(0).toUpperCase()}</span>
+                                                    )}
+                                                </div>
+                                                <span className="font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)] truncate">
+                                                    {name}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                            {isSearching && personalChatResults.length > 0 && (
+                                <div className="flex justify-center py-2 w-full">
+                                    <Loader2 className="w-4 h-4 animate-spin text-[var(--ds-accent)]" />
                                 </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
-                                {/* GROUP NAME INPUT */}
-                                <div className="w-full mt-[24px] space-y-[8px]">
-                                    <label className="font-['Poppins'] font-medium text-[14px] text-black">Group name</label>
-                                    <input
-                                        placeholder="Group name"
-                                        value={groupName}
-                                        onChange={(e) => setGroupName(e.target.value)}
-                                        className="w-full h-[40px] px-[16px] py-[8px] border border-[#E5E7EB] rounded-[8px] font-['Poppins'] text-[14px] outline-none"
-                                    />
-                                </div>
+                {/* VIEW 2: Add Members for Group */}
+                {currentView === 'addMembers' && (
+                    <>
+                        {/* Frame 2609544: 376px x 300px, gap: 8px */}
+                        <div className="w-full max-w-[376px] h-[300px] flex flex-col items-start p-0 gap-2 shrink-0">
+                            {/* Search Bar (Component 10: 376px x 36px) */}
+                            <div className="w-full max-w-[376px] h-9 py-2 px-0 flex flex-row justify-between items-center gap-1 border-b border-[var(--ds-text-primary)] shrink-0 box-border">
+                                <input
+                                    placeholder="Search"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full bg-transparent border-none outline-none p-0 font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)]"
+                                />
+                                <Search className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0" strokeWidth={1.5} />
+                            </div>
 
-                                {/* MEMBERS LIST SECTION */}
-                                <div className="w-full mt-[24px] flex flex-col">
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-['Poppins'] font-medium text-[14px] text-black">Members list</span>
-                                        <button
-                                            onClick={() => setCurrentView('newMessage')}
-                                            className="flex items-center gap-1 font-['Poppins'] font-normal text-[14px] text-[#6366F1]"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            Add members
-                                        </button>
+                            {/* User List with Checkboxes (376px x 256px - 6 users visible) */}
+                            <div
+                                ref={listRef}
+                                onScroll={handleScroll}
+                                className="w-full max-w-[376px] h-[256px] flex flex-col items-start p-0 gap-2 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0"
+                            >
+                                {isSearching && filteredResults.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center w-full h-full gap-2">
+                                        <Loader2 className="w-5 h-5 animate-spin text-[var(--ds-accent)]" />
+                                        <p className="text-xs text-[var(--ds-text-muted)] font-['DM_Sans']">Searching users...</p>
                                     </div>
-
-                                    <div className="w-full max-h-[200px] overflow-y-auto mt-[16px] space-y-[8px]">
-                                        {selectedUsersData.map((user) => (
-                                            <div key={user.user_id || user.id} className="flex justify-between items-center h-[48px] w-full">
-                                                <div className="flex items-center gap-[16px]">
-                                                    <div className="relative w-[32px] h-[32px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-none font-['Poppins'] select-none">
-                                                        <span>{(user.full_name || "U").charAt(0).toUpperCase()}</span>
-                                                        {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
-                                                            <img
-                                                                src={user.avatar_url}
-                                                                alt={user.full_name}
-                                                                className="absolute inset-0 w-full h-full object-cover"
-                                                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                                                            />
-                                                        ) : null}
+                                ) : filteredResults.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center w-full h-full text-center">
+                                        <p className="text-sm text-[var(--ds-text-muted)] font-['DM_Sans']">
+                                            {searchTerm.length === 0 ? "Type to search for users" : "No users found"}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    filteredResults.map((u) => {
+                                        const userId = u.user_id || u.id;
+                                        const isSelected = selectedUserIds.includes(userId);
+                                        const name = u.full_name || u.account_name || u.name || "Cocpit user";
+                                        const avatar = u.avatar_url || u.avatar;
+                                        return (
+                                            <div
+                                                key={userId}
+                                                onClick={() => toggleUserSelection(userId)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === ' ' || e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        toggleUserSelection(userId);
+                                                    }
+                                                }}
+                                                role="checkbox"
+                                                aria-checked={isSelected}
+                                                tabIndex={0}
+                                                className="w-full max-w-[376px] h-9 flex flex-row justify-between items-center p-0 gap-2 shrink-0 cursor-pointer hover:bg-[var(--ds-surface-1)]/50 rounded-lg transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[var(--ds-accent)]"
+                                            >
+                                                <div className="flex flex-row items-center gap-2 h-5">
+                                                    <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex items-center justify-center text-[10px] text-[var(--ds-text-primary)]">
+                                                        {avatar && avatar !== '/assets/pngegg.png' ? (
+                                                            <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span>{name.charAt(0).toUpperCase()}</span>
+                                                        )}
                                                     </div>
-                                                    <span className="font-['Poppins'] font-normal text-[14px] text-black">
-                                                        {user.full_name || user.account_name || "User"}
+                                                    <span className="font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)] truncate">
+                                                        {name}
                                                     </span>
                                                 </div>
-                                                <button
-                                                    onClick={() => toggleUserSelection(user.user_id || user.id)}
-                                                    className="flex items-center gap-[4px] text-[#EF4444]"
-                                                >
-                                                    <span className="font-['Poppins'] font-normal text-[12px]">Remove</span>
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
 
-                                {/* ACTION BUTTONS */}
-                                <div className="w-[300px] h-[40px] flex flex-row items-start p-0 gap-[16px] mt-[24px] mx-auto">
-                                    <button
-                                        onClick={handleClose}
-                                        className="w-[142px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] flex justify-center items-center text-[#818CF8] font-['Poppins'] font-normal text-[14px] transition-colors hover:bg-[#F3F4FF]"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleCreate}
-                                        disabled={!groupName.trim() || isCreating}
-                                        className={cn(
-                                            "w-[142px] h-[40px] border border-white rounded-[24px] flex justify-center items-center text-white font-['Poppins'] font-normal text-[14px] transition-all",
-                                            groupName.trim() && !isCreating ? "bg-[#6366F1] cursor-pointer" : "bg-[#C7D2FE] cursor-default"
-                                        )}
-                                    >
-                                        {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
-                                    </button>
-                                </div>
+                                                {/* Checkbox (20px x 20px, rounded-[4px]) */}
+                                                <div className="w-5 h-5 shrink-0 flex items-center justify-center">
+                                                    {isSelected ? (
+                                                        <div className="w-5 h-5 bg-[var(--ds-accent)] rounded-[4px] flex items-center justify-center shrink-0">
+                                                            <svg
+                                                                width="12"
+                                                                height="9"
+                                                                viewBox="0 0 12 9"
+                                                                fill="none"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                className="shrink-0"
+                                                                aria-hidden="true"
+                                                            >
+                                                                <path
+                                                                    d="M1 4.5L4.5 8L11 1.5"
+                                                                    stroke="var(--ds-bg)"
+                                                                    strokeWidth="2"
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-5 h-5 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-[4px] shrink-0" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                                {isSearching && filteredResults.length > 0 && (
+                                    <div className="flex justify-center py-2 w-full">
+                                        <Loader2 className="w-4 h-4 animate-spin text-[var(--ds-accent)]" />
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
-                </div>
+                        </div>
+
+                        {/* Footer Buttons (Frame 2609476: 376px x 36px, gap: 8px) */}
+                        <div className="w-full max-w-[376px] h-9 flex flex-row justify-center items-start p-0 gap-2 shrink-0">
+                            {/* Primary emphasis button */}
+                            <button
+                                type="button"
+                                onClick={handleAddClick}
+                                disabled={selectedUserIds.length === 0 || isSubmitting}
+                                className={`w-[77px] h-9 px-3 py-1.5 rounded-[100px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex items-center justify-center transition-all cursor-pointer ${
+                                    selectedUserIds.length > 0 && !isSubmitting
+                                        ? 'bg-[var(--ds-accent)] hover:opacity-90 active:scale-95'
+                                        : 'bg-[var(--ds-accent)]/50 opacity-50 cursor-not-allowed'
+                                }`}
+                            >
+                                {isSubmitting ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-[var(--ds-text-primary)]" />
+                                ) : (
+                                    'Add'
+                                )}
+                            </button>
+                            {/* Secondary button */}
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                disabled={isSubmitting}
+                                className="w-[77px] h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] bg-transparent font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex items-center justify-center hover:bg-[var(--ds-surface-1)] active:scale-95 transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </>
+                )}
+
+                {/* VIEW 3: Create Group Form */}
+                {currentView === 'createGroup' && (
+                    <>
+                        {/* Frame 2609544: 376px x 314px, gap: 8px */}
+                        <div className="w-full max-w-[376px] h-[314px] flex flex-col items-center p-0 gap-2 shrink-0">
+                            {/* Avatar Upload (Frame 2609482: 60px x 84px, gap: 8px) */}
+                            <div className="w-[60px] h-[84px] flex flex-col items-center p-0 gap-2 shrink-0">
+                                <div
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-[60px] h-[60px] rounded-full bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex flex-col items-center justify-center gap-[2px] cursor-pointer overflow-hidden shrink-0 hover:opacity-80 transition-opacity"
+                                >
+                                    {groupAvatarPreview ? (
+                                        <img src={groupAvatarPreview} alt="Group Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <ProfileIcon className="w-5 h-5 text-[var(--ds-text-primary)]" size={20} fill="currentColor" />
+                                    )}
+                                </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleAvatarChange}
+                                />
+                                <span
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-[59px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-center text-[var(--ds-text-secondary)] cursor-pointer hover:text-[var(--ds-text-primary)] transition-colors shrink-0"
+                                >
+                                    Add photo
+                                </span>
+                            </div>
+
+                            {/* Group Name Input (Input with label: 376px x 62px) */}
+                            <div className="w-full max-w-[376px] h-[62px] py-2 px-0 flex flex-col justify-center items-start gap-[10px] border-b border-[var(--ds-border)] shrink-0 box-border">
+                                <label className="w-[71px] h-4 font-['DM_Sans'] font-medium text-xs leading-4 text-[var(--ds-text-secondary)] text-left">
+                                    Group name
+                                </label>
+                                <input
+                                    placeholder="Group name"
+                                    value={groupName}
+                                    onChange={(e) => setGroupName(e.target.value)}
+                                    className="w-full bg-transparent border-none outline-none font-['DM_Sans'] font-normal text-base leading-6 text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] p-0"
+                                />
+                            </div>
+
+                            {/* Members List Header (Frame 2608667: 376px x 20px) */}
+                            <div className="w-full max-w-[376px] h-5 flex flex-row justify-between items-center p-0 gap-6 shrink-0">
+                                <span className="w-[84px] h-5 font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)]">
+                                    Members list
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentView('addMembers')}
+                                    className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer p-0 bg-transparent border-none outline-none shrink-0"
+                                    title="Add members"
+                                    aria-label="Add members"
+                                >
+                                    <PlusIcon className="w-5 h-5 text-[var(--ds-text-primary)]" size={20} />
+                                </button>
+                            </div>
+
+                            {/* Selected Members List (Frame: 376px x 124px - show 3 and then scroll hidden) */}
+                            <div className="w-full max-w-[376px] h-[124px] max-h-[124px] flex flex-col items-start p-0 gap-2 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0">
+                                {selectedUsersData.map((u) => {
+                                    const userId = u.user_id || u.id;
+                                    const name = u.full_name || u.account_name || u.name || "Cocpit user";
+                                    const avatar = u.avatar_url || u.avatar;
+                                    return (
+                                        <div
+                                            key={userId}
+                                            className="w-full max-w-[376px] h-9 flex flex-row justify-between items-center p-0 gap-2 shrink-0"
+                                        >
+                                            <div className="flex flex-row items-center gap-2 h-5">
+                                                <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex items-center justify-center text-[10px] text-[var(--ds-text-primary)]">
+                                                    {avatar && avatar !== '/assets/pngegg.png' ? (
+                                                        <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span>{name.charAt(0).toUpperCase()}</span>
+                                                    )}
+                                                </div>
+                                                <span className="font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)] truncate">
+                                                    {name}
+                                                </span>
+                                            </div>
+
+                                            {/* Delete Icon (20px x 20px) */}
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleUserSelection(userId)}
+                                                className="w-5 h-5 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity cursor-pointer p-0 bg-transparent border-none outline-none shrink-0"
+                                                title="Remove member"
+                                                aria-label="Remove member"
+                                            >
+                                                <DeleteIcon className="w-5 h-5 text-[var(--ds-error)]" size={20} fill="currentColor" />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Footer Buttons (Frame 2609476: 376px x 36px, gap: 8px) */}
+                        <div className="w-full max-w-[376px] h-9 flex flex-row justify-center items-start p-0 gap-2 shrink-0">
+                            {/* Primary emphasis button */}
+                            <button
+                                type="button"
+                                onClick={handleCreate}
+                                disabled={!groupName.trim() || isCreating}
+                                className={`w-[77px] h-9 px-3 py-1.5 rounded-[100px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex items-center justify-center transition-all ${
+                                    groupName.trim() && !isCreating
+                                        ? 'bg-[var(--ds-accent)] hover:opacity-90 active:scale-95 cursor-pointer'
+                                        : 'bg-[var(--ds-accent)]/40 text-[var(--ds-text-primary)]/50 cursor-not-allowed'
+                                }`}
+                            >
+                                {isCreating ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-[var(--ds-text-primary)]" />
+                                ) : (
+                                    <span className="w-[51px] h-6 flex items-center justify-center">Create</span>
+                                )}
+                            </button>
+                            {/* Secondary button */}
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="w-[77px] h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] bg-transparent font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex items-center justify-center hover:bg-[var(--ds-surface-1)] active:scale-95 transition-colors cursor-pointer"
+                            >
+                                <span className="w-[53px] h-6 flex items-center justify-center">Cancel</span>
+                            </button>
+                        </div>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     );

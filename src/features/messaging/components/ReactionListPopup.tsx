@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import Avatar from "@/components/shared/Avatar";
-import { X } from "lucide-react";
+import { CloseCrossIcon } from "@/components/icons";
 
 interface Reaction {
   user_id: string;
@@ -64,37 +64,42 @@ export function ReactionListPopup({
       className="fixed inset-0 z-[200] bg-transparent"
       onClick={handleBackdropClick}
     >
+      {/* Frame: Reaction Popup Box */}
       <div
         ref={popupRef}
-        className="absolute bg-white rounded-2xl shadow-2xl w-[320px] max-w-[90vw] max-h-[60vh] flex flex-col overflow-hidden border border-[#EEF2FF]"
+        className="absolute w-[250px] max-w-[calc(100vw-32px)] flex flex-col items-center p-3 gap-3 bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[8px] box-border shadow-2xl overflow-hidden select-none"
         style={{ top: position.top, left: position.left }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#EEF2FF]">
-          <span className="font-['Poppins'] font-semibold text-[15px] text-[#000000]">
+        {/* Frame 2609688: Title Header */}
+        <div className="w-full h-6 flex flex-row items-center justify-between gap-3 self-stretch shrink-0">
+          {/* Reactions Title */}
+          <span className="flex-1 h-6 font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] text-left truncate flex items-center select-none">
             Reactions
           </span>
+
+          {/* Frame 2609536: Close Button */}
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 hover:bg-[#EEF2FF] rounded-full transition-colors"
+            className="w-5 h-5 flex items-center justify-end text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer shrink-0 p-0 border-none bg-transparent"
+            title="Close"
+            aria-label="Close reactions"
           >
-            <X className="w-4 h-4 text-[#6B7280]" />
+            <CloseCrossIcon className="w-5 h-5 text-[var(--ds-text-primary)]" size={20} />
           </button>
         </div>
 
-        {/* Reaction list */}
-        <div className="overflow-y-auto flex-1">
+        {/* Frame 2610121: Reaction Items List */}
+        {/* Shows up to 4 items naturally without scroll (4 * 24px + 3 * 8px = 120px); beyond 4 items, allows vertical scroll with hidden scrollbars and zero horizontal scroll */}
+        <div className="w-full flex flex-col items-start gap-2 self-stretch max-h-[120px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {sorted.map((reaction) => {
             const isMe = reaction.user_id === currentUserId;
             return (
+              /* Frame 2609539: Reaction Item Row */
               <div
                 key={reaction.user_id}
-                className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-                  isMe
-                    ? "hover:bg-[#EEF2FF] cursor-pointer"
-                    : "hover:bg-[#F9FAFB]"
-                }`}
+                className="w-full h-6 flex flex-row justify-between items-center gap-2 self-stretch shrink-0 cursor-pointer hover:opacity-85 transition-opacity overflow-hidden"
                 onClick={() => {
                   if (isMe) {
                     onRemoveReaction(messageId);
@@ -103,22 +108,27 @@ export function ReactionListPopup({
                 }}
                 title={isMe ? "Click to remove your reaction" : undefined}
               >
-                {/* Avatar */}
-                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
-                  <Avatar
-                    url={reaction.avatar || undefined}
-                    name={reaction.full_name || "User"}
-                    size="sm"
-                  />
+                {/* Left side: Avatar (Rectangle 31) + Name */}
+                <div className="flex items-center gap-2 min-w-0 flex-1 h-6 overflow-hidden">
+                  {/* Rectangle 31: 20x20px Avatar */}
+                  <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 flex items-center justify-center">
+                    <Avatar
+                      url={reaction.avatar || undefined}
+                      name={reaction.full_name || "User"}
+                      className="w-5 h-5 text-[10px]"
+                    />
+                  </div>
+
+                  {/* Name: DM Sans 14px/20px LH, color #FFECE6 */}
+                  <span className="font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)] truncate text-left select-none flex-1 min-w-0">
+                    {isMe ? "You" : reaction.full_name || "User"}
+                  </span>
                 </div>
 
-                {/* Name */}
-                <span className="flex-1 font-['Poppins'] font-normal text-[13px] text-[#000000] truncate">
-                  {isMe ? "You" : reaction.full_name || "User"}
+                {/* Right side: Emoji (Poppins 16px/24px LH) */}
+                <span className="w-4 h-6 font-['Poppins'] font-normal text-base leading-6 flex items-center justify-center shrink-0 select-none">
+                  {reaction.emoji}
                 </span>
-
-                {/* Emoji */}
-                <span className="text-[18px] shrink-0">{reaction.emoji}</span>
               </div>
             );
           })}

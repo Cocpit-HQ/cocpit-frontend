@@ -1,23 +1,26 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useGroupChat } from "./groupChat.context";
 import GroupHeader from "./GroupHeader";
 import GroupMessageList from "./GroupMessageList";
 import UnifiedMessageInput from "../ui/UnifiedMessageInput";
 import GroupDetails from "./GroupDetails";
-import AddMemberModal from "./AddMemberModal";
+import CreateGroupModal from "./CreateGroupModal";
+import { DeleteMessageModal } from "../ui/DeleteMessageModal";
+import MessageSelectionBottomBar from "../ui/MessageSelectionBottomBar";
 import { Loader2 } from "lucide-react";
 import { useQueryClient, useQuery, useMutation, useInfiniteQuery, InfiniteData } from "@tanstack/react-query";
 import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
-import { editMessage, deleteMessage, addOrUpdateReaction, clearReaction } from "@/services/api/messaging";
+import { editMessage, deleteMessage, addOrUpdateReaction, clearReaction, pinMessage } from "@/services/api/messaging";
 import { Message } from "@/types/messaging";
 import { formatTimeAgo, isPostUrl, isJobUrl, mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper";
 import { useSocket } from "@/context/SocketContext";
 import { TypingPayload } from "@/types/socket";
 import MessageInfoModal from "../../MessageInfoModal";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
-import MediaPreviewModal from "../ui/MediaPreviewModal";
+import MediaDetailViewer from "../ui/MediaDetailViewer";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import ChatSkeleton from "../ui/ChatSkeleton";
@@ -25,6 +28,9 @@ import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useSocial } from "@/context/SocialContext";
 import { cn } from "@/lib/utils";
 import { getMessageCopyText } from "@/features/messaging/utils/messageCopy";
+import { searchUsers, getSuggestedUsers, UserMention } from "@/services/api/users";
+import { getPinnedMessageId, setPinnedMessageId } from "@/features/messaging/utils/pinMessageUtils";
+import { PinnedMessageBanner } from "../ui/PinnedMessageBanner";
 
 interface GroupChatProps {
     groupId: string;
@@ -33,22 +39,59 @@ interface GroupChatProps {
     onBack?: () => void;
     unreadCount?: number;
     isMuted?: boolean;
+    mutedUntil?: string | null;
 }
 
-export default function GroupChat({ groupId, currentUser, messages = [], onBack, unreadCount = 0, isMuted = false }: GroupChatProps) {
+export default function GroupChat({ groupId, currentUser, messages = [], onBack, unreadCount = 0, isMuted = false, mutedUntil = null }: GroupChatProps) {
     const { activeGroup, isLoading, error, inviteMember, isInactive, leaveGroup } = useGroupChat();
     const { activeProfile } = useActiveProfile();
     const { toast } = useToast();
-    const [activeView, setActiveView] = useState<'chat' | 'info' | 'edit'>('chat');
+    const searchParams = useSearchParams();
+    const viewParam = searchParams?.get("view");
+    const initialView = (viewParam === "info" || viewParam === "details") ? 'info' : (viewParam === "edit" ? 'edit' : 'chat');
+    const [activeView, setActiveView] = useState<'chat' | 'info' | 'edit'>(initialView);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const queryClient = useQueryClient();
     const { socket, setActiveConversationId } = useSocket();
     const { isBlocked } = useSocial();
-    const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-    const [isMessageSelected, setIsMessageSelected] = useState(false);
+    const [selectedMessages, setSelectedMessages] = useState<Message[]>([]);
+    const isMessageSelected = selectedMessages.length > 0;
+    const selectedMessage = selectedMessages[selectedMessages.length - 1] || null;
+    const selectedMessageIds = useMemo(() => selectedMessages.map((m) => m.id), [selectedMessages]);
+
+    const conversationId = activeGroup?.conversation_id || groupId;
+    const [pinnedMessageId, setPinnedMessageIdState] = useState<string | null>(() => {
+        return getPinnedMessageId(conversationId, activeProfile?.type, activeProfile?.id);
+    });
+
+    useEffect(() => {
+        setPinnedMessageIdState(getPinnedMessageId(conversationId, activeProfile?.type, activeProfile?.id));
+    }, [conversationId, activeProfile?.type, activeProfile?.id]);
+
+    useEffect(() => {
+        if (!socket) return;
+        const handleMessagePinned = (payload: { conversationId: string; pinnedMessageId: string | null; is_pinned: boolean }) => {
+            if (String(payload.conversationId) === String(conversationId)) {
+                setPinnedMessageId(conversationId, payload.pinnedMessageId, activeProfile?.type, activeProfile?.id);
+                setPinnedMessageIdState(payload.pinnedMessageId);
+            }
+        };
+        socket.on("message_pinned", handleMessagePinned);
+        return () => {
+            socket.off("message_pinned", handleMessagePinned);
+        };
+    }, [socket, conversationId, activeProfile?.type, activeProfile?.id]);
+
     const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false);
+    const [messageInfoMessage, setMessageInfoMessage] = useState<Message | null>(null);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-    const [previewMedia, setPreviewMedia] = useState<{ url: string, type: 'image' | 'video' | 'document', name?: string } | null>(null);
+    const [previewMedia, setPreviewMedia] = useState<{
+        url: string;
+        type: 'image' | 'video' | 'document' | string;
+        name?: string;
+        mediaList?: { url: string; type: 'image' | 'video' | 'document' | string; name?: string | null }[];
+        initialIndex?: number;
+    } | null>(null);
     const [replyingTo, setReplyingTo] = useState<{
         messageId: string;
         senderName: string;
@@ -60,22 +103,49 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
     } | null>(null);
     const [leaveAction, setLeaveAction] = useState<'left' | 'removed' | null>(null);
 
-    const handleMediaClick = (url: string, type: 'image' | 'video' | 'document', name?: string) => {
-        setPreviewMedia({ url, type, name });
+    const handleMediaClick = (
+        url: string,
+        type: 'image' | 'video' | 'document' | string,
+        name?: string,
+        allMedia?: { url: string; type: string; name?: string | null }[],
+        index?: number,
+    ) => {
+        setPreviewMedia({
+            url,
+            type,
+            name,
+            mediaList: allMedia as any,
+            initialIndex: index ?? 0,
+        });
     };
 
-    const handleDeleteForMe = React.useCallback(async (targetMsg: Message) => {
-        const msgId = targetMsg.id;
-        // Optimistic Update
+    const handleDeleteForMe = React.useCallback(async (targetMsg?: Message) => {
+        const targetMsgs = targetMsg ? [targetMsg] : selectedMessages;
+        if (targetMsgs.length === 0) return;
+        const targetIds = new Set(targetMsgs.map((m) => m.id));
+
+        setSelectedMessages([]);
+
+        if (pinnedMessageId && targetIds.has(pinnedMessageId)) {
+            setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
+            setPinnedMessageIdState(null);
+        }
+
         queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
             if (!old) return undefined;
             return {
                 ...old,
                 pages: old.pages.map(page => page.map(m => {
-                    if (m.id === msgId) {
+                    if (targetIds.has(m.id)) {
                         return {
                             ...m,
                             text: "This message was deleted for you.",
+                            text_content: "This message was deleted for you.",
+                            sharedPost: null,
+                            sharedProfile: null,
+                            media: [],
+                            reactions: [],
+                            is_deleted: true,
                             is_deleted_for_me: true
                         };
                     }
@@ -85,30 +155,53 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         });
 
         try {
-            await deleteMessage(msgId, false);
-            toast({ description: "Message deleted successfully" });
+            await Promise.allSettled(targetMsgs.map((m) => deleteMessage(m.id, false)));
+            toast({
+                description:
+                    targetMsgs.length > 1
+                        ? `${targetMsgs.length} messages deleted`
+                        : "Message deleted successfully",
+            });
         } catch (e: any) {
             console.error("Failed to delete for me", e);
             const errorMsg = e?.response?.data?.message || e?.message || "Failed to delete message";
             toast({ title: "Error", description: errorMsg, variant: "destructive" });
             queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
         }
-    }, [groupId, queryClient, toast]);
+    }, [groupId, selectedMessages, queryClient, toast]);
 
-    const handleDeleteForEveryone = React.useCallback(async (targetMsg: Message) => {
-        const msgId = targetMsg.id;
+    const handleDeleteForEveryone = React.useCallback(async (targetMsg?: Message) => {
+        const targetMsgs = targetMsg ? [targetMsg] : selectedMessages;
+        if (targetMsgs.length === 0) return;
 
-        // Immediately clear selection
-        setSelectedMessage(null);
-        setIsMessageSelected(false);
+        const currentUid = currentUser?.id || currentUser?.user_id || activeProfile?.id || "";
+        const allMine = targetMsgs.every(
+            (m) => m.sender === 'me' || m.senderId === currentUid || m.senderId === 'me'
+        );
+        if (!allMine) {
+            toast({
+                title: "Permission Denied",
+                description: "You can only delete your own messages for everyone",
+                variant: "destructive",
+            });
+            return;
+        }
 
-        // Optimistic Update
+        const targetIds = new Set(targetMsgs.map((m) => m.id));
+
+        setSelectedMessages([]);
+
+        if (pinnedMessageId && targetIds.has(pinnedMessageId)) {
+            setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
+            setPinnedMessageIdState(null);
+        }
+
         queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
             if (!old) return undefined;
             return {
                 ...old,
                 pages: old.pages.map(page => page.map(m => {
-                    if (m.id === msgId) {
+                    if (targetIds.has(m.id)) {
                         return {
                             ...m,
                             text: "This message was deleted for everyone.",
@@ -131,57 +224,110 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         });
 
         try {
-            await deleteMessage(msgId, true);
-            toast({ description: "Message deleted for everyone" });
+            await Promise.allSettled(targetMsgs.map((m) => deleteMessage(m.id, true)));
+            toast({
+                description:
+                    targetMsgs.length > 1
+                        ? `${targetMsgs.length} messages deleted for everyone`
+                        : "Message deleted for everyone",
+            });
         } catch (e: any) {
             console.error("Failed to delete for everyone", e);
             const errorMsg = e?.response?.data?.message || e?.message || "Failed to delete message for everyone";
             toast({ title: "Error", description: errorMsg, variant: "destructive" });
             queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
         }
-    }, [groupId, queryClient, toast]);
+    }, [groupId, selectedMessages, currentUser, activeProfile, queryClient, toast]);
 
     const handleMessageAction = React.useCallback((action: string, msg?: Message) => {
         const targetMsg = msg || selectedMessage;
-        if (!targetMsg) return;
+        if (!targetMsg && selectedMessages.length === 0 && action !== 'close') return;
 
         if (action === 'info') {
-            setIsMessageInfoOpen(true);
-        } else if (action === 'copy') {
-            if (targetMsg) {
-                navigator.clipboard.writeText(getMessageCopyText(targetMsg));
+            const msgForInfo = targetMsg || (selectedMessages.length > 0 ? selectedMessages[0] : null);
+            if (msgForInfo) {
+                setMessageInfoMessage(msgForInfo);
+                setIsMessageInfoOpen(true);
             }
-            setSelectedMessage(null);
-            setIsMessageSelected(false);
+        } else if (action === 'copy') {
+            const msgsToCopy = selectedMessages.length > 0 ? selectedMessages : (targetMsg ? [targetMsg] : []);
+            if (msgsToCopy.length > 0) {
+                const textToCopy = msgsToCopy
+                    .map((m) => getMessageCopyText(m))
+                    .filter(Boolean)
+                    .join("\n\n");
+                if (textToCopy) {
+                    navigator.clipboard.writeText(textToCopy);
+                    toast({
+                        description:
+                            msgsToCopy.length > 1
+                                ? `${msgsToCopy.length} messages copied`
+                                : "Message copied",
+                    });
+                }
+            }
+            setSelectedMessages([]);
         } else if (action === 'edit') {
-            setEditingMessageId(targetMsg.id);
-            setSelectedMessage(null);
-            setIsMessageSelected(false);
+            if (targetMsg) {
+                const createdAtStr = targetMsg.created_at || (targetMsg as any).createdAt || (targetMsg as any).timestamp;
+                const createdAtTime = createdAtStr ? new Date(createdAtStr).getTime() : NaN;
+                if (!isNaN(createdAtTime) && (Date.now() - createdAtTime) / (1000 * 60) > 15) {
+                    toast({
+                        description: "Messages can only be edited within 15 minutes of sending",
+                        variant: "destructive",
+                    });
+                    setSelectedMessages([]);
+                    return;
+                }
+                setEditingMessageId(targetMsg.id);
+            }
+            setSelectedMessages([]);
+        } else if (action === 'pin') {
+            if (targetMsg) {
+                const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+                setPinnedMessageId(conversationId, targetMsg.id, activeProfile?.type, activeProfile?.id);
+                setPinnedMessageIdState(String(targetMsg.id));
+                toast({ description: "Message pinned" });
+                pinMessage(String(conversationId), String(targetMsg.id), true, companyId).catch((err) => {
+                    console.error("Failed to pin group message on server:", err);
+                });
+            }
+            setSelectedMessages([]);
+        } else if (action === 'unpin') {
+            const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+            setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
+            setPinnedMessageIdState(null);
+            toast({ description: "Message unpinned" });
+            pinMessage(String(conversationId), null, false, companyId).catch((err) => {
+                console.error("Failed to unpin group message on server:", err);
+            });
+            setSelectedMessages([]);
+        } else if (action === 'delete') {
+            setDeleteTargetMessage(msg || targetMsg || null);
+            setIsDeleteModalOpen(true);
         } else if (action === 'delete_for_me') {
-            handleDeleteForMe(targetMsg);
-            setSelectedMessage(null);
-            setIsMessageSelected(false);
+            handleDeleteForMe(msg);
         } else if (action === 'delete_for_everyone') {
-            handleDeleteForEveryone(targetMsg);
-            setSelectedMessage(null);
-            setIsMessageSelected(false);
+            handleDeleteForEveryone(msg);
         } else if (action === 'close') {
-            setSelectedMessage(null);
-            setIsMessageSelected(false);
+            setSelectedMessages([]);
         }
-    }, [selectedMessage, handleDeleteForMe, handleDeleteForEveryone]);
+    }, [selectedMessage, selectedMessages, handleDeleteForMe, handleDeleteForEveryone, toast]);
 
     const handleMessageClick = React.useCallback((message: Message) => {
-        if (selectedMessage?.id === message.id) {
-            setSelectedMessage(null); // Toggle off
-            setIsMessageSelected(false);
-        } else {
-            setSelectedMessage(message);
-            setIsMessageSelected(true);
-        }
-    }, [selectedMessage]);
+        setSelectedMessages((prev) => {
+            const exists = prev.some((m) => m.id === message.id);
+            if (exists) {
+                return prev.filter((m) => m.id !== message.id);
+            } else {
+                return [...prev, message];
+            }
+        });
+    }, []);
 
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+    const [deleteTargetMessage, setDeleteTargetMessage] = useState<Message | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const editMessageMutation = useMutation({
         mutationFn: async ({ messageId, text }: { messageId: string, text: string }) => {
@@ -275,9 +421,21 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         });
     }, [data]);
 
+    const editingMessage = React.useMemo(() => {
+        if (!editingMessageId) return null;
+        return fetchedMessages.find((m) => m.id === editingMessageId) || null;
+    }, [editingMessageId, fetchedMessages]);
+
     useEffect(() => {
-        setActiveView('chat')
-    }, [groupId]);
+        const vParam = searchParams?.get("view");
+        if (vParam === "info" || vParam === "details") {
+            setActiveView("info");
+        } else if (vParam === "edit") {
+            setActiveView("edit");
+        } else if (!vParam) {
+            setActiveView("chat");
+        }
+    }, [groupId, searchParams]);
 
     useEffect(() => {
         if (!socket) return;
@@ -611,13 +769,19 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             const previousMessages = queryClient.getQueryData<InfiniteData<Message[]>>(['messages', groupId]);
 
             // Optimistic update to the new value
+            const isDoc = (f: File) =>
+                f.type === "application/pdf" ||
+                f.type.includes("word") ||
+                f.type.includes("officedocument") ||
+                /\.(doc|docx|pdf|txt|rtf|xls|xlsx|ppt|pptx)$/i.test(f.name);
             const tempMedia = files.map(file => ({
                 url: URL.createObjectURL(file),
-                type: file.type.startsWith('video/') ? 'video' : (file.type === 'application/pdf' ? 'document' : 'image') as 'image' | 'video' | 'document'
+                type: file.type.startsWith('video/') ? 'video' : (isDoc(file) ? 'document' : 'image') as 'image' | 'video' | 'document',
+                name: file.name
             }));
 
             const optimisticMessage: Message = {
-                id: `temp-${Date.now()}`,
+                id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                 senderId: currentUser.id || currentUser.user_id,
                 sender: 'me',
                 senderName: activeGroup?.members.find(m => m.user_id === (currentUser.id || currentUser.user_id))?.full_name || "Me",
@@ -768,7 +932,35 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         if (socket) {
             socket.emit('stopGroupTyping', { groupId: groupId });
         }
-        sendMessageMutation.mutate({ text, files, replyMessageId: replyingTo?.messageId });
+
+        const isDocFile = (f: File) =>
+            f.type === "application/pdf" ||
+            f.type.includes("word") ||
+            f.type.includes("officedocument") ||
+            /\.(doc|docx|pdf|txt|rtf|xls|xlsx|ppt|pptx)$/i.test(f.name);
+
+        const visualFiles = files ? files.filter((f) => !isDocFile(f)) : [];
+        const docFiles = files ? files.filter((f) => isDocFile(f)) : [];
+
+        if (docFiles.length > 0) {
+            if (visualFiles.length > 0 || text.trim()) {
+                sendMessageMutation.mutate({ text, files: visualFiles, replyMessageId: replyingTo?.messageId });
+                docFiles.forEach((docFile) => {
+                    sendMessageMutation.mutate({ text: "", files: [docFile] });
+                });
+            } else {
+                docFiles.forEach((docFile, idx) => {
+                    sendMessageMutation.mutate({
+                        text: "",
+                        files: [docFile],
+                        replyMessageId: idx === 0 ? replyingTo?.messageId : undefined,
+                    });
+                });
+            }
+        } else {
+            sendMessageMutation.mutate({ text, files: visualFiles, replyMessageId: replyingTo?.messageId });
+        }
+
         setReplyingTo(null);
     }, [socket, groupId, sendMessageMutation, replyingTo]);
 
@@ -859,20 +1051,63 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         );
     }
 
+    const handleOpenInfo = () => {
+        setActiveView('info');
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', 'info');
+            window.history.replaceState(null, '', url.pathname + url.search);
+        }
+    };
+
+    const handleBack = (backPosition: 'chat' | 'info' | 'edit') => {
+        setActiveView(backPosition);
+        if (backPosition === 'chat' && typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('view');
+            url.searchParams.delete('tab');
+            window.history.replaceState(null, '', url.pathname + url.search);
+        }
+    };
+
+    const pinnedMessage = useMemo(() => {
+        if (!pinnedMessageId) return null;
+        return displayMessages.find((m) => String(m.id) === String(pinnedMessageId)) || null;
+    }, [displayMessages, pinnedMessageId]);
+
+    const handleScrollToPinnedMessage = (msgId: string) => {
+        const el = document.getElementById(`msg-${msgId}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
+
+    const handleUnpinPinnedMessage = () => {
+        const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+        setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
+        setPinnedMessageIdState(null);
+        toast({ description: "Message unpinned" });
+        pinMessage(String(conversationId), null, false, companyId).catch((err) => {
+            console.error("Failed to unpin group message on server:", err);
+        });
+    };
+
     if (isLoading && !fetchedMessages.length) {
         return (
-            <div className="flex flex-col h-full bg-background relative">
+            <div className="flex flex-col h-full bg-[var(--ds-bg)] relative">
                 <GroupHeader
-                    onOpenDetails={() => setActiveView('info')}
+                    onOpenDetails={handleOpenInfo}
                     onAddMember={() => setIsAddMemberOpen(true)}
                     onBack={onBack}
                     typingStatus={typingStatus}
                     onLeaveGroup={() => setShowLeaveConfirm(true)}
                     isMessageSelected={isMessageSelected}
                     selectedMessage={selectedMessage}
+                    selectedMessages={selectedMessages}
                     onMessageAction={(action) => handleMessageAction(action)}
                     currentUserId={currentUser.id || currentUser.user_id || ""}
                     isMuted={isMuted}
+                    mutedUntil={mutedUntil}
                 />
                 <ChatSkeleton />
             </div>
@@ -888,23 +1123,22 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         );
     }
 
-    const handleBack = (backPosition: 'chat' | 'info' | 'edit') => {
-        setActiveView(backPosition);
-    }
     return (
-        <div className="flex flex-col h-full bg-background relative overflow-hidden">
+        <div className="flex flex-col h-full bg-[var(--ds-bg)] relative overflow-hidden">
             {activeView === 'chat' && (
                 <GroupHeader
-                    onOpenDetails={() => setActiveView('info')}
+                    onOpenDetails={handleOpenInfo}
                     onAddMember={() => setIsAddMemberOpen(true)}
                     onBack={activeView !== 'chat' ? () => setActiveView('chat') : onBack}
                     typingStatus={typingStatus}
                     onLeaveGroup={() => setShowLeaveConfirm(true)}
                     isMessageSelected={isMessageSelected}
                     selectedMessage={selectedMessage}
+                    selectedMessages={selectedMessages}
                     onMessageAction={(action) => handleMessageAction(action)}
                     currentUserId={currentUser.id || currentUser.user_id || ""}
                     isMuted={isMuted}
+                    mutedUntil={mutedUntil}
                 />
             )}
 
@@ -915,18 +1149,37 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     activeView !== 'chat' ? "opacity-0 invisible translate-x-[-20px]" : "opacity-100 visible translate-x-0"
                 )}>
                     <div className="flex-1 flex flex-col overflow-hidden relative">
+                        {pinnedMessageId && (
+                            <PinnedMessageBanner
+                                message={pinnedMessage}
+                                pinnedMessageId={pinnedMessageId}
+                                onScrollToMessage={handleScrollToPinnedMessage}
+                                onUnpin={handleUnpinPinnedMessage}
+                            />
+                        )}
                         <GroupMessageList
                             messages={displayMessages}
+                            pinnedMessageId={pinnedMessageId}
+                            conversationId={conversationId}
+                            groupMembers={activeGroup?.members}
                             currentUserId={currentUser.id || currentUser.user_id || ""}
                             onLoadMore={fetchNextPage}
                             hasMore={hasNextPage}
                             isLoadingMore={isFetchingNextPage}
                             onMessageClick={handleMessageClick}
                             selectedMessageId={selectedMessage?.id}
+                            selectedMessageIds={selectedMessageIds}
                             editingMessageId={editingMessageId}
                             onSaveEdit={handleSaveEdit}
                             onCancelEdit={() => setEditingMessageId(null)}
-                            onAction={handleMessageAction}
+                            // Handle retry click from failed message bubble to re-trigger sending in group chat
+                            onAction={(action, msg) => {
+                                if (action === "retry" && msg) {
+                                    handleSendMessage(msg.text || msg.text_content || "", []);
+                                    return;
+                                }
+                                handleMessageAction(action, msg);
+                            }}
                             onMediaClick={handleMediaClick}
                             unreadCount={unreadCount}
                             onReply={(msg) => {
@@ -957,46 +1210,102 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     </div>
 
                     {!isInactive ? (
-                        <UnifiedMessageInput
-                            onSendMessage={handleSendMessage}
-                            onTyping={handleTypingInput}
-                            isLoading={isLoading || isMessagesLoading}
-                            placeholder="Type a message to group..."
-                            replyingTo={replyingTo}
-                            onCancelReply={() => setReplyingTo(null)}
-                            searchUsersFn={async (query: string) => {
-                                const myId = currentUser.id || currentUser.user_id;
-                                const members = activeGroup?.members || [];
-                                return members
-                                    .filter(m => m.user_id !== myId) // Exclude self
-                                    .filter(m => {
-                                        if (!query) return true; // Show all on empty query (just "@")
-                                        const q = query.toLowerCase();
-                                        return (
-                                            m.full_name?.toLowerCase().includes(q) ||
-                                            m.account_name?.toLowerCase().includes(q)
-                                        );
-                                    })
-                                    .map(m => ({
-                                        id: m.user_id,
-                                        full_name: m.full_name,
-                                        account_name: m.account_name || '',
-                                        avatar_url: m.avatar_url || '',
-                                        headline: m.headline || ''
-                                    }));
-                            }}
-                        />
+                        isMessageSelected && selectedMessages.length > 0 ? (
+                            <MessageSelectionBottomBar
+                                selectedCount={selectedMessages.length}
+                                allAreMine={selectedMessages.every(
+                                    (m) =>
+                                        m.sender === "me" ||
+                                        m.senderId === (currentUser?.id || currentUser?.user_id || activeProfile?.id) ||
+                                        m.senderId === "me",
+                                )}
+                                onClose={() => handleMessageAction("close")}
+                                onDeleteForMe={() => handleMessageAction("delete_for_me")}
+                                onDeleteForEveryone={() => handleMessageAction("delete_for_everyone")}
+                            />
+                        ) : (
+                            <UnifiedMessageInput
+                                onSendMessage={handleSendMessage}
+                                onTyping={handleTypingInput}
+                                isLoading={isLoading || isMessagesLoading}
+                                placeholder="Type a message to group..."
+                                replyingTo={replyingTo}
+                                onCancelReply={() => setReplyingTo(null)}
+                                editingMessage={editingMessage}
+                                onCancelEdit={() => setEditingMessageId(null)}
+                                onSaveEdit={(msgId, text) => editMessageMutation.mutate({ messageId: msgId, text })}
+                                searchUsersFn={async (query: string): Promise<UserMention[]> => {
+                                    const myId = currentUser.id || currentUser.user_id;
+                                    const members = activeGroup?.members || [];
+                                    const q = (query || "").toLowerCase();
+
+                                    // 1. Group members first (excluding self)
+                                    const matchedMembers: UserMention[] = members
+                                        .filter(m => (m.user_id || (m as any).id) !== myId)
+                                        .filter(m => {
+                                            if (!q) return true;
+                                            return (
+                                                m.full_name?.toLowerCase().includes(q) ||
+                                                m.account_name?.toLowerCase().includes(q)
+                                            );
+                                        })
+                                        .map(m => ({
+                                            id: String(m.user_id || (m as any).id || ''),
+                                            full_name: m.full_name || 'User',
+                                            account_name: m.account_name || '',
+                                            avatar_url: m.avatar_url || '',
+                                            headline: m.headline || '',
+                                            type: 'USER',
+                                            is_company: false
+                                        }));
+
+                                    // 2. External platform users & organizations from Feed API
+                                    let externalResults: UserMention[] = [];
+                                    try {
+                                        externalResults = query
+                                            ? await searchUsers(query, true)
+                                            : await getSuggestedUsers(true);
+                                    } catch (err) {
+                                        externalResults = [];
+                                    }
+
+                                    // 3. Deduplicate against group members and self
+                                    const memberIds = new Set(matchedMembers.map(m => m.id));
+                                    if (myId) memberIds.add(String(myId));
+
+                                    const filteredExternal = (externalResults || []).filter(u => !memberIds.has(u.id));
+
+                                    // 4. @everyone for group chats
+                                    const showEveryone = !q || "everyone".includes(q) || "all".includes(q);
+                                    const everyoneMention: UserMention = {
+                                        id: "everyone",
+                                        full_name: "Everyone",
+                                        account_name: "everyone",
+                                        avatar_url: "",
+                                        headline: "Notify all members in this group",
+                                        type: "GROUP",
+                                        is_company: false,
+                                    };
+
+                                    return [
+                                        ...(showEveryone ? [everyoneMention] : []),
+                                        ...matchedMembers,
+                                        ...filteredExternal,
+                                    ];
+                                }}
+                            />
+                        )
                     ) : (
-                        <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm text-center text-muted-foreground text-sm flex flex-col items-center gap-1">
+                        <div className="p-4 border-t border-[var(--ds-border)] bg-[var(--ds-surface-1)] text-center text-[var(--ds-text-secondary)] font-['DM_Sans'] text-sm flex flex-col items-center gap-1">
                             {leaveAction === 'removed' ? (
                                 <>
-                                    <p className="font-medium text-foreground">You were removed from this group</p>
-                                    <p className="text-xs opacity-70">You can delete this chat from your list in group info.</p>
+                                    <p className="font-medium text-[var(--ds-text-primary)]">You were removed from this group</p>
+                                    <p className="text-xs text-[var(--ds-text-muted)]">You can delete this chat from your list in group info.</p>
                                 </>
                             ) : (
                                 <>
-                                    <p className="font-medium text-foreground">You left this group</p>
-                                    <p className="text-xs opacity-70">You can delete this chat from your list in group info.</p>
+                                    <p className="font-medium text-[var(--ds-text-primary)]">You left this group</p>
+                                    <p className="text-xs text-[var(--ds-text-muted)]">You can delete this chat from your list in group info.</p>
                                 </>
                             )}
                         </div>
@@ -1005,12 +1314,13 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
 
                 {/* Info/Edit Panel - Slides in from the right */}
                 <div className={cn(
-                    "fixed inset-0 z-50 bg-white md:absolute md:inset-0 md:z-10 transition-all duration-300",
+                    "fixed inset-0 z-50 bg-[var(--ds-bg)] md:absolute md:inset-0 md:z-10 transition-all duration-300",
                     activeView === 'chat'
                         ? "translate-x-full opacity-0 invisible"
                         : "translate-x-0 opacity-100 visible"
                 )}>
                     <GroupDetails
+                        groupId={groupId}
                         isOpen={activeView !== 'chat'}
                         onClose={(backPosition: 'chat' | 'info' | 'edit') => handleBack(backPosition)}
                         currentUserId={currentUser.id || currentUser.user_id || ""}
@@ -1021,30 +1331,72 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                 </div>
             </div>
 
-            <AddMemberModal
+            <CreateGroupModal
                 isOpen={isAddMemberOpen}
                 onClose={() => setIsAddMemberOpen(false)}
-                onInvite={(uid) => inviteMember(uid)}
+                initialView="addMembers"
+                mode="addMembers"
+                groupId={groupId}
             />
 
-            {selectedMessage && (
+            {isMessageInfoOpen && (messageInfoMessage || selectedMessage) && (
                 <MessageInfoModal
                     isOpen={isMessageInfoOpen}
-                    onClose={() => setIsMessageInfoOpen(false)}
-                    messageId={selectedMessage.id}
-                    messageContent={selectedMessage.text}
+                    onClose={() => {
+                        setIsMessageInfoOpen(false);
+                        setMessageInfoMessage(null);
+                    }}
+                    message={messageInfoMessage || selectedMessage}
+                    messageId={(messageInfoMessage || selectedMessage)!.id}
+                    messageContent={(messageInfoMessage || selectedMessage)!.text || (messageInfoMessage || selectedMessage)!.text_content || ""}
+                    groupId={groupId}
+                    isGroup={true}
+                    currentUserId={currentUser?.id || activeProfile?.id}
                 />
             )}
+
+            <DeleteMessageModal
+                open={isDeleteModalOpen}
+                onOpenChange={setIsDeleteModalOpen}
+                count={1}
+                onDeleteForMe={() => {
+                    if (deleteTargetMessage) {
+                        handleDeleteForMe(deleteTargetMessage);
+                    }
+                    setDeleteTargetMessage(null);
+                }}
+                onDeleteForEveryone={() => {
+                    if (deleteTargetMessage) {
+                        handleDeleteForEveryone(deleteTargetMessage);
+                    }
+                    setDeleteTargetMessage(null);
+                }}
+                isSender={Boolean(
+                    deleteTargetMessage &&
+                    (deleteTargetMessage.sender === "me" ||
+                     deleteTargetMessage.senderId === (currentUser?.id || currentUser?.user_id || activeProfile?.id) ||
+                     deleteTargetMessage.senderId === "me")
+                )}
+            />
 
 
 
             {previewMedia && (
-                <MediaPreviewModal
+                <MediaDetailViewer
                     isOpen={!!previewMedia}
                     onClose={() => setPreviewMedia(null)}
-                    mediaUrl={previewMedia.url}
-                    mediaType={previewMedia.type}
-                    fileName={previewMedia.name || "media"}
+                    items={
+                        previewMedia.mediaList && previewMedia.mediaList.length > 0
+                            ? previewMedia.mediaList
+                            : [
+                                  {
+                                      url: previewMedia.url,
+                                      type: previewMedia.type,
+                                      name: previewMedia.name,
+                                  },
+                              ]
+                    }
+                    initialIndex={previewMedia.initialIndex ?? 0}
                 />
             )}
 

@@ -21,29 +21,14 @@ export function UnavailableContentCard({
   return (
     <div
       className={cn(
-        "flex flex-col justify-start items-start gap-1 w-full max-w-[280px]",
-        !embedded && (
-          isMe
-            ? "bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[12px] px-[16px] py-[12px]"
-            : "bg-chat-bubble-received-bg text-[var(--foreground)] rounded-[12px] px-[16px] py-[12px]"
-        ),
+        "w-64 p-2.5 rounded-2xl border border-[var(--ds-border)] flex flex-col justify-start items-start gap-1 bg-transparent",
         className
       )}
     >
-      <div
-        className={cn(
-          "text-xs font-semibold leading-4",
-          isMe ? "text-white" : "text-foreground"
-        )}
-      >
+      <div className="text-[var(--ds-text-primary)] text-xs font-normal font-['DM_Sans'] leading-4">
         {title}
       </div>
-      <div
-        className={cn(
-          "text-[11px] font-normal leading-snug",
-          isMe ? "text-white/80" : "text-muted-foreground"
-        )}
-      >
+      <div className="self-stretch text-[var(--ds-text-secondary)] text-[10px] font-normal font-['DM_Sans'] leading-3">
         {message}
       </div>
     </div>
