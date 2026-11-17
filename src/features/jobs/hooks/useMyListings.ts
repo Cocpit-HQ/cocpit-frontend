@@ -53,7 +53,7 @@ export const useMyListings = (initialStatus: string = 'All') => {
 
   // Extract latest counts from the first page (or default fallback)
   const counts: ListingsCounts = useMemo(() => {
-    return data?.pages[0]?.counts ?? { all: 0, active: 0, closed: 0, draft: 0, inReview: 0 };
+    return data?.pages[0]?.counts ?? { all: 0, active: 0, closed: 0, draft: 0, inReview: 0, rejected: 0 };
   }, [data]);
 
   const loadMore = useCallback(() => {

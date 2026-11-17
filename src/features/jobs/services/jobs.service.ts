@@ -1086,6 +1086,8 @@ export const getMyListings = async (
       id: job.job_id,
       title: job.title,
       status: job.status,
+      moderation_status: job.moderation_status,
+      rejection_reason: job.rejection_reason,
       posted_at: getRelativeTime(job.published_at || job.created_at),
       published_at: job.published_at,
       created_at: job.created_at,
@@ -1111,12 +1113,12 @@ export const getMyListings = async (
 
     const nextCursor = responseData.nextCursor || null;
     const hasMore = responseData.hasMore ?? false;
-    const counts: ListingsCounts = responseData.counts || { all: 0, active: 0, closed: 0, draft: 0, inReview: 0 };
+    const counts: ListingsCounts = responseData.counts || { all: 0, active: 0, closed: 0, draft: 0, inReview: 0, rejected: 0 };
 
     return { data: mapped, nextCursor, hasMore, counts };
   } catch (error) {
     console.error("Failed to fetch listings:", error);
-    return { data: [], nextCursor: null, hasMore: false, counts: { all: 0, active: 0, closed: 0, draft: 0, inReview: 0 } as ListingsCounts };
+    return { data: [], nextCursor: null, hasMore: false, counts: { all: 0, active: 0, closed: 0, draft: 0, inReview: 0, rejected: 0 } as ListingsCounts };
   }
 };
 

@@ -31,7 +31,10 @@ const getMobileStatusColor = (status?: string) => {
       return 'text-ds-success';
     case 'IN REVIEW':
     case 'IN_REVIEW':
+    case 'UNDER_REVIEW':
       return 'text-ds-accent';
+    case 'REJECTED':
+      return 'text-ds-error';
     case 'CLOSED':
     case 'CLOSE':
       return 'text-ds-warning';
@@ -47,7 +50,10 @@ const getStatusColor = (status?: string) => {
       return 'text-ds-success';
     case 'IN REVIEW':
     case 'IN_REVIEW':
+    case 'UNDER_REVIEW':
       return 'text-ds-accent';
+    case 'REJECTED':
+      return 'text-ds-error';
     case 'CLOSED':
     case 'CLOSE':
       return 'text-ds-warning';
@@ -58,12 +64,12 @@ const getStatusColor = (status?: string) => {
 };
 
 export const ListingsTab: React.FC<ListingsTabProps> = ({ 
-  listings,
-  targetJobId, 
+  listings, 
+  targetJobId,
   hasMore = false, 
   isFetchingMore = false, 
   loadMore, 
-  counts = { all: 0, active: 0, closed: 0, draft: 0, inReview: 0 },
+  counts = { all: 0, active: 0, closed: 0, draft: 0, inReview: 0, rejected: 0 },
   statusFilter, 
   onStatusFilterChange, 
   onSelectListing,
@@ -118,13 +124,14 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
     return () => clearTimeout(timer);
   }, [targetJobId, listings]);
 
-  // Sub-filter tabs from Figma spec
+  // Sub-filter tabs (Figma: All, Active, Closed, In Review, Draft, Rejected)
   const filterChips = [
     { label: 'All', key: 'All', count: counts.all },
     { label: 'Active', key: 'Active', count: counts.active },
     { label: 'Closed', key: 'Close', count: counts.closed },
     { label: 'In Review', key: 'In Review', count: counts.inReview },
-    { label: 'Draft', key: 'Draft', count: counts.draft }
+    { label: 'Draft', key: 'Draft', count: counts.draft },
+    { label: 'Rejected', key: 'Rejected', count: counts.rejected }
   ];
 
   const getEmptyStateContent = () => {
@@ -141,7 +148,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         description: 'Jobs that are no longer accepting applications will appear here.',
       };
     }
-    if (s === 'in review' || s === 'in_review') {
+    if (s === 'in review' || s === 'in_review' || s === 'under_review') {
       return {
         title: 'No jobs in review',
         description: 'Jobs currently undergoing review will appear here.',
@@ -153,6 +160,12 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         description: 'Jobs saved as drafts will appear here.',
       };
     }
+    if (s === 'rejected') {
+      return {
+        title: 'No rejected jobs',
+        description: 'Jobs that were rejected by admin will appear here.',
+      };
+    }
     return {
       title: 'No active jobs yet',
       description: 'Your published and active job listings will appear here.',
@@ -160,16 +173,25 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
   };
 
   const emptyContent = getEmptyStateContent();
+
   const getCurrentTabInfo = () => {
     const s = statusFilter.toLowerCase();
     if (s === 'active') return { title: 'Active Jobs', count: counts?.active ?? 0 };
     if (s === 'close' || s === 'closed') return { title: 'Closed Jobs', count: counts?.closed ?? 0 };
     if (s === 'in review' || s === 'in_review') return { title: 'In Review Jobs', count: counts?.inReview ?? 0 };
     if (s === 'draft' || s === 'drafts') return { title: 'Draft Jobs', count: counts?.draft ?? 0 };
+    if (s === 'rejected') return { title: 'Rejected Jobs', count: counts?.rejected ?? 0 };
     return { title: 'All Jobs', count: counts?.all ?? listings.length };
   };
 
-  const { title: tabTitle, count: tabCount } = getCurrentTabInfo();
+  const { title: tabTitle } = getCurrentTabInfo();
+
+  const currentCount = filterChips.find(
+    c => c.key.toLowerCase() === statusFilter.toLowerCase() ||
+         (c.key === 'Close' && statusFilter.toLowerCase() === 'closed') ||
+         (c.key === 'Draft' && statusFilter.toLowerCase() === 'drafts') ||
+         (c.key === 'Rejected' && statusFilter.toLowerCase() === 'rejected')
+  )?.count || counts.all || listings.length;
 
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-4 font-dm-sans">
@@ -182,6 +204,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
             ? 'Draft jobs'
             : statusFilter.toLowerCase() === 'in review' || statusFilter.toLowerCase() === 'in_review'
             ? 'In review jobs'
+            : statusFilter.toLowerCase() === 'rejected'
+            ? 'Rejected jobs'
             : `${statusFilter} jobs`}
         </span>
         <button
@@ -196,31 +220,32 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         </button>
       </div>
 
-      {/* Desktop Section Header: All Jobs & Total jobs (Desktop only) */}
+      {/* Desktop Section Header: All Jobs & Total jobs */}
       <div className="hidden md:flex w-full flex-col items-start gap-1">
         <h3 className="text-ds-text-primary ds-text-body-1 font-medium">
           {tabTitle}
         </h3>
         <span className="text-ds-text-secondary ds-text-small font-normal">
-          Total jobs - {tabCount}
+          Total jobs - {currentCount}
         </span>
       </div>
 
-      {/* Desktop Sub-filter tabs row (Desktop only) */}
+      {/* Desktop Sub-filter tabs row (Clean text with active orange underline) */}
       <div className="hidden md:flex w-full items-center justify-between select-none">
-        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar h-9">
+        <div className="flex items-center gap-6 overflow-x-auto no-scrollbar h-9">
           {filterChips.map((chip) => {
             const isSelected =
               statusFilter.toLowerCase() === chip.key.toLowerCase() ||
               (chip.key === 'Close' && statusFilter.toLowerCase() === 'closed') ||
-              (chip.key === 'Draft' && statusFilter.toLowerCase() === 'drafts');
+              (chip.key === 'Draft' && statusFilter.toLowerCase() === 'drafts') ||
+              (chip.key === 'Rejected' && statusFilter.toLowerCase() === 'rejected');
 
             return (
               <button
                 type="button"
                 key={chip.key}
                 onClick={() => onStatusFilterChange(chip.key)}
-                className={`relative h-9 px-3 py-1.5 flex flex-col justify-center items-center text-base font-medium font-dm-sans transition-colors whitespace-nowrap cursor-pointer shrink-0 focus:outline-none ${
+                className={`relative h-9 px-1 py-1.5 flex flex-col justify-center items-center text-base font-medium font-dm-sans transition-colors whitespace-nowrap cursor-pointer shrink-0 focus:outline-none bg-transparent border-none ${
                   isSelected ? 'text-ds-text-primary' : 'text-ds-text-secondary hover:text-ds-text-primary'
                 }`}
               >
@@ -234,8 +259,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         </div>
       </div>
 
-      {/* Job Card List */}
-      <div className="w-full flex flex-col gap-0 md:gap-3">
+      {/* Job listings container */}
+      <div className="w-full flex flex-col">
         {isLoading ? (
           [1, 2, 3].map((n) => (
             <div
@@ -260,27 +285,25 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
             </div>
           ))
         ) : listings.length === 0 && !isFetchingMore ? (
-          <div className="w-full max-w-[800px] min-h-[324px] pt-[60px] pb-[120px] flex flex-col justify-center items-center gap-2 select-none self-stretch animate-in fade-in duration-200">
-            {/* IconFrame: 64x64px, padding 12px, bg #1A1A20 (--ds-surface-1), rounded-full */}
-            <div className="w-16 h-16 p-3 bg-ds-surface-1 rounded-full flex items-center justify-center shrink-0">
-              <BriefcaseIcon size={40} className="w-10 h-10 text-ds-text-muted shrink-0" fill="currentColor" />
+          <div className="w-full py-16 flex flex-col items-center justify-center gap-3 text-center bg-ds-surface-1 rounded-2xl border border-ds-border my-2">
+            <div className="size-12 rounded-full bg-ds-surface-2 border border-ds-border flex items-center justify-center text-ds-accent">
+              <Icon icon="solar:magnifer-linear" className="size-6" />
             </div>
-
-            {/* Title: 16px semibold (600), line-height 24px, color #FFECE6 (--ds-text-primary) */}
-            <h3 className="text-ds-text-primary ds-text-body-2 font-semibold font-dm-sans leading-6 text-center">
-              {emptyContent.title}
-            </h3>
-
-            {/* Subtitle: 14px regular (400), line-height 20px, color #B8ADA8 (--ds-text-secondary), max-w-[306px] */}
-            <p className="max-w-[306px] text-ds-text-secondary ds-text-secondary font-normal font-dm-sans leading-5 text-center">
-              {emptyContent.description}
-            </p>
+            <div className="flex flex-col items-center gap-1 max-w-sm px-4">
+              <h4 className="text-ds-text-primary ds-text-body-1 font-medium">{emptyContent.title}</h4>
+              <p className="text-ds-text-secondary ds-text-small font-normal">
+                {emptyContent.description}
+              </p>
+            </div>
           </div>
         ) : (
           listings.map((item, index) => {
             const statusUpper = (item.status || 'DRAFT').toUpperCase();
-            const isActive = statusUpper === 'ACTIVE';
-            const isDraft = statusUpper === 'DRAFT';
+            const moderationUpper = (item.moderation_status || '').toUpperCase();
+            const isRejected = statusUpper === 'REJECTED' || moderationUpper === 'REJECTED';
+            const isUnderReview = !isRejected && (statusUpper === 'UNDER_REVIEW' || statusUpper === 'IN_REVIEW' || statusUpper === 'IN REVIEW' || moderationUpper === 'UNDER_REVIEW');
+            const isActive = !isRejected && !isUnderReview && statusUpper === 'ACTIVE';
+            const isDraft = !isRejected && !isUnderReview && statusUpper === 'DRAFT';
             const statusColor = getStatusColor(item.status);
             const isMenuOpen = activeMenuJobId === item.id;
 
@@ -291,7 +314,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                   onClick={() => onSelectListing && onSelectListing(item)}
                   id={`job-listing-mobile-${item.id}`}
                   className={cn(
-                    "flex md:hidden w-full h-16 py-2 px-0 justify-between items-center gap-4 cursor-pointer select-none transition-colors duration-300",
+                    "flex md:hidden w-full h-16 py-2 px-0 justify-between items-center gap-4 cursor-pointer select-none transition-colors duration-300 border-b border-ds-border",
                     targetJobId === item.id && "bg-ds-surface-1/50 rounded-lg px-2 ring-1 ring-ds-border"
                   )}
                 >
@@ -301,7 +324,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                       {item.title}
                     </h4>
                     <span className="text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate">
-                      {formatPostedTime(item.posted_at || item.last_edited)}
+                      {formatPostedTime(item.published_at || item.posted_at || item.last_edited)}
                     </span>
                   </div>
 
@@ -310,193 +333,207 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                     className="flex flex-col justify-center items-end gap-2 shrink-0 h-10"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase ${getMobileStatusColor(item.status)}`}>
-                      {statusUpper === 'CLOSED' ? 'CLOSED' : statusUpper === 'IN_REVIEW' ? 'IN REVIEW' : statusUpper}
+                    <span
+                      className={cn(
+                        "font-dm-sans font-normal text-xs leading-4 capitalize",
+                        getMobileStatusColor(item.status)
+                      )}
+                    >
+                      {item.status?.toLowerCase().replace(/_/g, ' ') || 'draft'}
                     </span>
-
                     <button
                       type="button"
+                      aria-label="More actions"
                       onClick={(e) => {
                         e.stopPropagation();
                         setMobileMenuJob(item);
                       }}
-                      className="w-5 h-5 flex items-center justify-end text-ds-text-secondary hover:text-ds-text-primary focus:outline-none transition-colors shrink-0 cursor-pointer bg-transparent border-none p-0"
-                      aria-label="Job actions"
+                      className="p-0 text-ds-text-secondary hover:text-ds-text-primary cursor-pointer bg-transparent border-0 outline-none flex items-center justify-center"
                     >
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="5" cy="10" r="1.5" fill="currentColor" />
-                        <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-                        <circle cx="15" cy="10" r="1.5" fill="currentColor" />
-                      </svg>
+                      <MenuIcon size={16} className="text-ds-text-secondary" />
                     </button>
                   </div>
                 </div>
 
-                {/* Desktop Job Card: Preserved 100% Unchanged */}
-                <div
-                  onClick={() => onSelectListing && onSelectListing(item)}
+                {/* Desktop Job Row (Exact Figma Flat Row with Bottom Border) */}
+                <div 
                   id={`job-listing-${item.id}`}
+                  onClick={() => {
+                    if (!isUnderReview && !isRejected && onSelectListing) {
+                      onSelectListing(item);
+                    }
+                  }}
                   className={cn(
-                    "hidden md:flex w-full max-w-[800px] min-h-[129px] pr-3 border-b border-ds-border flex-col justify-center items-start cursor-pointer select-none transition-colors duration-300",
-                    targetJobId === item.id && "bg-ds-surface-1/50 rounded-lg px-3 ring-1 ring-ds-border"
+                    "hidden md:flex w-full max-w-[800px] pr-3 border-b border-ds-border flex-col justify-center items-start select-none transition-colors duration-200",
+                    isUnderReview || isRejected ? 'min-h-[76px] pb-3 cursor-default' : 'min-h-[129px] cursor-pointer',
+                    targetJobId === item.id && "bg-ds-surface-1/40 px-3 rounded-lg"
                   )}
                 >
-                {/* Frame 2609981: Top Row */}
-                <div className="w-full h-[68px] py-2 flex flex-row items-center justify-between gap-4 self-stretch">
-                  {/* Frame 2609064: Title + Date */}
-                  <div className="flex-1 h-[52px] flex flex-col justify-center items-start gap-2 self-stretch min-w-0">
-                    <h4 className="w-full h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 line-clamp-1 truncate flex items-center">
-                      {item.title}
-                    </h4>
-                    <span className="h-5 text-ds-text-secondary text-sm font-normal font-dm-sans leading-5 truncate flex items-center">
-                      {formatPostedTime(item.posted_at || item.last_edited)}
-                    </span>
-                  </div>
+                  {/* Top Row: Title, Date, Status, 3-dots */}
+                  <div className="w-full h-[68px] py-2 flex flex-row items-center justify-between gap-4 self-stretch">
+                    <div className="flex-1 h-[52px] flex flex-col justify-center items-start gap-1 self-stretch min-w-0">
+                      <h4 className="w-full text-ds-text-primary text-base font-semibold font-dm-sans leading-6 line-clamp-1 truncate flex items-center">
+                        {item.title}
+                      </h4>
+                      <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 truncate flex items-center">
+                        {item.posted_at || item.last_edited ? formatPostedTime(item.published_at || item.posted_at || item.last_edited) : 'Posted recently'}
+                      </span>
+                    </div>
 
-                  {/* Frame 2609239: Status & Action on right */}
-                  <div
-                    className="relative w-[59px] h-5 flex flex-row items-center gap-2 shrink-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span className={`text-[10px] font-normal font-dm-sans leading-3 uppercase flex items-center ${statusColor}`}>
-                      {statusUpper === 'CLOSED' ? 'CLOSED' : statusUpper}
-                    </span>
+                    <div
+                      className="relative min-w-[59px] h-5 flex flex-row items-center justify-end gap-2 shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span className={`text-[11px] font-semibold font-dm-sans leading-3 uppercase flex items-center whitespace-nowrap ${
+                        isRejected ? 'text-ds-error' : statusColor
+                      }`}>
+                        {isRejected ? 'REJECTED' : statusUpper === 'CLOSED' ? 'CLOSE' : isUnderReview ? 'IN REVIEW' : statusUpper}
+                      </span>
 
-                    {isActive ? (
-                      <div className="relative">
+                      {isActive ? (
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuJobId(isMenuOpen ? null : item.id);
+                            }}
+                            className="w-5 h-5 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary focus:outline-none transition-colors shrink-0 cursor-pointer bg-transparent border-none p-0"
+                            aria-label="Job actions"
+                          >
+                            <MenuIcon className="w-5 h-5 text-ds-text-secondary hover:text-ds-text-primary transition-colors shrink-0" />
+                          </button>
+
+                          {isMenuOpen && (
+                            <div
+                              ref={menuRef}
+                              className="absolute right-0 top-7 z-50 w-[110px] p-3 bg-ds-surface-1 border border-ds-border rounded-[8px] shadow-2xl flex flex-col items-start gap-4 text-left select-none animate-in fade-in zoom-in-95 duration-100"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuJobId(null);
+                                  onSendOffer && onSendOffer(item);
+                                }}
+                                className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
+                              >
+                                Send offer
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuJobId(null);
+                                  setJobToClose(item.id);
+                                }}
+                                className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
+                              >
+                                Close Job
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuJobId(null);
+                                  setJobToDelete(item.id);
+                                }}
+                                className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
+                              >
+                                Delete job
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : !isRejected ? (
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setActiveMenuJobId(isMenuOpen ? null : item.id);
+                            setJobToDelete(item.id);
                           }}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          className="w-5 h-5 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary focus:outline-none transition-colors shrink-0 cursor-pointer"
-                          aria-label="Job actions"
+                          className="w-5 h-5 flex items-center justify-center text-ds-error hover:opacity-80 focus:outline-none transition-colors shrink-0 cursor-pointer bg-transparent border-none p-0"
+                          aria-label="Delete job"
                         >
-                          <MenuIcon className="w-5 h-5 text-ds-text-secondary hover:text-ds-text-primary transition-colors shrink-0" />
+                          <DeleteIcon className="w-5 h-5 text-ds-error shrink-0" />
                         </button>
+                      ) : null}
+                    </div>
+                  </div>
 
-                        {/* Dropdown Menu for Active Listing matching Figma 'Active three dot' */}
-                        {isMenuOpen && (
-                          <div
-                            ref={menuRef}
-                            className="absolute right-0 top-7 z-50 w-[92px] p-3 bg-ds-bg border border-ds-border rounded-[8px] shadow-2xl flex flex-col items-start gap-4 text-left select-none animate-in fade-in zoom-in-95 duration-100"
-                            onClick={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuJobId(null);
-                                onSendOffer && onSendOffer(item);
-                              }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
-                            >
-                              Send offer
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuJobId(null);
-                                setJobToClose(item.id);
-                              }}
-                              className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
-                            >
-                              Close Job
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuJobId(null);
-                                setJobToDelete(item.id);
-                              }}
-                              className="text-ds-text-secondary hover:text-ds-text-primary text-sm font-normal font-dm-sans leading-5 transition-colors cursor-pointer text-left whitespace-nowrap p-0 bg-transparent border-0 outline-none"
-                            >
-                              Delete job
-                            </button>
-                          </div>
-                        )}
+                  {/* Rejection Note Banner */}
+                  {isRejected && item.rejection_reason && (
+                    <div className="w-full my-1.5 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-ds-error font-dm-sans flex items-start gap-1.5">
+                      <Icon icon="solar:danger-triangle-linear" className="w-4 h-4 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold">Listing Rejected by Admin: </span>
+                        <span className="text-ds-text-secondary">{item.rejection_reason}</span>
                       </div>
-                    ) : (
+                    </div>
+                  )}
+
+                  {/* Bottom Row: 3 metric columns + View Applicants CTA */}
+                  {!isUnderReview && !isRejected && (
+                    <div className="w-full h-[60px] flex flex-row justify-center items-center gap-3 self-stretch">
+                      <div className="flex-1 h-[60px] flex flex-row items-center gap-3 min-w-0">
+                        {/* Applications */}
+                        <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-1 rounded-3xl min-w-0">
+                          <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                            {item.applicants_count || 0}
+                          </span>
+                          <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                            Applications
+                          </span>
+                        </div>
+
+                        {/* Shortlisted */}
+                        <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-1 rounded-3xl min-w-0">
+                          <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                            {item.shortlisted_count || 0}
+                          </span>
+                          <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                            Shortlisted
+                          </span>
+                        </div>
+
+                        {/* Offer sent */}
+                        <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-1 rounded-3xl min-w-0">
+                          <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
+                            {item.offers_count || 0}
+                          </span>
+                          <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
+                            Offer sent
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* View applicants / Edit draft CTA */}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setJobToDelete(item.id);
+                          if (isDraft) {
+                            if (onSelectListing) {
+                              onSelectListing(item);
+                            }
+                          } else if (onViewApplicants) {
+                            onViewApplicants(item);
+                          } else if (onSelectListing) {
+                            onSelectListing(item);
+                          }
                         }}
-                        className="w-5 h-5 flex items-center justify-center text-ds-error hover:opacity-80 focus:outline-none transition-colors shrink-0 cursor-pointer"
-                        aria-label="Delete job"
+                        className="w-[143px] min-w-[143px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary rounded-full text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap focus:outline-none transition-all active:scale-95 shadow-sm cursor-pointer shrink-0 border-none outline-none"
                       >
-                        <DeleteIcon className="w-5 h-5 text-ds-error shrink-0" />
+                        {isDraft ? 'Edit draft' : 'View applicants'}
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-
-                {/* Frame 2609982: Bottom Row */}
-                <div className="w-full h-[60px] flex flex-row justify-center items-center gap-3 self-stretch">
-                  {/* Frame 2609980: 3 metric columns */}
-                  <div className="flex-1 h-[60px] flex flex-row items-center gap-3 min-w-0">
-                    {/* Frame 2608617: Applications */}
-                    <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
-                      <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
-                        {item.applicants_count || 0}
-                      </span>
-                      <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
-                        Applications
-                      </span>
-                    </div>
-
-                    {/* Frame 2609065: Shortlisted */}
-                    <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
-                      <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
-                        {item.shortlisted_count || 0}
-                      </span>
-                      <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
-                        Shortlisted
-                      </span>
-                    </div>
-
-                    {/* Frame 2609240: Offer sent */}
-                    <div className="flex-1 h-[60px] py-2 flex flex-col justify-center items-start gap-2 rounded-3xl min-w-0">
-                      <span className="text-ds-text-primary text-sm font-semibold font-dm-sans leading-5">
-                        {item.offers_count || 0}
-                      </span>
-                      <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
-                        Offer sent
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* View applicants / Edit draft CTA */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onViewApplicants) {
-                        onViewApplicants(item);
-                      } else if (onSelectListing) {
-                        onSelectListing(item);
-                      }
-                    }}
-                    className="w-[143px] min-w-[143px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary rounded-full text-base font-medium font-dm-sans leading-6 flex items-center justify-center whitespace-nowrap focus:outline-none transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
-                  >
-                    {isDraft ? 'Edit draft' : 'View applicants'}
-                  </button>
-                </div>
-              </div>
               </React.Fragment>
             );
           })
         )}
 
         {/* Infinite scroll loader trigger */}
-        {hasMore && (
+        {hasMore ? (
           <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center">
             {isFetchingMore ? (
               <div className="flex items-center gap-2 text-ds-accent font-medium ds-text-small font-dm-sans">
@@ -507,27 +544,27 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
               <div className="h-4 w-full" />
             )}
           </div>
-        )}
+        ) : listings.length > 0 ? (
+          <div className="w-full py-4 flex justify-center items-center">
+            <span className="text-ds-text-secondary ds-text-meta bg-ds-surface-1 border border-ds-border px-3 py-1 rounded-full">
+              You've reached the end of your listings.
+            </span>
+          </div>
+        ) : null}
       </div>
 
-      {/* Mobile Filter Bottom Sheet Drawer: Exact Figma (393px x 232px, bg var(--ds-bg), r: 8px 8px 0 0) */}
+      {/* Mobile Filter Drawer Sheet: Exact Figma (393px x 260px) */}
       {isFilterDrawerOpen && (
         <div className="fixed inset-0 z-[100] md:hidden touch-none">
-          {/* Overlay backdrop */}
           <div
             onClick={() => setIsFilterDrawerOpen(false)}
             className="fixed inset-0 bg-ds-bg/80 backdrop-blur-sm animate-in fade-in duration-200"
           />
-
-          {/* Drawer Sheet */}
           <div className="fixed bottom-0 left-0 right-0 z-[101] flex justify-center">
-            <div className="w-full max-w-[393px] h-[232px] bg-ds-bg border-t border-x border-ds-border rounded-t-[8px] p-[8px_12px_24px] flex flex-col items-start gap-4 box-border shadow-2xl animate-in slide-in-from-bottom duration-200">
-              {/* Drag Handle (pepicons-pop:line-x 50px x 3px var(--ds-text-muted)) */}
+            <div className="w-full max-w-[393px] h-[300px] bg-ds-bg border-t border-x border-ds-border rounded-t-[8px] p-[8px_12px_24px] flex flex-col items-start gap-4 box-border shadow-2xl animate-in slide-in-from-bottom duration-200">
               <div className="w-full h-5 flex flex-col items-center justify-center shrink-0">
                 <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
               </div>
-
-              {/* Filter Options List */}
               <div className="self-stretch flex flex-col items-start gap-4">
                 {[
                   { label: 'All jobs', key: 'All' },
@@ -535,11 +572,13 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                   { label: 'In review', key: 'In Review' },
                   { label: 'Closed', key: 'Close' },
                   { label: 'Draft', key: 'Draft' },
+                  { label: 'Rejected', key: 'Rejected' },
                 ].map((option) => {
                   const isSelected =
                     statusFilter.toLowerCase() === option.key.toLowerCase() ||
                     (option.key === 'Close' && statusFilter.toLowerCase() === 'closed') ||
-                    (option.key === 'Draft' && statusFilter.toLowerCase() === 'drafts');
+                    (option.key === 'Draft' && statusFilter.toLowerCase() === 'drafts') ||
+                    (option.key === 'Rejected' && statusFilter.toLowerCase() === 'rejected');
 
                   return (
                     <button
@@ -563,24 +602,18 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         </div>
       )}
 
-      {/* Mobile 3-Dot More Actions Drawer: Exact Figma (393px x 160px, bg var(--ds-bg), r: 8px 8px 0 0) */}
+      {/* Mobile 3-Dot More Actions Drawer: Exact Figma (393px x 160px) */}
       {mobileMenuJob && (
         <div className="fixed inset-0 z-[100] md:hidden touch-none">
-          {/* Overlay backdrop */}
           <div
             onClick={() => setMobileMenuJob(null)}
             className="fixed inset-0 bg-ds-bg/80 backdrop-blur-sm animate-in fade-in duration-200"
           />
-
-          {/* Drawer Sheet */}
           <div className="fixed bottom-0 left-0 right-0 z-[101] flex justify-center">
             <div className="w-full max-w-[393px] h-[160px] bg-ds-bg border-t border-x border-ds-border rounded-t-[8px] p-[8px_12px_24px] flex flex-col items-start gap-4 box-border shadow-2xl animate-in slide-in-from-bottom duration-200">
-              {/* Drag Handle (pepicons-pop:line-x 50px x 3px var(--ds-text-muted)) */}
               <div className="w-full h-5 flex flex-col items-center justify-center shrink-0">
                 <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
               </div>
-
-              {/* Action Buttons List */}
               <div className="self-stretch flex flex-col items-start gap-4">
                 {(mobileMenuJob.status || '').toUpperCase() === 'ACTIVE' && (
                   <>

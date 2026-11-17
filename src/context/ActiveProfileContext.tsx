@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { trackActorMetric, setPreservedUserActorInStorage } from "@/lib/actor-context";
 import { getActorContext, setActorContext } from "@/services/api/auth";
 import { Company } from "@/services/organization.service";
+import { toast } from "sonner";
 
 type ProfileType = "USER" | "COMPANY";
 
@@ -22,6 +23,8 @@ interface ActiveProfile {
     viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean; color?: string; description?: string } | null;
     verification_status?: string;
     is_identity_verified?: boolean;
+    rejection_reason?: string;
+    review_notes?: string;
 }
 
 interface ActiveProfileContextType {
@@ -58,6 +61,8 @@ const createUserProfile = (user: any): ActiveProfile => {
         avatar_url: user.image || undefined,
         verification_status: user.verification_status || (isVerified ? "VERIFIED" : undefined),
         is_identity_verified: isVerified,
+        rejection_reason: user.rejection_reason || (user as any).rejectionReason || undefined,
+        review_notes: user.review_notes || (user as any).reviewNotes || undefined,
     };
 };
 
@@ -82,6 +87,8 @@ const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: str
         viewer_role_data: company.viewer_role_data || null,
         verification_status: company.verification_status,
         is_identity_verified: isVerified,
+        rejection_reason: (company as any).rejection_reason || (company as any).rejectionReason || undefined,
+        review_notes: (company as any).review_notes || (company as any).reviewNotes || undefined,
     };
 };
 
@@ -103,7 +110,8 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const companies = bootstrappedCompanies;
     const bootstrapLockRef = React.useRef<string | null>(null);
 
-    const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] | string; is_owner?: boolean; name?: string } | null; role?: string }) => {
+    const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] | string; is_owner?: boolean; name?: string } | null; role?: string; is_suspended?: boolean }) => {
+        if (company.is_suspended) return false;
         if (company.viewer_role_data?.is_owner) return true;
         const roleName = company.viewer_role_data?.name || company.role || '';
         if (!roleName || roleName.toLowerCase().includes('_deleted_')) return false;
@@ -452,7 +460,14 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 if (type !== "COMPANY") return;
 
                 const targetCompany = companies.find((company) => (company.org_id || company.company_id) === id);
-                if (!targetCompany || !canSwitchToCompany(targetCompany)) return;
+                if (!targetCompany) return;
+
+                if ((targetCompany as any).is_suspended) {
+                    toast.error("This organization has been suspended and cannot be accessed.");
+                    return;
+                }
+
+                if (!canSwitchToCompany(targetCompany)) return;
 
                 await setActorContext({
                     type: "ORGANIZATION",
@@ -466,9 +481,11 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 setActiveProfile(companyProfile);
                 trackActorMetric("switch_complete", { type: "COMPANY", id: companyProfile.id });
                 window.location.href = `/organization/${targetCompany.slug}`;
-            } catch (error) {
+            } catch (error: any) {
                 console.error("[ActorContext] Failed to switch actor.", error);
                 trackActorMetric("switch_error", { type, id });
+                const errorMsg = error?.response?.data?.error || error?.response?.data?.message || "Failed to switch organization account.";
+                toast.error(errorMsg);
             }
         };
 

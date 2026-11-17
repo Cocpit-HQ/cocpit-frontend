@@ -552,13 +552,73 @@ export const parseNotificationText = (
     };
   }
 
+  // Organization suspension
+  if (type === 'organization_suspension' || /organization .* has been suspended/i.test(rawNotifText)) {
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const orgName = (meta.orgName as string) || 'Organization';
+    const reason = (meta.reason as string) || '';
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      prefixText: 'Your organization ',
+      boldTarget: orgName,
+      middleText: ' has been suspended',
+      bodyText: reason ? `Reason: ${reason}` : '',
+      targetUrl: '/settings/organizations',
+    };
+  }
+
+  // Job submitted: "Your job [Job Title] has been submitted for review."
+  const isJobSubmitted =
+    type === 'job_submitted' ||
+    /submitted for review/i.test(rawNotifText);
+
+  if (isJobSubmitted) {
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const jobTitleMatch = rawNotifText.match(/Your job\s+[“"']?(.*?)[”"']?\s+has been submitted/i);
+    let jobTitle = (meta.title as string) || (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
+    jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
+    const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
+    const targetUrl = jobId ? `/jobs?tab=My+Listings&filter=In+Review&jobId=${jobId}` : '/jobs?tab=My+Listings&filter=In+Review';
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: jobTitle,
+      prefixText: 'Your job ',
+      middleText: undefined,
+      bodyText: ' has been submitted for review.',
+      targetUrl,
+    };
+  }
+
   // Job approved: "Your job [Job Title] is now live."
   const isJobApproved =
     type === 'job_approved' ||
+    type === 'job_moderation_approved' ||
     type === 'job_live' ||
     type === 'job_published' ||
-    type === 'job_rejected' ||
-    /Your job.+?is now live/i.test(rawNotifText);
+    /Your job.+?is now live/i.test(rawNotifText) ||
+    /has been approved and is now live/i.test(rawNotifText);
 
   if (isJobApproved) {
     const ext = notification as unknown as ExtendedNotificationFields;
@@ -571,13 +631,13 @@ export const parseNotificationText = (
       }
     } catch {}
 
-    const jobTitleMatch = rawNotifText.match(/Your job\s+[“"']?(.*?)[”"']?\s+is now live/i);
-    let jobTitle = (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
+    const jobTitleMatch = rawNotifText.match(/(?:Your job posting|Your job)\s+[“"']?(.*?)[”"']?\s+(?:is now live|has been approved)/i);
+    let jobTitle = (meta.title as string) || (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
     jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
     const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
     const targetUrl = jobId
-      ? `/jobs?tab=My+Listings&view=view-listing&jobId=${jobId}&returnTo=/notifications`
-      : '/jobs?tab=My+Listings&returnTo=/notifications';
+      ? `/jobs?tab=My+Listings&filter=Active&view=view-listing&jobId=${jobId}&returnTo=/notifications`
+      : '/jobs?tab=My+Listings&filter=Active&returnTo=/notifications';
 
     return {
       actorName: null,
@@ -585,7 +645,7 @@ export const parseNotificationText = (
       boldTarget: jobTitle,
       prefixText: 'Your job ',
       middleText: undefined,
-      bodyText: ' is now live.',
+      bodyText: rawNotifText.includes('approved') ? ' has been approved and is now live.' : ' is now live.',
       targetUrl,
     };
   }
@@ -593,7 +653,9 @@ export const parseNotificationText = (
   // Job rejected: "Your job [Job Title] wasn’t approved. Reason: [Reason]."
   const isJobRejected =
     type === 'job_rejected' ||
-    /Your job.+?wasn[’']t approved/i.test(rawNotifText);
+    type === 'job_moderation_rejected' ||
+    /wasn[’']t approved/i.test(rawNotifText) ||
+    /was not approved/i.test(rawNotifText);
 
   if (isJobRejected) {
     const ext = notification as unknown as ExtendedNotificationFields;
@@ -606,23 +668,23 @@ export const parseNotificationText = (
       }
     } catch {}
 
-    const jobTitleMatch = rawNotifText.match(/Your job\s+[“"']?(.*?)[”"']?\s+wasn[’']t approved/i);
-    const reasonMatch = rawNotifText.match(/Reason:\s*(.+?)(?:\.|\s*)$/i);
-    let jobTitle = (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
+    const jobTitleMatch = rawNotifText.match(/(?:Your job posting|Your job)\s+[“"']?(.*?)[”"']?\s+was(?:n[’']t|\s+not)\s+approved/i);
+    let jobTitle = (meta.title as string) || (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
     jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
-    const reason = (meta.rejectionReason as string) || (reasonMatch ? reasonMatch[1].trim().replace(/\.$/, '') : 'Not specified');
+    const reasonMatch = rawNotifText.match(/Reason:\s*(.+?)(?:\.|\s*)$/i);
+    const reason = (meta.rejection_reason as string) || (meta.rejectionReason as string) || (reasonMatch ? reasonMatch[1].trim().replace(/\.$/, '') : 'Not specified');
     const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
     const targetUrl = jobId
-      ? `/jobs?tab=My+Listings&view=view-listing&jobId=${jobId}&returnTo=/notifications`
-      : '/jobs?tab=My+Listings&returnTo=/notifications';
+      ? `/jobs?tab=My+Listings&view=view-listing&filter=Rejected&jobId=${jobId}&returnTo=/notifications`
+      : '/jobs?tab=My+Listings&returnTo=/notifications&filter=Rejected';
 
     return {
       actorName: null,
       actorSuffix: null,
       boldTarget: jobTitle,
-      prefixText: 'Your job ',
+      prefixText: 'Your job posting ',
       middleText: undefined,
-      bodyText: ` wasn’t approved. Reason: ${reason}.`,
+      bodyText: ` was not approved. Reason: ${reason}.`,
       targetUrl,
     };
   }
@@ -868,14 +930,59 @@ export const getNotificationRoute = (
     return orgQuery ? `/team${orgQuery}` : '/team';
   }
 
+  // Redirect rejected job notification to My Listings -> Rejected tab with highlight
+  if (
+    type === 'job_rejected' ||
+    type === 'job_moderation_rejected' ||
+    notification.text?.includes('was not approved') ||
+    notification.text?.includes("wasn't approved") ||
+    notification.text?.includes("wasn’t approved")
+  ) {
+    let jobId = notification.reference_id;
+    if (!jobId) {
+      try {
+        if (typeof ext.metadata === 'string') {
+          const parsed = JSON.parse(ext.metadata);
+          jobId = parsed.jobId || parsed.job_id;
+        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+          jobId = (ext.metadata as any).jobId || (ext.metadata as any).job_id;
+        }
+      } catch {}
+    }
+    return jobId
+      ? `/jobs?tab=My+Listings&filter=Rejected&jobId=${jobId}`
+      : '/jobs?tab=My+Listings&filter=Rejected';
+  }
+
+  // Redirect submitted / in-review job notification
+  if (
+    type === 'job_submitted' ||
+    notification.text?.includes('submitted for review')
+  ) {
+    let jobId = notification.reference_id;
+    if (!jobId) {
+      try {
+        if (typeof ext.metadata === 'string') {
+          const parsed = JSON.parse(ext.metadata);
+          jobId = parsed.jobId || parsed.job_id;
+        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+          jobId = (ext.metadata as any).jobId || (ext.metadata as any).job_id;
+        }
+      } catch {}
+    }
+    return jobId
+      ? `/jobs?tab=My+Listings&filter=In+Review&jobId=${jobId}`
+      : '/jobs?tab=My+Listings&filter=In+Review';
+  }
+
   // Redirect approved / live job notification to /jobs dashboard with highlight
   if (
     type === 'job_approved' ||
+    type === 'job_moderation_approved' ||
     type === 'job_live' ||
     type === 'job_published' ||
-    type === 'job_rejected' ||
-    type === 'job_live' ||
     notification.text?.includes('is now live') ||
+    notification.text?.includes('has been approved') ||
     /Your job.+?is now live/i.test(notification.text || '')
   ) {
     let jobId = notification.reference_id;
@@ -890,8 +997,8 @@ export const getNotificationRoute = (
       } catch {}
     }
     return jobId
-      ? `/jobs?tab=My+Listings&view=view-listing&jobId=${jobId}&returnTo=/notifications`
-      : '/jobs?tab=My+Listings&returnTo=/notifications';
+      ? `/jobs?tab=My+Listings&view=view-listing&filter=Active&jobId=${jobId}&returnTo=/notifications`
+      : '/jobs?tab=My+Listings&returnTo=/notifications&filter=Active';
   }
 
   // Candidate personal notification: "You declined the offer from [Company] for [Job Title]"
@@ -968,14 +1075,13 @@ export const getNotificationRoute = (
       : '/profile';
   }
 
-  // SCRUM-1660: Business account status notifications should mark as read without redirecting
   if (
     type === 'company_deactivated' ||
-    type === 'company_deleted' ||
-    type === 'company_reactivated' ||
-    type === 'company_recovered'
+    type === 'organization_suspension' ||
+    type === 'organization_appeal_approved' ||
+    type === 'organization_appeal_rejected'
   ) {
-    return null;
+    return '/settings/organizations';
   }
 
   // Organization Onboarded notification redirects item click to user's personal profile (experience or education section)
@@ -990,6 +1096,31 @@ export const getNotificationRoute = (
     return isInstitution
       ? '/profile?section=education#education-section'
       : '/profile?section=experience#experience-section';
+  }
+
+  if (type === 'company_deleted') {
+    const meta = (notification.metadata as Record<string, unknown>) || {};
+    const canRecover = Boolean(
+      notification.can_recover ??
+      notification.canRecover ??
+      notification.is_owner ??
+      notification.isOwner ??
+      meta.can_recover ??
+      meta.canRecover ??
+      meta.is_owner ??
+      meta.isOwner ??
+      (currentUserId && (meta.owner_id === currentUserId || meta.ownerId === currentUserId))
+    );
+    // Only stakeholders who have the recover option (Owner) are redirected to settings/organizations.
+    // Associated team members cannot recover the deleted company and should NOT be redirected anywhere.
+    return canRecover ? '/settings/organizations' : null;
+  }
+  if (type === 'company_reactivated' || type === 'company_recovered') {
+    const slug =
+      notification.actor_slug ||
+      ((notification.metadata as Record<string, unknown>)?.org_slug as string) ||
+      ((notification.metadata as Record<string, unknown>)?.orgSlug as string);
+    return slug ? `/organization/${slug}` : '/settings/organizations';
   }
 
   return null;

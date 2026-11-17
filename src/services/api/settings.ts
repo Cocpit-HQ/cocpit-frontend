@@ -70,6 +70,9 @@ export interface PrivacySettings {
   followingVisibility?: 'everyone' | 'followers_only' | 'no_one';
   followersVisibility?: 'everyone' | 'followers_only' | 'no_one';
   messagePermission?: 'everyone' | 'followers_only' | 'no_one';
+  is_verified?: boolean;
+  is_identity_verified?: boolean;
+  verification_status?: string;
 }
 
 export const getPrivacySettings = async (companyId?: string): Promise<PrivacySettings> => {
@@ -84,6 +87,9 @@ export const getPrivacySettings = async (companyId?: string): Promise<PrivacySet
     followingVisibility: raw.followingVisibility ?? raw.following_visibility ?? 'everyone',
     followersVisibility: raw.followersVisibility ?? raw.followers_visibility ?? 'everyone',
     messagePermission: raw.messagePermission ?? raw.message_permission ?? 'everyone',
+    is_verified: raw.is_verified ?? raw.is_identity_verified ?? false,
+    is_identity_verified: raw.is_identity_verified ?? raw.is_verified ?? false,
+    verification_status: raw.verification_status || (raw.is_identity_verified ? 'VERIFIED' : 'UNVERIFIED'),
   };
 };
 

@@ -331,7 +331,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
                     ) : (
                       <>
                         <Check className="w-4 h-4" />
-                        {initialData ? "Update Job" : "Post Job"}
+                        {initialData ? "Update & Submit" : "Submit for Verification"}
                       </>
                     )}
                   </button>

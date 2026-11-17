@@ -129,17 +129,36 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                                         </DropdownMenu>
                                     </div>
 
-                                    <div className="mb-4">
-                                        <span
-                                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${status === "Open"
-                                                ? "bg-green-500/10 text-green-500"
-                                                : "bg-red-500/10 text-red-500"
-                                                }`}
-                                        >
-                                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === "Open" ? "bg-green-500" : "bg-red-500"
-                                                }`} />
-                                            {status}
-                                        </span>
+                                    <div className="mb-4 flex flex-col gap-1.5">
+                                        {job.moderation_status === 'UNDER_REVIEW' ? (
+                                            <span className="inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse mr-1.5" />
+                                                Under Review
+                                            </span>
+                                        ) : job.moderation_status === 'REJECTED' ? (
+                                            <div className="space-y-1.5">
+                                                <span className="inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5" />
+                                                    Revision Required
+                                                </span>
+                                                {job.rejection_reason && (
+                                                    <p className="text-xs text-rose-600 dark:text-rose-400 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
+                                                        <strong>Feedback:</strong> {job.rejection_reason}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span
+                                                className={`inline-flex items-center w-fit px-2 py-0.5 rounded text-xs font-medium ${status === "Open"
+                                                    ? "bg-green-500/10 text-green-500"
+                                                    : "bg-red-500/10 text-red-500"
+                                                    }`}
+                                            >
+                                                <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === "Open" ? "bg-green-500" : "bg-red-500"
+                                                    }`} />
+                                                {status}
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">

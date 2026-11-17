@@ -30,6 +30,8 @@ export interface Job {
   applicants_count?: number;
   shortlisted_count?: number;
   offers_count?: number;
+  moderation_status?: 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | string;
+  rejection_reason?: string | null;
 
   // AI Recommendation details
   is_recommended?: boolean;
@@ -106,6 +108,8 @@ export interface JobListing {
   posted_at?: string;
   last_edited?: string;
   status: 'ACTIVE' | 'IN REVIEW' | 'DRAFT' | 'CLOSED' | string;
+  moderation_status?: 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | string;
+  rejection_reason?: string | null;
   company?: string;
   location?: string;
   description?: string;
@@ -131,6 +135,7 @@ export interface ListingsCounts {
   closed: number;
   draft: number;
   inReview: number;
+  rejected: number;
 }
 
 export interface JobOffer {

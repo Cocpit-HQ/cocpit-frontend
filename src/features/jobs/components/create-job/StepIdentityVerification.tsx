@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react';
 import { LeftArrowIcon, TrustShieldIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useMyProfile } from '@/hooks/use-my-profile';
 import { VerifyIdentityModal } from '@/features/settings';
 
 interface StepIdentityVerificationProps {
@@ -19,15 +20,30 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
   title,
 }) => {
   const { activeProfile } = useActiveProfile();
+  const { data: myProfile } = useMyProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
   const router = useRouter();
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
+  // Check if current user or company is in a pending verification review state
+  const status = activeProfile?.verification_status || (myProfile?.user as any)?.verification_status;
+  const isPending = status === 'PENDING' || status === 'UNDER_REVIEW' || status === 'DOCUMENT_PENDING';
+
   const handleVerifyClick = () => {
+    // Only redirect to settings when the user is in pending state
+    if (isPending) {
+      if (isCompanyMode) {
+        router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`);
+      } else {
+        router.push('/settings/privacy');
+      }
+      return;
+    }
+
+    // Otherwise, open the verification modal directly on the current screen
     if (isCompanyMode) {
       router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`);
     } else {
-      // Open verification modal directly within the Create Job flow instead of redirecting to Settings
       setIsVerifyModalOpen(true);
     }
   };
@@ -73,12 +89,18 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
       <div className="w-full max-w-[360px] md:max-w-[640px] flex flex-col items-center px-0 md:px-5 pt-0 md:pt-5 pb-6 md:pb-10 gap-5 my-auto text-center font-dm-sans">
         {/* Headings: Frame 2609237 */}
         <div className="w-full max-w-[360px] md:max-w-[578px] flex flex-col items-center gap-3">
+          {isPending && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              Under Review by Admin
+            </div>
+          )}
           {/* Title: 32px on mobile (leading 40px), 40px on desktop (leading 48px), bold, text-ds-text-primary */}
           <h1 className="w-full text-ds-text-primary text-[32px] md:text-[40px] font-bold leading-[40px] md:leading-[48px] font-dm-sans text-center">
             Identity Verification Required
           </h1>
           {/* Subtitle: 16px, semibold, leading-6, text-ds-text-secondary */}
-          <p className="w-full text-ds-text-secondary text-base font-semibold leading-6 font-dm-sans text-center">
+          <p className="w-full text-ds-text-secondary text-sm sm:text-base font-semibold leading-5 sm:leading-6 font-dm-sans text-center">
             To maintain the integrity of our career network and ensure the highest quality of listings, only verified users can post a job.
           </p>
         </div>
@@ -95,12 +117,22 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
               Verify Now
             </span>
           </button>
-          {/* Secondary button: width 203px, height 36px, px-3 py-1.5, border border-ds-border, rounded-full, text-ds-text-primary */}
-          <div className="w-[203px] h-9 px-3 py-1.5 border border-ds-border text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 bg-transparent shrink-0 select-none cursor-default font-dm-sans">
+          {/* Secondary button: width 203px, height 36px, px-3 py-1.5, border border-ds-border, rounded-full */}
+          <button
+            type="button"
+            onClick={() => {
+              if (isCompanyMode) {
+                router.push(`/organization/${activeProfile?.slug}/settings/privacy`);
+              } else {
+                router.push('/settings/privacy');
+              }
+            }}
+            className="w-[203px] h-9 px-3 py-1.5 border border-ds-border active:scale-95 text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 font-dm-sans"
+          >
             <span className="font-dm-sans font-medium text-base leading-6 text-ds-text-primary whitespace-nowrap">
               Learn about verification
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Frame 2609984: width 360px on mobile, 600px on desktop — side-by-side flex-row */}
@@ -143,9 +175,13 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
           <span className="text-ds-text-secondary">
             Verification typically takes less than 2 minutes. Need help?{' '}
           </span>
-          <span className="text-ds-accent font-normal select-none cursor-default">
+          <button
+            type="button"
+            onClick={() => router.push('/support')}
+            className="text-ds-accent font-normal cursor-pointer bg-transparent border-none p-0 outline-none focus-visible:ring-1 focus-visible:ring-ds-accent rounded-sm"
+          >
             Contact Support
-          </span>
+          </button>
         </div>
       </div>
 
