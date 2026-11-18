@@ -180,6 +180,12 @@ export function useCompanyPermissions(company?: any | null) {
 
         if (upperPerms.includes('*') || upperPerms.includes(cleanPerm)) return true;
 
+        // MANAGE_COMPANY / MANAGE_COMPANY_DETAILS fallback
+        if (
+            (cleanPerm === 'MANAGE_COMPANY_DETAILS' || cleanPerm === 'MANAGE_COMPANY' || cleanPerm === 'MANAGE_ORGANIZATION_DETAILS' || cleanPerm === 'MANAGE_ORGANIZATION') &&
+            (upperPerms.includes('MANAGE_COMPANY_DETAILS') || upperPerms.includes('MANAGE_COMPANY') || upperPerms.includes('MANAGE_ORGANIZATION_DETAILS') || upperPerms.includes('MANAGE_ORGANIZATION') || upperPerms.includes('MANAGE_COMMUNITY'))
+        ) return true;
+
         // CHAT / MESSAGES fallback
         if ((cleanPerm === 'CHAT' || cleanPerm === 'MESSAGES') && (upperPerms.includes('CHAT') || upperPerms.includes('MESSAGES'))) return true;
 
@@ -233,9 +239,12 @@ export function useCompanyPermissions(company?: any | null) {
         isEditor,
         // Pre-computed common checks for UI convenience
         canEdit: checkPermission('MANAGE_COMPANY_DETAILS'),
+        canFollow: checkPermission('MANAGE_COMPANY_DETAILS'),
+        canChat: checkPermission('CHAT'),
         canManageMembers: checkPermission('MANAGE_MEMBERS') || checkPermission('INVITE_MEMBERS') || checkPermission('REMOVE_MEMBERS'),
         canPostJobs: checkPermission('POST_JOBS'),
         canCreateContent: checkPermission('CREATE_CONTENT'),
+        canInteractWithPosts: checkPermission('CREATE_POST') || checkPermission('CREATE_CONTENT'),
         canViewAnalytics: checkPermission('VIEW_ANALYTICS'),
         canManageRoles: checkPermission('MANAGE_ROLES'),
         canVerify: isOwner, // Strict

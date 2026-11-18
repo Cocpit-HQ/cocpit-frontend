@@ -65,9 +65,9 @@ export default function HashtagPage() {
       </button>
 
       {/* Main Hashtag Content (Centered 442px column, matching post/[id]) */}
-      <div className="w-full max-w-[442px] px-4 sm:px-0 mx-auto pt-[60px] sm:pt-[60px] flex flex-col items-center">
+      <div className="w-full max-w-[442px] px-0 sm:px-0 mx-auto pt-[60px] sm:pt-[60px] flex flex-col items-center">
         {/* Hashtag Header */}
-        <div className="w-full flex flex-col items-start mb-6 select-text">
+        <div className="w-full flex flex-col items-start mb-6 select-text px-4 sm:px-0">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 text-ds-text-primary">
             <div className="p-1.5 rounded-lg bg-ds-accent/10 text-ds-accent">
               <Hash className="w-5 h-5" />
@@ -107,7 +107,7 @@ export default function HashtagPage() {
 
           {/* Loading Skeletons */}
           {loading && posts.length === 0 && (
-            <div className="space-y-4 w-full">
+            <div className="space-y-4 w-full px-4 sm:px-0">
               {[1, 2, 3].map((i) => (
                 <FeedPostCardSkeleton key={i} />
               ))}

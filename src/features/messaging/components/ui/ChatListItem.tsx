@@ -4,13 +4,15 @@ import React from "react"
 import Link from "next/link"
 import { ChatThread } from "@/types/messaging"
 import { avatarGradients } from "@/constants/messaging"
-import { BellOff } from "lucide-react"
+import { PinIcon, NotificationOffIcon } from "@/components/icons"
 
 import Avatar from "@/components/shared/Avatar"
 import { useSocket } from "@/context/SocketContext"
 import { formatTimeAgo } from "@/lib/mappers/messaging.mapper"
 import { useAuth } from "@/hooks/use-auth"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { isChatMuted } from "../../utils/muteUtils"
+import { stripMentionSyntax } from "@/lib/mentions"
 
 const getAvatarGradient = (avatar: string) => {
   return avatarGradients[avatar] || "from-gray-400 to-gray-500";
@@ -34,7 +36,18 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
   const currentUserId = activeProfile?.id || user?.id || (user as any)?.user_id;
 
   const resolvedLastMessage = React.useMemo(() => {
-    if (!chat.lastMessage) return '';
+    if (!chat.lastMessage) {
+      if ((chat as any).last_message_media || (chat as any).lastMessageMedia) {
+        const media = (chat as any).last_message_media || (chat as any).lastMessageMedia;
+        if (Array.isArray(media) && media.length > 0) {
+          const mime = media[0]?.file_type || media[0]?.type || media[0]?.mime_type || '';
+          if (mime.includes('image')) return 'Photo';
+          if (mime.includes('video')) return 'Video';
+          return 'Attachment';
+        }
+      }
+      return '';
+    }
     if (chat.isGroup) {
       const match = chat.lastMessage.match(/(?:^|\b)(.*)\s+created the group(?:\s*"(.*)")?/i);
       if (match) {
@@ -49,8 +62,8 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
         }
       }
     }
-    return chat.lastMessage;
-  }, [chat.lastMessage, chat.isGroup, (chat as any).admin_id, currentUserName, currentUserId]);
+    return stripMentionSyntax(chat.lastMessage);
+  }, [chat.lastMessage, chat.isGroup, (chat as any).admin_id, (chat as any).last_message_media, (chat as any).lastMessageMedia, currentUserName, currentUserId]);
   const isRequest = !!chat.is_requesting;
   const isGroupInvitation = isRequest && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
   const displayUnread = isSelected 
@@ -86,94 +99,110 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
 
   const content = (
     <div
-      className={`box-border flex flex-col justify-center items-start px-[16px] w-full cursor-pointer transition-all mx-auto ${
-        isQuickChat
-          ? `py-[8px] ${!isFirst ? 'border-t border-solid border-[#EEF2FF]' : ''} rounded-none mb-0`
-          : 'mb-[16px] rounded-[24px]'
-      } ${!isMobile && isSelected ? 'bg-chat-active-item-bg' : 'bg-[#FFFFFF]'}`}
+      className={`box-border w-full max-w-[380px] h-[76px] px-3 py-2 cursor-pointer transition-colors rounded-[12px] flex items-center justify-center gap-2 flex-none ${
+        isSelected ? 'bg-[var(--ds-surface-1)]' : 'bg-transparent hover:bg-[var(--ds-surface-1)]/50'
+      }`}
     >
-      <div className={`flex flex-col w-full relative ${isQuickChat ? 'py-0' : 'py-[8px]'}`}>
-        {/* GROUP 1: Header Row */}
-        <div className="flex items-center w-full">
-          
-          {/* Avatar Container */}
-          <div className={`w-[40px] h-[40px] shrink-0 relative ${isQuickChat ? 'mt-[1px]' : ''}`}>
-            {chat.isGroup ? (
+      {/* Frame 2608571: 356px x 60px */}
+      <div className="w-full h-[60px] flex flex-row items-start p-0 gap-2 flex-1">
+        {/* Avatar Container (32x32) */}
+        <div className="w-8 h-8 shrink-0 relative flex-none order-0">
+          {chat.isGroup ? (
+            <Avatar
+              url={chat.avatar}
+              name={displayName}
+              size="sm"
+              online={chat.online}
+              showOnlineStatus={false}
+              fallbackGradient="gradient-1"
+              className="w-8 h-8 rounded-full"
+            />
+          ) : (
+            <Link
+              href={isCompanyType ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
+              onClick={(e) => e.stopPropagation()}
+              className="w-8 h-8 block hover:opacity-80 transition-opacity"
+            >
               <Avatar
                 url={chat.avatar}
                 name={displayName}
-                size="md"
+                size="sm"
                 online={chat.online}
-                showOnlineStatus={true}
+                showOnlineStatus={false}
                 fallbackGradient="gradient-1"
-                className="w-full h-full"
+                isCompany={isCompanyType}
+                isUnknown={isUnknownEntity}
+                className={`w-8 h-8 ${isCompanyType ? "rounded-[6px]" : "rounded-full"}`}
               />
-            ) : (
-              <Link
-                href={isCompanyType ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full h-full block hover:opacity-80 transition-opacity"
-              >
-                <Avatar
-                  url={chat.avatar}
-                  name={displayName}
-                  size="md"
-                  online={chat.online}
-                  showOnlineStatus={true}
-                  fallbackGradient="gradient-1"
-                  isCompany={isCompanyType}
-                  isUnknown={isUnknownEntity}
-                  className="w-full h-full"
-                />
-              </Link>
-            )}
-          </div>
-
-          {/* Text Block */}
-          <div className="flex flex-col items-start pl-[8px] flex-1 min-w-0">
-            <div className="flex justify-between items-center w-full">
-              <h3 className={`h-[24px] font-['Poppins'] text-[16px] leading-[24px] flex items-center min-w-0 pr-2 ${displayUnread > 0 ? 'font-semibold text-[#111827]' : 'font-medium text-[#000000]'}`}>
-                <span className="truncate">{displayName}</span>
-              </h3>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {chat.is_muted && (
-                  <BellOff className="w-[14px] h-[14px] text-[#6B7280]" />
-                )}
-                <span className={`font-['Poppins'] text-[12px] leading-[16px] ${displayUnread > 0 ? 'font-semibold text-[#6366F1]' : 'font-normal text-[#6B7280]'}`}>
-                  {formatTimeAgo(chat.lastMessageAt || chat.time)}
-                </span>
-              </div>
-            </div>
-            {!isQuickChat && (
-              <p className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full min-w-0">
-                <span className="truncate w-full block">{displaySubtitle}</span>
-              </p>
-            )}
-          </div>
-
-        </div>
-
-        {/* GROUP 2: Last Message */}
-        <div className={`${isQuickChat ? 'mt-[-4px]' : 'mt-[8px]'} pl-[48px] flex items-center justify-between w-full`}>
-          <p className={`font-['Poppins'] ${isQuickChat ? 'text-[12px] leading-[16px]' : 'text-[14px] leading-[20px]'} truncate flex-1 pr-[8px] ${displayUnread > 0 ? 'font-semibold text-[#111827]' : 'font-normal text-[#6B7280]'}`}>
-            {isTyping ? (
-              <span className="text-[#10B981] font-medium inline-flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] inline-block animate-pulse shrink-0" />
-                Typing...
-              </span>
-            ) : (
-              isQuickChat && chat.lastMessage && chat.lastMessage.length > 10
-                ? `${chat.lastMessage.substring(0, 10)}...`
-                : chat.lastMessage
-            )}
-          </p>
-          {displayUnread > 0 && (
-            <span className={`bg-[#6366F1] text-[#FFFFFF] font-['Poppins'] font-medium text-[12px] leading-[16px] rounded-[100px] flex items-center justify-center shrink-0 ${isQuickChat ? 'min-w-[16px] h-[16px] px-[4px]' : 'min-w-[20px] h-[20px] px-[6px]'}`}>
-              {displayUnread > 99 ? '99+' : displayUnread}
-            </span>
+            </Link>
+          )}
+          {/* Frame 2609905: 4px x 4px at left: 25px, top: 25px */}
+          {chat.online && !isUnknownEntity && !chat.isBlockedByOther && (
+            <div
+              className="w-1 h-1 left-[25px] top-[25px] absolute bg-[var(--ds-success)] rounded-full"
+              aria-hidden="true"
+            />
           )}
         </div>
 
+        {/* Frame 2608568: 316px x 60px, gap: 6px */}
+        <div className="flex-1 h-[60px] flex flex-col justify-start items-start gap-1.5 min-w-0 p-0 order-1">
+          {/* Frame 2610108: 316px x 24px */}
+          <div className="w-full h-6 flex flex-row justify-between items-center p-0 gap-2.5 flex-none order-0">
+            <h3 className="font-['DM_Sans'] text-base font-medium leading-6 text-[var(--ds-text-primary)] truncate flex-1 min-w-0 order-0">
+              {displayName}
+            </h3>
+            <div className="flex items-center gap-1.5 shrink-0 order-1">
+              {chat.is_pinned && (
+                <PinIcon className="w-3.5 h-3.5 text-[var(--ds-text-muted)] shrink-0" />
+              )}
+              {isChatMuted(chat) && (
+                <NotificationOffIcon className="w-3.5 h-3.5 text-[var(--ds-text-muted)] shrink-0" />
+              )}
+              {!chat.is_pinned && !isChatMuted(chat) && (
+                /* Frame 2608646: DM Sans 12px/16px 400 #726B67 */
+                <span className="font-['DM_Sans'] text-xs font-normal leading-4 text-[var(--ds-text-muted)] shrink-0">
+                  {formatTimeAgo(chat.lastMessageAt || chat.time)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Subtitle / Role: DM Sans 12px/16px 400 #B8ADA8 */}
+          {!isQuickChat && (
+            <p className="font-['DM_Sans'] text-xs font-normal leading-4 text-[var(--ds-text-secondary)] truncate w-full h-4 flex-none order-1">
+              {displaySubtitle}
+            </p>
+          )}
+
+          {/* Frame 2610107: 316px x 14px */}
+          <div className="w-full h-3.5 flex flex-row justify-between items-center p-0 gap-2 flex-none order-2">
+            <p className="font-['DM_Sans'] text-[10px] font-normal leading-3 text-[var(--ds-text-primary)] truncate flex-1 min-w-0 order-0">
+              {isTyping ? (
+                <span className="text-[var(--ds-success)] font-medium inline-flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--ds-success)] inline-block animate-pulse shrink-0" />
+                  typing...
+                </span>
+              ) : (
+                resolvedLastMessage || "No messages yet"
+              )}
+            </p>
+            {displayUnread > 0 && (
+              /* Frame 2609901: 14px x 14px, border-radius 7px, background #EC6229, padding: 1px 5px 1px 4px */
+              <div
+                className={`h-[14px] bg-[var(--ds-accent)] rounded-[7px] flex flex-col justify-center items-center shrink-0 box-border order-1 ${
+                  displayUnread > 9
+                    ? "min-w-[14px] w-auto px-1 py-[1px]"
+                    : "w-[14px] pt-[1px] pr-[5px] pb-[1px] pl-[4px]"
+                }`}
+              >
+                <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-white whitespace-nowrap flex items-center justify-center order-0 select-none">
+                  {displayUnread > 99 ? '99+' : displayUnread}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -201,7 +230,9 @@ function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProp
     prevProps.chat.isBlockedByOther === nextProps.chat.isBlockedByOther &&
     prevProps.chat.is_requesting === nextProps.chat.is_requesting &&
     prevProps.chat.request_source === nextProps.chat.request_source &&
-    prevProps.chat.is_muted === nextProps.chat.is_muted
+    prevProps.chat.is_muted === nextProps.chat.is_muted &&
+    prevProps.chat.muted_until === nextProps.chat.muted_until &&
+    prevProps.chat.is_pinned === nextProps.chat.is_pinned
   );
 }
 

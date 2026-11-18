@@ -26,6 +26,8 @@ interface OnboardingDropdownProps {
   placement?: "bottom" | "top";
   allowCustom?: boolean;
   fallbackOption?: DropdownOption;
+  onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
+  isLoadingMore?: boolean;
 }
 
 export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
@@ -44,6 +46,8 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
   placement = "bottom",
   allowCustom = true,
   fallbackOption,
+  onScroll,
+  isLoadingMore = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [failedLogos, setFailedLogos] = useState<Record<string, boolean>>({});
@@ -156,8 +160,9 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
     }
   };
 
-  // Instant client-side search filtering (only when searchable is true)
+  // Instant client-side search filtering (only when searchable is true, unless server-filtered via onSearchChange)
   const filteredOptions = useMemo(() => {
+    if (onSearchChange) return options;
     if (!searchable || !searchQuery.trim()) return options;
     const q = searchQuery.toLowerCase().trim();
     const matched = options.filter((o) =>
@@ -175,7 +180,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
     }
 
     return matched;
-  }, [options, searchQuery, searchable, allowCustom, fallbackOption]);
+  }, [options, searchQuery, searchable, allowCustom, fallbackOption, onSearchChange]);
 
   return (
     <div 
@@ -309,85 +314,99 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
           }`}
         >
           {/* Options List */}
-          <div ref={listboxRef} id={`${id}-listbox`} className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
+          <div
+            ref={listboxRef}
+            id={`${id}-listbox`}
+            onScroll={onScroll}
+            className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1"
+            role="listbox"
+          >
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((opt, index) => {
-                const isSelected = opt.id === value || opt.label === value || opt.label.toLowerCase() === searchQuery.toLowerCase();
-                const isHighlighted = index === highlightedIndex;
-                const isOrgField =
-                  Boolean(id?.includes("organization") || id?.includes("company")) ||
-                  Boolean(placeholder?.toLowerCase().includes("organization") || placeholder?.toLowerCase().includes("company"));
-                const isOrg = isOrgField || Boolean(opt.data?.org_id || opt.data?.logo_url);
-                const hasLogo = Boolean(opt.data?.logo_url && !failedLogos[opt.data.logo_url]);
+              <>
+                {filteredOptions.map((opt, index) => {
+                  const isSelected = opt.id === value || opt.label === value || opt.label.toLowerCase() === searchQuery.toLowerCase();
+                  const isHighlighted = index === highlightedIndex;
+                  const isOrgField =
+                    Boolean(id?.includes("organization") || id?.includes("company")) ||
+                    Boolean(placeholder?.toLowerCase().includes("organization") || placeholder?.toLowerCase().includes("company"));
+                  const isOrg = isOrgField || Boolean(opt.data?.org_id || opt.data?.logo_url);
+                  const hasLogo = Boolean(opt.data?.logo_url && !failedLogos[opt.data.logo_url]);
 
-                return (
-                  <button
-                    key={`${opt.id}-${index}`}
-                    type="button"
-                    role="option"
-                    aria-selected={isSelected}
-                    tabIndex={0}
-                    onMouseDown={(e) => {
-                      e.preventDefault(); // Keep focus on input/trigger for mouse clicks
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === "ArrowDown" || e.key === "ArrowUp") {
-                        e.stopPropagation();
-                      }
-                      if (e.key === "Escape") {
+                  return (
+                    <button
+                      key={`${opt.id}-${index}`}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      tabIndex={0}
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Keep focus on input/trigger for mouse clicks
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === "ArrowDown" || e.key === "ArrowUp") {
+                          e.stopPropagation();
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsOpen(false);
+                          if (searchable) inputRef.current?.focus();
+                          else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
+                        }
+                        if (e.key === "Tab" && e.shiftKey && index === 0) {
+                          e.preventDefault();
+                          setIsOpen(false);
+                          if (searchable) inputRef.current?.focus();
+                          else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
+                        }
+                      }}
+                      onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setIsOpen(false);
+                        handleItemClick(opt);
                         if (searchable) inputRef.current?.focus();
                         else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
-                      }
-                      if (e.key === "Tab" && e.shiftKey && index === 0) {
-                        e.preventDefault();
-                        setIsOpen(false);
-                        if (searchable) inputRef.current?.focus();
-                        else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
-                      }
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleItemClick(opt);
-                      if (searchable) inputRef.current?.focus();
-                      else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
-                    }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center gap-2.5 transition-colors cursor-pointer truncate focus:outline-none focus:text-ds-text-primary ${
-                      isHighlighted
-                        ? "text-ds-text-primary"
-                        : isSelected
-                        ? "text-ds-accent font-medium"
-                        : "text-ds-text-secondary hover:text-ds-text-primary"
-                    }`}
-                  >
-                    {isOrg && (
-                      hasLogo ? (
-                        <img
-                          src={opt.data.logo_url}
-                          alt={opt.label}
-                          onError={() => {
-                            if (opt.data?.logo_url) {
-                              setFailedLogos((prev) => ({ ...prev, [opt.data.logo_url]: true }));
-                            }
-                          }}
-                          className="w-5 h-5 rounded-[4px] object-cover shrink-0 bg-ds-surface-2"
-                        />
-                      ) : (
-                        <OrgAvatarFallbackIcon size={20} className="w-5 h-5 rounded-[4px] shrink-0" />
-                      )
-                    )}
-                    <span className="truncate">{opt.label}</span>
-                    {opt.sublabel && (
-                      <span className="text-xs text-ds-text-muted ml-1.5 truncate">
-                        ({opt.sublabel})
-                      </span>
-                    )}
-                  </button>
-                );
-              })
+                      }}
+                      className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center gap-2.5 transition-colors cursor-pointer truncate focus:outline-none focus:text-ds-text-primary ${
+                        isHighlighted
+                          ? "text-ds-text-primary"
+                          : isSelected
+                          ? "text-ds-accent font-medium"
+                          : "text-ds-text-secondary hover:text-ds-text-primary"
+                      }`}
+                    >
+                      {isOrg && (
+                        hasLogo ? (
+                          <img
+                            src={opt.data.logo_url}
+                            alt={opt.label}
+                            onError={() => {
+                              if (opt.data?.logo_url) {
+                                setFailedLogos((prev) => ({ ...prev, [opt.data.logo_url]: true }));
+                              }
+                            }}
+                            className="w-5 h-5 rounded-[4px] object-cover shrink-0 bg-ds-surface-2"
+                          />
+                        ) : (
+                          <OrgAvatarFallbackIcon size={20} className="w-5 h-5 rounded-[4px] shrink-0" />
+                        )
+                      )}
+                      <span className="truncate">{opt.label}</span>
+                      {opt.sublabel && (
+                        <span className="text-xs text-ds-text-muted ml-1.5 truncate">
+                          ({opt.sublabel})
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                {isLoadingMore && (
+                  <div className="w-full py-1.5 flex items-center justify-center gap-1.5 text-xs text-ds-text-muted font-sans">
+                    <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth text-ds-accent" />
+                    <span>Loading more...</span>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="py-3 text-center text-ds-text-muted text-xs font-sans">
                 {isLoading ? "Loading options..." : "No options found"}

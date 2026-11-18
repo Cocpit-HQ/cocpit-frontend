@@ -110,6 +110,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
     ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((about.industry || data.industry) || "").toLowerCase().trim());
   const rawIndustry = (isEdu ? (about.institution_type || about.industry) : about.industry) || data.industry;
   const industry = formatIndustryType(rawIndustry);
+  const sector = (about.sector || (data as any)?.sector || "").trim();
 
   const location = (about.location_formatted || about.location || about.headquarter || data.location || about.city || "").trim();
   const anyData = data as any;
@@ -171,7 +172,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
   const hasPart1 = Boolean(description || slogan);
   const hasSpecialties = Boolean(specialtiesText);
   const hasEmail = Boolean(email);
-  const hasRow1 = Boolean(industry || employeeCount);
+  const hasRow1 = Boolean(industry || employeeCount || sector);
   const hasRow2 = Boolean(founded || websiteUrl);
   const hasHeadquarter = Boolean(location);
   const hasSocial = socialLinks.length > 0;
@@ -288,9 +289,9 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
             </div>
           )}
 
-          {/* Row 1: Industry & Organization size */}
+          {/* Row 1: Industry, Sector & Organization size */}
           {hasRow1 && (
-            <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
+            <div className="w-full max-w-[780px] flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4 sm:gap-10">
               {industry && (
                 <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
@@ -298,6 +299,17 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
                   </span>
                   <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere]">
                     {industry}
+                  </span>
+                </div>
+              )}
+
+              {sector && (
+                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
+                  <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
+                    Sector
+                  </span>
+                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere]">
+                    {sector}
                   </span>
                 </div>
               )}

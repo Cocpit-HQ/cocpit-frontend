@@ -15,15 +15,26 @@ import { MobileSearchScreen } from './MobileSearchScreen';
 
 interface GlobalSearchProps {
   hasSidebar?: boolean;
-  variant?: 'desktop' | 'mobile';
+  variant?: 'desktop' | 'mobile' | 'embedded';
+  initialQuery?: string;
+  onSearch?: (query: string) => void;
+  category?: string;
+  placeholder?: string;
 }
 
-export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalSearchProps) {
+export function GlobalSearch({
+  hasSidebar = true,
+  variant = 'desktop',
+  initialQuery,
+  onSearch,
+  category,
+  placeholder,
+}: GlobalSearchProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isJobsRoute = Boolean(pathname?.startsWith('/jobs'));
   
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialQuery || '');
   const [isFocused, setIsFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -34,8 +45,15 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Lock background feed scrolling when search is opened on desktop
-  useBodyScrollLock(isFocused && variant === 'desktop');
+  // Sync initialQuery when passed from parent (e.g. SearchHeaderBar)
+  useEffect(() => {
+    if (initialQuery !== undefined) {
+      setSearchQuery(initialQuery);
+    }
+  }, [initialQuery]);
+
+  // Lock background feed scrolling when search is opened on desktop or embedded
+  useBodyScrollLock(isFocused && (variant === 'desktop' || variant === 'embedded'));
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -65,8 +83,9 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (!debouncedSearch.trim() || isJobsRoute) {
+      if (!isFocused || !debouncedSearch.trim() || isJobsRoute) {
         setSearchResults([]);
+        setIsSearching(false);
         return;
       }
       setIsSearching(true);
@@ -86,7 +105,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
       }
     };
     fetchResults();
-  }, [debouncedSearch]);
+  }, [debouncedSearch, isFocused, isJobsRoute]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -100,12 +119,12 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   }, []);
 
   useEffect(() => {
-    if (pathname && !pathname.startsWith('/search')) {
+    if (pathname && !pathname.startsWith('/search') && variant !== 'embedded') {
       setSearchQuery('');
       setIsFocused(false);
       inputRef.current?.blur();
     }
-  }, [pathname]);
+  }, [pathname, variant]);
 
   const navigateToSearch = (targetUrl: string) => {
     const currentPath =
@@ -129,21 +148,32 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
     router.push(finalUrl);
   };
 
+  const executeSearch = (rawTerm: string) => {
+    const trimmed = rawTerm.trim();
+    setIsFocused(false);
+    inputRef.current?.blur();
+    if (trimmed) {
+      saveSearch(trimmed);
+    }
+
+    if (onSearch) {
+      onSearch(trimmed);
+      return;
+    }
+
+    if (!trimmed) return;
+
+    if (isJobsRoute) {
+      navigateToSearch(`/search?type=jobs&q=${encodeURIComponent(trimmed)}`);
+    } else {
+      navigateToSearch(`/search?q=${encodeURIComponent(trimmed)}&type=all`);
+    }
+  };
+
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const trimmed = searchQuery.trim();
-      if (!trimmed) return;
-
-      setIsFocused(false);
-      inputRef.current?.blur();
-      saveSearch(trimmed);
-
-      if (isJobsRoute) {
-        navigateToSearch(`/search?type=jobs&q=${encodeURIComponent(trimmed)}`);
-      } else {
-        navigateToSearch(`/search?q=${encodeURIComponent(trimmed)}&type=all`);
-      }
+      executeSearch(searchQuery);
     }
   };
   
@@ -161,7 +191,12 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
       return;
     }
 
-    if (user.type === 'COMPANY' || user.account_type === 'COMPANY') {
+    const isOrg = user.type === 'COMPANY' || user.account_type === 'COMPANY' ||
+                  user.type === 'INSTITUTION' || user.account_type === 'INSTITUTION' ||
+                  user.type === 'ORGANIZATION' || user.account_type === 'ORGANIZATION' ||
+                  (user as any).entity_type === 'COMPANY' || (user as any).entity_type === 'INSTITUTION';
+
+    if (isOrg) {
       setIsNavigating(true);
       try {
         const companySlug = user.slug || user.id;
@@ -172,7 +207,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
         saveSearch({ ...user, slug: targetSlug });
         router.push(`/organization/${targetSlug}`);
       } catch (err) {
-        toast({ title: "Error", description: "Unable to load company profile. The company may have been deleted or deactivated.", variant: "destructive" });
+        toast({ title: "Error", description: "Unable to load organization profile. It may have been deleted or deactivated.", variant: "destructive" });
       } finally {
         setIsNavigating(false);
       }
@@ -200,13 +235,21 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   };
   
   const getUrlForUser = (user: SearchedUser) => {
-    return user.type === 'COMPANY' || user.account_type === 'COMPANY'
+    const isOrg = user.type === 'COMPANY' || user.account_type === 'COMPANY' ||
+                  user.type === 'INSTITUTION' || user.account_type === 'INSTITUTION' ||
+                  user.type === 'ORGANIZATION' || user.account_type === 'ORGANIZATION' ||
+                  (user as any).entity_type === 'COMPANY' || (user as any).entity_type === 'INSTITUTION';
+    return isOrg
       ? `/organization/${user.slug || user.id}`
       : `/profile/${user.account_name || user.id}`;
   };
   
   const renderAvatar = (user: SearchedUser) => {
-    const isCompany = user.type === 'COMPANY' || (user as any).type === 'company' || (user as any).account_type === 'COMPANY' || (user as any).account_type === 'company';
+    const isCompany = user.type === 'COMPANY' || (user as any).type === 'company' || 
+                      user.account_type === 'COMPANY' || (user as any).account_type === 'company' ||
+                      user.type === 'INSTITUTION' || (user as any).type === 'institution' || 
+                      user.account_type === 'INSTITUTION' || (user as any).account_type === 'institution' ||
+                      (user as any).entity_type === 'COMPANY' || (user as any).entity_type === 'INSTITUTION';
     const roundedClass = isCompany ? 'rounded-[8px]' : 'rounded-full';
     if (user.avatar_url || user.avatar) {
       return (
@@ -239,14 +282,14 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
       <input
         ref={inputRef}
         type="text"
-        placeholder={isJobsRoute ? "Discover jobs that match your skills..." : "Search"}
+        placeholder={placeholder || (isJobsRoute ? "Discover jobs that match your skills..." : "Search")}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         onFocus={() => setIsFocused(true)}
         onKeyDown={handleSearch}
         className={
           variant === 'mobile'
-            ? "bg-transparent outline-none font-['DM_Sans'] text-[15px] text-[#A1A1AA] placeholder:text-[#A1A1AA] w-full pl-2"
+            ? "bg-transparent outline-none font-['DM_Sans'] text-[15px] text-ds-text-muted placeholder:text-ds-text-muted w-full pl-2"
             : "flex-grow bg-transparent outline-none font-['DM_Sans'] text-[16px] leading-[24px] text-ds-text-primary placeholder:text-ds-text-muted w-full h-full"
         }
       />
@@ -254,23 +297,13 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
         name="search"
         className={
           variant === 'mobile'
-            ? "w-[20px] h-[20px] text-[#A1A1AA] shrink-0 cursor-pointer mr-1"
+            ? "w-[20px] h-[20px] text-ds-text-muted shrink-0 cursor-pointer mr-1"
             : "w-[20px] h-[20px] text-ds-text-primary shrink-0 cursor-pointer hover:text-ds-accent transition-colors"
         }
         onClick={() => {
           inputRef.current?.focus();
           setIsFocused(true);
-          const trimmed = searchQuery.trim();
-          if (trimmed) {
-            setIsFocused(false);
-            inputRef.current?.blur();
-            saveSearch(trimmed);
-            if (isJobsRoute) {
-              navigateToSearch(`/search?type=jobs&q=${encodeURIComponent(trimmed)}`);
-            } else {
-              navigateToSearch(`/search?q=${encodeURIComponent(trimmed)}&type=all`);
-            }
-          }
+          executeSearch(searchQuery);
         }}
       />
     </>
@@ -280,13 +313,11 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
     <>
       {/* Live Search Dropdown */}
       {showLive && (
-        <div className={variant === 'mobile' ? "fixed top-[60px] left-0 right-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg border-t border-[#3F3F46] shadow-xl z-[9999] max-h-[80vh] overflow-y-auto" : "absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50"}>
+        <div className={variant === 'mobile' ? "fixed top-[60px] left-0 right-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg border-t border-ds-border shadow-xl z-[9999] max-h-[80vh] overflow-y-auto" : "absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50"}>
           {isJobsRoute ? (
             <div
               onClick={() => {
-                setIsFocused(false);
-                inputRef.current?.blur();
-                navigateToSearch(`/search?type=jobs&q=${encodeURIComponent(searchQuery.trim())}`);
+                executeSearch(searchQuery);
               }}
               className="w-full px-3 py-2.5 flex items-center gap-3 text-ds-text-primary hover:bg-ds-surface-1 rounded-lg cursor-pointer transition-colors"
             >
@@ -340,16 +371,15 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
           {!isJobsRoute && searchQuery.trim() && (
             <div
               onClick={() => {
-                setIsFocused(false);
-                inputRef.current?.blur();
-                saveSearch(searchQuery.trim());
-                navigateToSearch(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=all`);
+                executeSearch(searchQuery);
               }}
               className="w-full px-3 py-2 flex items-center gap-2.5 text-ds-accent hover:bg-ds-surface-1 rounded-lg cursor-pointer transition-colors border-t border-ds-border/50 pt-2.5"
             >
               <Icon name="search" className="w-4 h-4 text-ds-accent shrink-0" />
               <span className="text-xs sm:text-sm font-medium font-['DM_Sans'] truncate">
-                See all results for &ldquo;{searchQuery.trim()}&rdquo;
+                {category && category !== 'all'
+                  ? `Search ${category} for \u201C${searchQuery.trim()}\u201D`
+                  : `See all results for \u201C${searchQuery.trim()}\u201D`}
               </span>
             </div>
           )}
@@ -358,7 +388,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
 
       {/* Recent / Search History Dropdown */}
       {showRecent && (
-        <div className={variant === 'mobile' ? "fixed top-[60px] left-0 right-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg border-t border-[#3F3F46] shadow-xl z-[9999] max-h-[80vh] overflow-y-auto" : "absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50"}>
+        <div className={variant === 'mobile' ? "fixed top-[60px] left-0 right-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg border-t border-ds-border shadow-xl z-[9999] max-h-[80vh] overflow-y-auto" : "absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50"}>
           <div className="flex justify-between items-center w-full mb-1">
             <h3 className="text-[14px] leading-5 font-normal text-ds-text-primary">Recent</h3>
           </div>
@@ -377,17 +407,13 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
                     }}
                     onClick={() => {
                       setSearchQuery(item.value);
-                      saveSearch(item.value);
-                      setIsFocused(false);
-                      navigateToSearch(`/search?q=${encodeURIComponent(item.value)}&type=all`);
+                      executeSearch(item.value);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         setSearchQuery(item.value);
-                        saveSearch(item.value);
-                        setIsFocused(false);
-                        navigateToSearch(`/search?q=${encodeURIComponent(item.value)}&type=all`);
+                        executeSearch(item.value);
                       }
                     }}
                   >
@@ -494,7 +520,40 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
             />
           </div>
         </div>
-        <MobileSearchScreen isOpen={isMobileSearchOpen} onClose={() => setIsMobileSearchOpen(false)} />
+        <MobileSearchScreen
+          isOpen={isMobileSearchOpen}
+          onClose={() => setIsMobileSearchOpen(false)}
+          initialQuery={initialQuery}
+          onSearch={onSearch}
+          category={category}
+          placeholder={placeholder}
+        />
+      </>
+    );
+  }
+
+  if (variant === 'embedded') {
+    return (
+      <>
+        {/* Backdrop overlay to reduce background page opacity and capture outside clicks */}
+        {isFocused && (
+          <div 
+            className="fixed inset-0 bg-black/60 dark:bg-black/70 backdrop-blur-[2px] z-[45] pointer-events-auto transition-opacity duration-200 ease-out"
+            onClick={() => {
+              setIsFocused(false);
+              inputRef.current?.blur();
+            }}
+            aria-hidden="true"
+          />
+        )}
+
+        <div ref={dropdownRef} className="relative w-full max-w-[442px] pointer-events-auto z-50">
+          {/* Search Input Bar */}
+          <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full h-[40px] border-b border-ds-text-primary bg-transparent">
+            {inputEl}
+          </div>
+          {dropdownEl}
+        </div>
       </>
     );
   }

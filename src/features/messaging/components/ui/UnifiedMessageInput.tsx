@@ -1,12 +1,15 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { Paperclip, Send, Smile, Mic, X, FileText, Film, Image as ImageIcon } from "lucide-react"
+import { Paperclip, Send, Smile, Mic, X, Play } from "lucide-react"
+import { FileTextIcon, CancelIcon } from "@/components/icons"
 import { MentionTextarea } from "@/components/ui/MentionTextarea"
 import { UserMention } from "@/services/api/users"
+import { formatMentionsForBackend } from "@/lib/mentions"
 import ReplyPreview from "../ReplyPreview"
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
 import { useTheme } from "next-themes"
+import { cn } from "@/lib/utils"
 
 interface UnifiedMessageInputProps {
     onSendMessage: (text: string, files: File[]) => void
@@ -15,17 +18,26 @@ interface UnifiedMessageInputProps {
     disabledMessage?: string
     placeholder?: string
     isLoading?: boolean
-    searchUsersFn?: (query: string, forTagging?: boolean) => Promise<UserMention[]>
+    searchUsersFn?: (query: string, forTagging?: boolean, cursor?: string) => Promise<any>
     replyingTo?: {
         messageId: string;
         senderName: string;
         content: string;
         isMe?: boolean;
-        mediaType?: 'image' | 'video' | 'document' | string | null;
+        mediaType?: 'image' | 'video' | 'document' | 'attachment' | string | null;
         mediaName?: string | null;
         mediaUrl?: string | null;
+        sharedPostId?: string | null;
+        sharedProfileId?: string | null;
+        sharedProfileType?: string | null;
+        entityType?: string | null;
+        entityId?: string | null;
+        isAttachment?: boolean;
     } | null;
     onCancelReply?: () => void;
+    editingMessage?: { id: string; text?: string; text_content?: string } | null;
+    onCancelEdit?: () => void;
+    onSaveEdit?: (messageId: string, text: string) => void;
     pendingSharedPost?: any | null;
     onCancelPendingSharedPost?: () => void;
     pendingSharedProfile?: any | null;
@@ -47,6 +59,9 @@ export default function UnifiedMessageInput({
     searchUsersFn,
     replyingTo,
     onCancelReply,
+    editingMessage,
+    onCancelEdit,
+    onSaveEdit,
     pendingSharedPost,
     onCancelPendingSharedPost,
     pendingSharedProfile,
@@ -56,6 +71,7 @@ export default function UnifiedMessageInput({
     isQuickChat
 }: UnifiedMessageInputProps) {
     const [text, setText] = useState("")
+    const [inlineMentions, setInlineMentions] = useState<UserMention[]>([])
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
     const [files, setFiles] = useState<File[]>([])
     const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -73,19 +89,58 @@ export default function UnifiedMessageInput({
 
     const isDisabled = disabled || isLoading;
 
+    useEffect(() => {
+        if (editingMessage) {
+            const initialText = editingMessage.text || editingMessage.text_content || "";
+            setText(initialText);
+            setTimeout(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.focus();
+                    const len = initialText.length;
+                    textareaRef.current.setSelectionRange(len, len);
+                    textareaRef.current.style.height = 'auto';
+                    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 68)}px`;
+                }
+            }, 0);
+        }
+    }, [editingMessage]);
+
     const handleSend = () => {
         if (isDisabled) return;
+        if (editingMessage && onSaveEdit) {
+            if (text.trim()) {
+                const formattedText = formatMentionsForBackend(text, inlineMentions);
+                onSaveEdit(editingMessage.id, formattedText);
+                setText("");
+                setInlineMentions([]);
+                if (onCancelEdit) onCancelEdit();
+                if (textareaRef.current) {
+                    textareaRef.current.style.height = '20px';
+                    textareaRef.current.style.overflowY = 'hidden';
+                }
+            }
+            return;
+        }
         if (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile) {
-            onSendMessage(text, files)
+            const formattedText = formatMentionsForBackend(text, inlineMentions);
+            onSendMessage(formattedText, files)
             setText("")
+            setInlineMentions([])
             setFiles([])
             if (textareaRef.current) {
-                textareaRef.current.style.height = 'auto';
+                textareaRef.current.style.height = '20px';
+                textareaRef.current.style.overflowY = 'hidden';
             }
         }
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Escape" && editingMessage && onCancelEdit) {
+            e.preventDefault();
+            onCancelEdit();
+            setText("");
+            return;
+        }
         if (isDisabled) return;
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault()
@@ -120,8 +175,6 @@ export default function UnifiedMessageInput({
         setTimeout(() => {
             textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
             textarea.focus();
-            textarea.style.height = 'auto';
-            textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
         }, 0);
     };
 
@@ -145,167 +198,263 @@ export default function UnifiedMessageInput({
         };
     }, [showEmojiPicker]);
 
-    const getFileIcon = (file: File) => {
-        if (file.type.startsWith('image/')) return <ImageIcon className="w-4 h-4" />;
-        if (file.type.startsWith('video/')) return <Film className="w-4 h-4" />;
-        return <FileText className="w-4 h-4" />;
-    };
+    const filePreviews = React.useMemo(() => {
+        return files.map(file => ({
+            file,
+            url: URL.createObjectURL(file),
+            isDoc: file.type === "application/pdf" ||
+                file.type.includes("word") ||
+                file.type.includes("officedocument") ||
+                /\.(doc|docx|pdf|txt|rtf|xls|xlsx|ppt|pptx)$/i.test(file.name),
+            isVideo: file.type.startsWith("video/"),
+            isImg: file.type.startsWith("image/")
+        }));
+    }, [files]);
+
+    useEffect(() => {
+        return () => {
+            filePreviews.forEach(p => URL.revokeObjectURL(p.url));
+        };
+    }, [filePreviews]);
 
     return (
-        <div className={`px-4 py-3 md:px-6 md:py-4 w-full bg-background shrink-0 ${isQuickChat ? 'p-4' : ''}`}>
-            <div className={`flex flex-col w-full ${!isQuickChat ? 'border border-border/60 p-1.5 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20' : ''} ${files.length > 0 || replyingTo || pendingSharedPost || pendingSharedProfile ? 'rounded-[20px]' : 'rounded-[32px]'} bg-transparent transition-all relative`}>
+        <div className={`w-full px-4 py-0 bg-[var(--ds-bg)] shrink-0 ${isQuickChat ? 'p-3' : ''}`}>
+            <div className="flex flex-col w-full bg-transparent transition-all relative">
+                {/* Frame 2610122: Editing message banner matching Figma */}
+                {editingMessage && onCancelEdit && (
+                    <div className="flex flex-row items-center justify-between gap-2 w-full h-5 mb-2 self-stretch">
+                        <span className="font-['DM_Sans'] font-medium text-xs leading-4 text-[var(--ds-accent)] flex-1 truncate select-none">
+                            Editing message
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onCancelEdit();
+                                setText("");
+                            }}
+                            className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity p-0 cursor-pointer shrink-0"
+                            aria-label="Cancel editing"
+                            title="Cancel editing"
+                        >
+                            <CancelIcon size={20} className="w-5 h-5 text-[var(--ds-text-primary)]" fill="currentColor" />
+                        </button>
+                    </div>
+                )}
+
                 {replyingTo && onCancelReply && (
                     <ReplyPreview replyingTo={replyingTo} onCancel={onCancelReply} />
                 )}
 
                 {pendingSharedPost && onCancelPendingSharedPost && (
-                    <div className="flex items-center justify-between gap-3 w-full relative px-[16px] py-[12px] bg-[var(--primary-tint)] border border-[var(--border)] rounded-[16px] mb-1.5">
+                    <div className="flex items-center justify-between gap-3 w-full relative px-3 py-2 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-lg mb-1.5">
                         <div className="flex items-center gap-3 overflow-hidden flex-1">
-                            <div className="h-10 w-10 rounded-full overflow-hidden bg-[var(--card)] dark:bg-[#1E293B] flex items-center justify-center shrink-0 border border-[var(--border)]">
+                            <div className="size-8 rounded-full overflow-hidden bg-[var(--ds-surface-2)] flex items-center justify-center shrink-0 border border-[var(--ds-border)]">
                                 {pendingSharedPost.author_avatar || pendingSharedPost.authorAvatar ? (
                                     <img src={pendingSharedPost.author_avatar || pendingSharedPost.authorAvatar} alt={pendingSharedPost.author_name || pendingSharedPost.author} className="h-full w-full object-cover" />
                                 ) : (
-                                    <span className="font-semibold text-[var(--primary)]">{(pendingSharedPost.author_name || pendingSharedPost.author)?.[0]?.toUpperCase() || "P"}</span>
+                                    <span className="font-semibold text-xs text-[var(--ds-accent)]">{(pendingSharedPost.author_name || pendingSharedPost.author)?.[0]?.toUpperCase() || "P"}</span>
                                 )}
                             </div>
                             <div className="flex flex-col text-left overflow-hidden">
-                                <span className="font-['Poppins'] font-semibold text-[13px] text-[var(--foreground)] dark:text-white truncate">
+                                <span className="font-['DM_Sans'] font-medium text-xs text-[var(--ds-text-primary)] truncate">
                                     Shared Post by {pendingSharedPost.author_name || pendingSharedPost.author}
                                 </span>
-                                <span className="font-['Poppins'] font-normal text-[12px] text-[var(--primary)] dark:text-[#818CF8] truncate">
+                                <span className="font-['DM_Sans'] font-normal text-[10px] text-[var(--ds-text-secondary)] truncate">
                                     {pendingSharedPost.content || "View shared post"}
                                 </span>
                             </div>
                         </div>
                         <button
                             onClick={onCancelPendingSharedPost}
-                            className="text-[var(--primary)] dark:text-[#818CF8] hover:bg-[var(--border)]/30 p-1.5 rounded-full transition-colors shrink-0"
+                            className="text-[var(--ds-text-muted)] hover:text-[var(--ds-text-primary)] p-1 rounded-full transition-colors shrink-0"
                             aria-label="Remove shared post"
                         >
-                            <X className="w-[18px] h-[18px]" strokeWidth={2} />
+                            <X className="w-4 h-4" strokeWidth={2} />
                         </button>
                     </div>
                 )}
 
                 {pendingSharedProfile && onCancelPendingSharedProfile && (
-                    <div className="flex items-center justify-between gap-3 w-full relative px-[16px] py-[12px] bg-[var(--primary-tint)] border border-[var(--border)] rounded-[16px] mb-1.5">
+                    <div className="flex items-center justify-between gap-3 w-full relative px-3 py-2 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-lg mb-1.5">
                         <div className="flex items-center gap-3 overflow-hidden flex-1">
-                            <div className="h-10 w-10 rounded-full overflow-hidden bg-[var(--card)] dark:bg-[#1E293B] flex items-center justify-center shrink-0 border border-[var(--border)]">
+                            <div className="size-8 rounded-full overflow-hidden bg-[var(--ds-surface-2)] flex items-center justify-center shrink-0 border border-[var(--ds-border)]">
                                 {pendingSharedProfile.avatar || pendingSharedProfile.avatar_url ? (
                                     <img src={pendingSharedProfile.avatar || pendingSharedProfile.avatar_url} alt={pendingSharedProfile.name} className="h-full w-full object-cover" />
                                 ) : (
-                                    <span className="font-semibold text-[var(--primary)]">{pendingSharedProfile.name?.[0]?.toUpperCase() || "P"}</span>
+                                    <span className="font-semibold text-xs text-[var(--ds-accent)]">{pendingSharedProfile.name?.[0]?.toUpperCase() || "P"}</span>
                                 )}
                             </div>
                             <div className="flex flex-col text-left overflow-hidden">
-                                <span className="font-['Poppins'] font-semibold text-[13px] text-[var(--foreground)] dark:text-white truncate">
+                                <span className="font-['DM_Sans'] font-medium text-xs text-[var(--ds-text-primary)] truncate">
                                     Shared Profile of {pendingSharedProfile.name}
                                 </span>
-                                <span className="font-['Poppins'] font-normal text-[12px] text-[var(--primary)] dark:text-[#818CF8] truncate">
+                                <span className="font-['DM_Sans'] font-normal text-[10px] text-[var(--ds-text-secondary)] truncate">
                                     {pendingSharedProfile.headline || "View shared profile"}
                                 </span>
                             </div>
                         </div>
                         <button
                             onClick={onCancelPendingSharedProfile}
-                            className="text-[var(--primary)] dark:text-[#818CF8] hover:bg-[var(--border)]/30 p-1.5 rounded-full transition-colors shrink-0"
+                            className="text-[var(--ds-text-muted)] hover:text-[var(--ds-text-primary)] p-1 rounded-full transition-colors shrink-0"
                             aria-label="Remove shared profile"
                         >
-                            <X className="w-[18px] h-[18px]" strokeWidth={2} />
+                            <X className="w-4 h-4" strokeWidth={2} />
                         </button>
                     </div>
                 )}
 
                 {pendingEntityContext && onDismissEntityContext && (
-                    <div className="flex items-center justify-between gap-3 w-full relative px-[16px] py-[12px] bg-[var(--primary-tint)] border border-[var(--border)] rounded-[16px] mb-1.5">
+                    <div className="flex items-center justify-between gap-3 w-full relative px-3 py-2 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-lg mb-1.5">
                         <div className="flex items-center gap-3 overflow-hidden flex-1">
-                            <div className="h-10 w-10 rounded-full overflow-hidden bg-[var(--card)] dark:bg-[#1E293B] flex items-center justify-center shrink-0 border border-[var(--border)]">
-                                <span className="font-semibold text-[var(--primary)]">
+                            <div className="size-8 rounded-full overflow-hidden bg-[var(--ds-surface-2)] flex items-center justify-center shrink-0 border border-[var(--ds-border)]">
+                                <span className="text-xs">
                                     {pendingEntityContext.type === 'job' ? '💼' : pendingEntityContext.type === 'event' ? '📅' : '📝'}
                                 </span>
                             </div>
                             <div className="flex flex-col text-left overflow-hidden">
-                                <span className="font-['Poppins'] font-semibold text-[13px] text-[var(--foreground)] dark:text-white truncate">
+                                <span className="font-['DM_Sans'] font-medium text-xs text-[var(--ds-text-primary)] truncate">
                                     {pendingEntityContext.type === 'job' ? 'Job Application Context' : pendingEntityContext.type === 'event' ? 'Event Context' : 'Job Offer Context'}
                                 </span>
-                                <span className="font-['Poppins'] font-normal text-[12px] text-[var(--primary)] dark:text-[#818CF8] truncate">
+                                <span className="font-['DM_Sans'] font-normal text-[10px] text-[var(--ds-text-secondary)] truncate">
                                     This context will be attached to your first message
                                 </span>
                             </div>
                         </div>
                         <button
                             onClick={onDismissEntityContext}
-                            className="text-[var(--primary)] dark:text-[#818CF8] hover:bg-[var(--border)]/30 p-1.5 rounded-full transition-colors shrink-0"
+                            className="text-[var(--ds-text-muted)] hover:text-[var(--ds-text-primary)] p-1 rounded-full transition-colors shrink-0"
                             aria-label="Remove context"
                         >
-                            <X className="w-[18px] h-[18px]" strokeWidth={2} />
+                            <X className="w-4 h-4" strokeWidth={2} />
                         </button>
                     </div>
                 )}
 
-                {/* File Previews inside the input box */}
-                {files.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto px-2 pt-2 pb-1">
-                        {files.map((file, index) => (
-                            <div key={index} className="relative group shrink-0 mt-1 mr-1">
-                                {file.type.startsWith('image/') ? (
-                                    <div className="w-[60px] h-[60px] relative overflow-hidden rounded-[12px] bg-muted border border-border/50">
-                                        <img src={URL.createObjectURL(file)} alt="preview" className="object-cover w-full h-full" />
+                {/* Frame 2610066: File Previews inside the input box matching Figma */}
+                {filePreviews.length > 0 && (
+                    <div className="w-full px-3 py-0 flex flex-row items-center gap-2.5 h-10 overflow-x-auto overflow-y-hidden scrollbar-none mb-1.5 shrink-0 self-stretch">
+                        {filePreviews.map(({ file, url, isDoc, isVideo, isImg }, index) => {
+                            if (isImg) {
+                                return (
+                                    <div
+                                        key={index}
+                                        className="relative w-[60px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)]"
+                                    >
+                                        <img
+                                            src={url}
+                                            alt={file.name}
+                                            className="w-[60px] h-10 object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFile(index)}
+                                            className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0"
+                                            aria-label="Remove image"
+                                        >
+                                            <X className="w-3 h-3 stroke-[2.5]" />
+                                        </button>
                                     </div>
-                                ) : (
-                                    <div className="w-[60px] h-[60px] flex flex-col items-center justify-center bg-muted rounded-[12px] text-muted-foreground border border-border/50 p-1">
-                                        {getFileIcon(file)}
-                                        <span className="text-[9px] truncate w-full text-center mt-1 text-foreground/80">{file.name}</span>
+                                );
+                            }
+
+                            if (isVideo) {
+                                return (
+                                    <div
+                                        key={index}
+                                        className="relative w-[60px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)]"
+                                    >
+                                        <video
+                                            src={url}
+                                            className="w-[60px] h-10 object-cover pointer-events-none"
+                                            preload="metadata"
+                                        />
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <Play className="w-5 h-5 text-[var(--ds-text-secondary)] fill-current" />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFile(index)}
+                                            className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0"
+                                            aria-label="Remove video"
+                                        >
+                                            <X className="w-3 h-3 stroke-[2.5]" />
+                                        </button>
                                     </div>
-                                )}
-                                <button
-                                    onClick={() => removeFile(index)}
-                                    className="absolute -top-2 -right-2 bg-[var(--card)] border border-[var(--border)] text-[var(--destructive)] rounded-full p-[2px] shadow-sm hover:bg-[var(--destructive)] hover:text-[var(--primary-foreground)] transition-colors z-10"
-                                    aria-label="Remove file"
+                                );
+                            }
+
+                            return (
+                                <div
+                                    key={index}
+                                    className="relative w-[50px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)]"
                                 >
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                        ))}
+                                    <div className="w-full h-full flex flex-col items-center justify-center px-1 py-0 select-none">
+                                        <FileTextIcon className="w-5 h-5 text-[var(--ds-text-primary)] shrink-0" size={20} />
+                                        <span className="font-['DM_Sans'] text-[10px] leading-3 font-normal text-[var(--ds-text-primary)] text-center truncate max-w-[38px]">
+                                            {file.name}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeFile(index)}
+                                        className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0"
+                                        aria-label="Remove document"
+                                    >
+                                        <X className="w-3 h-3 stroke-[2.5]" />
+                                    </button>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
 
-                <div className={isQuickChat ? "flex flex-row justify-between items-center w-full box-border px-[16px] py-[4px] gap-[8px] min-h-[44px] bg-[#FFFFFF] border border-[#6B7280] focus-within:border-[var(--primary)] focus-within:ring-1 focus-within:ring-[var(--primary)]/20 transition-all rounded-[24px]" : "flex items-center gap-1.5 w-full"}>
-                    {/* Attachment button */}
-                    <button
-                        className={`flex items-center justify-center rounded-full transition-colors shrink-0 self-center disabled:opacity-40 ${isQuickChat ? 'w-[20px] h-[20px] text-black hover:opacity-70' : 'w-9 h-9 text-muted-foreground hover:bg-muted ml-1'}`}
-                        disabled={isDisabled}
-                        onClick={() => fileInputRef.current?.click()}
-                        aria-label="Attach file"
+                {/* Frame 2610043: Input row matching Figma */}
+                <div className="self-stretch flex flex-row items-center p-0 gap-2.5 w-full min-h-[40px]">
+                    {/* Search / Left Underline Input with Paperclip */}
+                    <div
+                        className={cn(
+                            "box-border flex flex-row items-center px-3 py-1.5 gap-2.5 flex-1 min-h-[40px] h-10 border-b transition-colors",
+                            isDisabled
+                                ? "border-[var(--ds-text-muted)]"
+                                : "border-[var(--ds-text-primary)] focus-within:border-[var(--ds-accent)]"
+                        )}
                     >
-                        <Paperclip className="w-5 h-5" strokeWidth={1.5} />
-                    </button>
-
-                    {/* Input textarea */}
-                    <div className="flex-1 relative flex items-center justify-start h-full self-center">
-                        <MentionTextarea
-                            ref={textareaRef}
-                            value={text}
-                            searchUsersFn={searchUsersFn}
-                            onChange={(e) => {
-                                setText(e.target.value);
-                                if (onTyping) onTyping();
-
-                                const target = e.target;
-                                if (target && 'style' in target) {
-                                    target.style.height = 'auto';
-                                    const newHeight = Math.min(target.scrollHeight, 128);
-                                    target.style.height = `${newHeight}px`;
-                                    target.style.overflowY = target.scrollHeight > 128 ? 'auto' : 'hidden';
-                                }
-                            }}
-                            onKeyDown={handleKeyDown}
-                            placeholder={disabledMessage || (isQuickChat ? "Write a message..." : (placeholder || (isDisabled ? "Loading..." : "Message...")))}
-                            rows={1}
-                            className={`w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide ${isQuickChat ? "text-[12px] leading-[18px] font-['Poppins'] text-[#6B7280] placeholder:text-[#6B7280] p-0 my-auto" : "px-2 py-2 max-h-32 text-[15px] leading-[20px] text-foreground placeholder:text-muted-foreground/60"}`}
-                            style={{ minHeight: isQuickChat ? "18px" : "36px" }}
+                        <button
+                            type="button"
+                            className={cn(
+                                "w-5 h-5 flex items-center justify-center transition-colors shrink-0 p-0",
+                                isDisabled
+                                    ? "text-[var(--ds-text-muted)] cursor-default"
+                                    : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] cursor-pointer"
+                            )}
                             disabled={isDisabled}
-                        />
+                            onClick={() => fileInputRef.current?.click()}
+                            aria-label="Attach file"
+                            title="Attach file"
+                        >
+                            <Paperclip className="w-5 h-5" strokeWidth={1.5} />
+                        </button>
+
+                        <div className="flex-1 relative flex items-center justify-start min-w-0">
+                            <MentionTextarea
+                                ref={textareaRef}
+                                value={text}
+                                searchUsersFn={searchUsersFn}
+                                placement="top"
+                                onMentionsChange={setInlineMentions}
+                                maxHeight={68}
+                                enableHashtags={false}
+                                onChange={(e) => {
+                                    setText(e.target.value);
+                                    if (onTyping) onTyping();
+                                }}
+                                onKeyDown={handleKeyDown}
+                                placeholder={disabledMessage || (isQuickChat ? "Write a message..." : (placeholder || (isDisabled ? "Loading..." : "Write a message...")))}
+                                rows={1}
+                                className="w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide text-xs leading-4 font-normal font-['DM_Sans'] text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] p-0 min-h-4 max-h-[68px] overflow-y-auto"
+                                disabled={isDisabled}
+                            />
+                        </div>
                     </div>
 
                     <input
@@ -317,38 +466,48 @@ export default function UnifiedMessageInput({
                         accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     />
 
-                    {/* Right side controls */}
-                    <div className={`flex items-center self-center shrink-0 ${isQuickChat ? "gap-[16px] mb-0" : "gap-[16px] mr-1"}`}>
-                        <button
-                            ref={emojiButtonRef}
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            className={`flex items-center justify-center rounded-full transition-colors ${showEmojiPicker ? 'text-primary bg-primary/10' : (isQuickChat ? 'text-black hover:opacity-70' : 'text-muted-foreground hover:bg-muted')} ${isQuickChat ? 'w-[20px] h-[20px]' : 'w-9 h-9'}`}
-                            disabled={isDisabled}
-                            aria-label="Open emoji picker"
-                        >
-                            <Smile className="w-5 h-5" strokeWidth={1.5} />
-                        </button>
+                    {/* Right side emoji and send buttons */}
+                    <button
+                        ref={emojiButtonRef}
+                        type="button"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className={cn(
+                            "w-5 h-5 flex items-center justify-center transition-colors shrink-0 p-0",
+                            isDisabled
+                                ? "text-[var(--ds-text-muted)] cursor-default"
+                                : showEmojiPicker
+                                    ? "text-[var(--ds-accent)] cursor-pointer"
+                                    : "text-[var(--ds-text-primary)] hover:opacity-80 cursor-pointer"
+                        )}
+                        disabled={isDisabled}
+                        aria-label="Open emoji picker"
+                        title="Emoji"
+                    >
+                        <Smile className="w-5 h-5" strokeWidth={1.5} />
+                    </button>
 
-                        <button
-                            onClick={handleSend}
-                            disabled={isDisabled || (!text.trim() && files.length === 0 && !pendingSharedPost && !pendingSharedProfile)}
-                            className={`flex items-center justify-center transition-all shadow-sm ${isQuickChat ? 'w-[20px] h-[20px] rounded-none shadow-none text-black hover:opacity-70' : 'w-9 h-9 rounded-full'} 
-                                ${isQuickChat
-                                    ? (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile ? 'text-[var(--primary)]' : 'text-black')
-                                    : (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile
-                                        ? 'bg-[var(--primary-tint)] text-[var(--primary)] hover:bg-[var(--primary-tint)]/80'
-                                        : 'bg-transparent text-muted-foreground/40 cursor-default')
-                                }`}
-                            aria-label="Send message"
-                        >
-                            <Send className="w-5 h-5" strokeWidth={1.5} />
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={handleSend}
+                        disabled={isDisabled || (!text.trim() && files.length === 0 && !pendingSharedPost && !pendingSharedProfile)}
+                        className={cn(
+                            "w-5 h-5 flex items-center justify-center transition-all shrink-0 p-0",
+                            isDisabled
+                                ? "text-[var(--ds-text-muted)] cursor-default"
+                                : text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile
+                                    ? "text-[var(--ds-accent)] hover:opacity-80 cursor-pointer"
+                                    : "text-[var(--ds-text-muted)] opacity-50 cursor-default"
+                        )}
+                        aria-label="Send message"
+                        title="Send message"
+                    >
+                        <Send className="w-5 h-5" strokeWidth={1.5} />
+                    </button>
                 </div>
 
                 {/* Emoji Picker Overlay */}
                 {showEmojiPicker && (
-                    <div ref={pickerRef} className="absolute bottom-[calc(100%+10px)] right-4 shadow-xl z-50 rounded-2xl overflow-hidden border border-border">
+                    <div ref={pickerRef} className="absolute bottom-[calc(100%+10px)] right-4 shadow-xl z-50 rounded-2xl overflow-hidden border border-[var(--ds-border)]">
                         <EmojiPicker
                             onEmojiClick={handleInputEmojiSelect}
                             lazyLoadEmojis

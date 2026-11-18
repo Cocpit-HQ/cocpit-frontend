@@ -218,8 +218,9 @@ export interface SearchedUser {
   avatar_url: string | null;
   avatar?: string | null;
   account_type: string;
-  type?: 'USER' | 'COMPANY';
+  type?: 'USER' | 'COMPANY' | 'INSTITUTION' | 'ORGANIZATION';
   slug?: string;
   industry?: string | null;
   website?: string | null;
+  entity_type?: string;
 }

@@ -131,12 +131,21 @@ export function PrivacySettingsPage() {
   );
   const parseRejectionReason = (val?: string) => {
     if (!val || typeof val !== 'string') return null;
-    const match = val.match(/\[Reason:\s*([^\]]+)\]/i);
-    return match ? match[1].trim() : val;
+    const clean = val
+      .replace(/\[Reason:\s*([^\]]+)\]/gi, '$1')
+      .replace(/(?:Rejection Reason|Reason):\s*/gi, '')
+      .split(/[|\n]+/)
+      .map((s) => s.trim())
+      .filter((s) => s && !s.toLowerCase().includes('no rejection reason selected'))
+      .filter((s, idx, arr) => arr.indexOf(s) === idx)
+      .join(', ');
+    return clean || null;
   };
-  const rejectionReason = (privacy as any)?.rejection_reason || 
-    (myProfile?.user as any)?.rejection_reason || 
-    activeProfile?.rejection_reason ||
+
+  const rejectionReason =
+    parseRejectionReason((privacy as any)?.rejection_reason) || 
+    parseRejectionReason((myProfile?.user as any)?.rejection_reason) || 
+    parseRejectionReason(activeProfile?.rejection_reason) ||
     parseRejectionReason((privacy as any)?.review_notes) ||
     parseRejectionReason((activeProfile as any)?.review_notes) ||
     null;
@@ -246,7 +255,7 @@ export function PrivacySettingsPage() {
                 : isPending 
                 ? "Your document is under review by admin" 
                 : isRejected
-                ? (rejectionReason ? `Previous attempt was not approved (${rejectionReason}). Verify again to unlock job posting.` : "Your previous verification was rejected. Verify again to unlock job posting.")
+                ? (rejectionReason ? `Previous attempt was not approved (${rejectionReason}).` : "Previous attempt was not approved.")
                 : "Verify your identity to unlock more features"}
             </div>
           </div>

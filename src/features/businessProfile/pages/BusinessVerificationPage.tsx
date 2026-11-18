@@ -341,7 +341,7 @@ export function BusinessVerificationPage() {
                 Profile
               </span>
             </div>
-            <div className="self-stretch h-[2px] bg-transparent" />
+            <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
           </button>
 
           {/* About Tab */}
@@ -355,7 +355,7 @@ export function BusinessVerificationPage() {
                 About
               </span>
             </div>
-            <div className="self-stretch h-[2px] bg-transparent" />
+            <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
           </button>
 
           {/* Verification Tab (Active) */}
@@ -368,7 +368,7 @@ export function BusinessVerificationPage() {
                 Verification
               </span>
             </div>
-            <div className="self-stretch h-[2px] bg-ds-accent" />
+            <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
           </button>
         </div>
 

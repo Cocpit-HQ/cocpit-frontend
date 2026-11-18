@@ -37,7 +37,23 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
         const response = await api.get(`/jobs/roles?q=${encodeURIComponent(title)}`);
         const raw = response.data;
         const list = Array.isArray(raw) ? raw : (raw?.items || []);
-        setSuggestions(list.map((r: any) => (typeof r === 'string' ? r : r.role_name || r.name || String(r))));
+        const formatted = list.map((r: any) =>
+          (typeof r === 'string' ? r : r.role_name || r.name || String(r)).trim()
+        );
+
+        // Deduplicate case-insensitively so suggestions are never duplicated
+        const seen = new Set<string>();
+        const uniqueSuggestions: string[] = [];
+        for (const role of formatted) {
+          if (!role) continue;
+          const normalized = role.toLowerCase();
+          if (!seen.has(normalized)) {
+            seen.add(normalized);
+            uniqueSuggestions.push(role);
+          }
+        }
+
+        setSuggestions(uniqueSuggestions);
       } catch (error) {
         console.error("Error fetching job roles:", error);
       } finally {

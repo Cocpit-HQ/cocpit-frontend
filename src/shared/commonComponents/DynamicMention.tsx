@@ -58,7 +58,9 @@ export const DynamicMention = ({ displayName, handle, mentionedUsers, disableLin
   const finalClassName = cn(defaultClassName, className);
   const finalStyle = style || { color: 'var(--ds-accent)' };
 
-  if (disableLinks) {
+  const isEveryone = cleanHandle?.toLowerCase() === 'everyone' || cleanHandle?.toLowerCase() === 'all' || displayName?.toLowerCase() === 'everyone';
+
+  if (isEveryone || disableLinks) {
     return (
       <span className={finalClassName} style={finalStyle}>
         {nameToShow}

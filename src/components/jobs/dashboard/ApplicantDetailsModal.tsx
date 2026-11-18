@@ -46,6 +46,16 @@ export function ApplicantDetailsModal({ open, onOpenChange, applicant, onStatusU
                     </div>
 
                     <div className="p-6 space-y-8">
+                        {/* Candidate Note */}
+                        {(applicant.candidateNote || applicant.coverNote || (applicant as any).cover_note) && (
+                            <section>
+                                <h3 className="text-sm font-semibold text-foreground mb-2">Candidate Note</h3>
+                                <div className="p-3 bg-muted/20 border-l-2 border-ds-accent rounded-r-lg text-sm text-muted-foreground leading-relaxed">
+                                    {applicant.candidateNote || applicant.coverNote || (applicant as any).cover_note}
+                                </div>
+                            </section>
+                        )}
+
                         {/* About */}
                         <section>
                             <h3 className="text-sm font-semibold text-foreground mb-2">About</h3>

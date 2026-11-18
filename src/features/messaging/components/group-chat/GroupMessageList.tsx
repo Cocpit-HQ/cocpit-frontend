@@ -14,6 +14,7 @@ interface GroupMessageListProps {
     isLoadingMore?: boolean;
     onMessageClick?: (message: Message) => void;
     selectedMessageId?: string;
+    selectedMessageIds?: string[];
     editingMessageId?: string | null;
     onSaveEdit?: (messageId: string, text: string) => void;
     onCancelEdit?: () => void;
@@ -22,6 +23,9 @@ interface GroupMessageListProps {
     unreadCount?: number;
     onReply?: (message: Message) => void;
     onReaction?: (message: Message, emoji: string) => void;
+    pinnedMessageId?: string | null;
+    conversationId?: string;
+    groupMembers?: any[];
 }
 
 const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
@@ -32,6 +36,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
     isLoadingMore,
     onMessageClick,
     selectedMessageId,
+    selectedMessageIds,
     editingMessageId,
     onSaveEdit,
     onCancelEdit,
@@ -39,13 +44,26 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
     onMediaClick,
     unreadCount = 0,
     onReply,
-    onReaction
+    onReaction,
+    pinnedMessageId,
+    conversationId,
+    groupMembers,
 }, ref) => {
     const localRef = useRef<HTMLDivElement>(null);
     const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef;
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
     const lastScrollTopRef = useRef<number>(0);
     const shouldScrollToBottomRef = useRef<boolean>(true);
+
+    const selectedIdSet = useMemo(() => {
+        if (selectedMessageIds && selectedMessageIds.length > 0) {
+            return new Set(selectedMessageIds);
+        }
+        if (selectedMessageId) {
+            return new Set([selectedMessageId]);
+        }
+        return new Set<string>();
+    }, [selectedMessageIds, selectedMessageId]);
 
     const updateShouldScrollToBottom = (val: boolean) => {
         shouldScrollToBottomRef.current = val;
@@ -252,11 +270,11 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
             <div
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-4 py-3 scrollbar-hide relative bg-background"
+                className="flex-1 overflow-y-auto px-4 py-3 scrollbar-hide relative bg-[var(--ds-bg)]"
             >
                 {hasMore && (
                     <div className="flex justify-center py-2">
-                        {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <div className="h-4" />}
+                        {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin text-[var(--ds-text-secondary)]" /> : <div className="h-4" />}
                     </div>
                 )}
 
@@ -331,7 +349,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
                                 {/* Date divider */}
                                 {showDateDivider && !isFirstUnread && (
                                     <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
-                                        <span className="text-[11px] font-['Poppins'] text-muted-foreground lowercase first-letter:uppercase shrink-0">
+                                        <span className="justify-center text-[var(--ds-text-secondary)] text-[10px] font-normal font-['DM_Sans'] leading-3 shrink-0 lowercase first-letter:uppercase">
                                             {currentMsgDateStr}
                                         </span>
                                     </div>
@@ -339,11 +357,11 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
                                 {/* Unread divider */}
                                 {isFirstUnread && (
                                     <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
-                                        <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
-                                        <span className="text-[11px] font-bold text-[var(--primary)] mx-4 shrink-0 bg-[var(--primary)]/10 px-3 py-1 rounded-full">
+                                        <div className="h-[1px] bg-[var(--ds-accent)]/40 flex-1" />
+                                        <span className="text-[10px] font-medium font-['DM_Sans'] text-[var(--ds-accent)] mx-3 shrink-0 bg-[var(--ds-accent)]/10 px-2.5 py-0.5 rounded-full">
                                             {initialUnread} Unread message{initialUnread !== 1 ? 's' : ''}
                                         </span>
-                                        <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
+                                        <div className="h-[1px] bg-[var(--ds-accent)]/40 flex-1" />
                                     </div>
                                 )}
                                 {/* System message */}
@@ -356,7 +374,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
                                         onSaveEdit={(text) => onSaveEdit?.(msg.id, text)}
                                         onCancelEdit={onCancelEdit}
                                         onMessageClick={onMessageClick}
-                                        isSelected={selectedMessageId === msg.id}
+                                        isSelected={selectedIdSet.has(msg.id)}
+                                        hasSelection={selectedIdSet.size > 0}
                                         onAction={onAction}
                                         showSenderName={showSenderName}
                                         showAvatar={groupedMsg.isLastInGroup}
@@ -374,6 +393,9 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
                                         isHighlighted={highlightedMessageId === msg.id}
                                         onReaction={onReaction}
                                         currentUserId={currentUserId}
+                                        conversationId={conversationId}
+                                        isPinned={Boolean(pinnedMessageId && String(msg.id) === String(pinnedMessageId))}
+                                        groupMembers={groupMembers}
                                     />
                                 )}
                             </div>
@@ -384,7 +406,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
 
             {showScrollButton && !shouldScrollToBottom && (
                 <button
-                    className="absolute bottom-4 right-4 md:right-8 bg-white border border-border shadow-lg text-primary p-2 rounded-full z-50 hover:bg-muted transition-all"
+                    className="absolute bottom-4 right-4 md:right-8 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] shadow-lg text-[var(--ds-text-primary)] hover:text-[var(--ds-accent)] p-2 rounded-full z-50 hover:bg-[var(--ds-surface-2)] transition-all"
                     onClick={() => {
                         if (scrollRef.current) {
                             scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });

@@ -56,15 +56,18 @@ function renderReportThumbnail(item: ReportListItem) {
     );
   }
 
-  // 2. User Profile -> Profile icon
+  // 2. User Profile / Group -> Profile icon
   if (
     targetType === 'USER' ||
     targetType === 'PROFILE' ||
+    targetType === 'GROUP' ||
     (targetType !== 'POST' && targetType !== 'COMMENT' && targetType !== 'THOUGHT' && (
       rawType.includes('user') ||
       rawType.includes('profile') ||
+      rawType.includes('group') ||
       combined.includes('user profile') ||
       combined.includes('reported profile') ||
+      combined.includes('reported group') ||
       combined.includes('fake account') ||
       combined.includes('impersonat')
     ))

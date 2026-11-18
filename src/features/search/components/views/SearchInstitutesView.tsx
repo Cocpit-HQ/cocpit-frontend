@@ -59,7 +59,7 @@ export const SearchInstitutesView: React.FC<SearchInstitutesViewProps> = ({
   }
 
   return (
-    <div className="w-full max-w-[540px] mx-auto px-2 sm:px-0 flex flex-col gap-4 mt-2">
+    <div className="w-full max-w-[540px] mx-auto px-4 sm:px-0 flex flex-col gap-4 mt-2">
       <h2 className="text-base font-medium text-ds-text-primary w-full text-left font-dm-sans">
         Institute
       </h2>

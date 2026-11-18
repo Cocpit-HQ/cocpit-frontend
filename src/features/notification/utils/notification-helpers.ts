@@ -134,37 +134,41 @@ export const parseNotificationText = (
   // Company follower notification: e.g. "radha started following dyp university"
   const followerText = notification.text || bodyText || '';
 
-  const isCompanyFollower =
+  const ext = notification as unknown as ExtendedNotificationFields;
+  let meta: Record<string, any> = {};
+  try {
+    if (typeof ext.metadata === 'string') {
+      meta = JSON.parse(ext.metadata);
+    } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+      meta = ext.metadata as Record<string, any>;
+    }
+  } catch {}
+
+  const isCompanyActor = Boolean(
+    notification.is_company_actor ||
+    ext.isCompanyActor ||
+    meta.isCompanyActor ||
+    meta.is_company_actor ||
+    meta.follower_org_id ||
+    meta.followerOrgId
+  );
+
+  const isFollowerNotification =
     type === 'company_follower' ||
-    (type !== 'follow' && /.+?\s+started following\s+.+/i.test(followerText.trim()));
+    (isCompanyActor && (type === 'follow' || /started following/i.test(followerText))) ||
+    (type !== 'follow' && /.+?\s+started following(?:\s+.+)?/i.test(followerText.trim()));
 
-  if (isCompanyFollower) {
-    const match = followerText.trim().match(/^(.*?)\s+started following\s+(.+?)(?:\.|\s*)$/i);
+  if (isFollowerNotification) {
+    const match = followerText.trim().match(/^(.*?)\s+started following(?:\s+(.+?))?(?:\.|\s*)$/i);
     const parsedFollower = match && match[1] ? match[1].trim() : null;
-    const ext = notification as unknown as ExtendedNotificationFields;
-    let meta: Record<string, any> = {};
-    try {
-      if (typeof ext.metadata === 'string') {
-        meta = JSON.parse(ext.metadata);
-      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
-        meta = ext.metadata as Record<string, any>;
-      }
-    } catch {}
-
-    const isCompanyActor = Boolean(
-      notification.is_company_actor ||
-      ext.isCompanyActor ||
-      meta.isCompanyActor ||
-      meta.is_company_actor ||
-      meta.follower_org_id ||
-      meta.followerOrgId
-    );
 
     const followerId =
       (meta.followerOrgId as string) ||
       (meta.follower_org_id as string) ||
       (meta.followerId as string) ||
       (meta.follower_id as string) ||
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
       notification.sender_id;
 
     const followerSlug =
@@ -172,13 +176,9 @@ export const parseNotificationText = (
       (meta.followerSlug as string) ||
       (meta.follower_slug as string);
 
-    const targetUrl = followerSlug
-      ? `/organization/${followerSlug}`
-      : isCompanyActor && followerId
-        ? `/organization/${followerId}`
-        : followerId
-          ? `/profile/${followerId}`
-          : null;
+    const targetUrl = isCompanyActor
+      ? (followerSlug ? `/organization/${followerSlug}` : (followerId ? `/organization/${followerId}` : null))
+      : (followerId ? `/profile/${followerId}` : null);
 
     const followerName =
       parsedFollower ||
@@ -188,7 +188,13 @@ export const parseNotificationText = (
       'Someone';
 
     const rawOrgName = match && match[2] ? match[2].trim().replace(/\.$/, '') : '';
-    const orgName = /^you$/i.test(rawOrgName) ? '' : rawOrgName;
+    const isTargetCurrentUserOrOrg =
+      !rawOrgName ||
+      /^you$/i.test(rawOrgName) ||
+      /^your\s+company$/i.test(rawOrgName) ||
+      Boolean(activeProfileName && rawOrgName.toLowerCase() === activeProfileName.trim().toLowerCase());
+
+    const orgName = isTargetCurrentUserOrOrg ? '' : rawOrgName;
 
     return {
       actorName: followerName,
@@ -650,12 +656,23 @@ export const parseNotificationText = (
     };
   }
 
+  // User verification notification (redirects to privacy settings)
+  if (type === 'user_identity_verification' || /user verification|identity verification/i.test(rawNotifText)) {
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: null,
+      prefixText: '',
+      bodyText: rawNotifText.replace(/Your identity verification was not approved/i, 'Your user verification is rejected'),
+      targetUrl: '/settings/privacy',
+    };
+  }
+
   // Job rejected: "Your job [Job Title] wasn’t approved. Reason: [Reason]."
   const isJobRejected =
     type === 'job_rejected' ||
     type === 'job_moderation_rejected' ||
-    /wasn[’']t approved/i.test(rawNotifText) ||
-    /was not approved/i.test(rawNotifText);
+    /(?:Your job posting|Your job)\s+[“"']?.*?was(?:n[’']t|\s+not)\s+approved/i.test(rawNotifText);
 
   if (isJobRejected) {
     const ext = notification as unknown as ExtendedNotificationFields;
@@ -673,10 +690,7 @@ export const parseNotificationText = (
     jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
     const reasonMatch = rawNotifText.match(/Reason:\s*(.+?)(?:\.|\s*)$/i);
     const reason = (meta.rejection_reason as string) || (meta.rejectionReason as string) || (reasonMatch ? reasonMatch[1].trim().replace(/\.$/, '') : 'Not specified');
-    const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
-    const targetUrl = jobId
-      ? `/jobs?tab=My+Listings&view=view-listing&filter=Rejected&jobId=${jobId}&returnTo=/notifications`
-      : '/jobs?tab=My+Listings&returnTo=/notifications&filter=Rejected';
+    const targetUrl = '/jobs?tab=My+Listings&filter=Rejected';
 
     return {
       actorName: null,
@@ -768,7 +782,7 @@ export const getNotificationRoute = (
   if (type === 'like' && postReferenceId) {
     return `/post/${postReferenceId}?returnTo=/notifications`;
   }
-  if (type === 'company_follower') {
+  if (type === 'company_follower' || type === 'follow') {
     let meta: Record<string, any> = {};
     try {
       if (typeof ext.metadata === 'string') {
@@ -797,20 +811,23 @@ export const getNotificationRoute = (
       (meta.follower_org_id as string) ||
       (meta.followerId as string) ||
       (meta.follower_id as string) ||
-      notification.sender_id;
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
+      notification.sender_id ||
+      notification.reference_id;
 
-    if (followerSlug) {
-      return `/organization/${followerSlug}`;
+    if (isCompanyActor) {
+      if (followerSlug) {
+        return `/organization/${followerSlug}`;
+      }
+      if (followerId) {
+        return `/organization/${followerId}`;
+      }
+    } else {
+      if (followerId) {
+        return `/profile/${followerId}`;
+      }
     }
-    if (isCompanyActor && followerId) {
-      return `/organization/${followerId}`;
-    }
-    if (followerId) {
-      return `/profile/${followerId}`;
-    }
-  }
-  if (type === 'follow' && notification.reference_id) {
-    return `/profile/${notification.reference_id}`;
   }
   if (type === 'repost' && postReferenceId) {
     return `/post/${postReferenceId}?returnTo=/notifications`;
@@ -930,28 +947,24 @@ export const getNotificationRoute = (
     return orgQuery ? `/team${orgQuery}` : '/team';
   }
 
-  // Redirect rejected job notification to My Listings -> Rejected tab with highlight
+  // Redirect user identity / document verification notification to Privacy Settings
+  if (
+    type === 'user_identity_verification' ||
+    type === 'doc_verification_rejected' ||
+    type === 'doc_verification_success' ||
+    /identity verification/i.test(notification.text || '') ||
+    /user verification/i.test(notification.text || '')
+  ) {
+    return '/settings/privacy';
+  }
+
+  // Redirect rejected job notification to My Listings -> Rejected tab
   if (
     type === 'job_rejected' ||
     type === 'job_moderation_rejected' ||
-    notification.text?.includes('was not approved') ||
-    notification.text?.includes("wasn't approved") ||
-    notification.text?.includes("wasn’t approved")
+    /(?:Your job posting|Your job)\s+[“"']?.*?was(?:n[’']t|\s+not)\s+approved/i.test(notification.text || '')
   ) {
-    let jobId = notification.reference_id;
-    if (!jobId) {
-      try {
-        if (typeof ext.metadata === 'string') {
-          const parsed = JSON.parse(ext.metadata);
-          jobId = parsed.jobId || parsed.job_id;
-        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
-          jobId = (ext.metadata as any).jobId || (ext.metadata as any).job_id;
-        }
-      } catch {}
-    }
-    return jobId
-      ? `/jobs?tab=My+Listings&filter=Rejected&jobId=${jobId}`
-      : '/jobs?tab=My+Listings&filter=Rejected';
+    return '/jobs?tab=My+Listings&filter=Rejected';
   }
 
   // Redirect submitted / in-review job notification

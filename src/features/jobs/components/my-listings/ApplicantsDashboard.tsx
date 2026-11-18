@@ -17,6 +17,7 @@ import {
   updateApplicationStatus,
   upsertApplicationNote,
   triggerApplicationAnalysis,
+  getJobById,
 } from '../../services/jobs.service';
 
 interface ApplicantsDashboardProps {
@@ -43,6 +44,10 @@ interface Candidate {
   selfNote?: string;
   note?: string;
   hasNote?: boolean;
+  candidateNote?: string;
+  coverNote?: string;
+  message?: string;
+  hasCandidateNote?: boolean;
   resumeName?: string;
   resumeFileName?: string;
   resume_file_name?: string;
@@ -192,6 +197,26 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   // Real data state
   const [candidateDetail, setCandidateDetail] = useState<any>(null);
   const [candidateAnalysis, setCandidateAnalysis] = useState<any>(null);
+  const [extraCounts, setExtraCounts] = useState<{ shortlisted_count?: number; offers_count?: number; applicants_count?: number }>({
+    shortlisted_count: listing.shortlisted_count,
+    offers_count: listing.offers_count,
+    applicants_count: listing.applicants_count,
+  });
+
+  useEffect(() => {
+    if (listing.id && (listing.offers_count === undefined || listing.shortlisted_count === undefined)) {
+      getJobById(listing.id).then((j: any) => {
+        if (j) {
+          setExtraCounts((prev) => ({
+            ...prev,
+            shortlisted_count: j.shortlisted_count ?? prev.shortlisted_count,
+            offers_count: j.offers_count ?? prev.offers_count,
+            applicants_count: j.applicants_count ?? prev.applicants_count,
+          }));
+        }
+      }).catch(() => {});
+    }
+  }, [listing.id, listing.offers_count, listing.shortlisted_count]);
 
   // Reset skills expansion when switching candidate
   useEffect(() => {
@@ -225,7 +250,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         let resolvedList = Array.isArray(list) ? list : [];
 
         if (filter === 'Noted') {
-          resolvedList = resolvedList.filter((c: any) => c.hasNote || Boolean(c.selfNote?.trim()) || Boolean(c.note?.trim()));
+          resolvedList = resolvedList.filter((c: any) => c.hasNote || Boolean(c.selfNote?.trim()) || Boolean(c.note?.trim()) || Boolean(c.candidateNote?.trim()) || Boolean(c.coverNote?.trim()) || Boolean(c.message?.trim()));
         }
 
         applicantsCache.set(currentKey, resolvedList);
@@ -393,15 +418,22 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const statusUpper = (listing.status || 'ACTIVE').toUpperCase();
 
   // Counts
-  const appCount = listing.applicants_count || candidates.length;
-  const shortlistCount = listing.shortlisted_count || candidates.filter(c => c.status === 'Shortlisted').length;
-  const offerCount = listing.offers_count || 0;
+  const appCount = listing.applicants_count ?? extraCounts.applicants_count ?? candidates.length;
+  const shortlistCount = listing.shortlisted_count ?? extraCounts.shortlisted_count ?? candidates.filter(c => c.status === 'Shortlisted').length;
+  const offerCount = listing.offers_count ?? extraCounts.offers_count ?? 0;
 
   // Resolved candidate fields
   const displayName = candidateDetail?.name || activeCandidate?.name || '';
   const displayHeadline = candidateDetail?.headline || activeCandidate?.headline || activeCandidate?.title || '';
   const displayScore = candidateAnalysis?.matchScore ?? activeCandidate?.matchScore ?? activeCandidate?.score;
   const displaySelfNote = candidateDetail?.selfNote || activeCandidate?.selfNote || activeCandidate?.note;
+  const displayCandidateNote =
+    candidateDetail?.candidateNote ||
+    candidateDetail?.coverNote ||
+    candidateDetail?.message ||
+    activeCandidate?.candidateNote ||
+    activeCandidate?.coverNote ||
+    activeCandidate?.message;
   const rawResume =
     candidateDetail?.resumeName ||
     activeCandidate?.resumeName ||
@@ -713,10 +745,17 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                           />
                           {/* Frame 2609105: Candidate Info */}
                           <div className="flex-1 flex flex-col justify-start items-start gap-1 min-w-0">
-                            <span className={`w-full text-base font-medium font-dm-sans leading-6 truncate flex items-center ${score != null ? 'text-ds-text-primary' : 'text-ds-text-secondary'
-                              }`}>
-                              {cand.name || 'Unknown User'}
-                            </span>
+                            <div className="w-full flex items-center justify-between gap-1 min-w-0">
+                              <span className={`text-base font-medium font-dm-sans leading-6 truncate ${score != null ? 'text-ds-text-primary' : 'text-ds-text-secondary'
+                                }`}>
+                                {cand.name || 'Unknown User'}
+                              </span>
+                              {(cand.candidateNote || cand.coverNote || cand.message || cand.hasCandidateNote) && (
+                                <span title="Candidate added a note with resume" className="text-ds-accent shrink-0 flex items-center">
+                                  <Icon icon="solar:notes-linear" className="size-3.5 text-ds-accent" />
+                                </span>
+                              )}
+                            </div>
                             {/* Frame 2609066 */}
                             <div className="flex flex-row items-center gap-1 h-6">
                               {score != null ? (
@@ -900,29 +939,47 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     </div>
                   )}
 
-                  {/* Frame 2608977: Resume PDF Row */}
-                  <div className="w-full h-5 pr-2 flex flex-row justify-between items-center gap-4">
-                    {/* Frame 2608990 */}
-                    <div className="flex flex-row items-center gap-2 min-w-0 h-5">
-                      <PdfFileIcon className="w-5 h-5 text-ds-text-primary shrink-0" />
-                      <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate">
-                        {displayResumeName}
-                      </span>
+                  {/* Resume PDF Row and Candidate Note with tighter gap */}
+                  <div className="w-full flex flex-col gap-2">
+                    {/* Frame 2608977: Resume PDF Row */}
+                    <div className="w-full h-5 pr-2 flex flex-row justify-between items-center gap-4">
+                      {/* Frame 2608990 */}
+                      <div className="flex flex-row items-center gap-2 min-w-0 h-5">
+                        <PdfFileIcon className="w-5 h-5 text-ds-text-primary shrink-0" />
+                        <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate">
+                          {displayResumeName}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (candidateDetail?.resumeUrl) {
+                            window.open(candidateDetail.resumeUrl, '_blank');
+                          } else {
+                            toast({ title: 'Resume Preview', description: `Viewing document: ${displayResumeName}` });
+                          }
+                        }}
+                        className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent cursor-pointer focus:outline-none transition-colors shrink-0"
+                        aria-label="View resume"
+                      >
+                        <EyeIcon className="w-5 h-5 text-ds-text-primary hover:text-ds-accent transition-colors" />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (candidateDetail?.resumeUrl) {
-                          window.open(candidateDetail.resumeUrl, '_blank');
-                        } else {
-                          toast({ title: 'Resume Preview', description: `Viewing document: ${displayResumeName}` });
-                        }
-                      }}
-                      className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent cursor-pointer focus:outline-none transition-colors shrink-0"
-                      aria-label="View resume"
-                    >
-                      <EyeIcon className="w-5 h-5 text-ds-text-primary hover:text-ds-accent transition-colors" />
-                    </button>
+
+                    {/* Frame 2609091: Candidate Note Card */}
+                    {displayCandidateNote && (
+                      <div className="w-full flex flex-col gap-2">
+                        <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
+                          Candidate note
+                        </span>
+                        {/* Frame 2609031 */}
+                        <div className="w-full p-3 bg-ds-surface-1 border-l-2 border-ds-accent rounded-tr-2xl rounded-bl-2xl rounded-br-2xl flex flex-col gap-2">
+                          <p className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 break-words">
+                            {displayCandidateNote}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Section - AI Executive Summary */}

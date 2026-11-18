@@ -51,14 +51,16 @@ export const SearchPostsView: React.FC<SearchPostsViewProps> = ({
   }
 
   return (
-    <div className="w-full max-w-[538px] mx-auto px-4 sm:px-12 flex flex-col items-center gap-6">
+    <div className="w-full max-w-[538px] mx-auto px-0 sm:px-12 flex flex-col items-center gap-6">
       {/* Posts List Column */}
       <div className="w-full max-w-[442px] flex flex-col gap-3 mx-auto">
         {items.map((post, idx) => {
-          const mappedPost = post.author ? post : mapBackendPostToFrontend(post);
+          if (!post) return null;
+          const mappedPost = (post.id && post.author !== undefined) ? post : mapBackendPostToFrontend(post);
+          const postId = mappedPost.id || mappedPost.post_id || post.id || post.post_id || `search-post-${idx}`;
           return (
-            <div key={mappedPost.id || mappedPost.post_id || `search-post-${idx}`} className="w-full max-w-[442px]">
-              <FeedPost {...mappedPost} id={mappedPost.id || mappedPost.post_id} returnTo={returnTo} />
+            <div key={postId} className="w-full max-w-[442px]">
+              <FeedPost {...mappedPost} id={postId} returnTo={returnTo} />
             </div>
           );
         })}

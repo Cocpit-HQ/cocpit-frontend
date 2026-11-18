@@ -98,11 +98,17 @@ export const ProfileEditTabs: React.FC<ProfileEditTabsProps> = ({
               config.widthClass,
               config.orderClass,
               isActive
-                ? "text-[var(--ds-text-primary)] border-b-2 border-[var(--ds-accent)]"
-                : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] border-b-2 border-transparent"
+                ? "text-[var(--ds-text-primary)]"
+                : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
             )}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            {isActive && (
+              <span
+                className="absolute bottom-0 left-[1%] right-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]"
+                aria-hidden="true"
+              />
+            )}
           </button>
         );
       })}

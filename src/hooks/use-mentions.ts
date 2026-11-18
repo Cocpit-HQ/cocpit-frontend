@@ -5,8 +5,12 @@ import { searchHashtags, getTrendingHashtags, HashtagSuggestion } from '@/servic
 
 export type MentionMode = 'mention' | 'hashtag' | null;
 
+export type SearchUsersFnResult = 
+    | UserMention[] 
+    | { data?: UserMention[]; users?: UserMention[]; nextCursor?: string | null; hasMore?: boolean };
+
 interface UseMentionsProps {
-    searchUsersFn?: (query: string, forTagging?: boolean) => Promise<UserMention[]>;
+    searchUsersFn?: (query: string, forTagging?: boolean, cursor?: string) => Promise<SearchUsersFnResult>;
 }
 
 export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
@@ -18,6 +22,8 @@ export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
     const [hashtags, setHashtags] = useState<HashtagSuggestion[]>([]);
     const [activeIndex, setActiveIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [cursor, setCursor] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(false);
 
     const debouncedQuery = useDebounce(query, 300);
 
@@ -29,6 +35,8 @@ export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
             if (!mode) {
                 setUsers([]);
                 setHashtags([]);
+                setCursor(null);
+                setHasMore(false);
                 return;
             }
 
@@ -37,22 +45,52 @@ export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
                 if (mode === 'mention') {
                     if (debouncedQuery) {
                         if (searchUsersFn) {
-                            const results = await searchUsersFn(debouncedQuery, true);
+                            const res: any = await searchUsersFn(debouncedQuery, true);
                             if (isMounted) {
-                                setUsers(results || []);
+                                if (Array.isArray(res)) {
+                                    setUsers(res || []);
+                                    setCursor(null);
+                                    setHasMore(false);
+                                } else {
+                                    setUsers(res?.data || res?.users || []);
+                                    setCursor(res?.nextCursor || null);
+                                    setHasMore(Boolean(res?.hasMore));
+                                }
                                 setActiveIndex(0);
                             }
                         } else {
                             const results = await searchUsers(debouncedQuery, true);
                             if (isMounted) {
                                 setUsers(results || []);
+                                setCursor(null);
+                                setHasMore(false);
                                 setActiveIndex(0);
                             }
                         }
                     } else {
-                        const suggested = await getSuggestedUsers(true);
+                        // Empty query: user just typed "@"
+                        let results: any = [];
+                        if (searchUsersFn) {
+                            try {
+                                results = await searchUsersFn('', true);
+                            } catch (_) {
+                                results = [];
+                            }
+                        }
+                        // If searchUsersFn didn't provide empty-query results (e.g. searchUsers), fall back to feed suggested users & orgs
+                        if (!results || (Array.isArray(results) && results.length === 0)) {
+                            results = await getSuggestedUsers(true);
+                        }
                         if (isMounted) {
-                            setUsers(suggested || []);
+                            if (Array.isArray(results)) {
+                                setUsers(results || []);
+                                setCursor(null);
+                                setHasMore(false);
+                            } else {
+                                setUsers(results?.data || results?.users || []);
+                                setCursor(results?.nextCursor || null);
+                                setHasMore(Boolean(results?.hasMore));
+                            }
                             setActiveIndex(0);
                         }
                     }
@@ -85,6 +123,29 @@ export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
             abortController.abort();
         };
     }, [debouncedQuery, mode, searchUsersFn]);
+
+    const loadMoreUsers = async () => {
+        if (!hasMore || isLoading || !cursor || mode !== 'mention' || !searchUsersFn) return;
+        setIsLoading(true);
+        try {
+            const res: any = await searchUsersFn(debouncedQuery, true, cursor);
+            const newItems: UserMention[] = Array.isArray(res) ? res : (res?.data || res?.users || []);
+            const nextC = res?.nextCursor || null;
+            const more = Boolean(res?.hasMore);
+
+            setUsers(prev => {
+                const existingIds = new Set(prev.map(u => u.id));
+                const filteredNew = newItems.filter(u => !existingIds.has(u.id));
+                return [...prev, ...filteredNew];
+            });
+            setCursor(nextC);
+            setHasMore(more);
+        } catch (err) {
+            console.error("Failed to load more users for mentions", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleKeyDown = (
         e: React.KeyboardEvent | KeyboardEvent, 
@@ -122,6 +183,8 @@ export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
         users, hashtags,
         activeIndex, setActiveIndex,
         isLoading,
+        hasMore,
+        loadMoreUsers,
         handleKeyDown
     };
 };

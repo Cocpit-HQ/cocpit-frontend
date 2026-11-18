@@ -9,6 +9,8 @@ import {
   SearchHashtagItem,
 } from '../types/search.types';
 import { Job } from '@/features/jobs/types/jobs.types';
+import { CursorPaginatedResult } from '@/features/jobs/services/jobs.service';
+import { getTrendingHashtags, searchHashtags } from '@/services/api/hashtags';
 
 export const searchService = {
   async searchAll(query: string): Promise<StageAResponse> {
@@ -106,6 +108,30 @@ export const searchService = {
         queryParams.hashtag = Array.isArray(f.hashtag) ? f.hashtag.join(',') : f.hashtag;
       }
       if (f.sort_by) queryParams.sort_by = f.sort_by;
+      if (f.skills && f.skills.length > 0) {
+        queryParams.skills = Array.isArray(f.skills) ? f.skills.join('|') : f.skills;
+      }
+      if (f.experience && f.experience.length > 0) {
+        queryParams.experience = Array.isArray(f.experience) ? f.experience.join('|') : f.experience;
+      }
+      if (f.open_to && f.open_to.length > 0) {
+        queryParams.open_to = Array.isArray(f.open_to) ? f.open_to.join('|') : f.open_to;
+      }
+      if (f.sector && f.sector.length > 0) {
+        queryParams.sector = Array.isArray(f.sector) ? f.sector.join('|') : f.sector;
+      }
+      if (f.specific_search) {
+        queryParams.specific_search = f.specific_search;
+      }
+      if (f.mentions_org !== undefined) {
+        queryParams.mentions_org = f.mentions_org ? 'true' : 'false';
+      }
+      if (f.mentions_company !== undefined) {
+        queryParams.mentions_company = f.mentions_company ? 'true' : 'false';
+      }
+      if (f.scope) {
+        queryParams.scope = f.scope;
+      }
     }
 
     const response = await api.get('/search', {
@@ -145,3 +171,110 @@ export const searchService = {
     return this.searchCategory<SearchHashtagItem>({ ...params, type: 'hashtags' });
   },
 };
+
+/**
+ * Fetch skills with cursor pagination from the profile module's /profile/skills endpoint.
+ * Directly compatible with SearchableCursorFilterChip.
+ */
+export async function getPaginatedSkills(
+  query?: string,
+  cursor?: string,
+  limit = 50
+): Promise<CursorPaginatedResult<string>> {
+  const params: Record<string, string | number> = { limit };
+  if (query && query.trim()) params.q = query.trim();
+  if (cursor) params.cursor = cursor;
+
+  const response = await api.get('/profile/skills', { params });
+  const data = response.data?.data;
+  const rawItems = data?.items || [];
+  const items = rawItems.map((it: any) =>
+    typeof it === 'string' ? it : it?.name || it?.skill_name || ''
+  );
+
+  return {
+    items: items.filter(Boolean),
+    nextCursor: data?.next_cursor ? String(data.next_cursor) : null,
+    hasMore: Boolean(data?.has_more),
+  };
+}
+
+/**
+ * Unified cursor-paginated hashtag search provider.
+ * Supports:
+ * - Empty query: returns trending/popular hashtags with keyset cursor pagination
+ * - Non-empty query: returns autocomplete matched hashtags with keyset cursor pagination
+ * - Directly compatible with SearchableCursorFilterChip & filterOptionsCache
+ */
+export async function getPaginatedHashtags(
+  query?: string,
+  cursor?: string,
+  limit = 25
+): Promise<CursorPaginatedResult<string>> {
+  const cleanTerm = (query || '').trim().replace(/^#/, '');
+  const params: Record<string, any> = {
+    type: 'hashtags',
+    limit,
+    sort_by: cleanTerm ? 'most_popular' : 'trending',
+  };
+  if (cleanTerm) {
+    params.q = cleanTerm;
+  }
+  if (cursor) {
+    params.cursor = cursor;
+  }
+
+  try {
+    const response = await api.get('/search', { params });
+    const raw = response.data?.data || response.data;
+    const rawItems = raw?.items || [];
+    const items = rawItems
+      .map((item: any) => {
+        if (typeof item === 'string') return item.replace(/^#/, '');
+        return (item?.tag || '').replace(/^#/, '');
+      })
+      .filter(Boolean);
+
+    const nextCursor = raw?.next_cursor || raw?.pagination?.next_cursor || null;
+    const hasMore = Boolean(raw?.has_more ?? raw?.pagination?.has_more);
+
+    // Fallback: If /search?type=hashtags returned no items on initial browse, fallback to trending
+    if (items.length === 0 && !cursor && !cleanTerm) {
+      const trending = await getTrendingHashtags();
+      return {
+        items: trending.map((t) => t.tag.replace(/^#/, '')),
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+
+    return {
+      items,
+      nextCursor,
+      hasMore,
+    };
+  } catch (err) {
+    // Graceful fallback to legacy endpoints if /search is temporarily unavailable
+    try {
+      if (cleanTerm) {
+        const searchRes = await searchHashtags(cleanTerm);
+        return {
+          items: (searchRes.tags || []).map((t) => t.tag.replace(/^#/, '')),
+          nextCursor: null,
+          hasMore: false,
+        };
+      } else {
+        const trending = await getTrendingHashtags();
+        return {
+          items: trending.map((t) => t.tag.replace(/^#/, '')),
+          nextCursor: null,
+          hasMore: false,
+        };
+      }
+    } catch {
+      return { items: [], nextCursor: null, hasMore: false };
+    }
+  }
+}
+
+

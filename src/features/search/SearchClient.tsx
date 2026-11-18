@@ -16,9 +16,30 @@ import { SearchInstitutesView } from './components/views/SearchInstitutesView';
 import { SearchPostsView } from './components/views/SearchPostsView';
 import { SearchHashtagsView } from './components/views/SearchHashtagsView';
 import { SearchCategory } from './types/search.types';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export default function SearchClient() {
   const router = useRouter();
+  const { isCompany, activeProfile } = useActiveProfile();
+  const isOrgActor = Boolean(
+    isCompany ||
+    activeProfile?.type === 'COMPANY' ||
+    (activeProfile as any)?.type === 'ORGANIZATION' ||
+    (activeProfile as any)?.type === 'ORG' ||
+    activeProfile?.entityType === 'COMPANY' ||
+    activeProfile?.entityType === 'INSTITUTION' ||
+    (typeof window !== 'undefined' && (() => {
+      try {
+        const stored = sessionStorage.getItem('cocpit_active_profile');
+        if (!stored) return false;
+        const p = JSON.parse(stored);
+        return p?.type === 'COMPANY' || p?.type === 'ORGANIZATION' || p?.entityType === 'COMPANY' || p?.entityType === 'INSTITUTION';
+      } catch {
+        return false;
+      }
+    })())
+  );
+
   const {
     q,
     type,
@@ -34,6 +55,11 @@ export default function SearchClient() {
     goBackStep,
     exitSearch,
   } = useGlobalSearchUrlState();
+
+  const isTwoRowFilters =
+    type === 'jobs' ||
+    (isOrgActor && (type === 'people' || type === 'companies' || type === 'posts'));
+
 
   const handleSelectCategory = (newCategory: SearchCategory) => {
     setType(newCategory);
@@ -82,6 +108,7 @@ export default function SearchClient() {
           onBack={goBackStep}
           onClose={exitSearch}
           placeholder="Search Cocpit..."
+          category={type}
         />
 
         <SearchCategoryNav
@@ -100,7 +127,7 @@ export default function SearchClient() {
       <main
         onClickCapture={handleCaptureClick}
         className={`w-full flex flex-col items-center ${
-          type === 'jobs' ? 'pt-[164px] md:pt-[208px]' : 'pt-[156px]'
+          isTwoRowFilters ? 'pt-[112px] md:pt-[208px]' : 'pt-[100px] md:pt-[156px]'
         }`}
       >
         {/* If no query is entered yet */}

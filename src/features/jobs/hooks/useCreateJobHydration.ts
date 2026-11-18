@@ -87,7 +87,7 @@ export function useCreateJobHydration({ initialListing }: UseCreateJobHydrationO
             work_mode: jobData.work_mode || 'Hybrid',
             salary_min: jobData.salary_min,
             salary_max: jobData.salary_max,
-            salary_currency: jobData.salary_currency || 'USD',
+            salary_currency: jobData.salary_currency || 'INR',
             industry: jobData.industry || '',
           };
           setAccumulatedDetails(restored);

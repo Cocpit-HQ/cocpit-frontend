@@ -51,6 +51,9 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
               if (tType === 'COMPANY' || repType === 'company' || repType === 'company profile') {
                 return 'Company profile';
               }
+              if (tType === 'GROUP' || repType === 'group') {
+                return 'Group';
+              }
               if (tType === 'USER' || repType === 'profile' || repType === 'user profile' || repType === 'user') {
                 return 'User profile';
               }

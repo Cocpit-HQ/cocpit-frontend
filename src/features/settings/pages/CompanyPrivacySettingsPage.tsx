@@ -125,14 +125,21 @@ export function CompanyPrivacySettingsPage() {
 
   const parseRejectionReason = (val?: string) => {
     if (!val || typeof val !== 'string') return null;
-    const match = val.match(/\[Reason:\s*([^\]]+)\]/i);
-    return match ? match[1].trim() : val;
+    const clean = val
+      .replace(/\[Reason:\s*([^\]]+)\]/gi, '$1')
+      .replace(/(?:Rejection Reason|Reason):\s*/gi, '')
+      .split(/[|\n]+/)
+      .map((s) => s.trim())
+      .filter((s) => s && !s.toLowerCase().includes('no rejection reason selected'))
+      .filter((s, idx, arr) => arr.indexOf(s) === idx)
+      .join(', ');
+    return clean || null;
   };
 
   const rejectionReason =
-    org.rejection_reason ||
-    (settings as any)?.rejection_reason ||
-    activeProfile?.rejection_reason ||
+    parseRejectionReason(org.rejection_reason) ||
+    parseRejectionReason((settings as any)?.rejection_reason) ||
+    parseRejectionReason(activeProfile?.rejection_reason) ||
     parseRejectionReason(org.review_notes) ||
     parseRejectionReason((settings as any)?.review_notes) ||
     null;
@@ -153,7 +160,7 @@ export function CompanyPrivacySettingsPage() {
       if (updateActiveProfile) {
         updateActiveProfile({
           verification_status: 'REJECTED',
-          rejection_reason: rejectionReason,
+          rejection_reason: rejectionReason || undefined,
         });
       }
       if (refreshProfile) {
@@ -253,8 +260,8 @@ export function CompanyPrivacySettingsPage() {
                 ? "Your documents are under review by admin"
                 : isRejected
                 ? (rejectionReason 
-                    ? `Previous attempt was not approved (${rejectionReason}). Verify again to unlock job posting.`
-                    : "Previous attempt was not approved. Verify again to unlock job posting.")
+                    ? `Previous attempt was not approved (${rejectionReason}).`
+                    : "Previous attempt was not approved.")
                 : "Verify your identity to unlock more features"}
             </div>
           </div>

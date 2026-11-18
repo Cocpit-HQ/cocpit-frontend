@@ -10,11 +10,25 @@ interface SearchHashtagCardProps {
 }
 
 export const SearchHashtagCard: React.FC<SearchHashtagCardProps> = ({ hashtag, returnTo }) => {
-  const cleanTag = hashtag.tag.replace(/^#/, '');
+  const rawTag =
+    typeof hashtag === 'string'
+      ? hashtag
+      : hashtag?.tag || (hashtag as any)?.display_tag || (hashtag as any)?.name || (hashtag as any)?.hashtag || '';
+
+  const cleanTag = typeof rawTag === 'string' ? rawTag.replace(/^#/, '').trim() : '';
+  if (!cleanTag) return null;
+
   const url = `/hashtag/${encodeURIComponent(cleanTag)}` + (returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '');
 
-  const count = Number(hashtag.post_count ?? (hashtag as any).posts_count ?? (hashtag as any).usage_count ?? 0);
-  const countDisplay = hashtag.posts_display || `${count.toLocaleString()} post${count === 1 ? '' : 's'}`;
+  const count = Number(
+    typeof hashtag === 'object' && hashtag !== null
+      ? (hashtag.post_count ?? (hashtag as any).posts_count ?? (hashtag as any).usage_count ?? 0)
+      : 0
+  );
+  const countDisplay =
+    typeof hashtag === 'object' && hashtag !== null && hashtag.posts_display
+      ? hashtag.posts_display
+      : `${count.toLocaleString()} post${count === 1 ? '' : 's'}`;
 
   return (
     <Link

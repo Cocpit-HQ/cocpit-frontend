@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { JobListing } from '../../types/jobs.types';
+import { useInView } from '@/hooks/use-in-view';
 import { Icon } from '@iconify/react';
 import { OfferIcon } from '@/components/icons';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
@@ -16,6 +17,16 @@ export interface SentOfferGroup {
   acceptedCount: number;
   pendingCount: number;
   declinedCount: number;
+  applicationsCount?: number;
+  shortlistedCount?: number;
+  job_type?: string;
+  work_mode?: string;
+  location?: string;
+  experience_level?: string;
+  salary_min?: number;
+  salary_max?: number;
+  salary_currency?: string;
+  salary_period?: string;
 }
 
 interface SendOfferTabProps {
@@ -29,9 +40,9 @@ interface SendOfferTabProps {
   refreshTrigger?: number;
 }
 
-export const SendOfferTab: React.FC<SendOfferTabProps> = ({ 
-  listings, 
-  onSelectListing, 
+export const SendOfferTab: React.FC<SendOfferTabProps> = ({
+  listings,
+  onSelectListing,
   onSelectOfferGroup,
   initialOfferJobId,
   onClearInitialOfferJobId,
@@ -43,13 +54,39 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
   const { activeProfile, isLoading: isActiveProfileLoading } = useActiveProfile();
   const { socket } = useSocket();
 
-  // Sent Offers state
   const [sentOffers, setSentOffers] = useState<SentOfferGroup[]>([]);
+  const [totalOffersCount, setTotalOffersCount] = useState<number | null>(null);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const isFirstLoadOffersRef = useRef(true);
   const isFetchingRef = useRef(false);
 
-  // Active listings are fetched on demand with cursor-based pagination inside SendOfferModal
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0,
+    rootMargin: '100px',
+  });
+
+  const mapOfferItem = (item: any): SentOfferGroup => ({
+    id: item.job_id,
+    title: item.title,
+    company: item.company_display_name || item.company_name || '',
+    sentCount: Number(item.total_offers || 0),
+    acceptedCount: Number(item.accepted_count || 0),
+    pendingCount: Number(item.pending_count || 0),
+    declinedCount: Number(item.declined_count || 0),
+    applicationsCount: Number(item.applicants_count || 0),
+    shortlistedCount: Number(item.shortlisted_count || 0),
+    job_type: item.job_type || 'Full time',
+    work_mode: item.work_mode || 'Remote',
+    location: item.location || 'Remote',
+    experience_level: item.experience_level || '0-1Yrs',
+    salary_min: item.salary_min,
+    salary_max: item.salary_max,
+    salary_currency: item.salary_currency || 'INR',
+    salary_period: item.salary_period || 'YEARLY'
+  });
 
   const fetchSentOffers = useCallback(async (silent = false) => {
     if (isFetchingRef.current) return;
@@ -62,31 +99,20 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
       setIsLoadingOffers(true);
     }
     try {
-      const endpoint = companyId 
-        ? `/jobs/companies/${companyId}/offers/sent` 
+      const endpoint = companyId
+        ? `/jobs/companies/${companyId}/offers/sent`
         : `/jobs/offers/sent`;
-      const response = await api.get(endpoint);
-      const mapped: SentOfferGroup[] = (response.data || [])
+      const response = await api.get(endpoint, { params: { limit: 10 } });
+      const resData = response.data;
+      const rawList = Array.isArray(resData) ? resData : (resData.offers || []);
+      const mapped: SentOfferGroup[] = rawList
         .filter((item: any) => Number(item.total_offers || 0) > 0)
-        .map((item: any) => ({
-        id: item.job_id,
-        title: item.title,
-        company: item.company_display_name || item.company_name || '',
-        sentCount: Number(item.total_offers || 0),
-        acceptedCount: Number(item.accepted_count || 0),
-        pendingCount: Number(item.pending_count || 0),
-        declinedCount: Number(item.declined_count || 0),
-        // Pass original job details for details page
-        job_type: item.job_type || 'Full time',
-        work_mode: item.work_mode || 'Remote',
-        location: item.location || 'Remote',
-        experience_level: item.experience_level || '0-1Yrs',
-        salary_min: item.salary_min,
-        salary_max: item.salary_max,
-        salary_currency: item.salary_currency || 'USD',
-        salary_period: item.salary_period || 'YEARLY'
-      }));
+        .map(mapOfferItem);
+
       setSentOffers(mapped);
+      setTotalOffersCount(typeof resData?.totalOffers === 'number' ? resData.totalOffers : mapped.length);
+      setNextCursor(resData?.nextCursor || null);
+      setHasMore(Boolean(resData?.hasMore));
     } catch (error) {
       console.error('Failed to fetch sent offers:', error);
     } finally {
@@ -97,6 +123,47 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
       isFetchingRef.current = false;
     }
   }, [activeProfile?.id, activeProfile?.type]);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isFetchingMore || !nextCursor) return;
+    setIsFetchingMore(true);
+    let companyId = '';
+    if (activeProfile && activeProfile.type === 'COMPANY') {
+      companyId = activeProfile.id;
+    }
+    try {
+      const endpoint = companyId
+        ? `/jobs/companies/${companyId}/offers/sent`
+        : `/jobs/offers/sent`;
+      const response = await api.get(endpoint, {
+        params: { limit: 10, cursor: nextCursor }
+      });
+      const resData = response.data;
+      const rawList = Array.isArray(resData) ? resData : (resData.offers || []);
+      const mapped: SentOfferGroup[] = rawList
+        .filter((item: any) => Number(item.total_offers || 0) > 0)
+        .map(mapOfferItem);
+
+      setSentOffers(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const newUnique = mapped.filter(m => !existingIds.has(m.id));
+        return [...prev, ...newUnique];
+      });
+      setNextCursor(resData?.nextCursor || null);
+      setHasMore(Boolean(resData?.hasMore));
+    } catch (error) {
+      console.error('Failed to load more sent offers:', error);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [hasMore, isFetchingMore, nextCursor, activeProfile?.id, activeProfile?.type]);
+
+  // Trigger loadMore when scroll sentinel is in view
+  useEffect(() => {
+    if (inView && hasMore && !isFetchingMore) {
+      loadMore();
+    }
+  }, [inView, hasMore, isFetchingMore, loadMore]);
 
   useEffect(() => {
     if (isActiveProfileLoading) return;
@@ -144,7 +211,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
             <span className="hidden sm:inline">Sent offers</span>
           </h3>
           <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
-            Total offers - {sentOffers.length}
+            Total offers - {totalOffersCount !== null ? totalOffersCount : sentOffers.length}
           </span>
         </div>
       )}
@@ -178,7 +245,16 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
               disabledMessage="Sending job offers is temporarily disabled by admin."
             >
               <button
-                onClick={() => onOpenSendOfferModal ? onOpenSendOfferModal() : setIsSendOpen(true)}
+                onClick={() => {
+                  if (onClearInitialOfferJobId) {
+                    onClearInitialOfferJobId();
+                  }
+                  if (onOpenSendOfferModal) {
+                    onOpenSendOfferModal();
+                  } else {
+                    setIsSendOpen(true);
+                  }
+                }}
                 type="button"
                 className="w-[260px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary rounded-[100px] inline-flex justify-center items-center gap-2.5 ds-text-body-1 font-medium font-dm-sans text-base leading-6 transition-all shadow-sm cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
               >
@@ -257,6 +333,26 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
             </div>
           ))
         )}
+
+        {/* Infinite scroll loader trigger */}
+        {hasMore ? (
+          <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center">
+            {isFetchingMore ? (
+              <div className="flex items-center gap-2 text-ds-accent font-medium ds-text-small font-dm-sans">
+                <Icon icon="lucide:loader-2" className="size-4 animate-spin" />
+                <span>Loading more offers...</span>
+              </div>
+            ) : (
+              <div className="h-4 w-full" />
+            )}
+          </div>
+        ) : sentOffers.length > 0 ? (
+          <div className="w-full py-4 flex justify-center items-center">
+            <span className="text-ds-text-secondary ds-text-meta bg-ds-surface-1 border border-ds-border px-3 py-1 rounded-full">
+              You've reached the end of your sent offers.
+            </span>
+          </div>
+        ) : null}
       </div>
 
       {!onOpenSendOfferModal && (

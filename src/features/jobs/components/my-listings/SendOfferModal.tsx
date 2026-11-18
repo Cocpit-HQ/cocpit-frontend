@@ -49,23 +49,27 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
       setNextCursor(null);
       setHasMore(false);
       setIsLoadingMoreJobs(false);
+      setSelectedCandidates([]);
+      setPersonalNote('');
+      setSearchQuery('');
       return;
     }
 
     if (hasFetchedActiveJobsRef.current) return;
     hasFetchedActiveJobsRef.current = true;
 
+    // Use activeListings prop as optimistic instant display if available, but ALWAYS fetch the real active jobs
     const initialActive = (activeListings || []).filter(l => l.status?.toUpperCase() === 'ACTIVE');
-    if (initialActive.length > 0) {
+    if (initialActive.length > 0 && fetchedListings.length === 0) {
       setFetchedListings(initialActive);
-      setIsLoadingJobs(false);
-      setHasMore(initialActive.length >= 10);
-      return;
     }
 
     let isMounted = true;
     const fetchActiveJobs = async () => {
-      setIsLoadingJobs(true);
+      // Only show loading spinner if we don't already have listings to display smoothly
+      if (fetchedListings.length === 0 && initialActive.length === 0) {
+        setIsLoadingJobs(true);
+      }
       try {
         const actorTypeParam = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
         const res = await jobsService.getMyListings(
@@ -94,18 +98,16 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
     fetchActiveJobs();
     return () => { isMounted = false; };
-  }, [isOpen, activeListings, activeProfile?.id, activeProfile?.type]);
+  }, [isOpen, activeProfile?.id, activeProfile?.type]);
 
   const loadMoreJobs = useCallback(async () => {
-    if (isLoadingMoreJobs || !hasMore) return;
+    if (isLoadingMoreJobs || !hasMore || !nextCursor) return;
     setIsLoadingMoreJobs(true);
     try {
       const actorTypeParam = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
-      const lastJob = fetchedListings.length > 0 ? fetchedListings[fetchedListings.length - 1] : null;
-      const cursorToUse = nextCursor || (lastJob ? lastJob.published_at : undefined);
       const res = await jobsService.getMyListings(
         'Active',
-        cursorToUse,
+        nextCursor,
         10,
         actorTypeParam,
         activeProfile?.id
@@ -166,6 +168,18 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
   // Lock body scroll when modal is open to prevent background scrolling
   useBodyScrollLock(isOpen);
+
+  // Close and clean up on Escape key press
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCancelClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   useEffect(() => {
     let isMounted = true;
@@ -282,6 +296,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     setSelectedJobId('');
     setSelectedCandidates([]);
     setPersonalNote('');
+    setSearchQuery('');
     onClose();
   };
 
@@ -329,6 +344,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
       setSelectedJobId('');
       setSelectedCandidates([]);
       setPersonalNote('');
+      setSearchQuery('');
       onClose();
     } catch (error: any) {
       console.error('Failed to send offers:', error);

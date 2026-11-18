@@ -79,6 +79,7 @@ export const businessProfileService = {
     org_type?: string;
     entity_type?: string;
     industry?: string | null;
+    sector?: string | null;
     institution_type?: string | null;
     size?: string;
     website?: string;

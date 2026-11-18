@@ -76,6 +76,7 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
     hqCity,
     headline,
     description,
+    sector,
     countryOfOperation,
     incorporationDate,
     documents,
@@ -209,6 +210,7 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
       if (phoneNumber) formData.append("phone", `${phoneCountryCode}${phoneNumber}`);
       if (website) formData.append("website", website);
       formData.append("size", organizationSize || "1–10 members");
+      if (sector) formData.append("sector", sector);
       formData.append("country", countryOfOperation || hqCountry || "India");
       if (hqCity) formData.append("city", hqCity);
       if (headline) formData.append("headline", headline);

@@ -72,8 +72,10 @@ export interface BusinessProfileData {
   logoUrl?: string;
   coverUrl?: string;
   isVerified: boolean;
+  verificationStatus?: string;
   tagline: string;
   industry: string;
+  sector?: string;
   location: string;
   employeeCount: string;
   websiteUrl: string;

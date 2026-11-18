@@ -29,6 +29,7 @@ interface BusinessEditState {
   profileDraft: {
     name: string;
     industry: string;
+    sector?: string;
     foundedYear: string;
     size: string;
     website: string;
@@ -70,6 +71,7 @@ interface BusinessEditState {
 const defaultProfileDraft = {
   name: "",
   industry: "",
+  sector: "",
   foundedYear: "",
   size: "",
   website: "",

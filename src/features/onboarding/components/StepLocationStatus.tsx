@@ -8,6 +8,7 @@ import {
   saveOnboardingSituation,
 } from "@/services/api/onboarding";
 import { StructuredLocation } from "@/services/api/location";
+import { useDebounce } from "@/hooks/use-debounce";
 import OnboardingDropdown, { DropdownOption } from "./OnboardingDropdown";
 import OnboardingLocationInput from "./OnboardingLocationInput";
 import PillButton from "./PillButton";
@@ -129,12 +130,15 @@ export const StepLocationStatus: React.FC<StepLocationStatusProps> = ({
   // Master Data Options & Loaders
   const [statusOptions, setStatusOptions] = useState<DropdownOption[]>(FALLBACK_STATUS_OPTIONS);
   const [industryOptions, setIndustryOptions] = useState<DropdownOption[]>(INITIAL_INDUSTRY_OPTIONS);
+  const [industryCursor, setIndustryCursor] = useState<string | null>(null);
+  const [hasMoreIndustries, setHasMoreIndustries] = useState(false);
+  const [isLoadingMoreIndustries, setIsLoadingMoreIndustries] = useState(false);
+  const [industrySearchQuery, setIndustrySearchQuery] = useState("");
+  const debouncedIndustrySearch = useDebounce(industrySearchQuery, 250);
 
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [loadingIndustries, setLoadingIndustries] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  const industrySearchTimer = useRef<NodeJS.Timeout | null>(null);
 
   // 1. Fetch Status Master Data on mount
   useEffect(() => {
@@ -159,15 +163,17 @@ export const StepLocationStatus: React.FC<StepLocationStatusProps> = ({
     };
   }, []);
 
-  // 2. Fetch Initial Industries Master Data on mount
+  // 2. Fetch Initial Industries Master Data on mount (batch of 25)
   useEffect(() => {
     let isCancelled = false;
     const fetchInitialIndustries = async () => {
       setLoadingIndustries(true);
       try {
-        const data = await getOnboardingOptions("industries");
+        const data = await getOnboardingOptions("industries", undefined, undefined, 25);
         if (!isCancelled && Array.isArray(data) && data.length > 0) {
-          setIndustryOptions(data.map((item) => ({ id: item.id, label: item.label })));
+          setIndustryOptions(data.map((item) => ({ id: item.id || item.label, label: item.label })));
+          setIndustryCursor(data.nextCursor || null);
+          setHasMoreIndustries(Boolean(data.hasMore));
         }
       } catch (err) {
         // Silently handle
@@ -181,6 +187,84 @@ export const StepLocationStatus: React.FC<StepLocationStatusProps> = ({
       isCancelled = true;
     };
   }, []);
+
+  // Live debounced server search for industries in user onboarding
+  useEffect(() => {
+    if (!debouncedIndustrySearch.trim()) return;
+    let isCancelled = false;
+
+    const searchIndustries = async () => {
+      try {
+        const queryParam = debouncedIndustrySearch.trim();
+        const data = await getOnboardingOptions("industries", queryParam, undefined, 25);
+        if (!isCancelled && Array.isArray(data)) {
+          setIndustryOptions(data.map((item) => ({ id: item.id || item.label, label: item.label })));
+          setIndustryCursor(data.nextCursor || null);
+          setHasMoreIndustries(Boolean(data.hasMore));
+        }
+      } catch (err) {
+        console.error("Failed to search industries in user onboarding:", err);
+      }
+    };
+
+    searchIndustries();
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedIndustrySearch]);
+
+  // When search query is cleared, reset to first 25 items
+  useEffect(() => {
+    if (industrySearchQuery === "" && isHydratedRef.current) {
+      let isCancelled = false;
+      getOnboardingOptions("industries", undefined, undefined, 25)
+        .then((data) => {
+          if (!isCancelled && Array.isArray(data)) {
+            setIndustryOptions(data.map((item) => ({ id: item.id || item.label, label: item.label })));
+            setIndustryCursor(data.nextCursor || null);
+            setHasMoreIndustries(Boolean(data.hasMore));
+          }
+        })
+        .catch(() => {});
+      return () => {
+        isCancelled = true;
+      };
+    }
+  }, [industrySearchQuery]);
+
+  // Cursor-based infinite scroll: load next 25 on reaching list bottom
+  const handleIndustryScroll = useCallback(async (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (!el || isLoadingMoreIndustries || !hasMoreIndustries || !industryCursor) return;
+
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+      setIsLoadingMoreIndustries(true);
+      try {
+        const queryParam = debouncedIndustrySearch.trim() || undefined;
+        const res = await getOnboardingOptions("industries", queryParam, industryCursor, 25);
+        if (Array.isArray(res) && res.length > 0) {
+          const newItems = res.map((item) => ({
+            id: item.id || item.label,
+            label: item.label,
+          }));
+          setIndustryOptions((prev) => {
+            const existingIds = new Set(prev.map((p) => p.label));
+            const unique = newItems.filter((m) => !existingIds.has(m.label));
+            return [...prev, ...unique];
+          });
+          setIndustryCursor(res.nextCursor || null);
+          setHasMoreIndustries(Boolean(res.hasMore));
+        } else {
+          setHasMoreIndustries(false);
+          setIndustryCursor(null);
+        }
+      } catch (err) {
+        console.error("Failed to load more industries in user onboarding:", err);
+      } finally {
+        setIsLoadingMoreIndustries(false);
+      }
+    }
+  }, [isLoadingMoreIndustries, hasMoreIndustries, industryCursor, debouncedIndustrySearch]);
 
   // Form Validation: Status and Location are required, Industry is optional
   const isFormValid = useMemo(() => {
@@ -276,9 +360,12 @@ export const StepLocationStatus: React.FC<StepLocationStatusProps> = ({
                   setIndustry(val);
                 }}
                 searchable
+                onSearchChange={(q) => setIndustrySearchQuery(q)}
+                onScroll={handleIndustryScroll}
+                isLoadingMore={isLoadingMoreIndustries}
                 allowCustom={false}
                 fallbackOption={{ id: "Other", label: "Other" }}
-                isLoading={loadingIndustries}
+                isLoading={loadingIndustries && industryOptions.length === 0}
                 disabled={submitting}
                 clearable
               />

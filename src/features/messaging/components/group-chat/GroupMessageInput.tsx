@@ -165,6 +165,7 @@ export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }
                         ref={textareaRef}
                         value={text}
                         searchUsersFn={searchUsers}
+                        enableHashtags={false}
                         onChange={(e) => {
                             setText(e.target.value);
                             if (onTyping) onTyping();

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Job } from '../../types/jobs.types';
 import { Icon } from '@iconify/react';
+import { formatExperience } from '../../services/jobs.service';
 
 interface JobDetailBodyProps {
   job: Job;
@@ -103,7 +104,7 @@ export const JobDetailBody: React.FC<JobDetailBodyProps> = ({ job }) => {
                 Experience Level
               </span>
               <span className="text-ds-text-primary text-sm font-medium font-dm-sans mt-0.5">
-                {job.experience || '0-1 Yrs'}
+                {formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience)}
               </span>
             </div>
           </div>

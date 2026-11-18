@@ -4,6 +4,7 @@ import { LeftArrowIcon } from '@/components/icons';
 import { JobListing } from '../../types/jobs.types';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 import { formatCompactNumber, getCurrencySymbol } from '../../utils/currency.utils';
+import { formatExperience } from '../../services/jobs.service';
 
 interface ListingDetailsScreenProps {
   listing: JobListing;
@@ -34,9 +35,12 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
     status,
   } = listing;
 
-  const displayExperience = experience && experience !== 'Not specified'
-    ? experience
-    : ((listing as any).experience_label || (listing as any).experience_level || experience);
+  const displayExperience = formatExperience(
+    (listing as any).experience_min,
+    (listing as any).experience_max,
+    (listing as any).experience_level,
+    (listing as any).experience_label || (experience !== 'Not specified' ? experience : undefined)
+  );
 
   const displayWorkType = work_type && work_type !== 'Not specified'
     ? work_type
@@ -333,7 +337,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
                   </span>
                 </div>
                 <span className="text-base font-normal font-dm-sans leading-6 text-ds-text-primary break-words">
-                  {displayExperience || '0-1Yrs'}
+                  {displayExperience || 'Fresher (0-1 years)'}
                 </span>
               </div>
 

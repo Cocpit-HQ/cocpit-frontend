@@ -95,3 +95,12 @@ export const formatMentionsForBackend = (content: string, inlineMentions: UserMe
 
     return finalContent;
 };
+
+/**
+ * Strips raw markdown mention syntax `@[Full Name](type:id)` down to clean `@Full Name`
+ * for display in reply bubbles, input reply previews, toast notifications, and chat lists.
+ */
+export const stripMentionSyntax = (text?: string | null): string => {
+    if (!text || typeof text !== 'string') return '';
+    return text.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1');
+};

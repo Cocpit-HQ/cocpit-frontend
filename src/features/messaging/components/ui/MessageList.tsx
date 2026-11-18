@@ -15,6 +15,7 @@ interface MessageListProps {
   onSaveEdit?: (messageId: string, text: string) => void
   onCancelEdit?: () => void
   selectedMessageId?: string | null
+  selectedMessageIds?: string[]
   onMessageClick?: (message: Message) => void
   onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void
   unreadCount?: number
@@ -27,14 +28,28 @@ interface MessageListProps {
   otherUserType?: "COMPANY" | "USER"
   otherUserSlug?: string
   chatAvatar?: string
+  isRequesting?: boolean
+  isCannotMessage?: boolean
+  cannotMessageText?: string
+  pinnedMessageId?: string | null
 }
 
-const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId, otherUserType, otherUserSlug, chatAvatar }, ref) => {
+const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, selectedMessageIds, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId, otherUserType, otherUserSlug, chatAvatar, isRequesting = false, isCannotMessage = false, cannotMessageText, pinnedMessageId }, ref) => {
   const localRef = useRef<HTMLDivElement>(null)
   const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
   const lastScrollTopRef = useRef<number>(0)
   const shouldScrollToBottomRef = useRef<boolean>(true)
+
+  const selectedIdSet = useMemo(() => {
+    if (selectedMessageIds && selectedMessageIds.length > 0) {
+      return new Set(selectedMessageIds);
+    }
+    if (selectedMessageId) {
+      return new Set([selectedMessageId]);
+    }
+    return new Set<string>();
+  }, [selectedMessageIds, selectedMessageId]);
 
   const updateShouldScrollToBottom = (val: boolean) => {
     shouldScrollToBottomRef.current = val
@@ -233,21 +248,22 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
       const isMe = m.sender === 'me' || (m.senderId && currentUserId && String(m.senderId) === String(currentUserId));
       if (isMe) {
         lastSentId = m.id;
-        if (m.read_at) {
+        if (m.read_at && !isRequesting) {
           lastReadId = m.id;
         }
       }
     }
 
     return { lastReadMessageId: lastReadId, lastSentMessageId: lastSentId };
-  }, [displayMessages, currentUserId]);
+  }, [displayMessages, currentUserId, isRequesting]);
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-0 relative">
+    <div className="flex flex-col flex-1 min-h-0 relative">
       <div
         ref={scrollRef}
+        tabIndex={0}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-3 scrollbar-hide relative bg-background"
+        className="flex-1 overflow-y-auto px-4 py-3 scrollbar-hide relative bg-background outline-none focus:outline-none"
       >
       {hasMore && (
         <div className="flex justify-center py-2">
@@ -255,7 +271,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
         </div>
       )}
 
-          <div className="flex flex-col w-full min-h-full justify-end">
+          <div className="flex flex-col w-full min-h-full">
+            <div className="mt-auto" />
             {displayMessages.map((msg, index) => {
               const prev = displayMessages[index - 1];
               const next = displayMessages[index + 1];
@@ -326,25 +343,26 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                   className="w-full"
                 >
                   {showDateDivider && !isFirstUnread && (
-                    <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
-                      <span className="text-[11px] font-['Poppins'] text-muted-foreground lowercase first-letter:uppercase shrink-0">
+                    <div className="self-stretch inline-flex justify-center items-center gap-4 my-4 w-full">
+                      <span className="justify-center text-[var(--ds-text-secondary)] text-[10px] font-normal font-['DM_Sans'] leading-3 shrink-0">
                         {currentMsgDateStr}
                       </span>
                     </div>
                   )}
                   {isFirstUnread && (
-                    <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
-                      <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
-                      <span className="text-[11px] font-bold text-[var(--primary)] mx-4 shrink-0 bg-[var(--primary)]/10 px-3 py-1 rounded-full">
+                    <div className="flex items-center justify-center my-4 px-4 w-full">
+                      <div className="h-[1px] bg-[var(--ds-accent)]/40 flex-1" />
+                      <span className="text-[10px] font-medium font-['DM_Sans'] text-[var(--ds-accent)] mx-3 shrink-0 bg-[var(--ds-accent)]/10 px-2.5 py-0.5 rounded-full">
                         {initialUnread} Unread message{initialUnread !== 1 ? 's' : ''}
                       </span>
-                      <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
+                      <div className="h-[1px] bg-[var(--ds-accent)]/40 flex-1" />
                     </div>
                   )}
                   <MessageBubble
                     message={groupedMsg}
                     onAction={onAction}
-                    isSelected={selectedMessageId === msg.id}
+                    isSelected={selectedIdSet.has(msg.id)}
+                    hasSelection={selectedIdSet.size > 0}
                     isEditing={editingMessageId === msg.id}
                     onSaveEdit={(text) => onSaveEdit?.(msg.id, text)}
                     onCancelEdit={onCancelEdit}
@@ -361,6 +379,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                     onReaction={onReaction}
                     currentUserId={currentUserId}
                     conversationId={conversationId}
+                    isPinned={Boolean(pinnedMessageId && String(msg.id) === String(pinnedMessageId))}
                     otherUserType={otherUserType}
                     otherUserSlug={otherUserSlug}
                     chatAvatar={chatAvatar}
@@ -373,6 +392,13 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                 </div>
               );
             })}
+            {isCannotMessage && (
+              <div className="w-full flex justify-center items-center py-2 shrink-0">
+                <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-[var(--ds-text-secondary)] flex items-center justify-center">
+                  {cannotMessageText || "You can't message this person"}
+                </span>
+              </div>
+            )}
           </div>
       </div>
 

@@ -22,6 +22,7 @@ import {
 } from "@/services/api/social";
 import { useConnectionActions } from "@/features/connection/hooks/useConnectionActions";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyFollowPermission } from "@/hooks/useCompanyFollowPermission";
 import { companyService } from "@/services/organization.service";
 import { updateGlobalSearchEntityStatus } from "@/features/search/utils/search-cache.utils";
 
@@ -102,15 +103,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const { activeProfile, isCompany } = useActiveProfile();
   const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
 
-  const NO_FOLLOW_ACCESS_MESSAGE = "You don't have access to follow/unfollow on the behalf of company";
-
-  const actingCompanyRole = activeProfile?.viewer_role_data;
-  const actingCompanyCanFollow =
-    !isCompanyActor ||
-    actingCompanyRole?.is_owner ||
-    actingCompanyRole?.permissions?.includes("*") ||
-    actingCompanyRole?.permissions?.includes("MANAGE_COMMUNITY") ||
-    actingCompanyRole?.permissions?.includes("MANAGE_COMPANY_DETAILS");
+  const { canFollow: actingCompanyCanFollow, message: NO_FOLLOW_ACCESS_MESSAGE } = useCompanyFollowPermission();
 
   const queryClient = useQueryClient();
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);

@@ -176,9 +176,10 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     isActorThisCompany
   );
 
-  // Public view is strictly for external visitors or explicit ?view=public preview.
-  // Company members, admins, owners, or the active company actor viewing their own profile should never show public navigation/back buttons.
-  const isPublicView = isExplicitPublic ? true : (!isOwnProfile && !isOrgAdminOrOwner && !isActorThisCompany);
+  // Owner view is strictly for the active company actor viewing their own company.
+  // When in personal mode (USER), acting as another company, or viewing with explicit ?view=public,
+  // the page renders the Public View (Follow, Message, etc.).
+  const isPublicView = isExplicitPublic || !isActorThisCompany;
   const ownProfile = !isPublicView;
   const canManageCompany = Boolean(ownProfile && (isOrgAdminOrOwner || hasEditPermission));
 
@@ -375,8 +376,16 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       company.isVerified ||
       company.verified
     ),
+    verificationStatus: (
+      company.verification_status ||
+      company.verificationStatus ||
+      activeProfile?.verification_status ||
+      (activeProfile as any)?.verificationStatus ||
+      'UNVERIFIED'
+    ),
     tagline: company.headline || company.slogan || "",
     industry: (isEdu ? (company.institution_type || company.industry) : company.industry) || (isEdu ? "Higher Education" : ""),
+    sector: company.sector || "",
     location: company.location || company.city || "",
     employeeCount: company.size || "",
     websiteUrl: company.website || "",

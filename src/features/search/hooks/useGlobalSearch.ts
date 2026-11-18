@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { searchService } from '../services/search.service';
 import {
@@ -47,6 +47,7 @@ export function useGlobalSearch({ query, type, filters }: UseGlobalSearchParams)
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     refetchOnMount: false,
+    placeholderData: keepPreviousData,
   });
 
   // Stage B: Dedicated category deep-dive with infinite scroll keyset pagination
@@ -76,10 +77,11 @@ export function useGlobalSearch({ query, type, filters }: UseGlobalSearchParams)
       const hasMore = lastPage?.has_more ?? lastPage?.pagination?.has_more;
       return hasMore && nextCursor ? nextCursor : undefined;
     },
-    enabled: !isAll && (cleanQuery.length > 0 || hasActiveFilters || type !== 'posts'),
+    enabled: !isAll,
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     refetchOnMount: false,
+    placeholderData: keepPreviousData,
   });
 
   return {

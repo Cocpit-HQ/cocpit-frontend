@@ -1,4 +1,4 @@
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useJobs } from "../hooks/useJobs";
 import { useJobOffers } from "../hooks/useJobOffers";
@@ -19,11 +19,10 @@ import MyApplicationsTab from "../components/tabs/MyApplicationsTab";
 import OffersTab from "../components/tabs/OffersTab";
 
 interface JobsPageProps {
-  searchParams?: any;
   isCompanyMode?: boolean;
 }
 
-export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode: propIsCompanyMode = false }) => {
+export const JobsPage: React.FC<JobsPageProps> = ({ isCompanyMode: propIsCompanyMode = false }) => {
   const router = useRouter();
   const { isCompany, activeProfile } = useActiveProfile();
   const { isFeatureActive } = useFeatureFlags();
@@ -46,20 +45,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   const urlLocation = urlParams?.get('location') || '';
   const urlTab = urlParams?.get('tab') || 'Explore';
 
-  // Seed from SSR searchParams prop on first load
-  let resolvedParams: any = null;
-  if (searchParams) {
-    if (typeof searchParams.then === "function") {
-      resolvedParams = use(searchParams);
-    } else {
-      resolvedParams = searchParams;
-    }
-  }
-
-  const initialSearch =
-    urlSearch || (typeof resolvedParams?.search === "string" ? resolvedParams.search : "");
-  const initialLocation =
-    urlLocation || (typeof resolvedParams?.location === "string" ? resolvedParams.location : "");
+  const initialSearch = urlSearch;
+  const initialLocation = urlLocation;
 
   const {
     jobs,

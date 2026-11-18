@@ -12,7 +12,10 @@ export function useCompanyFollowPermission() {
     Boolean(actingCompanyRole?.is_owner) ||
     Boolean(actingCompanyRole?.permissions?.includes("*")) ||
     Boolean(actingCompanyRole?.permissions?.includes("MANAGE_COMMUNITY")) ||
-    Boolean(actingCompanyRole?.permissions?.includes("MANAGE_COMPANY_DETAILS"));
+    Boolean(actingCompanyRole?.permissions?.includes("MANAGE_COMPANY_DETAILS")) ||
+    Boolean(actingCompanyRole?.permissions?.includes("MANAGE_COMPANY")) ||
+    Boolean(actingCompanyRole?.permissions?.includes("MANAGE_ORGANIZATION_DETAILS")) ||
+    Boolean(actingCompanyRole?.permissions?.includes("MANAGE_ORGANIZATION"));
 
   return {
     isCompanyActor,

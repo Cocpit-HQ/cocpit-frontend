@@ -10,7 +10,8 @@ export interface NotificationPayload {
   senderAvatar?: string;
   conversationId?: string;
   isGroup?: boolean;
-  isJobChat?: boolean; // Indicates if the message originates from a job context chat
+  is_job_chat?: boolean; // Indicates if the message originates from a job context chat
+  isJobChat?: boolean;
   // Company notification fields
   title?: string;
   actor_name?: string;
@@ -44,7 +45,7 @@ export interface SocketMessage {
   text_content: string;
   created_at: string; // ISO Date string
   read_at: string | null;
-  author_company_id?: string | null; // Added
+  author_org_id?: string | null;
   shared_post?: {
     post_id: string;
     content: string;
