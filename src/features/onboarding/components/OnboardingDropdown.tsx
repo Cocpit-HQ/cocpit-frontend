@@ -160,9 +160,21 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
     }
   };
 
-  // Instant client-side search filtering (only when searchable is true, unless server-filtered via onSearchChange)
+  // Search filtering: server-filtered when onSearchChange is provided, otherwise client-filtered
   const filteredOptions = useMemo(() => {
-    if (onSearchChange) return options;
+    if (onSearchChange) {
+      if (!searchable || !searchQuery.trim()) return options;
+      const q = searchQuery.toLowerCase().trim();
+      const exactMatch = options.some((o) => o.label.toLowerCase() === q);
+      if (allowCustom && !exactMatch) {
+        return [{ id: searchQuery.trim(), label: searchQuery.trim() }, ...options];
+      }
+      if (!allowCustom && options.length === 0 && fallbackOption) {
+        return [fallbackOption];
+      }
+      return options;
+    }
+
     if (!searchable || !searchQuery.trim()) return options;
     const q = searchQuery.toLowerCase().trim();
     const matched = options.filter((o) =>

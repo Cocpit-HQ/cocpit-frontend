@@ -125,7 +125,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           Boolean(isOwnerFlag) ||
           perms.includes('*') ||
           perms.includes('MANAGE_COMPANY') ||
-          perms.includes('POST_JOBS')
+          perms.includes('POST_JOBS') ||
+          perms.includes('JOBS')
         );
       })
     );
