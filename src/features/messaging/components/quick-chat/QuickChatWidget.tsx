@@ -40,9 +40,7 @@ export function QuickChatWidget() {
   const canChat = !isCompany || checkPermission('chat') || checkPermission('CHAT');
   const canJobsChat = !isCompany || checkPermission('jobs_chat') || checkPermission('JOBS_CHAT');
   const hasChatPermission = canChat || canJobsChat;
-  // Quick Chat hidden/disabled for UAT environment:
-  // const shouldHide = !isFeedPage || !hasChatPermission;
-  const shouldHide = true;
+  const shouldHide = !isFeedPage || !hasChatPermission;
 
   useEffect(() => {
     if (isCompany && !canChat && canJobsChat) {

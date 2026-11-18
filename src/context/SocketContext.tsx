@@ -395,12 +395,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
 
-        // Suppress message toast on feed screen (uncomment if QuickChatWidget is re-enabled in the future):
-        // const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        // if (currentPath === '/feed' || currentPath === '/') {
-        //   console.log("[DEBUG] Suppressed: on feed path", currentPath);
-        //   return;
-        // }
+        // Suppress message toast on feed screen since QuickChatWidget handles it:
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        if (currentPath === '/feed' || currentPath === '/') {
+          console.log("[DEBUG] Suppressed: on feed path", currentPath);
+          return;
+        }
 
         console.log("[DEBUG] Firing standard message toast!");
 
@@ -544,10 +544,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else {
         if (payload.text) {
-          // If it's a message, don't show the standard toast on the feed screen (uncomment if QuickChatWidget is re-enabled in the future):
-          // if ((payload.type === 'message' || payload.type === 'new_message') && (pathname === '/feed' || pathname === '/')) {
-          //   return;
-          // }
+          // If it's a message, don't show the standard toast on the feed screen since QuickChatWidget is active:
+          if ((payload.type === 'message' || payload.type === 'new_message') && (pathname === '/feed' || pathname === '/')) {
+            return;
+          }
 
           toast({
             title: payload.type === 'message' || payload.type === 'new_message' ? 'New Message' : payload.title,
