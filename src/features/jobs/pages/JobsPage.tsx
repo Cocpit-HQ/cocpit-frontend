@@ -17,6 +17,8 @@ import JobsErrorState from "../components/states/JobsErrorState";
 import SavedJobsTab from "../components/tabs/SavedJobsTab";
 import MyApplicationsTab from "../components/tabs/MyApplicationsTab";
 import OffersTab from "../components/tabs/OffersTab";
+import { useCompanyPermissions } from "@/features/businessProfile";
+import { AccessDenied } from "@/features/access-denied";
 
 interface JobsPageProps {
   isCompanyMode?: boolean;
@@ -25,6 +27,7 @@ interface JobsPageProps {
 export const JobsPage: React.FC<JobsPageProps> = ({ isCompanyMode: propIsCompanyMode = false }) => {
   const router = useRouter();
   const { isCompany, activeProfile } = useActiveProfile();
+  const companyPerms = useCompanyPermissions(activeProfile);
   const { isFeatureActive } = useFeatureFlags();
 
   const isCompanyStored = typeof window !== "undefined" && (() => {
@@ -224,6 +227,17 @@ export const JobsPage: React.FC<JobsPageProps> = ({ isCompanyMode: propIsCompany
 
   const effectiveTab = urlTab || activeTab;
   if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView) {
+    if (isCompanyMode) {
+      const hasJobsAccess = companyPerms.checkPermission('JOBS') || companyPerms.checkPermission('POST_JOBS');
+      if (!hasJobsAccess) {
+        return (
+          <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans flex flex-col items-center justify-center pt-8 pb-16 px-4">
+            <AccessDenied title="You don't have access to this screen" />
+          </div>
+        );
+      }
+    }
+
     const returnTo = urlParams?.get('returnTo') || urlParams?.get('from');
     const shouldShowBack = !isCompanyMode || Boolean(returnTo);
 
