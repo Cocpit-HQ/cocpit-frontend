@@ -20,7 +20,7 @@ export function useIdentityVerification() {
       return await verifyIdentity(formData, companyId);
     },
     onSuccess: async () => {
-      toast.success("Identity verification submitted successfully");
+      toast.success("Documents submitted for review. Admin will verify your identity.");
       
       if (isCompany) {
         queryClient.invalidateQueries({ queryKey: ["company", activeProfile?.id] });
@@ -30,8 +30,8 @@ export function useIdentityVerification() {
         queryClient.invalidateQueries({ queryKey: ["activeProfile"] });
         if (updateActiveProfile) {
           updateActiveProfile({
-            verification_status: "VERIFIED",
-            is_identity_verified: true,
+            verification_status: "DOCUMENT_PENDING",
+            is_identity_verified: false,
           });
         }
       } else {
@@ -41,17 +41,28 @@ export function useIdentityVerification() {
             ...old,
             user: {
               ...old.user,
-              is_identity_verified: true,
-              verification_status: "VERIFIED",
+              is_identity_verified: false,
+              verification_status: "PENDING",
             },
           };
         });
         queryClient.invalidateQueries({ queryKey: ["my-profile"] });
         queryClient.invalidateQueries({ queryKey: ["activeProfile"] });
+        queryClient.setQueryData(["privacySettings"], (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            is_identity_verified: false,
+            is_verified: false,
+            verification_status: "PENDING",
+          };
+        });
+        queryClient.invalidateQueries({ queryKey: ["privacySettings"] });
+        queryClient.invalidateQueries({ queryKey: ["privacy-settings"] });
         if (updateActiveProfile) {
           updateActiveProfile({
-            verification_status: "VERIFIED",
-            is_identity_verified: true,
+            verification_status: "PENDING",
+            is_identity_verified: false,
           });
         }
       }

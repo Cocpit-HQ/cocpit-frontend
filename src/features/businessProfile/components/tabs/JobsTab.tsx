@@ -9,6 +9,7 @@ import { BusinessProfileData } from "../../types/business-profile.types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { businessProfileService } from "../../services/businessProfile.service";
 import { saveJob, applyJob, withdrawApplication } from "@/features/jobs/services/jobs.service";
+import { cleanSalary } from "@/features/jobs/utils/currency.utils";
 import { ApplyJobModal } from "@/features/jobs/components/modals/ApplyJobModal";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
 import { toast } from "sonner";
@@ -510,12 +511,13 @@ export default function JobsTab({
   const mappedJobs: BusinessJobItem[] = useMemo(() => {
     return rawList.map((job: any) => {
       const id = job.job_id || job.id || "";
-      const rawSalary =
+      const rawSalary = cleanSalary(
         job.salary ||
         job.salary_display ||
         (job.salary_min && job.salary_max
-          ? `$${job.salary_min >= 1000 ? Math.round(job.salary_min / 1000) : job.salary_min}-${job.salary_max >= 1000 ? `${Math.round(job.salary_max / 1000)}k` : job.salary_max}`
-          : "");
+          ? `${job.salary_min}-${job.salary_max}`
+          : job.salary_min || job.salary_max || "")
+      );
 
       const rawExp = job.experience || job.experience_level || "";
       const experience = rawExp

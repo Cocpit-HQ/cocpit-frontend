@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { CandidateCheckboxIcon, SearchIcon } from '@/components/icons';
 import Avatar from '@/components/shared/Avatar';
 import { JobListing } from '../../types/jobs.types';
+import * as jobsService from '../../services/jobs.service';
 import { useSession } from 'next-auth/react';
 import api from '@/lib/axios';
 import { toast } from 'sonner';
@@ -19,7 +20,7 @@ export interface SelectableCandidate {
 interface SendOfferModalProps {
   isOpen: boolean;
   onClose: () => void;
-  activeListings: JobListing[];
+  activeListings?: JobListing[];
   initialJobId?: string;
   onOfferSent?: () => void;
 }
@@ -27,12 +28,111 @@ interface SendOfferModalProps {
 export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   isOpen,
   onClose,
-  activeListings,
+  activeListings = [],
   initialJobId,
   onOfferSent,
 }) => {
   const { isCompany, activeProfile } = useActiveProfile();
   const isCompanyMode = isCompany && !!activeProfile?.id;
+
+  const [fetchedListings, setFetchedListings] = useState<JobListing[]>([]);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMoreJobs, setIsLoadingMoreJobs] = useState(false);
+  const [totalActiveCount, setTotalActiveCount] = useState<number | null>(null);
+  const hasFetchedActiveJobsRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      hasFetchedActiveJobsRef.current = false;
+      setNextCursor(null);
+      setHasMore(false);
+      setIsLoadingMoreJobs(false);
+      setSelectedCandidates([]);
+      setPersonalNote('');
+      setSearchQuery('');
+      return;
+    }
+
+    if (hasFetchedActiveJobsRef.current) return;
+    hasFetchedActiveJobsRef.current = true;
+
+    // Use activeListings prop as optimistic instant display if available, but ALWAYS fetch the real active jobs
+    const initialActive = (activeListings || []).filter(l => l.status?.toUpperCase() === 'ACTIVE');
+    if (initialActive.length > 0 && fetchedListings.length === 0) {
+      setFetchedListings(initialActive);
+    }
+
+    let isMounted = true;
+    const fetchActiveJobs = async () => {
+      // Only show loading spinner if we don't already have listings to display smoothly
+      if (fetchedListings.length === 0 && initialActive.length === 0) {
+        setIsLoadingJobs(true);
+      }
+      try {
+        const actorTypeParam = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+        const res = await jobsService.getMyListings(
+          'Active',
+          undefined,
+          10,
+          actorTypeParam,
+          activeProfile?.id
+        );
+        if (isMounted) {
+          setFetchedListings(res.data || []);
+          setNextCursor(res.nextCursor || null);
+          setHasMore(Boolean(res.hasMore));
+          if (res.counts?.active !== undefined) {
+            setTotalActiveCount(res.counts.active);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load active jobs for SendOfferModal:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingJobs(false);
+        }
+      }
+    };
+
+    fetchActiveJobs();
+    return () => { isMounted = false; };
+  }, [isOpen, activeProfile?.id, activeProfile?.type]);
+
+  const loadMoreJobs = useCallback(async () => {
+    if (isLoadingMoreJobs || !hasMore || !nextCursor) return;
+    setIsLoadingMoreJobs(true);
+    try {
+      const actorTypeParam = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+      const res = await jobsService.getMyListings(
+        'Active',
+        nextCursor,
+        10,
+        actorTypeParam,
+        activeProfile?.id
+      );
+      setFetchedListings((prev) => {
+        const existingIds = new Set(prev.map((j) => j.id));
+        const newItems = (res.data || []).filter((j) => !existingIds.has(j.id));
+        return [...prev, ...newItems];
+      });
+      setNextCursor(res.nextCursor || null);
+      setHasMore(Boolean(res.hasMore));
+      if (res.counts?.active !== undefined) {
+        setTotalActiveCount(res.counts.active);
+      }
+    } catch (err) {
+      console.error('Failed to load more active jobs for SendOfferModal:', err);
+    } finally {
+      setIsLoadingMoreJobs(false);
+    }
+  }, [isLoadingMoreJobs, hasMore, nextCursor, fetchedListings, activeProfile?.type, activeProfile?.id]);
+
+  // Use fetched complete list of active jobs, falling back to prop if provided
+  const effectiveListings = fetchedListings.length > 0 
+    ? fetchedListings 
+    : (activeListings || []).filter(l => l.status?.toUpperCase() === 'ACTIVE');
 
   const [stage, setStage] = useState<1 | 2 | 3>(initialJobId ? 2 : 1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,6 +169,18 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   // Lock body scroll when modal is open to prevent background scrolling
   useBodyScrollLock(isOpen);
 
+  // Close and clean up on Escape key press
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCancelClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
@@ -77,7 +189,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
         setStage(2);
         setIsFetchingRecipients(true);
         try {
-          const job = activeListings.find(l => l.id === initialJobId);
+          const job = effectiveListings.find(l => l.id === initialJobId) || activeListings.find(l => l.id === initialJobId);
           const companyId = job ? (job.org_id || (job as any).company_id) : null;
           const endpoint = companyId
             ? `/jobs/companies/${companyId}/offers/job/${initialJobId}/recipients`
@@ -167,11 +279,11 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   if (!isOpen) return null;
 
   // Search logic for listings
-  const filteredListings = activeListings.filter((l) =>
+  const filteredListings = effectiveListings.filter((l) =>
     l.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedJob = activeListings.find((l) => l.id === selectedJobId);
+  const selectedJob = effectiveListings.find((l) => l.id === selectedJobId) || activeListings.find((l) => l.id === selectedJobId);
 
   const toggleCandidateSelection = (candId: string) => {
     setSelectedCandidates((prev) =>
@@ -184,6 +296,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     setSelectedJobId('');
     setSelectedCandidates([]);
     setPersonalNote('');
+    setSearchQuery('');
     onClose();
   };
 
@@ -231,6 +344,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
       setSelectedJobId('');
       setSelectedCandidates([]);
       setPersonalNote('');
+      setSearchQuery('');
       onClose();
     } catch (error: any) {
       console.error('Failed to send offers:', error);
@@ -281,9 +395,17 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Title: Send offer */}
-            <h3 className="w-full max-w-[369px] h-6 text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center shrink-0">
-              Send offer
-            </h3>
+            <div className="w-full max-w-[369px] flex flex-col justify-center items-center gap-0.5 shrink-0">
+              <h3 className="text-ds-text-primary text-base font-medium font-dm-sans leading-6 text-center">
+                Send offer
+              </h3>
+              {!isLoadingJobs && (effectiveListings.length > 0 || (totalActiveCount ?? 0) > 0) && (
+                <span className="text-ds-text-secondary text-xs font-normal font-dm-sans">
+                  {totalActiveCount ?? effectiveListings.length}{' '}
+                  {(totalActiveCount ?? effectiveListings.length) === 1 ? 'active job' : 'active jobs'} available
+                </span>
+              )}
+            </div>
 
             {/* Underline Search bar */}
             <div className="w-full max-w-[369px] px-2 py-1 flex justify-center items-center shrink-0">
@@ -303,41 +425,58 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             <div
               className="w-full max-w-[369px] flex-1 max-h-[200px] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain flex flex-col gap-1 py-1"
               onWheel={(e) => e.stopPropagation()}
+              onScroll={(e) => {
+                const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+                if (scrollHeight - scrollTop - clientHeight < 40 && hasMore && !isLoadingMoreJobs) {
+                  loadMoreJobs();
+                }
+              }}
             >
-              {filteredListings.length === 0 ? (
+              {isLoadingJobs ? (
+                <div className="py-8 flex justify-center items-center w-full">
+                  <Icon icon="lucide:loader-2" className="size-6 animate-spin text-ds-accent" />
+                </div>
+              ) : filteredListings.length === 0 ? (
                 <div className="py-8 text-center text-ds-text-muted text-xs font-dm-sans w-full">
                   No active job listings found.
                 </div>
               ) : (
-                filteredListings.map((job) => {
-                  const isSelected = job.id === selectedJobId;
-                  return (
-                    <div
-                      key={job.id}
-                      onClick={() => setSelectedJobId(job.id)}
-                      className={`w-full h-[60px] py-2 px-2 inline-flex justify-between items-center gap-3 cursor-pointer rounded-xl transition-all select-none ${
-                        isSelected
-                          ? 'bg-ds-surface-1 border border-ds-accent/50 shadow-sm'
-                          : 'hover:bg-ds-surface-1/60 border border-transparent'
-                      }`}
-                    >
-                      <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0 pointer-events-none">
-                        <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate w-full text-left">
-                          {job.title}
-                        </span>
-                        <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 text-left">
-                          {job.posted_at || 'Posted recently'}
-                        </span>
+                <>
+                  {filteredListings.map((job) => {
+                    const isSelected = job.id === selectedJobId;
+                    return (
+                      <div
+                        key={job.id}
+                        onClick={() => setSelectedJobId(job.id)}
+                        className={`w-full h-[60px] py-2 px-2 inline-flex justify-between items-center gap-3 cursor-pointer rounded-xl transition-all select-none ${
+                          isSelected
+                            ? 'bg-ds-surface-1 border border-ds-accent/50 shadow-sm'
+                            : 'hover:bg-ds-surface-1/60 border border-transparent'
+                        }`}
+                      >
+                        <div className="flex-1 flex flex-col justify-center items-start gap-1 min-w-0 pointer-events-none">
+                          <span className="text-ds-text-primary text-sm font-medium font-dm-sans leading-5 truncate w-full text-left">
+                            {job.title}
+                          </span>
+                          <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 text-left">
+                            {job.posted_at || 'Posted recently'}
+                          </span>
+                        </div>
+                        {/* Active Badge (Frame 2608515: 69px x 32px, radius 24px) */}
+                        <div className="w-[69px] h-8 px-4 py-2 bg-ds-surface-1 rounded-full border border-ds-success flex justify-center items-center shrink-0 pointer-events-none">
+                          <span className="text-ds-success text-xs font-normal font-dm-sans leading-4 text-center">
+                            Active
+                          </span>
+                        </div>
                       </div>
-                      {/* Active Badge (Frame 2608515: 69px x 32px, radius 24px) */}
-                      <div className="w-[69px] h-8 px-4 py-2 bg-ds-surface-1 rounded-full border border-ds-success flex justify-center items-center shrink-0 pointer-events-none">
-                        <span className="text-ds-success text-xs font-normal font-dm-sans leading-4 text-center">
-                          Active
-                        </span>
-                      </div>
+                    );
+                  })}
+                  {isLoadingMoreJobs && (
+                    <div className="py-2 flex justify-center items-center w-full">
+                      <Icon icon="lucide:loader-2" className="size-4 animate-spin text-ds-accent" />
                     </div>
-                  );
-                })
+                  )}
+                </>
               )}
             </div>
 

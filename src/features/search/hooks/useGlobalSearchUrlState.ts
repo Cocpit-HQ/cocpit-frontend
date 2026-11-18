@@ -78,6 +78,15 @@ export function useGlobalSearchUrlState() {
     const hashtag = parseMultiParam(searchParams.get('hashtag') || searchParams.get('hashtags'));
     const sort_by = searchParams.get('sort_by') || undefined;
 
+    // Org Specific Filters
+    const skills = parseMultiParam(searchParams.get('skills'));
+    const experience = parseMultiParam(searchParams.get('experience'));
+    const open_to = parseMultiParam(searchParams.get('open_to') || searchParams.get('openTo'));
+    const sector = parseMultiParam(searchParams.get('sector'));
+    const specific_search = searchParams.get('specific_search') || undefined;
+    const mentions_org = searchParams.get('mentions_org') === 'true' || searchParams.get('mentions_company') === 'true' ? true : undefined;
+    const scope = (searchParams.get('scope') as 'network' | 'within_org') || undefined;
+
     return {
       job_type: job_type.length > 0 ? job_type : undefined,
       experience_level: experience_level.length > 0 ? experience_level : undefined,
@@ -103,6 +112,14 @@ export function useGlobalSearchUrlState() {
       posted_by: posted_by.length > 0 ? posted_by : undefined,
       hashtag: hashtag.length > 0 ? hashtag : undefined,
       sort_by,
+      skills: skills.length > 0 ? skills : undefined,
+      experience: experience.length > 0 ? experience : undefined,
+      open_to: open_to.length > 0 ? open_to : undefined,
+      sector: sector.length > 0 ? sector : undefined,
+      specific_search,
+      mentions_org,
+      mentions_company: mentions_org,
+      scope,
     };
   }, [searchParams]);
 
@@ -244,6 +261,13 @@ export function useGlobalSearchUrlState() {
           hashtag: null,
           hashtags: null,
           sort_by: null,
+          skills: null,
+          experience: null,
+          open_to: null,
+          sector: null,
+          specific_search: null,
+          mentions_org: null,
+          mentions_company: null,
           cursor: null,
         },
         { push: true }
@@ -348,8 +372,8 @@ export function useGlobalSearchUrlState() {
         ? currentArr.filter((_, idx) => idx !== existsIndex)
         : [...currentArr, value];
 
-      // Join with '|' for location, company, role, org_size, industry, hashtag, institute to safely protect items with commas
-      const delimiter = ['location', 'company', 'role', 'org_size', 'industry', 'hashtag', 'institute', 'school'].includes(key) ? '|' : ',';
+      // Join with '|' for location, company, role, org_size, industry, hashtag, institute, skills, experience, open_to, sector to safely protect items with commas
+      const delimiter = ['location', 'company', 'role', 'org_size', 'industry', 'hashtag', 'institute', 'school', 'skills', 'experience', 'open_to', 'sector'].includes(key) ? '|' : ',';
 
       updateUrl({
         [key]: updated.length > 0 ? updated.join(delimiter) : null,
@@ -411,6 +435,13 @@ export function useGlobalSearchUrlState() {
       hashtag: null,
       hashtags: null,
       sort_by: null,
+      skills: null,
+      experience: null,
+      open_to: null,
+      sector: null,
+      specific_search: null,
+      mentions_org: null,
+      mentions_company: null,
       cursor: null,
     });
   }, [updateUrl]);

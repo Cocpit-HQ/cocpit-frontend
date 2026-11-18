@@ -80,14 +80,14 @@ export function useCreateJobHydration({ initialListing }: UseCreateJobHydrationO
             company: jobData.company_name || '',
             location: jobData.location || '',
             description: jobData.description || '',
-            experience: jobData.experience_level || '',
-            experience_min: jobData.experience_min,
-            experience_max: jobData.experience_max,
+            experience: jobData.experience_level || (jobsService.resolveExperienceSelection(jobData.experience_min, jobData.experience_max)?.experience) || 'Fresher',
+            experience_min: jobData.experience_min !== undefined && jobData.experience_min !== null ? jobData.experience_min : 0,
+            experience_max: jobData.experience_max !== undefined && jobData.experience_max !== null ? jobData.experience_max : 1,
             work_type: jobData.job_type || 'Full time',
             work_mode: jobData.work_mode || 'Hybrid',
             salary_min: jobData.salary_min,
             salary_max: jobData.salary_max,
-            salary_currency: jobData.salary_currency || 'USD',
+            salary_currency: jobData.salary_currency || 'INR',
             industry: jobData.industry || '',
           };
           setAccumulatedDetails(restored);

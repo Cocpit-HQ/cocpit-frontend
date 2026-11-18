@@ -47,18 +47,47 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       onRead(notification.notification_id);
     }
     if (itemUrl) {
-      router.push(itemUrl);
+      const sep = itemUrl.includes('?') ? '&' : '?';
+      const finalItemUrl =
+        itemUrl.includes('returnTo') || itemUrl.includes('from')
+          ? itemUrl
+          : `${itemUrl}${sep}returnTo=/notifications`;
+      router.push(finalItemUrl);
     }
   };
   const parsed = parseNotificationText(notification, activeProfile?.name);
 
   // ── Determine actor profile URL for click redirection ─────────────
   const getActorUrl = (): string | null => {
+    // SCRUM-1660: Business account status notifications should mark as read without redirecting
+    if (
+      notification.type === 'company_deactivated' ||
+      notification.type === 'company_reactivated' ||
+      notification.type === 'company_deleted' ||
+      notification.type === 'company_recovered'
+    ) {
+      return null;
+    }
+
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof notification.metadata === 'string') {
+        meta = JSON.parse(notification.metadata);
+      } else if (typeof notification.metadata === 'object' && notification.metadata !== null) {
+        meta = notification.metadata as Record<string, any>;
+      }
+    } catch {}
+
     const isCompanyActor = Boolean(
       notification.is_company_actor ||
         (notification as unknown as { isCompanyActor?: boolean }).isCompanyActor ||
+        meta.isCompanyActor ||
+        meta.is_company_actor ||
+        meta.follower_org_id ||
+        meta.followerOrgId ||
         (notification as unknown as { actor_type?: string }).actor_type === 'company' ||
         (notification as unknown as { actor_type?: string }).actor_type === 'organization' ||
+        (notification.type as string) === 'ORG_ONBOARDED' ||
         notification.type === 'company_connection_accepted' ||
         notification.type === 'company_invite' ||
         notification.type === 'company_job' ||
@@ -68,36 +97,31 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         notification.type === 'organization_invite' ||
         notification.type === 'ORGANIZATION_INVITE' ||
         (notification.type as string) === 'member_role_updated' ||
-        (notification.type as string) === 'company_ownership_transferred' ||
-        notification.type === 'company_deactivated' ||
-        notification.type === 'company_reactivated' ||
-        notification.type === 'company_deleted' ||
-        notification.type === 'company_recovered'
+        (notification.type as string) === 'company_ownership_transferred'
     );
 
     if (isCompanyActor) {
-      if (notification.type === 'company_deactivated') {
-        return '/settings/organizations';
-      }
-      if (notification.type === 'company_deleted') {
-        const meta = (notification.metadata as Record<string, unknown>) || {};
-        const canRecover = Boolean(
-          notification.can_recover ??
-          notification.canRecover ??
-          notification.is_owner ??
-          notification.isOwner ??
-          meta.can_recover ??
-          meta.canRecover ??
-          meta.is_owner ??
-          meta.isOwner ??
-          (user?.id && (meta.owner_id === user.id || meta.ownerId === user.id))
-        );
-        return canRecover ? '/settings/organizations' : null;
-      }
       const slug =
         notification.actor_slug ||
-        ((notification.metadata as Record<string, unknown>)?.org_slug as string);
+        (meta.slug as string) ||
+        (meta.org_slug as string) ||
+        (meta.followerSlug as string) ||
+        (meta.follower_slug as string);
       if (slug) return `/organization/${slug}`;
+      const orgId =
+        (meta.followerOrgId as string) ||
+        (meta.follower_org_id as string) ||
+        (meta.followerId as string) ||
+        (meta.follower_id as string) ||
+        (notification.type === 'company_follower' || notification.type === 'follow'
+          ? notification.sender_id
+          : null) ||
+        ((notification.type as string) === 'ORG_ONBOARDED'
+          ? notification.reference_id
+          : null) ||
+        (meta.org_id as string) ||
+        (meta.orgId as string);
+      if (orgId) return `/organization/${orgId}`;
       if (
         notification.reference_id &&
         (notification.type === 'company_connection_accepted' ||
@@ -168,12 +192,28 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       );
     }
 
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof notification.metadata === 'string') {
+        meta = JSON.parse(notification.metadata);
+      } else if (typeof notification.metadata === 'object' && notification.metadata !== null) {
+        meta = notification.metadata as Record<string, any>;
+      }
+    } catch {}
+
     const isCompanyActor = Boolean(
       notification.is_company_actor ||
-        (notification as unknown as { isCompanyActor?: boolean }).isCompanyActor
+        (notification as unknown as { isCompanyActor?: boolean }).isCompanyActor ||
+        meta.isCompanyActor ||
+        meta.is_company_actor ||
+        meta.follower_org_id ||
+        meta.followerOrgId
     );
 
-    const isUserDocVerification = notification.type === 'doc_verification_success' || notification.type === 'doc_verification_rejected';
+    const isUserDocVerification =
+      (notification.type as string) === 'doc_verification_success' ||
+      (notification.type as string) === 'doc_verification_rejected' ||
+      (notification.type as string) === 'user_identity_verification';
     const effectiveAvatar = notification.actor_avatar || (isUserDocVerification && !isCompany ? (activeProfile?.avatar_url || (activeProfile as any)?.avatar) : null);
 
     if (visualKind === 'company' && !effectiveAvatar) {
@@ -267,7 +307,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       onClick={handleItemClick}
       className={cn(
         "group flex flex-row items-start w-full font-['DM_Sans'] transition-colors duration-[120ms] min-h-[48px] p-3 gap-2",
-        itemUrl ? "cursor-pointer" : "cursor-default",
+        (!notification.is_read || itemUrl) ? "cursor-pointer" : "cursor-default",
         isInsideGroup
           ? 'bg-transparent rounded-none'
           : 'bg-transparent rounded-[8px]'

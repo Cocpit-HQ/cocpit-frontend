@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -172,8 +172,68 @@ export default function ProfilePage() {
     return (userPostsData?.posts || []).map(mapProfilePostToPost);
   }, [userPostsData]);
 
-  // Restore scroll position when profile and posts are loaded
-  useScrollRestoration(!isLoading && (userPostsData !== undefined || isPostsError));
+  const searchParams = useSearchParams();
+  const sectionParam = searchParams?.get("section");
+
+  // Determine target section from query param (?section=experience) or URL fragment (#experience-section)
+  const targetId = useMemo(() => {
+    let section = sectionParam;
+    if (!section && typeof window !== "undefined") {
+      section = new URLSearchParams(window.location.search).get("section");
+    }
+    if (section === "education") return "education-section";
+    if (section === "experience") return "experience-section";
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash || "";
+      if (hash.includes("education-section")) return "education-section";
+      if (hash.includes("experience-section")) return "experience-section";
+    }
+    return null;
+  }, [sectionParam]);
+
+  const hasTargetSection = Boolean(targetId);
+
+  // Clear stored scroll positions immediately so useScrollRestoration doesn't force scroll(0)
+  if (typeof window !== "undefined" && hasTargetSection) {
+    sessionStorage.removeItem("scroll-/profile");
+    sessionStorage.removeItem("cocpit_scroll_y");
+    sessionStorage.removeItem("cocpit_profile_scroll_y");
+  }
+
+  // Restore scroll position when profile and posts are loaded (only if NOT deep-linking to an explicit section)
+  useScrollRestoration(!hasTargetSection && !isLoading && (userPostsData !== undefined || isPostsError));
+
+  const hasScrolledRef = useRef(false);
+  const lastTargetRef = useRef<string | null>(null);
+
+  if (lastTargetRef.current !== targetId) {
+    lastTargetRef.current = targetId;
+    hasScrolledRef.current = false;
+  }
+
+  // Auto-scroll to Experience or Education section in ONE single smooth scroll
+  useEffect(() => {
+    if (!targetId || hasScrolledRef.current || isLoading) return;
+
+    const performScroll = () => {
+      if (hasScrolledRef.current) return;
+      const el = document.getElementById(targetId);
+      if (el) {
+        hasScrolledRef.current = true;
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+
+    // If posts are already loaded or errored, the DOM is stable — scroll once now!
+    if (userPostsData !== undefined || isPostsError) {
+      const timer = setTimeout(performScroll, 80);
+      return () => clearTimeout(timer);
+    }
+
+    // Fallback: If posts take longer than 600ms, don't leave the user stuck at the top
+    const fallbackTimer = setTimeout(performScroll, 600);
+    return () => clearTimeout(fallbackTimer);
+  }, [targetId, isLoading, userPostsData, isPostsError]);
 
   // Always refetch fresh user posts on mount so posts published elsewhere appear immediately
   useEffect(() => {
@@ -775,7 +835,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
         {/* 3. Experience Section */}
-        <div className="w-full flex flex-col items-start gap-4">
+        <div id="experience-section" className="w-full flex flex-col items-start gap-4 scroll-mt-24">
           <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
             <div className="w-[87px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Experience
@@ -820,7 +880,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
         {/* 4. Education Section */}
-        <div className="w-full flex flex-col items-start gap-4">
+        <div id="education-section" className="w-full flex flex-col items-start gap-4 scroll-mt-24">
           <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
             <div className="w-[79px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Education

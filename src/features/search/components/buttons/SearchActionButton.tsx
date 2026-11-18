@@ -11,8 +11,17 @@ import {
   followSuggestedUser,
 } from '@/services/api/connections';
 import { companyService } from '@/services/organization.service';
+import { businessProfileService } from '@/features/businessProfile/services/businessProfile.service';
 import { useSocial } from '@/context/SocialContext';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useCompanyFollowPermission } from '@/hooks/useCompanyFollowPermission';
+import { useCompanyPermissions } from '@/features/businessProfile/hooks/useBusinessPermissions';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { updateGlobalSearchEntityStatus } from '../../utils/search-cache.utils';
 
 export interface SearchActionButtonProps {
@@ -46,6 +55,27 @@ export const SearchActionButton: React.FC<SearchActionButtonProps> = ({
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
   const { isCompany, activeProfile } = useActiveProfile();
+  const isOrgActor = Boolean(
+    isCompany ||
+    activeProfile?.type === 'COMPANY' ||
+    (activeProfile as any)?.type === 'ORGANIZATION' ||
+    (activeProfile as any)?.type === 'ORG' ||
+    activeProfile?.entityType === 'COMPANY' ||
+    activeProfile?.entityType === 'INSTITUTION' ||
+    (typeof window !== 'undefined' && (() => {
+      try {
+        const stored = sessionStorage.getItem('cocpit_active_profile');
+        if (!stored) return false;
+        const p = JSON.parse(stored);
+        return p?.type === 'COMPANY' || p?.type === 'ORGANIZATION' || p?.entityType === 'COMPANY' || p?.entityType === 'INSTITUTION';
+      } catch {
+        return false;
+      }
+    })())
+  );
+  const { canFollow, message: followBlockedMessage } = useCompanyFollowPermission();
+  const companyPerms = useCompanyPermissions(activeProfile);
+  const canChat = !isOrgActor || Boolean(companyPerms.canChat);
   const { isFollowing: isSocialFollowing, isFollowingInitialized, syncFollowStatus, notifyFollowEvent, followUser } = useSocial();
 
   const [localIsFollowing, setLocalIsFollowing] = useState(isFollowing);
@@ -93,15 +123,15 @@ export const SearchActionButton: React.FC<SearchActionButtonProps> = ({
   const currentUserId = (session?.user as any)?.id || (session?.user as any)?.sub;
   const isActualSelf =
     isSelf ||
-    (!isCompany && currentUserId && targetId === currentUserId) ||
-    (isCompany && activeProfile?.id === targetId);
+    (!isOrgActor && currentUserId && targetId === currentUserId) ||
+    (isOrgActor && activeProfile?.id === targetId);
 
   if (isActualSelf) return null;
 
   // Resolve current visual state
   let buttonState: 'connect' | 'follow' | 'pending' | 'accept' | 'message' | 'message_disabled';
 
-  if (isCompany) {
+  if (isOrgActor) {
     // When the viewer is an ORGANIZATION / COMPANY:
     // Organizations CANNOT create personal connections with users.
     // They can ONLY follow users (or message if already following).
@@ -144,11 +174,19 @@ export const SearchActionButton: React.FC<SearchActionButtonProps> = ({
     }
   }
 
+  // RBAC Permission checks for organization actor
+  const isFollowBlocked = isOrgActor && buttonState === 'follow' && !canFollow;
+  const isMessageBlocked = isOrgActor && buttonState === 'message' && !canChat;
+  const isRbacBlocked = isFollowBlocked || isMessageBlocked;
+  const blockedTooltip = isFollowBlocked
+    ? (followBlockedMessage || "You don't have access to follow/unfollow on the behalf of company")
+    : "You don't have access";
+
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isMutating) return;
+    if (isRbacBlocked || isMutating) return;
 
     if (status !== 'authenticated') {
       toast.error('Please sign in to continue');
@@ -161,7 +199,7 @@ export const SearchActionButton: React.FC<SearchActionButtonProps> = ({
       const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '';
       if (entityType === 'person') {
         const queryParams = new URLSearchParams({ userId: targetId });
-        if (isCompany && activeProfile?.id) {
+        if (isOrgActor && activeProfile?.id) {
           queryParams.set('companyId', activeProfile.id);
         }
         if (currentUrl) {
@@ -246,7 +284,11 @@ export const SearchActionButton: React.FC<SearchActionButtonProps> = ({
           // Else: POST /users/:userId/follow
           await followUser(targetId, undefined, targetName);
         } else {
-          await companyService.followCompany(targetId);
+          if (isOrgActor && activeProfile?.id) {
+            await businessProfileService.organizationFollowOrganization(activeProfile.id, targetId);
+          } else {
+            await companyService.followCompany(targetId);
+          }
           syncFollowStatus(targetId, true);
           notifyFollowEvent(targetId, true);
           updateGlobalSearchEntityStatus(queryClient, targetId, {
@@ -281,7 +323,9 @@ export const SearchActionButton: React.FC<SearchActionButtonProps> = ({
       break;
     case 'follow':
       label = 'Follow';
-      styleClasses = 'bg-ds-accent text-ds-text-primary hover:bg-ds-accent-hover shadow-sm active:scale-95 cursor-pointer';
+      styleClasses = isFollowBlocked
+        ? 'bg-ds-accent text-white shadow-sm pointer-events-none select-none'
+        : 'bg-ds-accent text-ds-text-primary hover:bg-ds-accent-hover shadow-sm active:scale-95 cursor-pointer';
       break;
     case 'accept':
       label = 'Accept';
@@ -294,13 +338,39 @@ export const SearchActionButton: React.FC<SearchActionButtonProps> = ({
       break;
     case 'message':
       label = 'Message';
-      styleClasses = 'bg-black text-white border border-[#2D3139] hover:bg-[#15181E] hover:border-[#3D424B] active:scale-95 cursor-pointer';
+      styleClasses = isMessageBlocked
+        ? 'bg-black text-white border border-[#2D3139] shadow-sm pointer-events-none select-none'
+        : 'bg-black text-white border border-[#2D3139] hover:bg-[#15181E] hover:border-[#3D424B] active:scale-95 cursor-pointer';
       break;
     case 'message_disabled':
       label = 'Message';
       styleClasses = 'bg-[#1F242F] text-[#555B66] border border-white/5 opacity-50 cursor-not-allowed';
       title = 'This organization does not accept direct messages';
       break;
+  }
+
+  if (isRbacBlocked) {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip enableTouch>
+          <TooltipTrigger asChild>
+            <span className="inline-flex cursor-not-allowed shrink-0">
+              <button
+                type="button"
+                disabled
+                aria-label={label}
+                className={`flex items-center justify-center w-[89px] h-[36px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dm-sans transition-all select-none shrink-0 ${styleClasses} ${className}`}
+              >
+                <span>{label}</span>
+              </button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+            {blockedTooltip}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   }
 
   return (

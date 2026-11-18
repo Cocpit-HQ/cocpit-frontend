@@ -14,6 +14,12 @@ import Avatar from '@/components/shared/Avatar';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import InteractiveLocationMap from '@/features/company-onboarding/components/InteractiveLocationMap';
 import {
   CalendarIcon,
@@ -73,13 +79,57 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     toggleFollow,
   } = useJobDetail(jobId);
   const { flags } = useFeatureFlags();
-  const { isCompany, activeProfile } = useActiveProfile();
+  const { isCompany, activeProfile, userCompanies } = useActiveProfile();
   const { goBack } = useSmartBack();
   const router = useRouter();
   const searchParams = useSearchParams();
   // SCRUM-1610: Support both returnTo and from query params (e.g. from notifications)
   // so back navigation pops history back to the caller instead of forcing /jobs
   const returnTo = searchParams.get('returnTo') || searchParams.get('from');
+
+  const isAssociatedCompanyAdminOrOwner = useMemo(() => {
+    if (!job) return false;
+
+    const jobOrgId = job.org_id || (job as any)?.company_id || (job as any)?.orgId;
+    const jobSlug = (job as any)?.company_slug || (job as any)?.slug;
+    const jobCompany = job.company || job.company_name;
+
+    // 1. If currently viewing as the company that posted the job
+    if (activeProfile?.type === 'COMPANY' && activeProfile.id && jobOrgId && activeProfile.id === jobOrgId) {
+      return true;
+    }
+
+    // 2. Check if the user is an owner, admin, or has job posting permissions for the associated company
+    return Boolean(
+      userCompanies?.some((c) => {
+        const matchId =
+          Boolean(jobOrgId && (c.org_id === jobOrgId || c.company_id === jobOrgId || (c as any)?.id === jobOrgId));
+        const matchSlug =
+          Boolean(c.slug && jobSlug && c.slug.toLowerCase().trim() === jobSlug.toLowerCase().trim());
+        const matchName =
+          Boolean(c.name && jobCompany && c.name.toLowerCase().trim() === jobCompany.toLowerCase().trim());
+
+        const isAssociated = matchId || matchSlug || matchName;
+        if (!isAssociated) return false;
+
+        const role = (c.role || '').toLowerCase().trim();
+        const roleName = ((c as any)?.viewer_role_data?.name || '').toLowerCase().trim();
+        const isOwnerFlag = (c as any)?.is_owner || (c as any)?.viewer_role_data?.is_owner;
+        const perms = (c as any)?.viewer_role_data?.permissions || [];
+
+        return (
+          role === 'owner' ||
+          role === 'admin' ||
+          roleName === 'owner' ||
+          roleName === 'admin' ||
+          Boolean(isOwnerFlag) ||
+          perms.includes('*') ||
+          perms.includes('MANAGE_COMPANY') ||
+          perms.includes('POST_JOBS')
+        );
+      })
+    );
+  }, [job, activeProfile, userCompanies]);
 
   // If this job belongs to the current logged-in business account, redirect to the recruiter listing details view
   React.useEffect(() => {
@@ -94,6 +144,10 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   }, [job, isCompany, activeProfile, returnTo, router]);
 
   const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+      return;
+    }
     if (returnTo && returnTo.startsWith('/')) {
       router.replace(returnTo);
       return;
@@ -101,10 +155,6 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
     if (lastSearch && (lastSearch.startsWith('/search') || lastSearch.startsWith('/jobs/search'))) {
       router.replace(lastSearch);
-      return;
-    }
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
       return;
     }
     goBack('/jobs');
@@ -185,6 +235,21 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   const isShortlisted = job.application_status?.toLowerCase() === 'shortlisted';
   const isTerminalOffer = Boolean(job.is_offer && (isDeclined || isWithdrawn || isExpired));
 
+  const offerExpiryText = (() => {
+    if (!job.is_offer) return undefined;
+    if (isAccepted || isDeclined || isWithdrawn) return undefined;
+    if (isExpired || job.offer_expiry_text === 'Offer expired') return 'Offer expired';
+    if (job.offer_expiry_text) {
+      return job.offer_expiry_text.startsWith('Offer')
+        ? job.offer_expiry_text
+        : `Offer ${job.offer_expiry_text.toLowerCase()}`;
+    }
+    if (job.offer_days_left != null && job.offer_days_left > 0) {
+      return `Offer ends in ${job.offer_days_left} day${job.offer_days_left === 1 ? '' : 's'}`;
+    }
+    return undefined;
+  })();
+
   // Share & Bookmark visibility rules based on Figma:
   // - Share icon: Visible ONLY for standard active jobs (Apply now / Withdraw). Hidden for closed jobs and offers.
   // - Bookmark/Save icon: Visible for standard active jobs, pending offers (Accept / Decline), and closed jobs (Follow / Unfollow)
@@ -201,7 +266,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
   const salaryDisplay = (() => {
     if (job.salary_display) {
-      return job.salary_display.replace(/[\$₹]/g, '').trim();
+      return job.salary_display.replace(/[\$₹]/g, '').replace(/\/yr|\/year|\/mo|\/hr/gi, '').trim();
     }
     if (job.salary_min && job.salary_max) {
       return `${Number(job.salary_min).toLocaleString()} - ${Number(job.salary_max).toLocaleString()}`;
@@ -320,6 +385,38 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
         >
           Withdraw
         </button>
+      );
+    }
+
+    if (isAssociatedCompanyAdminOrOwner) {
+      return (
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="inline-block cursor-not-allowed"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+              >
+                <button
+                  type="button"
+                  className="w-[104px] h-[36px] rounded-full bg-ds-accent text-white ds-text-body-1 shadow-sm flex items-center justify-center cursor-not-allowed pointer-events-none border-none outline-none whitespace-nowrap opacity-80"
+                >
+                  Apply now
+                </button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              sideOffset={6}
+              className="bg-ds-surface-2 text-ds-text-primary border border-ds-border text-xs px-2.5 py-1.5 rounded-md shadow-lg z-[100]"
+            >
+              You cannot apply to the job posted by your associated company.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     }
 
@@ -443,6 +540,38 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
       );
     }
 
+    if (isAssociatedCompanyAdminOrOwner) {
+      return (
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="block w-full cursor-not-allowed"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+              >
+                <button
+                  type="button"
+                  className="w-full h-9 px-4 rounded-full bg-ds-accent text-white text-base font-medium font-dm-sans leading-6 shadow-sm flex items-center justify-center cursor-not-allowed pointer-events-none border-none outline-none whitespace-nowrap opacity-80"
+                >
+                  Apply now
+                </button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              sideOffset={6}
+              className="bg-ds-surface-2 text-ds-text-primary border border-ds-border text-xs px-2.5 py-1.5 rounded-md shadow-lg z-[100]"
+            >
+              You cannot apply to the job posted by your associated company.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
     return (
       <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
         <button
@@ -487,10 +616,19 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
         {/* Job Header & Metadata */}
         <div className="w-full flex flex-col justify-start items-start gap-3">
-          {/* Job Title: Mobile 32px/40px font-bold, Desktop 40px/48px font-bold */}
-          <h1 className="w-full text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] font-bold font-dm-sans text-ds-text-primary">
-            {job.title}
-          </h1>
+          {/* Top Row: Job Title left, Offer Expiry right (matching Figma Frame 2608872 / Offer Detail) */}
+          <div className="w-full flex items-start justify-between gap-3">
+            <h1 className="flex-1 text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] font-bold font-dm-sans text-ds-text-primary">
+              {job.title}
+            </h1>
+            {job.is_offer && offerExpiryText && (
+              <div className="shrink-0 pt-2.5 sm:pt-3.5">
+                <span className={`text-xs font-normal font-dm-sans leading-4 ${isExpired ? 'text-ds-error' : 'text-ds-warning'}`}>
+                  {offerExpiryText}
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Posted By & Active Status Badge (Frame 2608872) */}
           <div className="w-full flex justify-between items-center gap-3">
@@ -568,7 +706,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               <span className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">Experience</span>
             </div>
             <div className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
-              {job.experience || '0-2 Yrs'}
+              {job.experience || '0-1 Yrs'}
             </div>
           </div>
 
@@ -621,36 +759,51 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
         </div>
 
         {/* Offer Recruiter Note (Figma Frame 2609030) */}
-        {job.is_offer && job.recruiter_message && (
-          <div className="w-full max-w-[700px] min-h-[84px] p-3 bg-ds-surface-1 border-l-2 border-ds-accent rounded-r-2xl rounded-bl-2xl rounded-tl-none flex flex-col items-start gap-2 self-stretch flex-none box-border">
-            <div className="flex items-center gap-2 h-9">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 flex-none bg-ds-surface-2">
-                {job.recruiter_avatar && !recruiterAvatarError ? (
-                  <img
-                    src={job.recruiter_avatar}
-                    alt={job.recruiter_name || job.company || 'Recruiter'}
-                    className="w-full h-full object-cover rounded-full"
-                    onError={() => setRecruiterAvatarError(true)}
-                  />
-                ) : (
-                  <UserIcon className="w-full h-full p-1.5 text-ds-text-primary" />
-                )}
-              </div>
-              <div className="flex flex-col items-start justify-center h-9">
-                <span className="font-dm-sans font-semibold text-base leading-6 text-ds-text-primary">
-                  {job.recruiter_name || job.company}
-                </span>
-                <span className="font-dm-sans font-normal text-[10px] leading-3 text-ds-text-secondary">
-                  {job.recruiter_title || (job.company ? `Recruiter at ${job.company}` : 'Hiring Team')}
-                </span>
-              </div>
-            </div>
+        {job.is_offer && job.recruiter_message && (() => {
+          const isCompanyJob = Boolean(job.org_id || (job as any).orgId || (job as any).company_id || (job as any).posted_as_company);
+          const noteDisplayName = isCompanyJob
+            ? (job.company || job.company_name || job.recruiter_name || 'Company')
+            : (job.recruiter_name || job.company || 'Recruiter');
+          const noteDisplayAvatar = isCompanyJob
+            ? (job.company_logo || job.recruiter_avatar)
+            : job.recruiter_avatar;
+          const noteDisplayTitle = isCompanyJob
+            ? ((job as any).company_headline || (job as any).offer_sender_headline || job.recruiter_title)
+            : job.recruiter_title;
 
-            <p className="font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary self-stretch m-0">
-              {job.recruiter_message}
-            </p>
-          </div>
-        )}
+          return (
+            <div className="w-full max-w-[700px] min-w-0 p-3 bg-ds-surface-1 border-l-2 border-ds-accent rounded-r-2xl rounded-bl-2xl rounded-tl-none flex flex-col items-start gap-2 self-stretch flex-none box-border">
+              <div className="flex items-center gap-2 h-9 min-w-0 w-full">
+                <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 flex-none bg-ds-surface-2">
+                  {noteDisplayAvatar && !recruiterAvatarError ? (
+                    <img
+                      src={noteDisplayAvatar}
+                      alt={noteDisplayName}
+                      className="w-full h-full object-cover rounded-full"
+                      onError={() => setRecruiterAvatarError(true)}
+                    />
+                  ) : (
+                    <UserIcon className="w-full h-full p-1.5 text-ds-text-primary" />
+                  )}
+                </div>
+                <div className="flex flex-col items-start justify-center h-9 min-w-0 flex-1">
+                  <span className="font-dm-sans font-semibold text-base leading-6 text-ds-text-primary truncate block w-full" title={noteDisplayName}>
+                    {noteDisplayName}
+                  </span>
+                  {noteDisplayTitle && (
+                    <span className="font-dm-sans font-normal text-[10px] leading-3 text-ds-text-secondary truncate block w-full" title={noteDisplayTitle}>
+                      {noteDisplayTitle}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <p className="font-dm-sans font-normal text-xs leading-4 text-ds-text-secondary self-stretch m-0 whitespace-pre-line break-words [overflow-wrap:anywhere]">
+                {job.recruiter_message}
+              </p>
+            </div>
+          );
+        })()}
 
         {/* Application Status Tracker (if applied) */}
         {job.is_applied && (
@@ -952,9 +1105,10 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
       {/* Apply Job Modal / Bottom Drawer */}
       <ApplyJobModal
-        isOpen={showApplyModal}
+        isOpen={showApplyModal && !isAssociatedCompanyAdminOrOwner}
         onClose={() => setShowApplyModal(false)}
         onApply={async (resumeUrl, uploadedFile, resumeId, coverLetter) => {
+          if (isAssociatedCompanyAdminOrOwner) return;
           await applyToJob(resumeUrl, uploadedFile, resumeId, coverLetter);
           setShowApplyModal(false);
         }}

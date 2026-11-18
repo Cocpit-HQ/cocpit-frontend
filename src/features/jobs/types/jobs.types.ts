@@ -7,7 +7,11 @@ export interface Job {
   location: string;
   job_type: 'Full time' | 'Part time' | 'Remote' | 'Contract' | 'Internship' | string;
   work_type?: 'Full time' | 'Part time' | 'Remote' | 'Contract' | 'Internship' | string;
-  experience?: string; // e.g. "0-2Yrs"
+  experience?: string; // e.g. "0-1Yrs"
+  experience_level?: string;
+  experience_label?: string;
+  experience_min?: number;
+  experience_max?: number;
   work_mode?: 'Remote' | 'Hybrid' | 'Onsite' | string;
   salary_min?: number;
   salary_max?: number;
@@ -26,6 +30,8 @@ export interface Job {
   applicants_count?: number;
   shortlisted_count?: number;
   offers_count?: number;
+  moderation_status?: 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | string;
+  rejection_reason?: string | null;
 
   // AI Recommendation details
   is_recommended?: boolean;
@@ -77,7 +83,7 @@ export interface JobsFilter {
   search?: string;
   location?: string;  // city / "remote" free-text, maps to backend ?location=
   job_type?: string; // "Full time" | "Part time" etc.
-  experience?: string; // "0-2Yrs" etc.
+  experience?: string; // "0-1Yrs" etc.
   work_mode?: string; // "Remote" | "Hybrid" | "Onsite"
   salary_range?: string | string[];
   date_posted?: string;
@@ -102,6 +108,8 @@ export interface JobListing {
   posted_at?: string;
   last_edited?: string;
   status: 'ACTIVE' | 'IN REVIEW' | 'DRAFT' | 'CLOSED' | string;
+  moderation_status?: 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | string;
+  rejection_reason?: string | null;
   company?: string;
   location?: string;
   description?: string;
@@ -127,6 +135,7 @@ export interface ListingsCounts {
   closed: number;
   draft: number;
   inReview: number;
+  rejected: number;
 }
 
 export interface JobOffer {
@@ -138,6 +147,7 @@ export interface JobOffer {
   days_remaining: number;
   company_name: string;
   location: string;
+  work_mode?: string;
   status: 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
   note?: string;
   is_active?: boolean;

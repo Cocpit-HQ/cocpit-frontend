@@ -189,7 +189,11 @@ export default function SinglePostPage({ params }: PageProps) {
 
     const returnTo = searchParams?.get('returnTo');
     if (returnTo && returnTo.startsWith('/')) {
-      router.replace(returnTo);
+      if (returnTo.includes('/notifications') && typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+      } else {
+        router.replace(returnTo);
+      }
       return;
     }
 
@@ -228,7 +232,11 @@ export default function SinglePostPage({ params }: PageProps) {
 
     const returnTo = searchParams?.get('returnTo');
     if (returnTo && returnTo.startsWith('/')) {
-      router.replace(returnTo);
+      if (returnTo.includes('/notifications') && typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+      } else {
+        router.replace(returnTo);
+      }
       return;
     }
 

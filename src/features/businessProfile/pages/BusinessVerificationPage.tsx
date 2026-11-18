@@ -102,6 +102,7 @@ export function BusinessVerificationPage() {
     org.verification_status === "PENDING" ||
     org.verification_status === "SUBMITTED" ||
     org.verification_status === "UNDER_REVIEW" ||
+    org.verification_status === "DOCUMENT_PENDING" ||
     justSubmitted
   );
 
@@ -214,7 +215,7 @@ export function BusinessVerificationPage() {
       }
 
       await businessProfileService.submitVerification(orgId, formData);
-      toast.success("Verification documents submitted successfully!");
+      toast.success("Verification documents submitted for review.");
       setJustSubmitted(true);
       setIsEditingForm(false);
       queryClient.invalidateQueries({ queryKey: ["orgProfile", rawSlug] });
@@ -226,8 +227,7 @@ export function BusinessVerificationPage() {
 
       if (updateActiveProfile) {
         updateActiveProfile({
-          verification_status: "VERIFIED",
-          is_identity_verified: true,
+          verification_status: "DOCUMENT_PENDING",
         });
       }
 
@@ -341,7 +341,7 @@ export function BusinessVerificationPage() {
                 Profile
               </span>
             </div>
-            <div className="self-stretch h-[2px] bg-transparent" />
+            <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
           </button>
 
           {/* About Tab */}
@@ -355,7 +355,7 @@ export function BusinessVerificationPage() {
                 About
               </span>
             </div>
-            <div className="self-stretch h-[2px] bg-transparent" />
+            <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
           </button>
 
           {/* Verification Tab (Active) */}
@@ -368,47 +368,78 @@ export function BusinessVerificationPage() {
                 Verification
               </span>
             </div>
-            <div className="self-stretch h-[2px] bg-ds-accent" />
+            <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
           </button>
         </div>
 
         {/* Conditional Screen View */}
         {showStatusView ? (
-          /* Account Verification Status List (Matching Figma Design) */
+          /* Organization Verification Status View */
           <div className="self-stretch flex flex-col items-start gap-4 animate-in fade-in-50 duration-150">
-            {/* Identity Verified Row */}
-            <div className="self-stretch flex items-center justify-between py-3">
-              <div className="flex flex-col items-start gap-0.5">
-                <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
-                  Account verification
-                </span>
-                <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-                  Your identity has been verified
-                </span>
-              </div>
-              <span className="text-ds-success text-sm font-medium font-['DM_Sans'] leading-5 shrink-0">
-                Verified
-              </span>
-            </div>
-
             {/* Document Verification Row */}
             <div className="self-stretch flex items-center justify-between py-2 sm:py-3">
               <div className="flex flex-col items-start gap-0.5">
                 <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
-                  Account verification
+                  Organization verification
                 </span>
                 <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-                  Document sent for verification
+                  {isVerified
+                    ? "Official documents verified and approved"
+                    : org.verification_status === "REJECTED"
+                    ? (org.rejection_reason || (org.review_notes && org.review_notes.includes('[Reason:') ? org.review_notes.match(/\[Reason:\s*([^\]]+)\]/)?.[1] : null)
+                        ? `Document verification rejected: ${org.rejection_reason || org.review_notes.match(/\[Reason:\s*([^\]]+)\]/)?.[1]}`
+                        : "Document verification was rejected")
+                    : "Official documents submitted and under review"}
                 </span>
               </div>
-              <span className="text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 shrink-0">
-                Submitted
+              <span
+                className={cn(
+                  "text-sm font-medium font-['DM_Sans'] leading-5 shrink-0",
+                  isVerified
+                    ? "text-ds-success"
+                    : org.verification_status === "REJECTED"
+                    ? "text-red-500"
+                    : "text-amber-500"
+                )}
+              >
+                {isVerified
+                  ? "Verified"
+                  : org.verification_status === "REJECTED"
+                  ? "Rejected"
+                  : "Under Review"}
               </span>
             </div>
+
+            {/* If rejected, allow re-submitting by opening the form view */}
+            {org.verification_status === "REJECTED" && (
+              <button
+                type="button"
+                onClick={() => setIsEditingForm(true)}
+                className="self-stretch py-2 px-4 rounded-xl border border-ds-border bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-primary text-sm font-medium transition-colors"
+              >
+                Re-submit Documents
+              </button>
+            )}
           </div>
         ) : (
           /* Form View: Single Column on Mobile, 2-Column Row 1 on Desktop */
           <div className="self-stretch flex flex-col items-start gap-5">
+            {/* Rejection Alert Banner if previously rejected */}
+            {org.verification_status === "REJECTED" && (
+              <div className="self-stretch p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-start gap-3">
+                <span className="text-rose-500 font-bold shrink-0 mt-0.5">!</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-rose-500">
+                    Previous Verification Not Approved
+                  </span>
+                  <span className="text-xs text-ds-text-secondary leading-relaxed">
+                    {org.rejection_reason || (org.review_notes && org.review_notes.includes('[Reason:') ? org.review_notes.match(/\[Reason:\s*([^\]]+)\]/)?.[1] : null)
+                      ? `Reason: ${org.rejection_reason || org.review_notes.match(/\[Reason:\s*([^\]]+)\]/)?.[1]}. Please upload valid, clear documents below to re-verify.`
+                      : "Please upload valid, clear documents below to re-verify your organization."}
+                  </span>
+                </div>
+              </div>
+            )}
             {/* Row 1: Legal Name & Incorporation Date */}
             <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-5 sm:gap-10 sm:h-[62px]">
               {/* Organization legal full name */}

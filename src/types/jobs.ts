@@ -152,6 +152,9 @@ export interface Applicant {
   }[]
   resumeName?: string
   resumeUrl?: string
+  candidateNote?: string
+  coverNote?: string
+  hasCandidateNote?: boolean
 
   initials: string
   color: string

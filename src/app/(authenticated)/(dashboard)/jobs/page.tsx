@@ -31,7 +31,6 @@ export default function JobsRoute({
     (typeof window !== "undefined" && (
       window.location.search.includes("My+Listings") ||
       window.location.search.includes("My%20Listings") ||
-      window.location.search.includes("tab=My") ||
       window.location.search.includes("view=")
     ))
   );
@@ -40,7 +39,7 @@ export default function JobsRoute({
     <FeatureGuard featureKey="enableJobsBoard" moduleName="Jobs & Careers">
       <Suspense fallback={isMyListingsOrCompany ? null : <JobsPageSkeleton />}>
         <MemoryRouter section="jobs" />
-        <JobsPage searchParams={searchParams} isCompanyMode={isCompanyMode} />
+        <JobsPage isCompanyMode={isCompanyMode} />
       </Suspense>
     </FeatureGuard>
   );

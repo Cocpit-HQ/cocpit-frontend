@@ -57,20 +57,25 @@ export const SearchHashtagsView: React.FC<SearchHashtagsViewProps> = ({
   }
 
   return (
-    <div className="w-full max-w-[488px] mx-auto px-2 sm:px-0 flex flex-col gap-3 mt-2">
+    <div className="w-full max-w-[488px] mx-auto px-4 sm:px-0 flex flex-col gap-3 mt-2">
       <h2 className="text-base font-medium text-ds-text-primary w-full text-left font-dm-sans">
         Hashtags
       </h2>
 
       {/* List Items Container */}
       <div className="flex flex-col gap-1 w-full divide-y divide-ds-border/40">
-        {items.map((hashtag, idx) => (
-          <SearchHashtagCard
-            key={`${hashtag.id || hashtag.tag}-${idx}`}
-            hashtag={hashtag}
-            returnTo={currentSearchUrl}
-          />
-        ))}
+        {items.map((hashtag, idx) => {
+          if (!hashtag) return null;
+          const rawTag = typeof hashtag === 'string' ? hashtag : hashtag.tag || (hashtag as any).name || (hashtag as any).hashtag;
+          const key = (typeof hashtag === 'object' && hashtag?.id) || rawTag || `hashtag-${idx}`;
+          return (
+            <SearchHashtagCard
+              key={`${key}-${idx}`}
+              hashtag={hashtag}
+              returnTo={currentSearchUrl}
+            />
+          );
+        })}
       </div>
 
       {/* Keyset pagination trigger */}

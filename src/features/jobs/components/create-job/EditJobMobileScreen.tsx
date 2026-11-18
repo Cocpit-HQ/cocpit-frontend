@@ -49,7 +49,7 @@ export const EditJobMobileScreen: React.FC<EditJobMobileScreenProps> = ({
   const [company, setCompany] = useState(initialData.company || 'Driftline Digital');
   const [location, setLocation] = useState(initialData.location || 'Mumbai, India');
   const [workMode, setWorkMode] = useState(initialData.workMode || 'Hybrid');
-  const [experience, setExperience] = useState(initialData.experience || '0 - 2 years');
+  const [experience, setExperience] = useState(initialData.experience || 'Fresher');
   const [workType, setWorkType] = useState(initialData.workType || 'Full time');
 
   // Drawer state machines
@@ -132,7 +132,7 @@ export const EditJobMobileScreen: React.FC<EditJobMobileScreenProps> = ({
             />
           </div>
 
-          {/* 2. Recruiter (Input with label) */}
+          {/* 2. Recruiter (Input with label - non-editable) */}
           <div className="w-full py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5 box-border">
             <label className="text-ds-text-secondary text-xs font-medium leading-4 font-dm-sans">
               Recruiter
@@ -140,9 +140,10 @@ export const EditJobMobileScreen: React.FC<EditJobMobileScreenProps> = ({
             <input
               type="text"
               value={company}
-              onChange={(e) => setCompany(e.target.value)}
+              readOnly
+              disabled
               placeholder="Company / Recruiter"
-              className="w-full bg-transparent border-none p-0 text-ds-text-primary text-sm font-normal leading-5 placeholder:text-ds-text-muted focus:outline-none focus:ring-0 font-dm-sans"
+              className="w-full bg-transparent border-none p-0 text-ds-text-secondary text-sm font-normal leading-5 placeholder:text-ds-text-muted focus:outline-none focus:ring-0 font-dm-sans cursor-default select-none"
             />
           </div>
 

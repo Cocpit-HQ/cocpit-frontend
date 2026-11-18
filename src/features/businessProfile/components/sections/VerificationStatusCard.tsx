@@ -13,12 +13,14 @@ import { useCompanyPermissions } from "@/features/businessProfile";
 
 interface VerificationStatusCardProps {
   isVerified?: boolean;
+  verificationStatus?: string;
   onManageDocumentsClick?: () => void;
   canVerify?: boolean;
 }
 
 export default function VerificationStatusCard({
   isVerified = false,
+  verificationStatus,
   onManageDocumentsClick,
   canVerify,
 }: VerificationStatusCardProps) {
@@ -37,6 +39,37 @@ export default function VerificationStatusCard({
 
   if (isVerified) return null;
 
+  const rawStatus = (
+    verificationStatus ||
+    activeProfile?.verification_status ||
+    (activeProfile as any)?.verificationStatus ||
+    "UNVERIFIED"
+  ).toUpperCase();
+
+  const isUnderReview = !isVerified && [
+    "UNDER_REVIEW",
+    "DOCUMENT_PENDING",
+    "PENDING",
+    "SUBMITTED",
+    "IN_REVIEW",
+  ].includes(rawStatus);
+
+  const isRejected = !isVerified && !isUnderReview && rawStatus === "REJECTED";
+
+  let statusText = "Unverified";
+  let statusColor = "text-ds-warning";
+  let statusMessage = "Your profile is unverified. Maintain updated documentation to preserve status.";
+
+  if (isUnderReview) {
+    statusText = "Under Review";
+    statusColor = "text-amber-500";
+    statusMessage = "Your verification request is under review and awaiting admin approval.";
+  } else if (isRejected) {
+    statusText = "Rejected";
+    statusColor = "text-red-500";
+    statusMessage = "Your verification request was rejected. Please re-submit your documentation.";
+  }
+
   return (
     <div className="w-full max-w-[800px] px-5">
       <div className="w-full self-stretch min-h-[96px] py-[10px] flex flex-col justify-center items-center gap-4">
@@ -54,11 +87,9 @@ export default function VerificationStatusCard({
 
           <div className="flex items-center shrink-0">
             <span
-              className={`ds-text-small ${
-                isVerified ? "text-[#22C55E]" : "text-ds-warning"
-              }`}
+              className={`ds-text-small font-medium ${statusColor}`}
             >
-              {isVerified ? "Verified" : "Unverified"}
+              {statusText}
             </span>
           </div>
         </div>
@@ -66,9 +97,7 @@ export default function VerificationStatusCard({
         {/* Row 2: Description & Action Button */}
         <div className="self-stretch w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 sm:h-9">
           <p className="text-ds-text-secondary ds-text-secondary">
-            {isVerified
-              ? "Your profile is verified. Maintain updated documentation to preserve status."
-              : "Your profile is unverified. Maintain updated documentation to preserve status."}
+            {statusMessage}
           </p>
 
           {!effectiveCanVerify ? (

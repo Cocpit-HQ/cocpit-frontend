@@ -81,7 +81,7 @@ export function Sidebar({ className }: SidebarProps) {
     ];
   }, [analyticsHref, profileHref, settingsHref, isCompanyActor]);
 
-  // Sort switchableCompanies so the currently active/open company is at the top of the list
+  // Sort switchableCompanies so the currently active company actor is at the top of the list
   const sortedCompanies = useMemo(() => {
     if (!switchableCompanies || switchableCompanies.length === 0) return [];
 
@@ -91,10 +91,7 @@ export function Sidebar({ className }: SidebarProps) {
         (companyId && activeProfile?.id === companyId) ||
         (company.slug && activeProfile?.slug && company.slug === activeProfile.slug)
       );
-      const isPathActive = company.slug
-        ? (pathname === `/organization/${company.slug}` || pathname?.startsWith(`/organization/${company.slug}/`))
-        : false;
-      return isActorActive || isPathActive;
+      return isActorActive;
     });
 
     if (activeIndex <= 0) return switchableCompanies;
@@ -102,11 +99,9 @@ export function Sidebar({ className }: SidebarProps) {
     const activeCompany = switchableCompanies[activeIndex];
     const rest = switchableCompanies.filter((_, idx) => idx !== activeIndex);
     return [activeCompany, ...rest];
-  }, [switchableCompanies, isCompany, activeProfile?.id, activeProfile?.slug, pathname]);
+  }, [switchableCompanies, isCompany, activeProfile?.id, activeProfile?.slug]);
 
-  const isPersonalActive = !isCompany && activeProfile?.type === 'USER' && (
-    !pathname || !pathname.startsWith('/organization/')
-  );
+  const isPersonalActive = !isCompany && activeProfile?.type === 'USER';
 
   return (
     <aside 
@@ -238,10 +233,7 @@ export function Sidebar({ className }: SidebarProps) {
                 (companyId && activeProfile?.id === companyId) ||
                 (company.slug && activeProfile?.slug && company.slug === activeProfile.slug)
               );
-              const isCurrentPath = company.slug
-                ? (pathname === `/organization/${company.slug}` || pathname?.startsWith(`/organization/${company.slug}/`))
-                : false;
-              const isOrgActive = isCurrentActor || isCurrentPath;
+              const isOrgActive = isCurrentActor;
               const orgHref = `/organization/${company.slug}`;
               const hasLogo = Boolean(company.logo_url && company.logo_url !== '/assets/pngegg.png');
 

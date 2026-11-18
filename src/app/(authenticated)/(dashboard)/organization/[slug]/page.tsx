@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import { BusinessProfilePage } from "@/features/businessProfile";
 import { FeatureGuard } from "@/components/feature-flags";
 import { BlockIcon } from "@/components/icons";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export default function CompanyPage() {
     const params = useParams();
@@ -85,8 +86,13 @@ export default function CompanyPage() {
         );
     }
 
+    const { activeProfile } = useActiveProfile();
     const isExplicitPublic = searchParams?.get("view") === "public" || searchParams?.get("mode") === "public" || searchParams?.get("preview") === "true";
-    const isMember = !isExplicitPublic && !!company?.viewer_role_data;
+    const isActorThisCompany = activeProfile?.type === 'COMPANY' && Boolean(
+        (company?.org_id && (activeProfile.id === company.org_id || activeProfile.id === (company as any).company_id)) ||
+        (company?.slug && activeProfile.slug === company.slug)
+    );
+    const isMember = !isExplicitPublic && isActorThisCompany;
 
     return (
         <FeatureGuard featureKey="enableOrganizations" moduleName="Organizations Showcase">

@@ -1,4 +1,4 @@
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useJobs } from "../hooks/useJobs";
 import { useJobOffers } from "../hooks/useJobOffers";
@@ -19,11 +19,10 @@ import MyApplicationsTab from "../components/tabs/MyApplicationsTab";
 import OffersTab from "../components/tabs/OffersTab";
 
 interface JobsPageProps {
-  searchParams?: any;
   isCompanyMode?: boolean;
 }
 
-export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode: propIsCompanyMode = false }) => {
+export const JobsPage: React.FC<JobsPageProps> = ({ isCompanyMode: propIsCompanyMode = false }) => {
   const router = useRouter();
   const { isCompany, activeProfile } = useActiveProfile();
   const { isFeatureActive } = useFeatureFlags();
@@ -46,20 +45,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   const urlLocation = urlParams?.get('location') || '';
   const urlTab = urlParams?.get('tab') || 'Explore';
 
-  // Seed from SSR searchParams prop on first load
-  let resolvedParams: any = null;
-  if (searchParams) {
-    if (typeof searchParams.then === "function") {
-      resolvedParams = use(searchParams);
-    } else {
-      resolvedParams = searchParams;
-    }
-  }
-
-  const initialSearch =
-    urlSearch || (typeof resolvedParams?.search === "string" ? resolvedParams.search : "");
-  const initialLocation =
-    urlLocation || (typeof resolvedParams?.location === "string" ? resolvedParams.location : "");
+  const initialSearch = urlSearch;
+  const initialLocation = urlLocation;
 
   const {
     jobs,
@@ -191,7 +178,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
 
   // Hide mobile HomeHeader search bar when the create-job wizard is active
   const urlView = urlParams?.get('view');
-  const isFullScreenView = urlView === 'create-job' || urlView === 'view_listing' || urlView === 'view-listing';
+  const isFullScreenView = urlView === 'create-job' || urlView === 'view_listing' || urlView === 'view-listing' || urlView === 'offer-details' || urlView === 'applicants';
   useEffect(() => {
     if (isFullScreenView) {
       document.body.dataset.hideSearch = 'true';
@@ -236,7 +223,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   ];
 
   const effectiveTab = urlTab || activeTab;
-  if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView || urlView === 'offer-details') {
+  if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView) {
     const returnTo = urlParams?.get('returnTo') || urlParams?.get('from');
     const shouldShowBack = !isCompanyMode || Boolean(returnTo);
 
@@ -246,11 +233,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
           isCompanyMode={isCompanyMode}
           onBack={shouldShowBack ? () => {
             if (returnTo) {
-              if (typeof window !== 'undefined' && window.history.length > 1) {
-                router.back();
-              } else {
-                router.push(returnTo);
-              }
+              router.push(returnTo);
               return;
             }
             if (isCompanyMode) {
@@ -313,9 +296,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                     </span>
                   </div>
                   {isActive ? (
-                    <div className="self-stretch h-[1.5px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                    <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                   ) : (
-                    <div className="self-stretch h-[1.5px] bg-transparent" />
+                    <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
                   )}
                 </button>
               );
@@ -355,7 +338,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
               >
                 <span>{tab.label}</span>
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                  <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                 )}
               </button>
             );

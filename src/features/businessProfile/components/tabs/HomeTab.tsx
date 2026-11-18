@@ -101,6 +101,7 @@ export default function HomeTab({
       {isOwnProfile && !data.isVerified && (
         <VerificationStatusCard
           isVerified={data.isVerified}
+          verificationStatus={data.verificationStatus || (data as any)?.verification_status}
           onManageDocumentsClick={handleManageDocuments}
           canVerify={canVerify}
         />

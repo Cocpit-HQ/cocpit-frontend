@@ -5,6 +5,7 @@ import Avatar from '@/components/shared/Avatar';
 import { BriefcaseIcon } from '@/components/icons';
 import { formatJobLocation } from '../../utils/location.utils';
 import { cleanSalary } from '../../utils/currency.utils';
+import { formatExperience } from '../../services/jobs.service';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface SearchJobCardProps {
@@ -99,7 +100,7 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
         <div className="flex flex-wrap items-center gap-2 text-xs font-normal font-dm-sans text-ds-text-secondary min-w-0">
           <div className="flex items-center gap-2 shrink-0">
             <Icon icon="solar:bag-2-linear" className="size-4 text-ds-text-secondary shrink-0" />
-            <span>{job.experience || '0-2Yrs'}</span>
+            <span>{formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience)}</span>
           </div>
 
           {(job.work_mode || job.location) && (

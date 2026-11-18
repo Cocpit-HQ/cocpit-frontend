@@ -1,13 +1,14 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { X, ChevronDown } from "lucide-react"
+import { X, ChevronDown, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Icon } from '@iconify/react'
 import { cn } from "@/lib/utils"
+import { useDebounce } from "@/hooks/use-debounce"
 import { updateMemberRoleSettings } from "@/services/api/organization"
 import { checkAccountNameAvailability } from "@/services/api/onboarding"
-import { getIndustries } from "@/features/jobs/services/jobs.service"
+import { getPaginatedIndustries } from "@/features/jobs/services/jobs.service"
 import { getProfileDropdowns } from "@/services/api/profile"
 import {
   Dialog,
@@ -95,6 +96,11 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const [availableIndustries, setAvailableIndustries] = useState<{ industry_name: string }[]>([]);
   const [isIndustryOpen, setIsIndustryOpen] = useState(false);
   const [industrySearch, setIndustrySearch] = useState('');
+  const [industryCursor, setIndustryCursor] = useState<string | null>(null);
+  const [hasMoreIndustries, setHasMoreIndustries] = useState(false);
+  const [isLoadingMoreIndustries, setIsLoadingMoreIndustries] = useState(false);
+  const [isSearchingIndustries, setIsSearchingIndustries] = useState(false);
+  const debouncedIndustrySearch = useDebounce(industrySearch, 250);
   const industryRef = React.useRef<HTMLDivElement>(null);
 
   // Dropdown options from API
@@ -111,20 +117,90 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   }, [formData]);
 
   useEffect(() => {
-    setIndustrySearch(formData.industry || '');
-  }, [formData.industry]);
+    if (!isIndustryOpen) {
+      setIndustrySearch(formData.industry || '');
+    }
+  }, [formData.industry, isIndustryOpen]);
 
+  // Initial fetch: 25 industries on mount
   useEffect(() => {
+    let isCancelled = false;
     const fetchIndustries = async () => {
       try {
-        const data = await getIndustries();
-        setAvailableIndustries(data);
+        const res = await getPaginatedIndustries(undefined, undefined, 25);
+        if (!isCancelled && Array.isArray(res.items)) {
+          setAvailableIndustries(res.items.map((name: string) => ({ industry_name: name })));
+          setIndustryCursor(res.nextCursor || null);
+          setHasMoreIndustries(Boolean(res.hasMore));
+        }
       } catch (err) {
-        console.error("Failed to fetch industries", err);
+        console.error("Failed to fetch industries in EditProfileModal", err);
       }
     };
     fetchIndustries();
+    return () => {
+      isCancelled = true;
+    };
   }, []);
+
+  // Live debounced server search for industries
+  useEffect(() => {
+    if (!isIndustryOpen) return;
+    let isCancelled = false;
+
+    const searchIndustries = async () => {
+      setIsSearchingIndustries(true);
+      try {
+        const trimmed = debouncedIndustrySearch.trim() || undefined;
+        const res = await getPaginatedIndustries(trimmed, undefined, 25);
+        if (!isCancelled && Array.isArray(res.items)) {
+          setAvailableIndustries(res.items.map((name: string) => ({ industry_name: name })));
+          setIndustryCursor(res.nextCursor || null);
+          setHasMoreIndustries(Boolean(res.hasMore));
+        }
+      } catch (err) {
+        console.error("Failed to search industries in EditProfileModal:", err);
+      } finally {
+        if (!isCancelled) setIsSearchingIndustries(false);
+      }
+    };
+
+    searchIndustries();
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedIndustrySearch, isIndustryOpen]);
+
+  // Cursor-based infinite scroll: load next 25 on reaching list bottom
+  const handleIndustryScroll = async (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (!el || isLoadingMoreIndustries || !hasMoreIndustries || !industryCursor) return;
+
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+      setIsLoadingMoreIndustries(true);
+      try {
+        const queryParam = debouncedIndustrySearch.trim() || undefined;
+        const res = await getPaginatedIndustries(queryParam, industryCursor, 25);
+        if (Array.isArray(res.items) && res.items.length > 0) {
+          const newItems = res.items.map((name: string) => ({ industry_name: name }));
+          setAvailableIndustries((prev) => {
+            const existing = new Set(prev.map((p) => p.industry_name));
+            const unique = newItems.filter((m) => !existing.has(m.industry_name));
+            return [...prev, ...unique];
+          });
+          setIndustryCursor(res.nextCursor || null);
+          setHasMoreIndustries(Boolean(res.hasMore));
+        } else {
+          setHasMoreIndustries(false);
+          setIndustryCursor(null);
+        }
+      } catch (err) {
+        console.error("Failed to load more industries in EditProfileModal:", err);
+      } finally {
+        setIsLoadingMoreIndustries(false);
+      }
+    }
+  };
 
   // Fetch dropdown options from API
   useEffect(() => {
@@ -154,9 +230,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     };
   }, []);
 
-  const filteredIndustries = availableIndustries.filter(ind =>
-    ind.industry_name.toLowerCase().includes(industrySearch.toLowerCase())
-  );
+  const filteredIndustries = availableIndustries;
 
   useEffect(() => {
     if (user) {
@@ -412,38 +486,62 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     placeholder="Search industries..."
                     className={cn(inputStyles, "border text-[14px]", isIndustryOpen ? "ring-2 ring-primary border-primary" : "")}
                   />
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 pointer-events-none" />
+                  {isSearchingIndustries ? (
+                    <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-primary" />
+                  ) : (
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 pointer-events-none" />
+                  )}
                 </div>
 
                 {isIndustryOpen && (
                   <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-card border border-border rounded-2xl shadow-lg z-50 overflow-hidden flex flex-col">
-                    <div className="max-h-[240px] overflow-y-auto scrollbar-thin py-2">
+                    <div
+                      onScroll={handleIndustryScroll}
+                      className="max-h-[240px] min-h-[160px] overflow-y-auto scrollbar-thin py-2"
+                    >
                       {filteredIndustries.length > 0 ? (
-                        filteredIndustries.map(ind => (
-                          <div
-                            key={ind.industry_name}
-                            className={cn(
-                              "w-full text-left px-4 py-2.5 text-[14px] font-['DM_Sans'] font-normal transition-colors flex items-center justify-between cursor-pointer",
-                              formData.industry === ind.industry_name
-                                ? "bg-primary/10 text-primary font-medium"
-                                : "text-foreground hover:bg-secondary"
-                            )}
-                            onClick={() => {
-                              setFormData(prev => ({ ...prev, industry: ind.industry_name }));
-                              setIsIndustryOpen(false);
-                              setIndustrySearch('');
-                            }}
-                          >
-                            <span className="truncate pr-4">{ind.industry_name}</span>
-                            {formData.industry === ind.industry_name && (
-                              <Icon icon="lucide:check" className="w-4 h-4 flex-shrink-0" />
-                            )}
-                          </div>
-                        ))
+                        <>
+                          {filteredIndustries.map(ind => (
+                            <div
+                              key={ind.industry_name}
+                              className={cn(
+                                "w-full text-left px-4 py-2.5 text-[14px] font-['DM_Sans'] font-normal transition-colors flex items-center justify-between cursor-pointer",
+                                formData.industry === ind.industry_name
+                                  ? "bg-primary/10 text-primary font-medium"
+                                  : "text-foreground hover:bg-secondary"
+                              )}
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, industry: ind.industry_name }));
+                                setIsIndustryOpen(false);
+                                setIndustrySearch(ind.industry_name);
+                              }}
+                            >
+                              <span className="truncate pr-4">{ind.industry_name}</span>
+                              {formData.industry === ind.industry_name && (
+                                <Icon icon="lucide:check" className="w-4 h-4 flex-shrink-0" />
+                              )}
+                            </div>
+                          ))}
+                          {isLoadingMoreIndustries && (
+                            <div className="w-full py-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                              <span>Loading more...</span>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div className="px-4 py-8 text-center">
-                          <p className="text-[14px] font-['DM_Sans'] font-medium text-foreground mb-1">No industries found</p>
-                          <p className="text-[12px] font-['DM_Sans'] text-muted-foreground">Try a different search term</p>
+                          {isSearchingIndustries ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                              <span className="text-[14px] font-medium text-foreground">Searching industries...</span>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-[14px] font-['DM_Sans'] font-medium text-foreground mb-1">No industries found</p>
+                              <p className="text-[12px] font-['DM_Sans'] text-muted-foreground">Try a different search term</p>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

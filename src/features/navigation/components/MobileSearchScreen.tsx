@@ -13,12 +13,23 @@ import { useToast } from '@/hooks/use-toast';
 interface MobileSearchScreenProps {
   isOpen: boolean;
   onClose: () => void;
+  initialQuery?: string;
+  onSearch?: (query: string) => void;
+  category?: string;
+  placeholder?: string;
 }
 
-export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps) {
+export function MobileSearchScreen({
+  isOpen,
+  onClose,
+  initialQuery = '',
+  onSearch,
+  category,
+  placeholder,
+}: MobileSearchScreenProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialQuery || '');
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -35,6 +46,12 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSearchQuery(initialQuery || '');
+    }
+  }, [isOpen, initialQuery]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -72,6 +89,10 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
 
     if (inputRef.current) {
       inputRef.current.focus({ preventScroll: true });
+      const len = (initialQuery || '').length;
+      if (len > 0) {
+        inputRef.current.setSelectionRange(len, len);
+      }
     }
 
     return () => {
@@ -93,8 +114,9 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (!debouncedSearch.trim()) {
+      if (!isOpen || !debouncedSearch.trim()) {
         setSearchResults([]);
+        setIsSearching(false);
         return;
       }
       setIsSearching(true);
@@ -114,16 +136,38 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
       }
     };
     fetchResults();
-  }, [debouncedSearch]);
+  }, [debouncedSearch, isOpen]);
+
+  const executeSearch = (rawTerm: string) => {
+    const trimmed = rawTerm.trim();
+    if (!trimmed) return;
+    saveSearch(trimmed);
+    onClose();
+
+    if (onSearch) {
+      onSearch(trimmed);
+      return;
+    }
+
+    const currentPath =
+      typeof window !== 'undefined'
+        ? window.location.pathname + window.location.search
+        : '/feed';
+    const isAlreadySearch = currentPath.startsWith('/search') || currentPath.startsWith('/jobs/search');
+    const safeOrigin = isAlreadySearch ? '/feed' : currentPath;
+
+    if (typeof window !== 'undefined' && !isAlreadySearch) {
+      sessionStorage.setItem('cocpit_search_origin', safeOrigin);
+    }
+
+    const categoryParam = category ? `&type=${encodeURIComponent(category)}` : '&type=all';
+    router.push(`/search?q=${encodeURIComponent(trimmed)}${categoryParam}&returnTo=${encodeURIComponent(safeOrigin)}`);
+  };
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      // Outdated search page navigation commented out:
-      // if (searchQuery.trim()) {
-      //   onClose();
-      //   router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      // }
+      executeSearch(searchQuery);
     }
   };
   
@@ -141,7 +185,12 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
       return;
     }
 
-    if (user.type === 'COMPANY' || user.account_type === 'COMPANY') {
+    const isOrg = user.type === 'COMPANY' || user.account_type === 'COMPANY' ||
+                  user.type === 'INSTITUTION' || user.account_type === 'INSTITUTION' ||
+                  user.type === 'ORGANIZATION' || user.account_type === 'ORGANIZATION' ||
+                  (user as any).entity_type === 'COMPANY' || (user as any).entity_type === 'INSTITUTION';
+
+    if (isOrg) {
       setIsNavigating(true);
       try {
         const companySlug = user.slug || user.id;
@@ -152,7 +201,7 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
         saveSearch({ ...user, slug: targetSlug });
         router.push(`/organization/${targetSlug}`);
       } catch (err) {
-        toast({ title: "Error", description: "Unable to load company profile. The company may have been deleted or deactivated.", variant: "destructive" });
+        toast({ title: "Error", description: "Unable to load organization profile. It may have been deleted or deactivated.", variant: "destructive" });
       } finally {
         setIsNavigating(false);
       }
@@ -180,13 +229,21 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
   };
   
   const getUrlForUser = (user: SearchedUser) => {
-    return user.type === 'COMPANY' || user.account_type === 'COMPANY'
+    const isOrg = user.type === 'COMPANY' || user.account_type === 'COMPANY' ||
+                  user.type === 'INSTITUTION' || user.account_type === 'INSTITUTION' ||
+                  user.type === 'ORGANIZATION' || user.account_type === 'ORGANIZATION' ||
+                  (user as any).entity_type === 'COMPANY' || (user as any).entity_type === 'INSTITUTION';
+    return isOrg
       ? `/organization/${user.slug || user.id}`
       : `/profile/${user.account_name || user.id}`;
   };
   
   const renderAvatar = (user: SearchedUser) => {
-    const isCompany = user.type === 'COMPANY' || (user as any).type === 'company' || (user as any).account_type === 'COMPANY' || (user as any).account_type === 'company';
+    const isCompany = user.type === 'COMPANY' || (user as any).type === 'company' || 
+                      user.account_type === 'COMPANY' || (user as any).account_type === 'company' ||
+                      user.type === 'INSTITUTION' || (user as any).type === 'institution' || 
+                      user.account_type === 'INSTITUTION' || (user as any).account_type === 'institution' ||
+                      (user as any).entity_type === 'COMPANY' || (user as any).entity_type === 'INSTITUTION';
     const roundedClass = isCompany ? 'rounded-[8px]' : 'rounded-full';
     if (user.avatar_url || user.avatar) {
       return (
@@ -214,37 +271,33 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
   const showLive = searchQuery.trim().length > 0;
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] bg-ds-bg w-full h-full overflow-hidden select-text overscroll-contain sm:hidden">
+    <div className="fixed inset-0 z-[99999] bg-ds-bg w-full h-full overflow-hidden select-text overscroll-contain md:hidden">
       <div 
         className="absolute inset-x-0 top-0 flex flex-col w-full bg-ds-bg"
         style={viewportStyle}
       >
         {/* Top Bar */}
         <div className="flex flex-row items-center px-4 pt-[max(16px,env(safe-area-inset-top,16px))] pb-3 gap-3 bg-ds-bg">
-        <button onClick={onClose} className="text-[#A1A1AA] hover:text-white transition-colors outline-none shrink-0" aria-label="Close search">
+        <button onClick={onClose} className="text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none shrink-0" aria-label="Close search">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <div className="flex-1 flex flex-row items-center border-b border-[#3F3F46] pb-2 gap-2">
+        <div className="flex-1 flex flex-row items-center border-b border-ds-border pb-2 gap-2">
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search"
+            placeholder={placeholder === 'hr' ? 'Search' : (placeholder || 'Search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearch}
-            className="flex-1 bg-transparent outline-none font-['DM_Sans'] text-[15px] text-white placeholder:text-[#A1A1AA] h-[24px]"
+            className="flex-1 bg-transparent outline-none font-['DM_Sans'] text-[15px] text-ds-text-primary placeholder:text-ds-text-muted h-[24px]"
           />
           <Icon
             name="search"
-            className="w-[18px] h-[18px] text-[#A1A1AA] shrink-0 cursor-pointer hover:text-white transition-colors"
+            className="w-[18px] h-[18px] text-ds-text-muted shrink-0 cursor-pointer hover:text-ds-text-primary transition-colors"
             onClick={() => {
-              // Outdated search page navigation commented out:
-              // if (searchQuery.trim()) {
-              //   onClose();
-              //   router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-              // }
+              executeSearch(searchQuery);
             }}
           />
         </div>
@@ -261,7 +314,7 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
         {showLive && (
           <div className="flex flex-col w-full">
             {isSearching ? (
-              <div className="text-[14px] leading-5 text-[#A1A1AA] mt-2">Searching...</div>
+              <div className="text-[14px] leading-5 text-ds-text-muted mt-2">Searching...</div>
             ) : searchResults.length > 0 ? (
               <div className="w-full flex flex-col gap-5 mt-2">
                 {searchResults.map((user) => (
@@ -274,11 +327,11 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       {renderAvatar(user)}
                       <div className="flex flex-col justify-center items-start min-w-0 flex-1">
-                        <p className="text-[15px] leading-5 font-medium font-['DM_Sans'] text-white whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                        <p className="text-[15px] leading-5 font-medium font-['DM_Sans'] text-ds-text-primary whitespace-nowrap overflow-hidden text-ellipsis w-full">
                           {user.full_name || user.name}
                         </p>
                         {user.headline && (
-                           <p className="text-[13px] leading-4 font-normal font-['DM_Sans'] text-[#A1A1AA] whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[95%]">
+                           <p className="text-[13px] leading-4 font-normal font-['DM_Sans'] text-ds-text-secondary whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[95%]">
                              {user.headline}
                            </p>
                         )}
@@ -288,7 +341,18 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
                 ))}
               </div>
             ) : (
-              <div className="text-[14px] leading-5 text-[#A1A1AA] mt-2">No results found.</div>
+              <div className="text-[14px] leading-5 text-ds-text-muted mt-2">No results found.</div>
+            )}
+            {searchQuery.trim() && (
+              <div
+                onClick={() => executeSearch(searchQuery)}
+                className="w-full py-3 flex items-center gap-2.5 text-ds-accent hover:bg-ds-surface-1 rounded-lg cursor-pointer transition-colors border-t border-ds-border/50 mt-3"
+              >
+                <Icon name="search" className="w-4 h-4 text-ds-accent shrink-0" />
+                <span className="text-sm font-medium font-['DM_Sans'] truncate">
+                  See all results for &ldquo;{searchQuery.trim()}&rdquo;
+                </span>
+              </div>
             )}
           </div>
         )}
@@ -297,10 +361,10 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
         {showRecent && (
           <div className="flex flex-col w-full mt-2">
             <div className="flex justify-between items-center w-full mb-4">
-              <h3 className="text-[15px] leading-5 font-normal text-white">Recent</h3>
+              <h3 className="text-[15px] leading-5 font-normal text-ds-text-primary">Recent</h3>
               <button 
                 onClick={() => clearAll()}
-                className="text-[13px] leading-5 font-medium text-[#FF6422]"
+                className="text-[13px] leading-5 font-medium text-ds-accent"
               >
                 Clear all
               </button>
@@ -314,16 +378,13 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
                         className="flex items-center gap-3 cursor-pointer flex-grow min-w-0"
                         onClick={() => {
                           setSearchQuery(item.value);
-                          saveSearch(item.value);
-                          // Outdated search page navigation commented out:
-                          // onClose();
-                          // router.push(`/search?q=${encodeURIComponent(item.value)}`);
+                          executeSearch(item.value);
                         }}
                       >
-                        <div className="w-10 h-10 rounded-full bg-ds-surface-1 flex items-center justify-center overflow-hidden shrink-0 border border-[#3F3F46]">
-                          <Icon name="search" className="w-[18px] h-[18px] text-[#A1A1AA]" />
+                        <div className="w-10 h-10 rounded-full bg-ds-surface-1 flex items-center justify-center overflow-hidden shrink-0 border border-ds-border">
+                          <Icon name="search" className="w-[18px] h-[18px] text-ds-text-muted" />
                         </div>
-                        <p className="text-[15px] leading-5 font-medium font-['DM_Sans'] text-white whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                        <p className="text-[15px] leading-5 font-medium font-['DM_Sans'] text-ds-text-primary whitespace-nowrap overflow-hidden text-ellipsis w-full">
                           {item.value}
                         </p>
                       </div>
@@ -332,7 +393,7 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
                           e.stopPropagation();
                           removeSearch(item.id);
                         }}
-                        className="text-[#A1A1AA] hover:text-white p-1 rounded-full transition-colors flex items-center justify-center shrink-0"
+                        className="text-ds-text-muted hover:text-ds-text-primary p-1 rounded-full transition-colors flex items-center justify-center shrink-0"
                         aria-label="Remove recent search"
                       >
                         <Icon name="close" className="w-[16px] h-[16px] text-current" />
@@ -350,11 +411,11 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
                     >
                       {renderAvatar(user)}
                       <div className="flex flex-col justify-center items-start min-w-0 flex-1">
-                        <p className="text-[15px] leading-5 font-medium font-['DM_Sans'] text-white whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                        <p className="text-[15px] leading-5 font-medium font-['DM_Sans'] text-ds-text-primary whitespace-nowrap overflow-hidden text-ellipsis w-full">
                           {user.full_name || user.name}
                         </p>
                         {user.headline && (
-                          <p className="text-[13px] leading-4 font-normal font-['DM_Sans'] text-[#A1A1AA] whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[95%]">
+                          <p className="text-[13px] leading-4 font-normal font-['DM_Sans'] text-ds-text-secondary whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[95%]">
                             {user.headline}
                           </p>
                         )}
@@ -366,7 +427,7 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
                         e.stopPropagation();
                         removeSearch(item.id);
                       }}
-                      className="text-[#A1A1AA] hover:text-white p-1 rounded-full transition-colors flex items-center justify-center shrink-0"
+                      className="text-ds-text-muted hover:text-ds-text-primary p-1 rounded-full transition-colors flex items-center justify-center shrink-0"
                       aria-label="Remove recent search"
                     >
                        <Icon name="close" className="w-[16px] h-[16px] text-current" />

@@ -152,7 +152,8 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       activeProfile.id === company.org_id ||
       activeProfile.id === company.id ||
       activeProfile.id === (company as any)._id ||
-      activeProfile.id === derivedOrgId
+      activeProfile.id === derivedOrgId ||
+      activeProfile.id === orgId
     )) ||
     (normalizedActiveSlug && (normalizedActiveSlug === normalizedPageSlug || normalizedActiveSlug === company.slug?.toLowerCase().trim())) ||
     (normalizedActiveName && (normalizedActiveName === normalizedCompanyName || normalizedActiveName === normalizedPageSlug))
@@ -175,10 +176,12 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     isActorThisCompany
   );
 
-  // When visiting as a user (not active company actor) or with ?view=public, open as public profile
+  // Owner view is strictly for the active company actor viewing their own company.
+  // When in personal mode (USER), acting as another company, or viewing with explicit ?view=public,
+  // the page renders the Public View (Follow, Message, etc.).
   const isPublicView = isExplicitPublic || !isActorThisCompany;
   const ownProfile = !isPublicView;
-  const canManageCompany = ownProfile && isOrgAdminOrOwner;
+  const canManageCompany = Boolean(ownProfile && (isOrgAdminOrOwner || hasEditPermission));
 
   React.useEffect(() => {
     if (isLoading) return;
@@ -208,6 +211,10 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     const lastSearch = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_last_search_url') : null;
     if (lastSearch && lastSearch.startsWith('/search')) {
       router.replace(lastSearch);
+      return;
+    }
+    if (isOwnProfile) {
+      router.push(isFromJobs ? "/jobs" : "/feed");
       return;
     }
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -369,8 +376,16 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       company.isVerified ||
       company.verified
     ),
+    verificationStatus: (
+      company.verification_status ||
+      company.verificationStatus ||
+      activeProfile?.verification_status ||
+      (activeProfile as any)?.verificationStatus ||
+      'UNVERIFIED'
+    ),
     tagline: company.headline || company.slogan || "",
     industry: (isEdu ? (company.institution_type || company.industry) : company.industry) || (isEdu ? "Higher Education" : ""),
+    sector: company.sector || "",
     location: company.location || company.city || "",
     employeeCount: company.size || "",
     websiteUrl: company.website || "",

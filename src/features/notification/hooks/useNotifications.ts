@@ -35,7 +35,7 @@ export const useNotifications = () => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [clearedTabs, setClearedTabs] = useState<Set<NotificationTab>>(new Set());
 
-  const companyId = isCompany && activeProfile?.id ? activeProfile.id : undefined;
+  const orgId = isCompany && activeProfile?.id ? activeProfile.id : undefined;
 
   // Initial Fetch
   const fetchData = useCallback(async () => {
@@ -43,7 +43,7 @@ export const useNotifications = () => {
       setLoading(true);
       setHasError(false);
 
-      const notifsData = await getNotifications(companyId);
+      const notifsData = await getNotifications(orgId);
       // Filter out chat messages per spec (images 6 & 7)
       const filteredData = notifsData.filter(
         (n: { type?: string }) => n.type !== 'message' && n.type !== 'new_message'
@@ -63,7 +63,7 @@ export const useNotifications = () => {
     } finally {
       setLoading(false);
     }
-  }, [companyId]);
+  }, [orgId]);
 
   // Initial Fetch on mount and when user/company changes
   useEffect(() => {
@@ -109,8 +109,9 @@ export const useNotifications = () => {
           newNotif.type === 'offer_declined' ||
           newNotif.type === 'job_offer_declined';
 
-        if (newNotif.recipient_company_id) {
-          if (!isCompany || activeProfile?.id !== newNotif.recipient_company_id) {
+        const notifRecipientOrgId = (newNotif as any)?.recipient_org_id || newNotif.recipient_company_id;
+        if (notifRecipientOrgId) {
+          if (!isCompany || activeProfile?.id !== notifRecipientOrgId) {
             return prev;
           }
         } else {
@@ -126,11 +127,12 @@ export const useNotifications = () => {
       });
     };
 
-    const handleNotificationRead = (payload: { notificationId?: string; id?: string; companyId?: string }) => {
+    const handleNotificationRead = (payload: { notificationId?: string; id?: string; orgId?: string; companyId?: string }) => {
       const notifId = payload?.notificationId || payload?.id;
       if (!notifId) return;
-      if (payload?.companyId) {
-        if (!isCompany || activeProfile?.id !== payload.companyId) return;
+      const targetOrgId = payload?.orgId || payload?.companyId;
+      if (targetOrgId) {
+        if (!isCompany || activeProfile?.id !== targetOrgId) return;
       } else if (isCompany) {
         return;
       }
@@ -139,30 +141,33 @@ export const useNotifications = () => {
       );
     };
 
-    const handleNotificationDeleted = (payload: { notificationId?: string; id?: string; companyId?: string }) => {
+    const handleNotificationDeleted = (payload: { notificationId?: string; id?: string; orgId?: string; companyId?: string }) => {
       const notifId = payload?.notificationId || payload?.id;
       if (!notifId) return;
-      if (payload?.companyId) {
-        if (!isCompany || activeProfile?.id !== payload.companyId) return;
+      const targetOrgId = payload?.orgId || payload?.companyId;
+      if (targetOrgId) {
+        if (!isCompany || activeProfile?.id !== targetOrgId) return;
       } else if (isCompany) {
         return;
       }
       setNotifications((prev) => prev.filter((n) => n.notification_id !== notifId));
     };
 
-    const handleAllNotificationsRead = (payload?: { companyId?: string }) => {
-      if (payload?.companyId) {
-        if (!isCompany || activeProfile?.id !== payload.companyId) return;
+    const handleAllNotificationsRead = (payload?: { orgId?: string; companyId?: string }) => {
+      const targetOrgId = payload?.orgId || payload?.companyId;
+      if (targetOrgId) {
+        if (!isCompany || activeProfile?.id !== targetOrgId) return;
       } else if (isCompany) {
         return;
       }
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     };
 
-    const handleNotificationsCleared = (payload?: { tab?: string; companyId?: string }) => {
+    const handleNotificationsCleared = (payload?: { tab?: string; orgId?: string; companyId?: string }) => {
       const tab = payload?.tab;
-      if (payload?.companyId) {
-        if (!isCompany || activeProfile?.id !== payload.companyId) return;
+      const targetOrgId = payload?.orgId || payload?.companyId;
+      if (targetOrgId) {
+        if (!isCompany || activeProfile?.id !== targetOrgId) return;
       } else if (isCompany) {
         return;
       }
@@ -217,13 +222,13 @@ export const useNotifications = () => {
       );
 
       try {
-        await markNotificationAsRead(id, companyId);
+        await markNotificationAsRead(id, orgId);
         window.dispatchEvent(new CustomEvent('notifications-updated'));
       } catch (error) {
         console.error('Failed to mark notification as read:', error);
       }
     },
-    [companyId]
+    [orgId]
   );
 
   // Delete handler
@@ -233,13 +238,13 @@ export const useNotifications = () => {
       setNotifications((prev) => prev.filter((n) => n.notification_id !== id));
 
       try {
-        await deleteNotification(id, companyId);
+        await deleteNotification(id, orgId);
         window.dispatchEvent(new CustomEvent('notifications-updated'));
       } catch (error) {
         console.error('Failed to delete notification:', error);
       }
     },
-    [companyId]
+    [orgId]
   );
 
   // Mark all as read handler
@@ -266,18 +271,18 @@ export const useNotifications = () => {
         );
 
         await Promise.all(
-          unreadJobs.map((n) => markNotificationAsRead(n.notification_id, companyId))
+          unreadJobs.map((n) => markNotificationAsRead(n.notification_id, orgId))
         );
       } else {
         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-        await markAllNotificationsRead(companyId);
+        await markAllNotificationsRead(orgId);
       }
 
       window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }
-  }, [activeTab, notifications, companyId]);
+  }, [activeTab, notifications, orgId]);
 
   // Clear all handler
   const handleClearAll = useCallback(async () => {
@@ -316,14 +321,14 @@ export const useNotifications = () => {
       window.dispatchEvent(new CustomEvent('notifications-updated'));
 
       if (idsToDelete.length > 0) {
-        await deleteNotifications(idsToDelete, companyId, currentTab);
+        await deleteNotifications(idsToDelete, orgId, currentTab);
       }
     } catch (error) {
       console.error('Failed to clear all notifications:', error);
     } finally {
       setShowClearConfirm(false);
     }
-  }, [activeTab, notifications, companyId]);
+  }, [activeTab, notifications, orgId]);
 
   // Tab filtered notifications
   const tabNotifications = useMemo(() => {

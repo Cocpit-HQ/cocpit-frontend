@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import {
   saveOnboardingDetails,
@@ -115,6 +116,10 @@ export const StepBackground: React.FC<StepBackgroundProps> = ({
   const [schoolOptions, setSchoolOptions] = useState<DropdownOption[]>(FALLBACK_SCHOOLS);
   const [programOptions, setProgramOptions] = useState<DropdownOption[]>(FALLBACK_PROGRAMS);
 
+  const [companySearch, setCompanySearch] = useState("");
+  const debouncedCompanySearch = useDebounce(companySearch, 300);
+  const initialCompanyOptionsRef = useRef<DropdownOption[]>(FALLBACK_ORGANIZATIONS);
+
   const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [loadingSchools, setLoadingSchools] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,12 +149,18 @@ export const StepBackground: React.FC<StepBackgroundProps> = ({
             const seen = new Set<string>();
             const unique: DropdownOption[] = [];
             for (const c of res.companies) {
-              if (c.name && !seen.has(c.name.toLowerCase())) {
-                seen.add(c.name.toLowerCase());
-                unique.push({ id: c.name, label: c.name, data: c });
+              const name = c.name?.trim();
+              if (!name) continue;
+              const key = c.org_id ? `org_${c.org_id}` : `name_${name.toLowerCase()}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                unique.push({ id: c.org_id || name, label: name, data: c });
               }
             }
-            if (unique.length > 0) setCompanyOptions(unique);
+            if (unique.length > 0) {
+              setCompanyOptions(unique);
+              initialCompanyOptionsRef.current = unique;
+            }
           }
           if (Array.isArray(res.titles) && res.titles.length > 0) {
             const seen = new Set<string>();
@@ -175,6 +186,48 @@ export const StepBackground: React.FC<StepBackgroundProps> = ({
       isCancelled = true;
     };
   }, [isExperienceBranch]);
+
+  // Dynamic company search as user types
+  useEffect(() => {
+    if (!isExperienceBranch) return;
+    const trimmed = debouncedCompanySearch.trim();
+    if (!trimmed) {
+      if (initialCompanyOptionsRef.current.length > 0) {
+        setCompanyOptions(initialCompanyOptionsRef.current);
+      }
+      return;
+    }
+
+    let isCancelled = false;
+    setLoadingCompanies(true);
+    getCompanyList(trimmed, "")
+      .then((res) => {
+        if (!isCancelled && res?.companies) {
+          const seen = new Set<string>();
+          const unique: DropdownOption[] = [];
+          for (const c of res.companies) {
+            const name = c.name?.trim();
+            if (!name) continue;
+            const key = c.org_id ? `org_${c.org_id}` : `name_${name.toLowerCase()}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              unique.push({ id: c.org_id || name, label: name, data: c });
+            }
+          }
+          setCompanyOptions(unique);
+        }
+      })
+      .catch(() => {
+        // preserve current options
+      })
+      .finally(() => {
+        if (!isCancelled) setLoadingCompanies(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedCompanySearch, isExperienceBranch]);
 
   // Fetch initial Schools & Programs on mount
   useEffect(() => {
@@ -309,6 +362,10 @@ export const StepBackground: React.FC<StepBackgroundProps> = ({
                       setSelectedCompany(val);
                       setSelectedOrgId(opt?.data?.org_id || null);
                       setWorkExperience(val, selectedRole);
+                      setCompanySearch("");
+                    }}
+                    onSearchChange={(query) => {
+                      setCompanySearch(query);
                     }}
                     searchable
                     isLoading={loadingCompanies}

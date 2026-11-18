@@ -283,7 +283,22 @@ export const createJob = async (data: JobFormData): Promise<void> => {
         skills: data.skills.split(",").map(s => s.trim()).filter(Boolean)
     };
 
-    await api.post("/jobs", payload);
+    const res = await api.post("/jobs", payload);
+    const newJob = res.data.job || res.data;
+    if (newJob?.job_id && data.activelyHiring) {
+        await api.post(`/jobs/${newJob.job_id}/submit`, {
+            title: data.jobTitle,
+            description: data.jobDescription || 'No description provided',
+            location: data.location || 'Remote',
+            salary_min: Number(data.minSalary) || 0,
+            salary_max: Number(data.maxSalary) || 0,
+            work_mode: data.workMode || 'Hybrid',
+            job_type: data.jobType || 'Full-time',
+            industry: data.industry || 'Technology',
+        }).catch(err => {
+            console.error("Error submitting created job:", err);
+        });
+    }
 };
 
 export const applyToJob = async (jobId: string, formData: FormData): Promise<void> => {

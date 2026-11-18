@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react';
 import { LeftArrowIcon, TrustShieldIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useMyProfile } from '@/hooks/use-my-profile';
 import { VerifyIdentityModal } from '@/features/settings';
 
 interface StepIdentityVerificationProps {
@@ -19,15 +20,32 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
   title,
 }) => {
   const { activeProfile } = useActiveProfile();
+  const { data: myProfile } = useMyProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
   const router = useRouter();
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // Check if current user or company is in a pending verification review state
+  const rawStatus = activeProfile?.verification_status || (myProfile?.user as any)?.verification_status;
+  const normalizedStatus = String(rawStatus || '').toUpperCase();
+  const isPending =
+    hasSubmitted ||
+    normalizedStatus === 'PENDING' ||
+    normalizedStatus === 'UNDER_REVIEW' ||
+    normalizedStatus === 'DOCUMENT_PENDING' ||
+    normalizedStatus === 'IN_REVIEW';
 
   const handleVerifyClick = () => {
+    // If under review/pending, do not redirect
+    if (isPending) {
+      return;
+    }
+
+    // Otherwise, open the verification modal directly on the current screen
     if (isCompanyMode) {
       router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`);
     } else {
-      // Open verification modal directly within the Create Job flow instead of redirecting to Settings
       setIsVerifyModalOpen(true);
     }
   };
@@ -78,29 +96,44 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
             Identity Verification Required
           </h1>
           {/* Subtitle: 16px, semibold, leading-6, text-ds-text-secondary */}
-          <p className="w-full text-ds-text-secondary text-base font-semibold leading-6 font-dm-sans text-center">
+          <p className="w-full text-ds-text-secondary text-sm sm:text-base font-semibold leading-5 sm:leading-6 font-dm-sans text-center">
             To maintain the integrity of our career network and ensure the highest quality of listings, only verified users can post a job.
           </p>
         </div>
 
         {/* Buttons Container: width: 300px, height: 88px, gap: 16px */}
         <div className="w-full max-w-[300px] flex flex-col justify-center items-center gap-4 shrink-0">
-          {/* Primary emphasis button: width 203px, height 36px, px-3 py-1.5, bg-ds-accent, rounded-full */}
+          {/* Primary emphasis button */}
           <button
             type="button"
             onClick={handleVerifyClick}
-            className="w-[203px] h-9 px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 transition-all shadow-sm cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 font-dm-sans"
+            disabled={isPending}
+            className={`min-w-[203px] w-auto h-9 px-4 py-1.5 text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 transition-all shadow-sm border-none outline-none shrink-0 font-dm-sans ${
+              isPending
+                ? 'bg-ds-accent opacity-90 cursor-default'
+                : 'bg-ds-accent hover:opacity-90 active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-ds-accent'
+            }`}
           >
             <span className="font-dm-sans font-medium text-base leading-6 text-ds-text-primary whitespace-nowrap">
-              Verify Now
+              {isPending ? 'Under Review by Admin' : 'Verify Now'}
             </span>
           </button>
-          {/* Secondary button: width 203px, height 36px, px-3 py-1.5, border border-ds-border, rounded-full, text-ds-text-primary */}
-          <div className="w-[203px] h-9 px-3 py-1.5 border border-ds-border text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 bg-transparent shrink-0 select-none cursor-default font-dm-sans">
+          {/* Secondary button: width 203px, height 36px, px-3 py-1.5, border border-ds-border, rounded-full */}
+          <button
+            type="button"
+            onClick={() => {
+              if (isCompanyMode) {
+                router.push(`/organization/${activeProfile?.slug}/settings/privacy`);
+              } else {
+                router.push('/settings/privacy');
+              }
+            }}
+            className="w-[203px] h-9 px-3 py-1.5 border border-ds-border active:scale-95 text-ds-text-primary rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 font-dm-sans"
+          >
             <span className="font-dm-sans font-medium text-base leading-6 text-ds-text-primary whitespace-nowrap">
               Learn about verification
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Frame 2609984: width 360px on mobile, 600px on desktop — side-by-side flex-row */}
@@ -143,9 +176,13 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
           <span className="text-ds-text-secondary">
             Verification typically takes less than 2 minutes. Need help?{' '}
           </span>
-          <span className="text-ds-accent font-normal select-none cursor-default">
+          <button
+            type="button"
+            onClick={() => router.push('/support')}
+            className="text-ds-accent font-normal cursor-pointer bg-transparent border-none p-0 outline-none focus-visible:ring-1 focus-visible:ring-ds-accent rounded-sm"
+          >
             Contact Support
-          </span>
+          </button>
         </div>
       </div>
 
@@ -155,8 +192,7 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         onClose={() => setIsVerifyModalOpen(false)}
         onSuccess={() => {
           setIsVerifyModalOpen(false);
-          // Advance wizard to role-input step after completing verification
-          onVerifySuccess();
+          setHasSubmitted(true);
         }}
       />
     </div>

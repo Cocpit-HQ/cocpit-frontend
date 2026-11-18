@@ -68,87 +68,108 @@ export const SearchJobFilters: React.FC<SearchJobFiltersProps> = ({
     [onSetFilter]
   );
 
+  const row1Chips = (
+    <>
+      <StandardFilterChip
+        title="Job type"
+        paramKey="job_type"
+        options={JOB_TYPE_OPTIONS}
+        selectedValues={jobTypeSelections}
+        onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
+      />
+
+      <StandardFilterChip
+        title="Experience"
+        paramKey="experience_level"
+        options={EXPERIENCE_OPTIONS}
+        selectedValues={experienceSelections}
+        onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
+      />
+
+      <StandardFilterChip
+        title="Work mode"
+        paramKey="work_mode"
+        options={WORK_MODE_OPTIONS}
+        selectedValues={workModeSelections}
+        onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
+      />
+
+      <SalaryFilterChip
+        selectedValues={salarySelections}
+        onToggle={(_, opt) => onToggleFilter('salary_range', opt)}
+        onCustomApply={handleCustomSalaryApply}
+      />
+
+      <SearchableCursorFilterChip
+        title="Industry"
+        paramKey="industry"
+        selectedValues={industrySelections}
+        fetchData={fetchIndustries}
+        onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
+      />
+    </>
+  );
+
+  const row2Chips = (
+    <>
+      <StandardFilterChip
+        title="Date posted"
+        paramKey="date_posted"
+        options={DATE_POSTED_OPTIONS}
+        selectedValues={datePostedSelections}
+        onToggle={(_, opt) => onSetFilter('date_posted', filters.date_posted === opt ? null : opt)}
+      />
+
+      <SearchableCursorFilterChip
+        title="Company"
+        paramKey="company"
+        selectedValues={companySelections}
+        fetchData={fetchCompanies}
+        onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
+      />
+
+      <SearchableLocationFilterChip
+        selectedValues={locationSelections}
+        onToggle={(opt) => onToggleFilter('location', opt)}
+      />
+
+      <button
+        type="button"
+        onClick={onToggleVerified}
+        className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-2 transition-all cursor-pointer font-dm-sans font-medium text-base leading-6 text-ds-text-primary select-none shrink-0 ${
+          filters.is_verified
+            ? 'bg-ds-bg border border-ds-accent text-ds-text-primary'
+            : 'bg-transparent border border-ds-border text-ds-text-primary hover:border-ds-text-muted'
+        }`}
+      >
+        <span>Verified</span>
+        {filters.is_verified && <Check className="size-4 text-ds-accent" />}
+      </button>
+    </>
+  );
+
   return (
-    <div className="w-full flex flex-col items-start gap-3">
-      {/* Row 1: Dropdown pill ('Jobs') + Job type + Experience + Work mode + Salary + Industry */}
-      <div className="flex flex-row items-center gap-3 overflow-x-auto scrollbar-hide select-none flex-nowrap w-full">
+    <>
+      {/* Mobile: 1 single horizontal scroll row */}
+      <div className="flex md:hidden flex-row items-center gap-3 overflow-x-auto scrollbar-hide select-none flex-nowrap w-full touch-pan-x overscroll-x-contain">
         {dropdownPill}
-
-        <StandardFilterChip
-          title="Job type"
-          paramKey="job_type"
-          options={JOB_TYPE_OPTIONS}
-          selectedValues={jobTypeSelections}
-          onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
-        />
-
-        <StandardFilterChip
-          title="Experience"
-          paramKey="experience_level"
-          options={EXPERIENCE_OPTIONS}
-          selectedValues={experienceSelections}
-          onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
-        />
-
-        <StandardFilterChip
-          title="Work mode"
-          paramKey="work_mode"
-          options={WORK_MODE_OPTIONS}
-          selectedValues={workModeSelections}
-          onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
-        />
-
-        <SalaryFilterChip
-          selectedValues={salarySelections}
-          onToggle={(_, opt) => onToggleFilter('salary_range', opt)}
-          onCustomApply={handleCustomSalaryApply}
-        />
-
-        <SearchableCursorFilterChip
-          title="Industry"
-          paramKey="industry"
-          selectedValues={industrySelections}
-          fetchData={fetchIndustries}
-          onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
-        />
+        {row1Chips}
+        {row2Chips}
       </div>
 
-      {/* Row 2: Indented under Job type on desktop (pl-0 md:pl-[96px]) */}
-      <div className="flex flex-row items-center gap-3 overflow-x-auto scrollbar-hide select-none flex-nowrap w-full pl-0 md:pl-[96px]">
-        <StandardFilterChip
-          title="Date posted"
-          paramKey="date_posted"
-          options={DATE_POSTED_OPTIONS}
-          selectedValues={datePostedSelections}
-          onToggle={(_, opt) => onSetFilter('date_posted', filters.date_posted === opt ? null : opt)}
-        />
+      {/* Desktop: 2-row layout matching JobSearchPage design */}
+      <div className="hidden md:flex flex-col items-start gap-3 w-full">
+        {/* Row 1: Dropdown pill ('Jobs') + Job type + Experience + Work mode + Salary + Industry */}
+        <div className="flex flex-row items-center gap-3 overflow-x-auto scrollbar-hide select-none flex-nowrap w-full">
+          {dropdownPill}
+          {row1Chips}
+        </div>
 
-        <SearchableCursorFilterChip
-          title="Company"
-          paramKey="company"
-          selectedValues={companySelections}
-          fetchData={fetchCompanies}
-          onToggle={(key, val) => onToggleFilter(key as keyof SearchFilterState, val)}
-        />
-
-        <SearchableLocationFilterChip
-          selectedValues={locationSelections}
-          onToggle={(opt) => onToggleFilter('location', opt)}
-        />
-
-        <button
-          type="button"
-          onClick={onToggleVerified}
-          className={`h-9 px-3 py-1.5 rounded-[100px] flex items-center justify-center gap-2 transition-all cursor-pointer font-dm-sans font-medium text-base leading-6 text-ds-text-primary select-none shrink-0 ${
-            filters.is_verified
-              ? 'bg-ds-bg border border-ds-accent text-ds-text-primary'
-              : 'bg-transparent border border-ds-border text-ds-text-primary hover:border-ds-text-muted'
-          }`}
-        >
-          <span>Verified</span>
-          {filters.is_verified && <Check className="size-4 text-ds-accent" />}
-        </button>
+        {/* Row 2: Indented under Job type on desktop (pl-[96px]) */}
+        <div className="flex flex-row items-center gap-3 overflow-x-auto scrollbar-hide select-none flex-nowrap w-full pl-[96px]">
+          {row2Chips}
+        </div>
       </div>
-    </div>
+    </>
   );
 };

@@ -65,8 +65,8 @@ export function SendOfferDialog({
 
         try {
             const fetchedList = isCompany
-                ? await getCompanyJobs(activeProfile!.id)
-                : await getMyCreatedJobs();
+                ? await getCompanyJobs(activeProfile!.id, { limit: 100 })
+                : await getMyCreatedJobs({ limit: 100 });
             fetchedJobs = fetchedList
                 .filter((j: any) => j.status === 'active' || (j as any).status === 'ACTIVE')
                 .map((j: any) => ({

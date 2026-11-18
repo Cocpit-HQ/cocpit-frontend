@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
-type PageStatus = 'active' | 'deactivated' | 'scheduled_for_deletion' | 'associated';
+type PageStatus = 'active' | 'deactivated' | 'scheduled_for_deletion' | 'associated' | 'suspended';
 
 type Org = {
   id: string;
@@ -27,6 +27,7 @@ type Org = {
   role?: string;
   pageStatus: PageStatus;
   isDeactivated?: boolean;
+  isSuspended?: boolean;
 };
 
 const PAGE_STATUS_CONFIG: Record<
@@ -58,6 +59,10 @@ const PAGE_STATUS_CONFIG: Record<
       'You are currently associated with this page and have access to its content and features. You can choose to leave the page at any time, after which your access and permissions will be removed',
     actionText: 'Leave page',
     modalTarget: 'leave',
+  },
+  suspended: {
+    description:
+      'This page has been suspended by an administrator and is not visible to the public. Visitors cannot access its content or features. If you believe this was a mistake, please submit an appeal using the link sent to your registered email.',
   },
 };
 
@@ -246,17 +251,22 @@ export function OrganizationsSettingsPage() {
       );
     }
 
+    const isSuspended =
+      selectedOrg.pageStatus === 'suspended' || selectedOrg.isSuspended;
+
     const isAssociatedDeactivated =
       selectedOrg.relation === 'associated' &&
       (selectedOrg.pageStatus === 'deactivated' || selectedOrg.isDeactivated);
 
-    const statusConfig = isAssociatedDeactivated
+    const statusConfig = isSuspended
+      ? PAGE_STATUS_CONFIG.suspended
+      : isAssociatedDeactivated
       ? {
           description: PAGE_STATUS_CONFIG.deactivated.description,
           actionText: 'Leave page',
           modalTarget: 'leave' as const,
         }
-      : PAGE_STATUS_CONFIG[selectedOrg.pageStatus];
+      : PAGE_STATUS_CONFIG[selectedOrg.pageStatus] || PAGE_STATUS_CONFIG.active;
 
     return (
       <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3">
@@ -290,6 +300,12 @@ export function OrganizationsSettingsPage() {
               <div className="h-[40px] px-4 py-2 bg-ds-surface-1 rounded-[24px] flex justify-center items-center gap-[10px] shrink-0 ml-2 border border-ds-border">
                 <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-accent whitespace-nowrap text-center">
                   Deactivated
+                </span>
+              </div>
+            ) : isSuspended ? (
+              <div className="h-[40px] px-4 py-2 bg-ds-surface-1 rounded-[24px] flex justify-center items-center gap-[10px] shrink-0 ml-2 border border-ds-border">
+                <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-error whitespace-nowrap text-center">
+                  Suspended
                 </span>
               </div>
             ) : selectedOrg.pageStatus !== 'scheduled_for_deletion' ? (

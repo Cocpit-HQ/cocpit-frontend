@@ -1782,7 +1782,7 @@ const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
             style={{ strokeWidth: "1.5px" }}
           />
           <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black dark:text-zinc-100">
-            {job.experience || "0-2Yrs"}
+            {job.experience || "0-1Yrs"}
           </span>
         </div>
         <div className="flex flex-row items-center gap-[8px]">

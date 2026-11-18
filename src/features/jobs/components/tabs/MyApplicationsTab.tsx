@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Job } from '../../types/jobs.types';
-import JobCardSkeleton from '../skeletons/JobCardSkeleton';
+import ApplicationCardSkeleton from '../skeletons/ApplicationCardSkeleton';
 import { MenuIcon, UserIcon, BriefcaseIcon, Icon as CustomIcon } from '@/components/icons';
 import MyApplicationsMobileDrawer from '../drawers/MyApplicationsMobileDrawer';
 
@@ -152,7 +152,11 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
           <div className="w-full text-ds-text-primary text-base sm:text-3xl font-semibold sm:font-bold font-dm-sans leading-6 sm:leading-10">
             {selectedDateFilter !== "All time"
               ? dateFilteredJobs.length
-              : applicationStats.totalApplied || jobs.length}
+              : applicationStats.totalApplied > 0
+              ? applicationStats.totalApplied
+              : isLoading
+              ? (jobs.length > 0 ? jobs.length : '')
+              : (jobs.length || 0)}
           </div>
           <div className="w-full text-ds-text-primary text-sm sm:text-base font-normal leading-5 sm:leading-6">
             Total Applied
@@ -163,7 +167,11 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
           <div className="w-full text-ds-text-primary text-base sm:text-3xl font-semibold sm:font-bold font-dm-sans leading-6 sm:leading-10">
             {selectedDateFilter !== "All time"
               ? dateFilteredJobs.filter(j => (j.application_status || '').toLowerCase() === "shortlisted").length
-              : applicationStats.shortlisted || 0}
+              : applicationStats.shortlisted > 0
+              ? applicationStats.shortlisted
+              : isLoading
+              ? ''
+              : 0}
           </div>
           <div className="w-full text-ds-text-primary text-sm sm:text-base font-normal leading-5 sm:leading-6">
             Shortlisted
@@ -176,7 +184,9 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
         {/* Mobile Filter Header (Figma Frame 2608535): Active X applications + Filter icon */}
         <div className="flex md:hidden w-full justify-between items-center h-6 select-none">
           <span className="text-ds-text-primary text-base font-normal font-dm-sans leading-6">
-            Active {dateFilteredJobs.length} applications
+            {isLoading && dateFilteredJobs.length === 0
+              ? 'Active applications'
+              : `Active ${dateFilteredJobs.length} applications`}
           </span>
 
           {/* Filter icon button with drawer trigger (Same CustomIcon filter as Explore tab) */}
@@ -217,7 +227,7 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
                 >
                   <span>{chip}</span>
                   {isSelected && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
+                    <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
                   )}
                 </button>
               );
@@ -270,8 +280,8 @@ export const MyApplicationsTab: React.FC<MyApplicationsTabProps> = ({
         <div className="w-full flex flex-col gap-4">
           {isLoading ? (
             <div className="w-full flex flex-col gap-4 py-4">
-              {[1, 2, 3].map((n) => (
-                <JobCardSkeleton key={n} />
+              {[1, 2, 3, 4].map((n) => (
+                <ApplicationCardSkeleton key={n} />
               ))}
             </div>
           ) : dateFilteredJobs.length === 0 ? (

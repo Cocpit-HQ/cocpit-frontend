@@ -32,13 +32,25 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   const queryClient = useQueryClient();
   const router = useRouter();
   const isMobile = useIsMobile();
-  const { activeProfile, isLoading: isActiveProfileLoading, updateActiveProfile } = useActiveProfile();
+  const { activeProfile, userCompanies, isLoading: isActiveProfileLoading, updateActiveProfile } = useActiveProfile();
   const {
     data: myProfile,
     isLoading: isMyProfileLoading,
     isError: isMyProfileError,
     refetch: refetchProfile,
   } = useMyProfile();
+
+  const isUserVerified = activeProfile?.type === 'USER' && Boolean(
+    myProfile?.user?.is_identity_verified ||
+    (myProfile?.user as any)?.is_verified ||
+    (myProfile?.user as any)?.isVerified ||
+    (myProfile?.user as any)?.verification_status === 'VERIFIED' ||
+    (myProfile?.user as any)?.verification_status === 'approved'
+  );
+  
+  // Bugfix ID-572: Companies can post jobs without verification
+  const isCompanyVerified = activeProfile?.type === 'COMPANY';
+  const isVerified = Boolean(isUserVerified || isCompanyVerified);
 
   // Verification state machine: 'loading' | 'verified' | 'unverified' | 'error'
   const verificationState = React.useMemo<VerificationState>(() => {
@@ -66,23 +78,23 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
       return 'error';
     }
 
-    if (myProfile?.user?.is_identity_verified) {
+    if (isUserVerified) {
       return 'verified';
     }
 
-    if (myProfile?.user && !myProfile.user.is_identity_verified) {
+    if (myProfile?.user && !isUserVerified) {
       return 'unverified';
     }
 
     return 'unverified';
-  }, [isActiveProfileLoading, activeProfile, isMyProfileLoading, isMyProfileError, myProfile]);
+  }, [isActiveProfileLoading, activeProfile, isMyProfileLoading, isMyProfileError, isUserVerified, myProfile]);
 
   // Sync verified status back to activeProfile context so subsequent visits in session are instant
   React.useEffect(() => {
-    if (activeProfile?.type === 'USER' && myProfile?.user?.is_identity_verified && !activeProfile.is_identity_verified) {
+    if (activeProfile?.type === 'USER' && isUserVerified && !activeProfile.is_identity_verified) {
       updateActiveProfile?.({ is_identity_verified: true });
     }
-  }, [activeProfile?.type, activeProfile?.is_identity_verified, myProfile?.user?.is_identity_verified, updateActiveProfile]);
+  }, [activeProfile?.type, activeProfile?.is_identity_verified, isUserVerified, updateActiveProfile]);
 
   const {
     createJobStep: step,
@@ -127,9 +139,20 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
     try {
       const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
       const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-      const newJobId = await jobsService.initializeJobDraft(title, actorType, actorId);
-      if (newJobId) {
-        setJobId(newJobId);
+      const defaultDetails = {
+        experience: 'Fresher',
+        experience_label: 'Fresher',
+        experience_min: 0,
+        experience_max: 1,
+      };
+      const result = await jobsService.initializeJobDraftWithDetails(title, actorType, actorId, defaultDetails);
+      if (result.id) {
+        setJobId(result.id);
+        setAccumulatedDetails({
+          id: result.id,
+          title,
+          ...defaultDetails,
+        });
       }
     } catch (error) {
       console.error('Failed to create initial draft', error);
@@ -263,7 +286,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
 
   return (
     <StepRoleInput
-      onBack={handleBack}
+      onBack={isVerified ? handleBack : () => setStep('verification')}
       onClose={handleBack}
       title={title}
       setTitle={setTitle}

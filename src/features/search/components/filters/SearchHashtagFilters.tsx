@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SearchPillChevron } from '../SearchPillChevron';
 import { SearchFilterState } from '../../types/search.types';
@@ -32,6 +32,13 @@ export const SearchHashtagFilters: React.FC<SearchHashtagFiltersProps> = ({
   const activeSort = filters.sort_by || 'most_popular';
   const isActive = Boolean(filters.sort_by);
 
+  // Float active selection to the top of the list
+  const displayOptions = useMemo(() => {
+    const selectedOpt = HASHTAG_SORT_OPTIONS.find((opt) => opt.value === activeSort);
+    const otherOpts = HASHTAG_SORT_OPTIONS.filter((opt) => opt.value !== activeSort);
+    return selectedOpt ? [selectedOpt, ...otherOpts] : HASHTAG_SORT_OPTIONS;
+  }, [activeSort]);
+
   const handleSelect = (val: string) => {
     // If clicking the already selected sort, toggle it off (reset to default)
     if (filters.sort_by === val) {
@@ -43,7 +50,7 @@ export const SearchHashtagFilters: React.FC<SearchHashtagFiltersProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-3 shrink-0">
+    <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
@@ -66,7 +73,7 @@ export const SearchHashtagFilters: React.FC<SearchHashtagFiltersProps> = ({
           sideOffset={8}
           className="p-4 w-auto min-w-[140px] bg-ds-bg border border-ds-border rounded-[10px] flex flex-col items-start gap-3.5 shadow-2xl z-[120] focus:outline-none focus:ring-0"
         >
-          {HASHTAG_SORT_OPTIONS.map((opt) => {
+          {displayOptions.map((opt) => {
             const isSelected = activeSort === opt.value;
             return (
               <button
@@ -85,7 +92,7 @@ export const SearchHashtagFilters: React.FC<SearchHashtagFiltersProps> = ({
           })}
         </PopoverContent>
       </Popover>
-    </div>
+    </>
   );
 };
 

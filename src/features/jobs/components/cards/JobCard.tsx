@@ -9,7 +9,8 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import { formatJobLocation } from '../../utils/location.utils';
-import { getRelativeTime } from '../../services/jobs.service';
+import { getRelativeTime, formatExperience } from '../../services/jobs.service';
+import { cleanSalary } from '../../utils/currency.utils';
 
 interface JobCardProps {
   job: Job;
@@ -41,7 +42,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
   const badgeText = job.recommended_badge || 'Top 15%';
   const percentMatch = badgeText.match(/\d+/);
   const strongerThanPercent = 100 - (percentMatch ? parseInt(percentMatch[0], 10) : 15);
-  const salaryText = job.salary_display || (job.salary_min && job.salary_max ? `${job.salary_min}–${job.salary_max}` : job.salary_min || job.salary_max);
+  const salaryText = cleanSalary(job.salary_display || (job.salary_min && job.salary_max ? `${job.salary_min}–${job.salary_max}` : job.salary_min || job.salary_max));
   const companyOrPosterName = job.org_id
     ? (job.company || job.recruiter_name)
     : (job.recruiter_name || job.company);
@@ -268,7 +269,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             {/* Experience: jobs briefcase icon (16x16) + experience text */}
             <div className="flex items-center gap-2 shrink-0">
               <CustomIcon name="job-experience" size={16} className="w-4 h-4 text-ds-text-secondary shrink-0" />
-              <span>{job.experience || '0-2Yrs'}</span>
+              <span>{formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience)}</span>
             </div>
 
             {/* Frame 2609961: Location */}
@@ -284,8 +285,8 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
             )}
           </div>
 
-          {/* Posted time - Desktop only inside left column */}
-          <span className="hidden md:inline text-ds-text-secondary ds-text-secondary font-normal">
+          {/* Posted time - visible inside left column on both mobile and desktop */}
+          <span className="text-xs text-ds-text-secondary font-normal font-dm-sans">
             {job.posted_at || (job.created_at ? getRelativeTime(job.created_at) : "Recently posted")}
           </span>
         </div>
@@ -310,13 +311,6 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
           </div>
         )}
       </div>
-
-      {/* Posted time - Mobile only below middle content */}
-      {job.posted_at && (
-        <span className="md:hidden text-ds-text-secondary ds-text-secondary font-normal">
-          {job.posted_at}
-        </span>
-      )}
     </div>
   );
 });

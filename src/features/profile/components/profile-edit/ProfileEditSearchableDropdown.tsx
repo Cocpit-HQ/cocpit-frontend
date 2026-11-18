@@ -350,7 +350,11 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
                   : (value ? opt.label.toLowerCase() === value.toLowerCase() : false);
                 const isHighlighted = idx === highlightedIndex;
 
-                const isOrg = Boolean(opt.org_id || opt.logo_url);
+                const isOrgField =
+                  label?.toLowerCase().includes("organization") ||
+                  label?.toLowerCase().includes("company") ||
+                  Boolean(id?.includes("org") || id?.includes("company"));
+                const isOrg = isOrgField || Boolean(opt.org_id || opt.logo_url);
                 const hasLogo = Boolean(opt.logo_url && !failedLogos[opt.logo_url]);
 
                 return (
@@ -400,9 +404,12 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
                     onSelect(query.trim());
                     setIsOpen(false);
                   }}
-                  className="self-stretch w-full text-left font-['DM_Sans'] text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate text-[var(--ds-accent)] hover:opacity-80 bg-transparent focus:outline-none"
+                  className="self-stretch w-full text-left font-['DM_Sans'] text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center gap-2.5 transition-colors cursor-pointer truncate text-[var(--ds-accent)] hover:opacity-80 bg-transparent focus:outline-none"
                 >
-                  Use &quot;{query.trim()}&quot;
+                  {(label?.toLowerCase().includes("organization") || label?.toLowerCase().includes("company") || id?.includes("org") || id?.includes("company")) && (
+                    <OrgAvatarFallbackIcon size={20} className="w-5 h-5 rounded-[4px] shrink-0" />
+                  )}
+                  <span className="truncate">Use &quot;{query.trim()}&quot;</span>
                 </button>
               </div>
             ) : (

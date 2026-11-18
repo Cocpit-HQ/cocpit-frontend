@@ -8,6 +8,10 @@ import { SearchPillChevron } from '../SearchPillChevron';
 import { getPaginatedLocations } from '../../services/locationSearch.service';
 import { formatJobLocation } from '@/features/jobs/utils/location.utils';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  getCachedFilterOptions,
+  fetchWithFilterCache,
+} from '../../utils/filterOptionsCache';
 
 export interface SearchableLocationFilterChipProps {
   selectedValues: string[];
@@ -58,25 +62,43 @@ export const SearchableLocationFilterChip: React.FC<SearchableLocationFilterChip
       openSnapshotRef.current = [...selectedValues];
     } else {
       setQuery('');
-      setItems([]);
-      setNextCursor(null);
-      setHasMore(false);
     }
-  }, [open]);
+  }, [open, selectedValues]);
 
-  // Initial load or debounced query search
+  // Load initial locations on open or debounced query search with SWR caching & instant 0ms render
   useEffect(() => {
     if (!open) return;
+
+    const trimmed = query.trim();
+
+    // 1. Synchronous Instant Read from cache (0ms delay, no loading spinner)
+    const cached = getCachedFilterOptions('locations', trimmed);
+    if (cached) {
+      setItems(cached.items);
+      setNextCursor(cached.nextCursor);
+      setHasMore(cached.hasMore);
+      setIsLoading(false);
+      return;
+    }
+
     let isCurrent = true;
     setIsLoading(true);
 
+    // If searching (typed query), debounce by 200ms; if initial browse open, fetch immediately (0ms delay)
+    const delay = trimmed ? 200 : 0;
+
     const timer = setTimeout(async () => {
       try {
-        const res = await getPaginatedLocations(
-          query.trim() || undefined,
-          undefined,
-          15,
-          sessionTokenRef.current
+        const res = await fetchWithFilterCache(
+          'locations',
+          trimmed || undefined,
+          () =>
+            getPaginatedLocations(
+              trimmed || undefined,
+              undefined,
+              15,
+              sessionTokenRef.current
+            )
         );
         if (isCurrent) {
           setItems(res.items || []);
@@ -88,7 +110,7 @@ export const SearchableLocationFilterChip: React.FC<SearchableLocationFilterChip
       } finally {
         if (isCurrent) setIsLoading(false);
       }
-    }, 200);
+    }, delay);
 
     return () => {
       isCurrent = false;

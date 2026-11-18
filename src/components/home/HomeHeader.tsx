@@ -62,8 +62,8 @@ export const HomeHeader = () => {
 
     const fetchUnreadCount = async () => {
         try {
-            const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
-            const notifs = await getNotifications(companyId);
+            const orgId = (isCompany && activeProfile) ? activeProfile.id : undefined;
+            const notifs = await getNotifications(orgId);
             const count = notifs.filter((n: any) => !n.is_read).length;
             setUnreadNotificationsCount(count);
         } catch (error) {

@@ -110,6 +110,46 @@ export function PrivacySettingsPage() {
     activeProfile?.verification_status === 'approved'
   );
 
+  const isPending = Boolean(
+    !isUserVerified && (
+      (privacy as any)?.verification_status === 'PENDING' ||
+      (privacy as any)?.verification_status === 'UNDER_REVIEW' ||
+      (myProfile?.user as any)?.verification_status === 'PENDING' ||
+      (myProfile?.user as any)?.verification_status === 'UNDER_REVIEW' ||
+      activeProfile?.verification_status === 'PENDING' ||
+      activeProfile?.verification_status === 'UNDER_REVIEW' ||
+      activeProfile?.verification_status === 'DOCUMENT_PENDING'
+    )
+  );
+
+  const isRejected = Boolean(
+    !isUserVerified && !isPending && (
+      (privacy as any)?.verification_status === 'REJECTED' ||
+      (myProfile?.user as any)?.verification_status === 'REJECTED' ||
+      activeProfile?.verification_status === 'REJECTED'
+    )
+  );
+  const parseRejectionReason = (val?: string) => {
+    if (!val || typeof val !== 'string') return null;
+    const clean = val
+      .replace(/\[Reason:\s*([^\]]+)\]/gi, '$1')
+      .replace(/(?:Rejection Reason|Reason):\s*/gi, '')
+      .split(/[|\n]+/)
+      .map((s) => s.trim())
+      .filter((s) => s && !s.toLowerCase().includes('no rejection reason selected'))
+      .filter((s, idx, arr) => arr.indexOf(s) === idx)
+      .join(', ');
+    return clean || null;
+  };
+
+  const rejectionReason =
+    parseRejectionReason((privacy as any)?.rejection_reason) || 
+    parseRejectionReason((myProfile?.user as any)?.rejection_reason) || 
+    parseRejectionReason(activeProfile?.rejection_reason) ||
+    parseRejectionReason((privacy as any)?.review_notes) ||
+    parseRejectionReason((activeProfile as any)?.review_notes) ||
+    null;
+
   const isCompanyVerified = Boolean(
     activeProfile?.type === 'COMPANY' && (
       activeProfile?.verification_status === 'VERIFIED' ||
@@ -123,10 +163,10 @@ export function PrivacySettingsPage() {
   // Auto-open identity verification modal when redirected from Create Job or external links
   useEffect(() => {
     const action = searchParams.get('action');
-    if (action === 'verify-identity' && !isVerified) {
+    if (action === 'verify-identity' && !isVerified && !isPending) {
       setIsVerifyModalOpen(true);
     }
-  }, [searchParams, isVerified]);
+  }, [searchParams, isVerified, isPending]);
 
   const handleToggle = useCallback(
     (key: 'showEmail' | 'showPhone', nextVal: boolean) => {
@@ -200,12 +240,23 @@ export function PrivacySettingsPage() {
 
         {/* Section 2: Account Verification */}
         <div className="self-stretch py-2 pb-4 inline-flex justify-between items-center border-b border-ds-border">
-          <div className="inline-flex flex-col justify-center items-start">
-            <div className="justify-center text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+          <div className="inline-flex flex-col justify-center items-start gap-1">
+            <div className="justify-center text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 flex items-center gap-2">
               Account verification
+              {isRejected && (
+                <span className="text-[11px] font-semibold text-rose-500 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded-full">
+                  Rejected
+                </span>
+              )}
             </div>
             <div className="justify-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-              {isVerified ? "Your identity has been verified" : "Verify your identity to unlock more features"}
+              {isVerified 
+                ? "Your identity has been verified" 
+                : isPending 
+                ? "Your document is under review by admin" 
+                : isRejected
+                ? (rejectionReason ? `Previous attempt was not approved (${rejectionReason}).` : "Previous attempt was not approved.")
+                : "Verify your identity to unlock more features"}
             </div>
           </div>
           {isVerified ? (
@@ -217,14 +268,33 @@ export function PrivacySettingsPage() {
                 Verified
               </span>
             </div>
+          ) : isPending ? (
+            <div
+              className="flex flex-row justify-center items-center px-3 py-1.5 gap-2.5 min-w-[76px] h-[36px] border border-amber-500/40 bg-amber-500/10 rounded-[100px] select-none cursor-default shrink-0 pointer-events-none"
+              aria-disabled="true"
+            >
+              <span className="flex justify-center items-center text-amber-500 font-['DM_Sans'] font-medium text-sm leading-5">
+                Pending
+              </span>
+            </div>
           ) : (
             <button
               type="button"
-              onClick={() => setIsVerifyModalOpen(true)}
-              className="w-[68px] h-[36px] rounded-[100px] border border-ds-border hover:border-ds-accent text-ds-text-primary hover:text-ds-accent flex justify-center items-center transition-colors cursor-pointer shrink-0"
+              onClick={() => {
+                if (activeProfile?.type === 'COMPANY' && activeProfile?.slug) {
+                  router.push(`/organization/${activeProfile.slug}/verify`);
+                } else {
+                  setIsVerifyModalOpen(true);
+                }
+              }}
+              className={`h-[36px] px-3.5 rounded-[100px] border flex justify-center items-center transition-colors cursor-pointer shrink-0 ${
+                isRejected 
+                  ? 'border-rose-400 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20' 
+                  : 'border-ds-border hover:border-ds-accent text-ds-text-primary hover:text-ds-accent'
+              }`}
             >
-              <span className="justify-start text-base font-medium font-['DM_Sans'] leading-6">
-                Verify
+              <span className="justify-start text-sm font-medium font-['DM_Sans'] leading-5 whitespace-nowrap">
+                {isRejected ? "Verify Again" : "Verify"}
               </span>
             </button>
           )}

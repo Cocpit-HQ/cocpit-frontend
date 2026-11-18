@@ -78,6 +78,8 @@ export const getNotificationVisualKind = (notification: Notification): Notificat
 
   // Company documents / verification
   if (
+    type === 'ORG_ONBOARDED' ||
+    type === 'org_onboarded' ||
     type === 'org_doc_verification_success' ||
     type === 'org_doc_verification_rejected' ||
     type === 'org_doc_verification_submitted' ||
@@ -132,35 +134,72 @@ export const parseNotificationText = (
   // Company follower notification: e.g. "radha started following dyp university"
   const followerText = notification.text || bodyText || '';
 
-  const isCompanyFollower =
-    type === 'company_follower' ||
-    /started following/i.test(followerText);
+  const ext = notification as unknown as ExtendedNotificationFields;
+  let meta: Record<string, any> = {};
+  try {
+    if (typeof ext.metadata === 'string') {
+      meta = JSON.parse(ext.metadata);
+    } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+      meta = ext.metadata as Record<string, any>;
+    }
+  } catch {}
 
-  if (isCompanyFollower) {
-    const match = followerText.trim().match(/^(.*?)\s+started following\s+(.+?)(?:\.|\s*)$/i);
-    const followerName = (match && match[1] ? match[1].trim() : null) || 'Someone';
-    const ext = notification as unknown as ExtendedNotificationFields;
-    let meta: Record<string, any> = {};
-    try {
-      if (typeof ext.metadata === 'string') {
-        meta = JSON.parse(ext.metadata);
-      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
-        meta = ext.metadata as Record<string, any>;
-      }
-    } catch {}
+  const isCompanyActor = Boolean(
+    notification.is_company_actor ||
+    ext.isCompanyActor ||
+    meta.isCompanyActor ||
+    meta.is_company_actor ||
+    meta.follower_org_id ||
+    meta.followerOrgId
+  );
+
+  const isFollowerNotification =
+    type === 'company_follower' ||
+    (isCompanyActor && (type === 'follow' || /started following/i.test(followerText))) ||
+    (type !== 'follow' && /.+?\s+started following(?:\s+.+)?/i.test(followerText.trim()));
+
+  if (isFollowerNotification) {
+    const match = followerText.trim().match(/^(.*?)\s+started following(?:\s+(.+?))?(?:\.|\s*)$/i);
+    const parsedFollower = match && match[1] ? match[1].trim() : null;
 
     const followerId =
+      (meta.followerOrgId as string) ||
+      (meta.follower_org_id as string) ||
       (meta.followerId as string) ||
       (meta.follower_id as string) ||
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
       notification.sender_id;
 
-    const targetUrl = followerId ? `/profile/${followerId}` : null;
-    const orgName = match && match[2] ? match[2].trim().replace(/\.$/, '') : '';
+    const followerSlug =
+      notification.actor_slug ||
+      (meta.followerSlug as string) ||
+      (meta.follower_slug as string);
+
+    const targetUrl = isCompanyActor
+      ? (followerSlug ? `/organization/${followerSlug}` : (followerId ? `/organization/${followerId}` : null))
+      : (followerId ? `/profile/${followerId}` : null);
+
+    const followerName =
+      parsedFollower ||
+      notification.actor_name ||
+      (meta.followerName as string) ||
+      (meta.follower_name as string) ||
+      'Someone';
+
+    const rawOrgName = match && match[2] ? match[2].trim().replace(/\.$/, '') : '';
+    const isTargetCurrentUserOrOrg =
+      !rawOrgName ||
+      /^you$/i.test(rawOrgName) ||
+      /^your\s+company$/i.test(rawOrgName) ||
+      Boolean(activeProfileName && rawOrgName.toLowerCase() === activeProfileName.trim().toLowerCase());
+
+    const orgName = isTargetCurrentUserOrOrg ? '' : rawOrgName;
 
     return {
-      actorName: actorName || orgName || null,
+      actorName: followerName,
       actorSuffix: null,
-      boldTarget: followerName,
+      boldTarget: null,
       boldTargetClassName: 'text-ds-text-primary',
       prefixText: '',
       middleText: undefined,
@@ -202,6 +241,54 @@ export const parseNotificationText = (
       boldTarget: null,
       prefixText: '',
       bodyText: `Congratulations ${displayName}, we have successfully reviewed and verified your documents. Your profile is now verified.`,
+    };
+  }
+
+  // Organization Onboarded notification: e.g. "Your organisation/institution, shree industry, is now registered with its verified account on Cocpit..."
+  const isOrgOnboarded =
+    type === 'ORG_ONBOARDED' ||
+    type === 'org_onboarded' ||
+    /is now registered with its verified account on Cocpit/i.test(bodyText);
+
+  if (isOrgOnboarded) {
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const orgName = (meta.org_name as string) || (meta.orgName as string) || notification.actor_name || '';
+    const orgSlug = (meta.slug as string) || (meta.actor_slug as string) || notification.actor_slug || '';
+    const orgId = (meta.org_id as string) || (meta.orgId as string) || notification.reference_id;
+    const targetUrl = orgSlug ? `/organization/${orgSlug}` : (orgId ? `/organization/${orgId}` : null);
+
+    const match = bodyText.match(/^(Your\s+(?:organisation|organization|institution|organisation\/institution),\s*)(.+?)(\s*,\s*is now registered with its verified account on Cocpit.*)$/i);
+    if (match) {
+      prefixText = match[1];
+      boldTarget = match[2].trim();
+      bodyText = match[3];
+    } else if (orgName && bodyText.includes(orgName)) {
+      const idx = bodyText.indexOf(orgName);
+      prefixText = bodyText.substring(0, idx);
+      boldTarget = orgName;
+      bodyText = bodyText.substring(idx + orgName.length);
+    } else {
+      boldTarget = orgName || null;
+    }
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: boldTarget || orgName,
+      boldTargetClassName: 'font-semibold text-ds-text-primary cursor-pointer',
+      prefixText,
+      middleText: undefined,
+      bodyText,
+      targetUrl,
     };
   }
 
@@ -471,13 +558,73 @@ export const parseNotificationText = (
     };
   }
 
+  // Organization suspension
+  if (type === 'organization_suspension' || /organization .* has been suspended/i.test(rawNotifText)) {
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const orgName = (meta.orgName as string) || 'Organization';
+    const reason = (meta.reason as string) || '';
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      prefixText: 'Your organization ',
+      boldTarget: orgName,
+      middleText: ' has been suspended',
+      bodyText: reason ? `Reason: ${reason}` : '',
+      targetUrl: '/settings/organizations',
+    };
+  }
+
+  // Job submitted: "Your job [Job Title] has been submitted for review."
+  const isJobSubmitted =
+    type === 'job_submitted' ||
+    /submitted for review/i.test(rawNotifText);
+
+  if (isJobSubmitted) {
+    const ext = notification as unknown as ExtendedNotificationFields;
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const jobTitleMatch = rawNotifText.match(/Your job\s+[“"']?(.*?)[”"']?\s+has been submitted/i);
+    let jobTitle = (meta.title as string) || (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
+    jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
+    const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
+    const targetUrl = jobId ? `/jobs?tab=My+Listings&filter=In+Review&jobId=${jobId}` : '/jobs?tab=My+Listings&filter=In+Review';
+
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: jobTitle,
+      prefixText: 'Your job ',
+      middleText: undefined,
+      bodyText: ' has been submitted for review.',
+      targetUrl,
+    };
+  }
+
   // Job approved: "Your job [Job Title] is now live."
   const isJobApproved =
     type === 'job_approved' ||
+    type === 'job_moderation_approved' ||
     type === 'job_live' ||
     type === 'job_published' ||
-    type === 'job_rejected' ||
-    /Your job.+?is now live/i.test(rawNotifText);
+    /Your job.+?is now live/i.test(rawNotifText) ||
+    /has been approved and is now live/i.test(rawNotifText);
 
   if (isJobApproved) {
     const ext = notification as unknown as ExtendedNotificationFields;
@@ -490,11 +637,13 @@ export const parseNotificationText = (
       }
     } catch {}
 
-    const jobTitleMatch = rawNotifText.match(/Your job\s+[“"']?(.*?)[”"']?\s+is now live/i);
-    let jobTitle = (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
+    const jobTitleMatch = rawNotifText.match(/(?:Your job posting|Your job)\s+[“"']?(.*?)[”"']?\s+(?:is now live|has been approved)/i);
+    let jobTitle = (meta.title as string) || (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
     jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
     const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
-    const targetUrl = jobId ? `/jobs?tab=My+Listings&jobId=${jobId}` : '/jobs?tab=My+Listings';
+    const targetUrl = jobId
+      ? `/jobs?tab=My+Listings&filter=Active&view=view-listing&jobId=${jobId}&returnTo=/notifications`
+      : '/jobs?tab=My+Listings&filter=Active&returnTo=/notifications';
 
     return {
       actorName: null,
@@ -502,15 +651,28 @@ export const parseNotificationText = (
       boldTarget: jobTitle,
       prefixText: 'Your job ',
       middleText: undefined,
-      bodyText: ' is now live.',
+      bodyText: rawNotifText.includes('approved') ? ' has been approved and is now live.' : ' is now live.',
       targetUrl,
+    };
+  }
+
+  // User verification notification (redirects to privacy settings)
+  if (type === 'user_identity_verification' || /user verification|identity verification/i.test(rawNotifText)) {
+    return {
+      actorName: null,
+      actorSuffix: null,
+      boldTarget: null,
+      prefixText: '',
+      bodyText: rawNotifText.replace(/Your identity verification was not approved/i, 'Your user verification is rejected'),
+      targetUrl: '/settings/privacy',
     };
   }
 
   // Job rejected: "Your job [Job Title] wasn’t approved. Reason: [Reason]."
   const isJobRejected =
     type === 'job_rejected' ||
-    /Your job.+?wasn[’']t approved/i.test(rawNotifText);
+    type === 'job_moderation_rejected' ||
+    /(?:Your job posting|Your job)\s+[“"']?.*?was(?:n[’']t|\s+not)\s+approved/i.test(rawNotifText);
 
   if (isJobRejected) {
     const ext = notification as unknown as ExtendedNotificationFields;
@@ -523,21 +685,20 @@ export const parseNotificationText = (
       }
     } catch {}
 
-    const jobTitleMatch = rawNotifText.match(/Your job\s+[“"']?(.*?)[”"']?\s+wasn[’']t approved/i);
-    const reasonMatch = rawNotifText.match(/Reason:\s*(.+?)(?:\.|\s*)$/i);
-    let jobTitle = (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
+    const jobTitleMatch = rawNotifText.match(/(?:Your job posting|Your job)\s+[“"']?(.*?)[”"']?\s+was(?:n[’']t|\s+not)\s+approved/i);
+    let jobTitle = (meta.title as string) || (meta.jobTitle as string) || (jobTitleMatch ? jobTitleMatch[1] : 'Job');
     jobTitle = jobTitle.replace(/^[“"']+|[”"']+$/g, '').trim();
-    const reason = (meta.rejectionReason as string) || (reasonMatch ? reasonMatch[1].trim().replace(/\.$/, '') : 'Not specified');
-    const jobId = (meta.jobId as string) || (meta.job_id as string) || notification.reference_id;
-    const targetUrl = jobId ? `/jobs?tab=My+Listings&jobId=${jobId}` : '/jobs?tab=My+Listings';
+    const reasonMatch = rawNotifText.match(/Reason:\s*(.+?)(?:\.|\s*)$/i);
+    const reason = (meta.rejection_reason as string) || (meta.rejectionReason as string) || (reasonMatch ? reasonMatch[1].trim().replace(/\.$/, '') : 'Not specified');
+    const targetUrl = '/jobs?tab=My+Listings&filter=Rejected';
 
     return {
       actorName: null,
       actorSuffix: null,
       boldTarget: jobTitle,
-      prefixText: 'Your job ',
+      prefixText: 'Your job posting ',
       middleText: undefined,
-      bodyText: ` wasn’t approved. Reason: ${reason}.`,
+      bodyText: ` was not approved. Reason: ${reason}.`,
       targetUrl,
     };
   }
@@ -619,24 +780,57 @@ export const getNotificationRoute = (
     null;
 
   if (type === 'like' && postReferenceId) {
-    return `/post/${postReferenceId}`;
+    return `/post/${postReferenceId}?returnTo=/notifications`;
   }
-  if (type === 'company_follower') {
+  if (type === 'company_follower' || type === 'follow') {
+    let meta: Record<string, any> = {};
+    try {
+      if (typeof ext.metadata === 'string') {
+        meta = JSON.parse(ext.metadata);
+      } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+        meta = ext.metadata as Record<string, any>;
+      }
+    } catch {}
+
+    const isCompanyActor = Boolean(
+      notification.is_company_actor ||
+      ext.isCompanyActor ||
+      meta.isCompanyActor ||
+      meta.is_company_actor ||
+      meta.follower_org_id ||
+      meta.followerOrgId
+    );
+
+    const followerSlug =
+      notification.actor_slug ||
+      (meta.followerSlug as string) ||
+      (meta.follower_slug as string);
+
     const followerId =
+      (meta.followerOrgId as string) ||
+      (meta.follower_org_id as string) ||
+      (meta.followerId as string) ||
+      (meta.follower_id as string) ||
+      (meta.orgId as string) ||
+      (meta.org_id as string) ||
       notification.sender_id ||
-      (typeof ext.metadata === 'object' && ext.metadata !== null
-        ? ((ext.metadata as Record<string, unknown>).followerId as string) ||
-          ((ext.metadata as Record<string, unknown>).follower_id as string)
-        : null);
-    if (followerId) {
-      return `/profile/${followerId}`;
+      notification.reference_id;
+
+    if (isCompanyActor) {
+      if (followerSlug) {
+        return `/organization/${followerSlug}`;
+      }
+      if (followerId) {
+        return `/organization/${followerId}`;
+      }
+    } else {
+      if (followerId) {
+        return `/profile/${followerId}`;
+      }
     }
   }
-  if (type === 'follow' && notification.reference_id) {
-    return `/profile/${notification.reference_id}`;
-  }
   if (type === 'repost' && postReferenceId) {
-    return `/post/${postReferenceId}`;
+    return `/post/${postReferenceId}?returnTo=/notifications`;
   }
   if (type === 'connection_request' && notification.reference_id) {
     return '/connections?tab=received';
@@ -665,11 +859,11 @@ export const getNotificationRoute = (
       // Ignore json parse error
     }
     return type !== 'post_tag' && commentId
-      ? `/post/${postReferenceId}?commentId=${commentId}`
-      : `/post/${postReferenceId}`;
+      ? `/post/${postReferenceId}?commentId=${commentId}&returnTo=/notifications`
+      : `/post/${postReferenceId}?returnTo=/notifications`;
   }
   if (type === 'channel_article' && postReferenceId) {
-    return `/post/${postReferenceId}`;
+    return `/post/${postReferenceId}?returnTo=/notifications`;
   }
   if (type === 'message_reaction' && notification.reference_id) {
     return `/messaging?conversationId=${notification.reference_id}`;
@@ -682,7 +876,7 @@ export const getNotificationRoute = (
     return `/organization/${slug}`;
   }
   if (type === 'advocacy' && postReferenceId) {
-    return `/post/${postReferenceId}`;
+    return `/post/${postReferenceId}?returnTo=/notifications`;
   }
   if (
     type === 'member_role_updated' ||
@@ -753,14 +947,55 @@ export const getNotificationRoute = (
     return orgQuery ? `/team${orgQuery}` : '/team';
   }
 
+  // Redirect user identity / document verification notification to Privacy Settings
+  if (
+    type === 'user_identity_verification' ||
+    type === 'doc_verification_rejected' ||
+    type === 'doc_verification_success' ||
+    /identity verification/i.test(notification.text || '') ||
+    /user verification/i.test(notification.text || '')
+  ) {
+    return '/settings/privacy';
+  }
+
+  // Redirect rejected job notification to My Listings -> Rejected tab
+  if (
+    type === 'job_rejected' ||
+    type === 'job_moderation_rejected' ||
+    /(?:Your job posting|Your job)\s+[“"']?.*?was(?:n[’']t|\s+not)\s+approved/i.test(notification.text || '')
+  ) {
+    return '/jobs?tab=My+Listings&filter=Rejected';
+  }
+
+  // Redirect submitted / in-review job notification
+  if (
+    type === 'job_submitted' ||
+    notification.text?.includes('submitted for review')
+  ) {
+    let jobId = notification.reference_id;
+    if (!jobId) {
+      try {
+        if (typeof ext.metadata === 'string') {
+          const parsed = JSON.parse(ext.metadata);
+          jobId = parsed.jobId || parsed.job_id;
+        } else if (typeof ext.metadata === 'object' && ext.metadata !== null) {
+          jobId = (ext.metadata as any).jobId || (ext.metadata as any).job_id;
+        }
+      } catch {}
+    }
+    return jobId
+      ? `/jobs?tab=My+Listings&filter=In+Review&jobId=${jobId}`
+      : '/jobs?tab=My+Listings&filter=In+Review';
+  }
+
   // Redirect approved / live job notification to /jobs dashboard with highlight
   if (
     type === 'job_approved' ||
+    type === 'job_moderation_approved' ||
     type === 'job_live' ||
     type === 'job_published' ||
-    type === 'job_rejected' ||
-    type === 'job_live' ||
     notification.text?.includes('is now live') ||
+    notification.text?.includes('has been approved') ||
     /Your job.+?is now live/i.test(notification.text || '')
   ) {
     let jobId = notification.reference_id;
@@ -774,7 +1009,9 @@ export const getNotificationRoute = (
         }
       } catch {}
     }
-    return jobId ? `/jobs?tab=My+Listings&jobId=${jobId}` : '/jobs?tab=My+Listings';
+    return jobId
+      ? `/jobs?tab=My+Listings&view=view-listing&filter=Active&jobId=${jobId}&returnTo=/notifications`
+      : '/jobs?tab=My+Listings&returnTo=/notifications&filter=Active';
   }
 
   // Candidate personal notification: "You declined the offer from [Company] for [Job Title]"
@@ -851,8 +1088,27 @@ export const getNotificationRoute = (
       : '/profile';
   }
 
-  if (type === 'company_deactivated') {
+  if (
+    type === 'company_deactivated' ||
+    type === 'organization_suspension' ||
+    type === 'organization_appeal_approved' ||
+    type === 'organization_appeal_rejected'
+  ) {
     return '/settings/organizations';
+  }
+
+  // Organization Onboarded notification redirects item click to user's personal profile (experience or education section)
+  if (
+    type === 'ORG_ONBOARDED' ||
+    /is now registered with its verified account on Cocpit/i.test(notification.text || '')
+  ) {
+    const isInstitution =
+      (typeof ext.metadata === 'object' && ext.metadata !== null && (ext.metadata.entity_type === 'INSTITUTION' || ext.metadata.entityType === 'INSTITUTION')) ||
+      /Your\s+institution/i.test(notification.text || '');
+
+    return isInstitution
+      ? '/profile?section=education#education-section'
+      : '/profile?section=experience#experience-section';
   }
 
   if (type === 'company_deleted') {

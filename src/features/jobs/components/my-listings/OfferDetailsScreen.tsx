@@ -147,26 +147,6 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   }, [fetchRecipients, refreshTrigger]);
 
   useEffect(() => {
-    const handleFocus = () => {
-      fetchRecipients(true);
-    };
-    const handleVisibility = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        fetchRecipients(true);
-      }
-    };
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibility);
-    const interval = setInterval(() => fetchRecipients(true), 4000);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibility);
-      clearInterval(interval);
-    };
-  }, [fetchRecipients]);
-
-  useEffect(() => {
     if (!socket) return;
     const handleNotification = (data: Record<string, unknown>) => {
       if (
@@ -226,7 +206,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         <span className="font-dm-sans font-medium text-base leading-6">Back</span>
       </button>
 
-      <div className="w-full max-w-[800px] mx-auto flex flex-col gap-4 md:gap-5 font-dm-sans animate-in fade-in duration-300 px-4 pt-3 pb-8 md:px-0 md:pt-0 md:pb-0">
+      <div className="w-full max-w-[800px] mx-auto flex flex-col gap-4 md:gap-5 font-dm-sans animate-in fade-in duration-300 px-4 pt-4 pb-8 md:px-0 md:pt-[60px] md:pb-16">
         {/* Mobile Back Button: In-flow at top (Frame 2609713 / 2609475) */}
         <div className="flex md:hidden w-full items-center justify-between h-6">
           <button
@@ -457,7 +437,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                     <span className="text-ds-text-primary text-base font-medium font-dm-sans leading-6">
                       Note
                     </span>
-                    <div className="w-full p-3 bg-ds-surface-1 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl rounded-tl-none border-l-2 border-ds-accent flex flex-col justify-start items-start gap-2 box-border">
+                    <div className="w-full min-w-0 max-w-full p-3 bg-ds-surface-1 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl rounded-tl-none border-l-2 border-ds-accent flex flex-col justify-start items-start gap-2 box-border">
                       {/* Note Sender: Frame 2609968 */}
                       <div className="w-full flex flex-row items-center gap-2 min-w-0">
                         <Avatar
@@ -477,7 +457,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                           )}
                         </div>
                       </div>
-                      <p className="text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 whitespace-pre-line">
+                      <p className="w-full text-ds-text-secondary text-xs font-normal font-dm-sans leading-4 whitespace-pre-line break-words [overflow-wrap:anywhere]">
                         {cand.note}
                       </p>
                     </div>

@@ -95,9 +95,20 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
   const normalizeExperience = (exp: string | undefined): string => {
     if (!exp) return 'Fresher';
-    if (exp === '0 - 2 years') return 'Fresher';
-    if (exp === '2 - 5 years') return 'Mid-level (3-5 yrs)';
-    if (exp === '5+ years') return 'Senior (5+ yrs)';
+    const clean = exp.trim();
+    const lower = clean.toLowerCase();
+    if (lower.includes('fresher') || lower.includes('entry') || lower.includes('0-1') || lower.includes('0 - 1') || lower.includes('0-2') || lower.includes('0 - 2')) {
+      return 'Fresher';
+    }
+    if (lower.includes('1-3') || lower.includes('1 - 3') || lower.includes('junior')) {
+      return 'Junior (1-3 yrs)';
+    }
+    if (lower.includes('3-5') || lower.includes('3 - 5') || lower.includes('2 - 5') || lower.includes('mid')) {
+      return 'Mid-level (3-5 yrs)';
+    }
+    if (lower.includes('5+') || lower.includes('senior')) {
+      return 'Senior (5+ yrs)';
+    }
     return exp;
   };
 
@@ -108,10 +119,12 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     return wt;
   };
 
-  const [experience, setExperience] = useState(normalizeExperience(initialDetails?.experience));
+  const incomingInitialExp = initialDetails?.experience || (initialDetails as any)?.experience_label || (initialDetails as any)?.experience_level;
+  const [experience, setExperience] = useState(() => normalizeExperience(incomingInitialExp));
   const [minExperience, setMinExperience] = useState('');
   const [maxExperience, setMaxExperience] = useState('');
-  const [workType, setWorkType] = useState(normalizeWorkType(initialDetails?.work_type));
+  const incomingInitialWorkType = initialDetails?.work_type || (initialDetails as any)?.job_type;
+  const [workType, setWorkType] = useState(() => normalizeWorkType(incomingInitialWorkType));
   const [workMode, setWorkMode] = useState(initialDetails?.work_mode || 'Hybrid');
   const [minSalary, setMinSalary] = useState(initialDetails?.salary_min ? String(initialDetails.salary_min) : '');
   const [maxSalary, setMaxSalary] = useState(initialDetails?.salary_max ? String(initialDetails.salary_max) : '');
@@ -148,6 +161,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const isExistingDraft = Boolean(initialDetails?.id || (jobId && initialDetails?.title));
 
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const isPublishingRef = useRef(false);
   const [isDirty, setIsDirty] = useState(false);
 
   // Fetch available industries and company's industry on mount
@@ -192,6 +207,13 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     };
   }, [isCompanyMode, activeProfile?.slug, initialDetails?.industry]);
 
+  // Keep non-editable company / recruiter name in sync with active posting actor
+  useEffect(() => {
+    if (companyNameFallback && company !== companyNameFallback) {
+      setCompany(companyNameFallback);
+    }
+  }, [companyNameFallback, company]);
+
   // Single Consolidated Hydration & Defaults Effect
   useEffect(() => {
     // 1. Company fallback when profile is available
@@ -213,15 +235,17 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       }
       if (initialDetails.description && !description) setDescription(initialDetails.description);
 
+      const incomingExpStr = initialDetails.experience || (initialDetails as any)?.experience_label || (initialDetails as any)?.experience_level;
       const resolvedExperience = resolveExperienceSelection(initialDetails.experience_min, initialDetails.experience_max);
-      if (resolvedExperience) {
+      if (incomingExpStr) {
+        setExperience(normalizeExperience(incomingExpStr));
+      } else if (resolvedExperience) {
         setExperience(normalizeExperience(resolvedExperience.experience));
         if (resolvedExperience.minExperience != null) setMinExperience(String(resolvedExperience.minExperience));
         if (resolvedExperience.maxExperience != null) setMaxExperience(String(resolvedExperience.maxExperience));
-      } else if (initialDetails.experience) {
-        setExperience(normalizeExperience(initialDetails.experience));
       }
-      if (initialDetails.work_type) setWorkType(normalizeWorkType(initialDetails.work_type));
+      const incomingWorkType = initialDetails.work_type || (initialDetails as any)?.job_type;
+      if (incomingWorkType) setWorkType(normalizeWorkType(incomingWorkType));
       if (initialDetails.work_mode) setWorkMode(initialDetails.work_mode);
       if (initialDetails.salary_min) setMinSalary(String(initialDetails.salary_min));
       if (initialDetails.salary_max) setMaxSalary(String(initialDetails.salary_max));
@@ -266,17 +290,15 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             setDescription(jobData.description);
             setIsAiGenerating(false);
 
-            if (jobData.experience_min !== null && jobData.experience_max !== null) {
-              const min = parseInt(jobData.experience_min, 10);
-              if (isNaN(min) || min === 0) {
-                setExperience('Fresher');
-              } else if (min <= 2) {
-                setExperience('Junior (1-3 yrs)');
-              } else if (min <= 4) {
-                setExperience('Mid-level (3-5 yrs)');
-              } else {
-                setExperience('Senior (5+ yrs)');
-              }
+            const expLabel = jobData.experience_label || jobData.experience_level;
+            const resolvedExp = resolveExperienceSelection(jobData.experience_min, jobData.experience_max);
+            if (expLabel) {
+              setExperience(normalizeExperience(expLabel));
+            } else if (resolvedExp) {
+              setExperience(normalizeExperience(resolvedExp.experience));
+            }
+            if (jobData.job_type) {
+              setWorkType(normalizeWorkType(jobData.job_type));
             }
 
           } else if (initialDescriptionEmpty && !hasManuallyRegenerated.current && retryCount < maxRetries) {
@@ -630,7 +652,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     }
   };
 
-  const handlePublishClick = () => {
+  const handlePublishClick = async () => {
+    if (isPublishingRef.current || isPublishing) return;
     setValidationError(null);
     if (role.trim().length < 2) {
       setValidationError("Job role/title must be at least 2 characters long");
@@ -652,7 +675,16 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         return;
       }
     }
-    onPublish(buildDetailsObject());
+    try {
+      isPublishingRef.current = true;
+      setIsPublishing(true);
+      await onPublish(buildDetailsObject());
+    } catch (err) {
+      console.error("Publish error:", err);
+    } finally {
+      setIsPublishing(false);
+      isPublishingRef.current = false;
+    }
   };
 
   const parsedMinSalary = minSalary ? parseFloat(minSalary.replace(/,/g, '')) : undefined;
@@ -758,20 +790,18 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               )}
             </div>
 
-            {/* Recruiter */}
-            <div className="border-b border-ds-border focus-within:border-ds-accent transition-colors pb-2 flex flex-col justify-center gap-1.5">
+            {/* Recruiter (Non-editable / read-only) */}
+            <div className="border-b border-ds-border transition-colors pb-2 flex flex-col justify-center gap-1.5">
               <label className="text-ds-text-muted text-xs font-medium font-dm-sans leading-4">
                 Recruiter
               </label>
               <input
                 type="text"
-                value={company}
-                onChange={(e) => {
-                  setCompany(e.target.value);
-                  setIsDirty(true);
-                }}
+                value={company || companyNameFallback || ''}
+                readOnly
+                disabled
                 placeholder="e.g. Acme Inc."
-                className="w-full bg-transparent text-sm font-normal text-ds-text-primary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none"
+                className="w-full bg-transparent text-sm font-normal text-ds-text-secondary placeholder:text-ds-text-muted font-dm-sans leading-5 outline-none cursor-default select-none"
               />
             </div>
           </div>
@@ -921,7 +951,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </div>
 
               {isExperienceOpen && (
-                <div className="hidden sm:flex absolute top-[calc(100%+8px)] left-0 w-[300px] h-[152px] max-w-[calc(100vw-32px)] bg-[#030303] border border-[#2C2C33] rounded-[8px] p-3 flex-col justify-between shadow-2xl z-40 box-border">
+                <div className="hidden sm:flex absolute top-[calc(100%+8px)] left-0 w-[300px] h-[152px] max-w-[calc(100vw-32px)] bg-ds-bg border border-ds-border rounded-[8px] p-3 flex-col justify-between shadow-2xl z-40 box-border">
                   {EXPERIENCE_OPTIONS.map((exp) => (
                     <button
                       key={exp}
@@ -1259,14 +1289,21 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             <button
               onClick={handlePublishClick}
               type="button"
-              disabled={!isPublishEnabled}
+              disabled={!isPublishEnabled || isPublishing}
               className={`w-[115px] h-[36px] px-3 py-1.5 rounded-[100px] flex justify-center items-center text-base font-medium font-dm-sans leading-6 transition-all select-none ${
-                isPublishEnabled
+                isPublishEnabled && !isPublishing
                   ? 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer shadow-sm'
                   : 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed opacity-50'
               }`}
             >
-              Publish
+              {isPublishing ? (
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  <span className="size-3.5 border-2 border-ds-text-primary border-t-transparent rounded-full animate-spin shrink-0" />
+                  <span>Publishing</span>
+                </span>
+              ) : (
+                'Publish'
+              )}
             </button>
 
             {isDirty ? (
@@ -1309,7 +1346,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         isOpen={isExperienceOpen}
         onClose={() => setIsExperienceOpen(false)}
         options={EXPERIENCE_OPTIONS}
-        selectedValue={experience}
+        selectedValue={experience || 'Fresher'}
         onSelect={(val) => {
           setExperience(val);
           setIsDirty(true);

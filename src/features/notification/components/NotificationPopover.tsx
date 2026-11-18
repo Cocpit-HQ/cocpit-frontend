@@ -31,8 +31,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
   const checkUnread = useCallback(async () => {
     try {
-      const companyId = isCompany && activeProfile ? activeProfile.id : undefined;
-      const rawData = await getNotifications(companyId);
+      const orgId = isCompany && activeProfile ? activeProfile.id : undefined;
+      const rawData = await getNotifications(orgId);
       const filtered = (rawData || []).filter(
         (n: { type?: string }) => n.type !== 'message' && n.type !== 'new_message'
       );

@@ -4,6 +4,7 @@ import { LeftArrowIcon } from '@/components/icons';
 import { JobListing } from '../../types/jobs.types';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 import { formatCompactNumber, getCurrencySymbol } from '../../utils/currency.utils';
+import { formatExperience } from '../../services/jobs.service';
 
 interface ListingDetailsScreenProps {
   listing: JobListing;
@@ -33,6 +34,17 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
     salary_currency,
     status,
   } = listing;
+
+  const displayExperience = formatExperience(
+    (listing as any).experience_min,
+    (listing as any).experience_max,
+    (listing as any).experience_level,
+    (listing as any).experience_label || (experience !== 'Not specified' ? experience : undefined)
+  );
+
+  const displayWorkType = work_type && work_type !== 'Not specified'
+    ? work_type
+    : ((listing as any).job_type || work_type);
 
   const formatSalary = (val: number | undefined | null) => {
     if (val === undefined || val === null || isNaN(val)) return 'Not specified';
@@ -183,7 +195,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
                 Experience level
               </span>
               <span className="text-ds-text-primary text-sm font-normal leading-5 break-words">
-                {experience || 'Not specified'}
+                {displayExperience || 'Not specified'}
               </span>
             </div>
 
@@ -192,7 +204,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
                 Work type
               </span>
               <span className="text-ds-text-primary text-sm font-normal leading-5 break-words">
-                {work_type || 'Not specified'}
+                {displayWorkType || 'Not specified'}
               </span>
             </div>
           </div>
@@ -325,7 +337,7 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
                   </span>
                 </div>
                 <span className="text-base font-normal font-dm-sans leading-6 text-ds-text-primary break-words">
-                  {experience || '0-2Yrs'}
+                  {displayExperience || 'Fresher (0-1 years)'}
                 </span>
               </div>
 

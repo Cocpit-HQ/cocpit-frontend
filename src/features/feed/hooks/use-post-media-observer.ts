@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useFeedUIStore } from '@/store/feed.store';
 
-export const usePostMediaObserver = (id: string | number, videoSrc?: string, aspectRatio?: string | number) => {
+export const usePostMediaObserver = (id?: string | number | null, videoSrc?: string, aspectRatio?: string | number) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { imageAspectRatios, setImageAspectRatio } = useFeedUIStore();
   
-  const storedRatio = imageAspectRatios[id.toString()];
+  const idStr = id != null ? id.toString() : '';
+  const storedRatio = idStr ? imageAspectRatios[idStr] : undefined;
   const [dynamicAspectRatio, setDynamicAspectRatio] = useState<number | undefined>(
     aspectRatio && aspectRatio !== 'auto' ? parseFloat(aspectRatio.toString()) : storedRatio
   );
@@ -45,7 +46,9 @@ export const usePostMediaObserver = (id: string | number, videoSrc?: string, asp
       const ratio = width / height;
       if (ratio && !isNaN(ratio)) {
         setDynamicAspectRatio(ratio);
-        setImageAspectRatio(id.toString(), ratio);
+        if (idStr) {
+          setImageAspectRatio(idStr, ratio);
+        }
       }
     }
   };

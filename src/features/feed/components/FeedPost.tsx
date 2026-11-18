@@ -812,7 +812,7 @@ export const FeedPost = (props: FeedPostProps) => {
             ? "w-full max-w-[442px] mx-auto bg-ds-bg flex flex-col gap-[8px] cursor-default box-border"
             : props.isProfileView
               ? "w-full max-w-[442px] mx-auto flex flex-col gap-[8px] bg-ds-bg cursor-pointer group"
-              : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[8px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-[var(--ds-media-border)]'}`,
+              : "w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[8px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer",
           props.className
         )}
       >
@@ -1265,6 +1265,10 @@ export const FeedPost = (props: FeedPostProps) => {
             targetType="POST"
             targetId={(isRepostWithoutThoughts && targetId ? targetId : id).toString()}
           />
+        )}
+
+        {!props.isFullContent && !props.isProfileView && !isInterested && (
+          <div className="w-full border-b border-[var(--ds-media-border)] pointer-events-none" />
         )}
       </div>
       {/* Temporary 'Interested' inline snackbar (40x40px thumb icon as per Figma) */}

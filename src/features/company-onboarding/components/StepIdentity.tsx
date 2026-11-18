@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, Loader2 } from "lucide-react";
 import { UploadIcon } from "@/components/icons";
 import { useCompanyOnboardingStore } from "../store/company-onboarding.store";
 import { getOnboardingOptions } from "@/services/api/onboarding";
 import { CocpitUserProfileImageEditor } from "@/shared/commonComponents/CocpitUserProfileImageEditor";
+import { useSectorOptions } from "@/features/search/hooks/useOrgSearchMeta";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface StepIdentityProps {
   onNext: () => void;
@@ -26,6 +28,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
     organizationName,
     foundedYear,
     industry,
+    sector,
     logoFile,
     logoPreview,
     updateField,
@@ -40,64 +43,142 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(industry || "");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [institutionOptions, setInstitutionOptions] = useState<{ id: string; label: string }[]>(INSTITUTION_OPTIONS);
   const [companyOptions, setCompanyOptions] = useState<{ id: string; label: string }[]>([]);
   const [loadingIndustries, setLoadingIndustries] = useState(false);
+  const [isSearchingIndustries, setIsSearchingIndustries] = useState(false);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 250);
+
+  // Sector dropdown states (dynamic from backend)
+  const { data: sectorOptions = [] } = useSectorOptions();
+  const [isSectorDropdownOpen, setIsSectorDropdownOpen] = useState(false);
+  const sectorDropdownRef = useRef<HTMLDivElement>(null);
 
   const isInstitution = organizationType === "INSTITUTION";
 
-  // Fetch options from onboarding API based on organizationType
+  // Initial load: 25 industries for company, or institution types
   useEffect(() => {
     let isCancelled = false;
 
-    const fetchOptions = async () => {
+    const fetchInitialOptions = async () => {
       setLoadingIndustries(true);
       try {
-        const slug = isInstitution ? "institution-types" : "industries";
-        const data = await getOnboardingOptions(slug);
-        if (!isCancelled && Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((item) => ({ id: item.slug || item.id || item.label, label: item.label }));
-          if (isInstitution) {
-            setInstitutionOptions(mapped);
-          } else {
-            setCompanyOptions(mapped);
+        if (isInstitution) {
+          const data = await getOnboardingOptions("institution-types");
+          if (!isCancelled && Array.isArray(data) && data.length > 0) {
+            setInstitutionOptions(
+              data.map((item) => ({ id: item.slug || item.id || item.label, label: item.label }))
+            );
+          }
+        } else {
+          const data = await getOnboardingOptions("industries", undefined, undefined, 25);
+          if (!isCancelled && Array.isArray(data)) {
+            setCompanyOptions(
+              data.map((item) => ({ id: item.slug || item.id || item.label, label: item.label }))
+            );
+            setCursor(data.nextCursor || null);
+            setHasMore(Boolean(data.hasMore));
           }
         }
       } catch (err) {
-        // Fallback options remain in place
+        console.error("Failed to load initial options:", err);
       } finally {
         if (!isCancelled) setLoadingIndustries(false);
       }
     };
 
-    fetchOptions();
+    fetchInitialOptions();
     return () => {
       isCancelled = true;
     };
   }, [isInstitution]);
 
-  const activeOptions = isInstitution ? institutionOptions : companyOptions;
-
-  // Sync searchQuery when industry or activeOptions change externally
+  // Live debounced search when user is typing in company mode
   useEffect(() => {
-    if (industry) {
-      const match = activeOptions.find((opt) => opt.id === industry || opt.label === industry);
-      setSearchQuery(match ? match.label : industry);
-    } else {
-      setSearchQuery("");
-    }
-  }, [industry, activeOptions]);
+    if (isInstitution || !isDropdownOpen) return;
+    let isCancelled = false;
 
-  // Real-time client-side filter
+    const searchIndustries = async () => {
+      setIsSearchingIndustries(true);
+      try {
+        const queryParam = debouncedSearchQuery.trim() || undefined;
+        const data = await getOnboardingOptions("industries", queryParam, undefined, 25);
+        if (!isCancelled && Array.isArray(data)) {
+          setCompanyOptions(
+            data.map((item) => ({ id: item.slug || item.id || item.label, label: item.label }))
+          );
+          setCursor(data.nextCursor || null);
+          setHasMore(Boolean(data.hasMore));
+        }
+      } catch (err) {
+        console.error("Failed to search industries:", err);
+      } finally {
+        if (!isCancelled) setIsSearchingIndustries(false);
+      }
+    };
+
+    searchIndustries();
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedSearchQuery, isDropdownOpen, isInstitution]);
+
+  // Cursor-based infinite scroll: load next 25 on reaching list bottom
+  const handleListScroll = async (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (!el || isLoadingMore || !hasMore || !cursor || isInstitution) return;
+
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+      setIsLoadingMore(true);
+      try {
+        const queryParam = debouncedSearchQuery.trim() || undefined;
+        const res = await getOnboardingOptions("industries", queryParam, cursor, 25);
+        if (Array.isArray(res) && res.length > 0) {
+          const newItems = res.map((item) => ({
+            id: item.slug || item.id || item.label,
+            label: item.label,
+          }));
+          setCompanyOptions((prev) => {
+            const existingIds = new Set(prev.map((p) => p.label));
+            const unique = newItems.filter((m) => !existingIds.has(m.label));
+            return [...prev, ...unique];
+          });
+          setCursor(res.nextCursor || null);
+          setHasMore(Boolean(res.hasMore));
+        } else {
+          setHasMore(false);
+          setCursor(null);
+        }
+      } catch (err) {
+        console.error("Failed to load more industries:", err);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  // Sync searchQuery when industry in store changes externally (only when dropdown is closed)
+  useEffect(() => {
+    if (!isDropdownOpen) {
+      setSearchQuery(industry || "");
+    }
+  }, [industry, isDropdownOpen]);
+
+  // Active options: client filter for static institution types, server-searched companyOptions for companies
   const filteredOptions = React.useMemo(() => {
-    if (!searchQuery.trim()) return activeOptions;
-    const q = searchQuery.toLowerCase().trim();
-    return activeOptions.filter((opt) =>
-      opt.label.toLowerCase().includes(q)
-    );
-  }, [activeOptions, searchQuery]);
+    if (isInstitution) {
+      if (!searchQuery.trim()) return institutionOptions;
+      const q = searchQuery.toLowerCase().trim();
+      return institutionOptions.filter((opt) => opt.label.toLowerCase().includes(q));
+    }
+    return companyOptions;
+  }, [isInstitution, institutionOptions, companyOptions, searchQuery]);
 
   // Reset highlighted index on query change
   useEffect(() => {
@@ -119,14 +200,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsDropdownOpen(false);
-        if (!searchQuery.trim()) {
-          updateField("industry", "");
-        } else if (industry) {
-          const match = activeOptions.find((opt) => opt.id === industry || opt.label === industry);
-          setSearchQuery(match ? match.label : industry);
-        } else {
-          setSearchQuery("");
-        }
+        setSearchQuery(industry || "");
       }
     };
     if (isDropdownOpen) {
@@ -135,7 +209,22 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen, industry, activeOptions, searchQuery, updateField]);
+  }, [isDropdownOpen, industry]);
+
+  // Close sector dropdown on outside click
+  useEffect(() => {
+    const handleSectorClickOutside = (e: MouseEvent) => {
+      if (sectorDropdownRef.current && !sectorDropdownRef.current.contains(e.target as Node)) {
+        setIsSectorDropdownOpen(false);
+      }
+    };
+    if (isSectorDropdownOpen) {
+      document.addEventListener("mousedown", handleSectorClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleSectorClickOutside);
+    };
+  }, [isSectorDropdownOpen]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateField("organizationName", e.target.value);
@@ -181,12 +270,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
       } else if (e.key === "Escape") {
         e.preventDefault();
         setIsDropdownOpen(false);
-        if (industry) {
-          const match = activeOptions.find((opt) => opt.id === industry || opt.label === industry);
-          setSearchQuery(match ? match.label : industry);
-        } else {
-          setSearchQuery("");
-        }
+        setSearchQuery(industry || "");
       }
     }
   };
@@ -361,10 +445,10 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
       {/* Frame 2609887: Main Input Area (672x300) */}
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-[672px] md:h-[300px] flex flex-col md:flex-row items-center justify-between gap-6 md:gap-[60px] p-0"
+        className="w-full max-w-[672px] flex flex-col md:flex-row items-center justify-between gap-6 md:gap-[60px] p-0"
       >
-        {/* Frame 2608512: Left Column (297x300) */}
-        <div className="w-full md:w-[297px] md:h-[300px] flex flex-col justify-between items-center py-4 px-2 gap-5">
+        {/* Frame 2608512: Left Column (297px) */}
+        <div className="w-full md:w-[297px] flex flex-col justify-start items-center py-2 px-2 gap-4">
           {/* Input with label: Organization / Institution name (281x62) */}
           <div className="w-full md:w-[281px] h-[62px] py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-2.5 transition-colors">
             <label
@@ -468,10 +552,14 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
                   }}
                   className="p-1 -mr-1 flex items-center justify-center cursor-pointer text-ds-text-primary focus:outline-none"
                 >
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
-                      }`}
-                  />
+                  {isSearchingIndustries ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-ds-accent" />
+                  ) : (
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
+                        }`}
+                    />
+                  )}
                 </button>
               </div>
             </div>
@@ -479,54 +567,150 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
             {/* Dropdown Menu - opens at bottom with hidden scroll */}
             {isDropdownOpen && (
               <div
-                className="absolute top-full left-0 mt-2 w-full p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl inline-flex flex-col justify-start items-center gap-3 overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150"
+                className="absolute top-full left-0 mt-2 w-full p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl inline-flex flex-col justify-start items-center gap-3 overflow-hidden z-40 animate-in fade-in duration-100"
               >
                 <div
                   ref={listboxRef}
                   role="listbox"
-                  className="self-stretch flex flex-col justify-start items-start gap-2 max-h-48 overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
+                  onScroll={handleListScroll}
+                  className="self-stretch flex flex-col justify-start items-start gap-2 max-h-48 min-h-[160px] overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
-                  {loadingIndustries ? (
-                    <div className="w-full py-3 text-center text-ds-text-muted text-sm font-['DM_Sans']">
+                  {loadingIndustries && companyOptions.length === 0 ? (
+                    <div className="w-full h-36 flex items-center justify-center text-ds-text-muted text-sm font-['DM_Sans']">
+                      <Loader2 className="w-4 h-4 animate-spin text-ds-accent mr-2" />
                       Loading industries...
                     </div>
                   ) : filteredOptions.length > 0 ? (
-                    filteredOptions.map((opt, index) => {
-                      const isSelected = industry === opt.label || industry === opt.id;
-                      const isHighlighted = index === highlightedIndex;
-                      return (
-                        <div
-                          key={opt.id}
-                          role="option"
-                          aria-selected={isSelected}
-                          onClick={() => handleSelectIndustry(opt.label)}
-                          className={`self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer transition-colors group select-none ${isHighlighted ? "bg-ds-surface-1" : "hover:bg-ds-surface-1/40"
-                            }`}
-                        >
-                          <span
-                            title={opt.label}
-                            className={`justify-start text-sm font-normal font-['DM_Sans'] leading-5 transition-colors cursor-pointer truncate ${isSelected
-                              ? "text-ds-accent font-medium"
-                              : isHighlighted
-                                ? "text-ds-text-primary"
-                                : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                    <>
+                      {filteredOptions.map((opt, index) => {
+                        const isSelected = industry === opt.label || industry === opt.id;
+                        const isHighlighted = index === highlightedIndex;
+                        return (
+                          <div
+                            key={opt.id}
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={() => handleSelectIndustry(opt.label)}
+                            className={`self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer transition-colors group select-none ${isHighlighted ? "bg-ds-surface-1" : "hover:bg-ds-surface-1/40"
                               }`}
                           >
-                            {opt.label}
-                          </span>
+                            <span
+                              title={opt.label}
+                              className={`justify-start text-sm font-normal font-['DM_Sans'] leading-5 transition-colors cursor-pointer truncate ${isSelected
+                                ? "text-ds-accent font-medium"
+                                : isHighlighted
+                                  ? "text-ds-text-primary"
+                                  : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                                }`}
+                            >
+                              {opt.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {isLoadingMore && (
+                        <div className="w-full py-2 flex items-center justify-center gap-1.5 text-xs text-ds-text-muted font-['DM_Sans']">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-ds-accent" />
+                          <span>Loading more...</span>
                         </div>
-                      );
-                    })
+                      )}
+                    </>
                   ) : (
-                    <div className="w-full py-3 text-center text-ds-text-muted text-sm font-['DM_Sans']">
-                      No options found
+                    <div className="w-full h-36 flex items-center justify-center text-ds-text-muted text-sm font-['DM_Sans']">
+                      {isSearchingIndustries ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-ds-accent" />
+                          <span>Searching...</span>
+                        </div>
+                      ) : (
+                        <span>No options found</span>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
             )}
           </div>
+
+          {/* Input with label and icon: Sectors Selection (281x62) */}
+          {!isInstitution && (
+            <div
+              ref={sectorDropdownRef}
+              className="w-full md:w-[281px] relative"
+            >
+              <div
+                onClick={() => setIsSectorDropdownOpen((prev) => !prev)}
+                className={`w-full h-[62px] py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors cursor-pointer ${
+                  isSectorDropdownOpen ? "border-ds-accent" : "border-ds-border hover:border-ds-text-muted"
+                }`}
+              >
+                <label className="text-left text-ds-text-secondary font-['DM_Sans'] text-xs font-medium leading-4 cursor-pointer">
+                  Sectors
+                </label>
+                <div className="self-stretch inline-flex justify-between items-center">
+                  <span
+                    className={`font-['DM_Sans'] text-sm leading-5 truncate select-none ${
+                      sector ? "text-ds-text-primary font-normal" : "text-ds-text-muted"
+                    }`}
+                  >
+                    {sector || "Select sector"}
+                  </span>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label="Toggle sector options"
+                    className="p-1 -mr-1 flex items-center justify-center cursor-pointer text-ds-text-primary focus:outline-none"
+                  >
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isSectorDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Sector Dropdown Menu */}
+              {isSectorDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-full p-2 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl inline-flex flex-col justify-start items-center gap-1 overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150">
+                  <div
+                    role="listbox"
+                    className="self-stretch flex flex-col justify-start items-start gap-1 max-h-56 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
+                    {sectorOptions.map((sec) => {
+                      const isSelected = sector === sec;
+                      return (
+                        <div
+                          key={sec}
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => {
+                            updateField("sector", isSelected ? "" : sec);
+                            setIsSectorDropdownOpen(false);
+                          }}
+                          className={`self-stretch h-9 px-3 rounded-lg inline-flex justify-between items-center cursor-pointer transition-colors group select-none ${
+                            isSelected ? "bg-ds-surface-1" : "hover:bg-ds-surface-1/40"
+                          }`}
+                        >
+                          <span
+                            className={`text-sm font-['DM_Sans'] leading-5 truncate transition-colors ${
+                              isSelected
+                                ? "text-ds-accent font-medium"
+                                : "text-ds-text-secondary group-hover:text-ds-text-primary font-normal"
+                            }`}
+                          >
+                            {sec}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: Asset Uploads (319x300, 14px vertically and 20px horizontally padding) */}
