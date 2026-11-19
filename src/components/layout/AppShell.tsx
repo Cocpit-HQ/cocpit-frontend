@@ -97,7 +97,8 @@ export function AppShell({
   const isJobExplorePage = Boolean(pathname?.startsWith('/jobs/explore'));
   const isGlobalSearchPage = Boolean(pathname?.startsWith('/search'));
   const isMessagingPage = Boolean(pathname?.startsWith('/messaging'));
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage || isJobExplorePage || isGlobalSearchPage;
+  const isAnalyticsPostPage = Boolean(pathname?.startsWith('/analytics/post'));
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage || isHashtagPage || isJobsFullScreen || isJobDetailPage || isJobSearchPage || isJobExplorePage || isGlobalSearchPage || isAnalyticsPostPage;
   const shouldHideBottomNav = hideBottomNav || (isDistractionFree && !isGlobalSearchPage) || isSettingsSubpage || isMessagingPage || activeModal === 'create-post';
 
   return (

@@ -283,6 +283,7 @@
   --color-ds-error: var(--ds-error);
   --color-ds-success: var(--ds-success);
   --color-ds-warning: var(--ds-warning);
+  --color-ds-accent-contrast: var(--ds-accent-contrast);
 
   /* ── New Component Colors ────────────────────────────────── */
   /* Focus ring — orange (#EC6229), used ONLY for keyboard focus */
@@ -428,6 +429,7 @@
     --ds-error: #E5484D;
     --ds-success: #3FB950;
     --ds-warning: #F0A500;
+    --ds-accent-contrast: #FFFFFF;
   }
 
   [data-theme="navy"] {
@@ -495,6 +497,7 @@
     --ds-error: #E5484D;
     --ds-success: #3FB950;
     --ds-warning: #F0A500;
+    --ds-accent-contrast: #FFFFFF;
   }
 
 
@@ -588,6 +591,7 @@
     --ds-error: #D6393E;
     --ds-success: #2E883C;
     --ds-warning: #B86B00;
+    --ds-accent-contrast: #FFFFFF;
   }
 
   [data-theme="dark"] {
@@ -720,6 +724,7 @@
     --ds-error: #E5484D;
     --ds-success: #3FB950;
     --ds-warning: #F0A500;
+    --ds-accent-contrast: #FFFFFF;
   }
 }
 

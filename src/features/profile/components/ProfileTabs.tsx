@@ -2,6 +2,7 @@
 
 import React from "react";
 import { AddPlusIcon } from "@/components/icons";
+import { UnderlineTabs, TabItem } from "@/components/ui/UnderlineTabs";
 
 export type ProfileTabType = "posts" | "experience" | "education" | "projects" | "skills";
 
@@ -28,55 +29,34 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
 }) => {
   const currentTab = TABS.find((t) => t.id === activeTab) || TABS[0];
 
+  const tabItems: TabItem<ProfileTabType>[] = TABS.map((tab) => ({
+    id: tab.id,
+    label: tab.label,
+  }));
+
+  const rightAction = isOwnProfile && onAddClick ? (
+    <button
+      type="button"
+      onClick={onAddClick}
+      className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex items-center justify-center gap-2 transition-all cursor-pointer flex-shrink-0"
+    >
+      <div className="w-4 h-4 flex-none order-0 flex-grow-0 relative flex items-center justify-center">
+        <AddPlusIcon className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0" />
+      </div>
+      <span className="text-[var(--ds-text-primary)] text-sm font-medium font-['DM_Sans'] leading-5 whitespace-nowrap">
+        {currentTab.actionLabel}
+      </span>
+    </button>
+  ) : undefined;
+
   return (
     <div className="w-full max-w-[800px] pl-5 flex flex-row justify-between items-center select-none flex-wrap gap-4">
-      {/* Tab Buttons */}
-      <div className="flex flex-row items-center gap-3 overflow-x-auto no-scrollbar">
-        {TABS.map((tab) => {
-          const isSelected = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onTabChange(tab.id)}
-              className="inline-flex flex-col justify-start items-center cursor-pointer transition-colors"
-            >
-              <div className="px-3 py-1.5 flex flex-col justify-center items-center">
-                <span
-                  className={`text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap transition-colors ${
-                    isSelected
-                      ? "text-[var(--ds-text-primary)]"
-                      : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
-                  }`}
-                >
-                  {tab.label}
-                </span>
-              </div>
-              {isSelected ? (
-                <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
-              ) : (
-                <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Action Button for Current Tab */}
-      {isOwnProfile && onAddClick && (
-        <button
-          type="button"
-          onClick={onAddClick}
-          className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex items-center justify-center gap-2 transition-all cursor-pointer flex-shrink-0"
-        >
-          <div className="w-4 h-4 flex-none order-0 flex-grow-0 relative flex items-center justify-center">
-            <AddPlusIcon className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0" />
-          </div>
-          <span className="text-[var(--ds-text-primary)] text-sm font-medium font-['DM_Sans'] leading-5 whitespace-nowrap">
-            {currentTab.actionLabel}
-          </span>
-        </button>
-      )}
+      <UnderlineTabs
+        tabs={tabItems}
+        activeTab={activeTab}
+        onChange={onTabChange}
+        rightElement={rightAction}
+      />
     </div>
   );
 };

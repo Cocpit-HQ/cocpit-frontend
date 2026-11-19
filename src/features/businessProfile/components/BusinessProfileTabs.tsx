@@ -11,6 +11,7 @@ import PostsTab from "@/features/businessProfile/components/tabs/PostsTab";
 import JobsTab from "@/features/businessProfile/components/tabs/JobsTab";
 import PeopleTab from "@/features/businessProfile/components/tabs/PeopleTab";
 import { cn } from "@/lib/utils";
+import { UnderlineTabs, TabItem } from "@/components/ui/UnderlineTabs";
 
 export interface BusinessProfileTabsProps {
   data: BusinessProfileData;
@@ -77,12 +78,12 @@ export function BusinessProfileTabs({
     scrollToTab();
   };
 
-  const tabs = [
-    { label: "Home", value: "home" },
-    { label: "About", value: "about" },
-    { label: "Post", value: "posts" },
-    { label: "Jobs", value: "jobs" },
-    { label: isEdu ? "Alumni" : "People", value: activeTabKey },
+  const tabs: TabItem<string>[] = [
+    { label: "Home", id: "home" },
+    { label: "About", id: "about" },
+    { label: "Post", id: "posts" },
+    { label: "Jobs", id: "jobs" },
+    { label: isEdu ? "Alumni" : "People", id: activeTabKey },
   ];
 
   return (
@@ -93,37 +94,13 @@ export function BusinessProfileTabs({
       className="w-full scroll-mt-[70px] sm:scroll-mt-[110px]"
     >
       {/* Tabs Header: w-[800px] responsive px-4 / pl-5 overflow-x-auto */}
-      <Tabs.List className="w-full max-w-[800px] px-4 sm:px-0 sm:pl-5 flex flex-nowrap overflow-x-auto no-scrollbar justify-start items-center gap-3 border-b border-transparent">
-        {tabs.map((tab) => {
-          const isSelected = activeTab === tab.value;
-
-          return (
-            <Tabs.Trigger
-              key={tab.value}
-              value={tab.value}
-              className="inline-flex flex-col justify-start items-center cursor-pointer group outline-none select-none p-0 bg-transparent border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded-sm"
-            >
-              <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center">
-                <span
-                  className={cn(
-                    "text-base font-medium font-['DM_Sans'] leading-6 transition-colors",
-                    isSelected
-                      ? "text-[var(--ds-text-primary)]"
-                      : "text-[var(--ds-text-secondary)] group-hover:text-[var(--ds-text-primary)]"
-                  )}
-                >
-                  {tab.label}
-                </span>
-              </div>
-              {isSelected ? (
-                <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
-              ) : (
-                <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
-              )}
-            </Tabs.Trigger>
-          );
-        })}
-      </Tabs.List>
+      <div className="w-full max-w-[800px] px-4 sm:px-0 sm:pl-5">
+        <UnderlineTabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={handleTabChange}
+        />
+      </div>
 
       <TabPermissionGuard
         activeTab={activeTab}

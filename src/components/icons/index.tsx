@@ -241,11 +241,54 @@ export type IconName =
   | "group-action-add"
   | "group-action-search"
   | "group-action-bell"
-  | "group-action-more";
+  | "group-action-more"
 
+  // Analytics & Data Visualization
+  | "sparkles"
+  | "trending-up"
+  | "trending-down"
+  | "chevron-left"
+  | "refresh"
+  | "refresh-cw"
+  | "layout-template"
+  | "type"
+  | "building"
+  | "building-2"
+  | "bar-chart"
+  | "bar-chart-2"
+  | "thumbs-up"
+  | "share-2"
+
+  // External / Legacy Aliases
+  | "lucide:sparkles"
+  | "lucide:trending-up"
+  | "lucide:trending-down"
+  | "lucide:arrow-right"
+  | "lucide:chevron-down"
+  | "lucide:chevron-left"
+  | "lucide:refresh-cw"
+  | "lucide:bar-chart-2"
+  | "lucide:alert-circle"
+  | "lucide:file-text"
+  | "lucide:calendar"
+  | "lucide:building-2"
+  | "lucide:layout-template"
+  | "lucide:type"
+  | "lucide:thumbs-up"
+  | "lucide:share-2"
+  | "bitcoin-icons:verify-filled"
+  | "hugeicons:repost"
+  | "svg-spinners:180-ring"
+  | "solar:document-add-linear"
+  | "stash:image"
+  | "fluent:poll-16-regular"
+  | "fluent:eye-16-regular"
+  | "ph:arrow-arc-left"
+  | "arrow-arc-left";
 
 export interface IconProps extends React.SVGProps<SVGSVGElement> {
   name?: IconName;
+  icon?: IconName | string;
   size?: number | string;
   className?: string;
 }
@@ -1499,7 +1542,7 @@ export const RupeeIcon = IndianRupeeIcon;
 export const TagUserIcon: React.FC<IconProps> = ({
   className = "w-5 h-5",
   size = 20,
-  fill = "#EC6229",
+  fill = "currentColor",
   ...props
 }) => (
   <svg
@@ -1523,7 +1566,7 @@ export const ActivityTagIcon = TagUserIcon;
 export const CommentPollIcon: React.FC<IconProps> = ({
   className = "w-8 h-8",
   size = 32,
-  fill = "#EC6229",
+  fill = "currentColor",
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
@@ -1535,7 +1578,7 @@ export const PollBarIcon = CommentPollIcon;
 export const CommentArticleIcon: React.FC<IconProps> = ({
   className = "w-8 h-8",
   size = 32,
-  fill = "#EC6229",
+  fill = "currentColor",
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
@@ -1547,7 +1590,7 @@ export const ArticleIcon = CommentArticleIcon;
 export const CommentMediaIcon: React.FC<IconProps> = ({
   className = "w-8 h-8",
   size = 32,
-  fill = "#EC6229",
+  fill = "currentColor",
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
@@ -1558,7 +1601,7 @@ export const CommentMediaIcon: React.FC<IconProps> = ({
 export const ReportProfileIcon: React.FC<IconProps> = ({
   className = "w-8 h-8",
   size = 32,
-  fill = "#EC6229",
+  fill = "currentColor",
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
@@ -2673,6 +2716,144 @@ export const OfferIcon: React.FC<IconProps> = ({
 
 export const OfferGiftIcon = OfferIcon;
 
+// ─── Analytics & UI Icons ───────────────────────────────────────────────────
+
+export const SparklesIcon: React.FC<IconProps> = ({
+  className = "w-5 h-5",
+  size,
+  fill = "none",
+  stroke = "currentColor",
+  strokeWidth = 2,
+  ...props
+}) => (
+  <svg
+    width={size || 24}
+    height={size || 24}
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke={stroke}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3v4" />
+    <path d="M19 17v4" />
+    <path d="M3 5h4" />
+    <path d="M17 19h4" />
+  </svg>
+);
+
+export const TrendingUpIcon: React.FC<IconProps> = ({
+  className = "w-5 h-5",
+  size,
+  fill = "none",
+  stroke = "currentColor",
+  strokeWidth = 2,
+  ...props
+}) => (
+  <svg
+    width={size || 24}
+    height={size || 24}
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke={stroke}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+    <polyline points="16 7 22 7 22 13" />
+  </svg>
+);
+
+export const TrendingDownIcon: React.FC<IconProps> = ({
+  className = "w-5 h-5",
+  size,
+  fill = "none",
+  stroke = "currentColor",
+  strokeWidth = 2,
+  ...props
+}) => (
+  <svg
+    width={size || 24}
+    height={size || 24}
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke={stroke}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+    <polyline points="16 17 22 17 22 11" />
+  </svg>
+);
+
+export const LayoutTemplateIcon: React.FC<IconProps> = ({
+  className = "w-5 h-5",
+  size,
+  fill = "none",
+  stroke = "currentColor",
+  strokeWidth = 2,
+  ...props
+}) => (
+  <svg
+    width={size || 24}
+    height={size || 24}
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke={stroke}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <rect width="18" height="7" x="3" y="3" rx="1" />
+    <rect width="9" height="7" x="3" y="14" rx="1" />
+    <rect width="5" height="7" x="16" y="14" rx="1" />
+  </svg>
+);
+
+export const ArrowArcLeftIcon: React.FC<IconProps> = ({
+  className = "w-5 h-5",
+  size = 20,
+  fill = "currentColor",
+  ...props
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 256 256"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M232 184a8 8 0 0 1-16 0a88 88 0 0 0-150.22-62.22L43.4 144H88a8 8 0 0 1 0 16H24a8 8 0 0 1-8-8V88a8 8 0 0 1 16 0v44.77l22.48-22.33A104 104 0 0 1 232 184"
+      fill={fill}
+    />
+  </svg>
+);
+
+export const ChevronLeftIcon = LeftArrowIcon;
+export const RefreshCwIcon = RotateIcon;
+export const RefreshIcon = RotateIcon;
+export const TypeIcon = TextFormattingIcon;
+export const Building2Icon = BusinessBuildingIcon;
+
 export const SVG_ICONS: Record<IconName, React.FC<IconProps>> = {
   cocpit: CocpitSocialIcon,
   "cocpit-logo": CocpitLogoIcon,
@@ -2899,15 +3080,59 @@ export const SVG_ICONS: Record<IconName, React.FC<IconProps>> = {
   "group-action-search": GroupActionSearchIcon,
   "group-action-bell": GroupActionBellIcon,
   "group-action-more": GroupActionMoreIcon,
+
+  // Analytics & Data Visualization
+  sparkles: SparklesIcon,
+  "trending-up": TrendingUpIcon,
+  "trending-down": TrendingDownIcon,
+  "chevron-left": LeftArrowIcon,
+  refresh: RotateIcon,
+  "refresh-cw": RotateIcon,
+  "layout-template": LayoutTemplateIcon,
+  type: TextFormattingIcon,
+  building: BusinessBuildingIcon,
+  "building-2": BusinessBuildingIcon,
+  "bar-chart": AnalyticsIcon,
+  "bar-chart-2": AnalyticsIcon,
+  "thumbs-up": LikeIcon,
+  "share-2": ShareIcon,
+
+  // External / Legacy Aliases
+  "lucide:sparkles": SparklesIcon,
+  "lucide:trending-up": TrendingUpIcon,
+  "lucide:trending-down": TrendingDownIcon,
+  "lucide:arrow-right": ArrowFrontIcon,
+  "lucide:chevron-down": ChevronDownIcon,
+  "lucide:chevron-left": LeftArrowIcon,
+  "lucide:refresh-cw": RotateIcon,
+  "lucide:bar-chart-2": AnalyticsIcon,
+  "lucide:alert-circle": AlertCircleIcon,
+  "lucide:file-text": FileTextIcon,
+  "lucide:calendar": CalendarIcon,
+  "lucide:building-2": BusinessBuildingIcon,
+  "lucide:layout-template": LayoutTemplateIcon,
+  "lucide:type": TextFormattingIcon,
+  "lucide:thumbs-up": LikeIcon,
+  "lucide:share-2": ShareIcon,
+  "bitcoin-icons:verify-filled": VerifyIcon,
+  "hugeicons:repost": RepostIcon,
+  "svg-spinners:180-ring": LoadingIcon,
+  "solar:document-add-linear": CommentArticleIcon,
+  "stash:image": ImageIcon,
+  "fluent:poll-16-regular": CommentPollIcon,
+  "fluent:eye-16-regular": EyeIcon,
+  "ph:arrow-arc-left": ArrowArcLeftIcon,
+  "arrow-arc-left": ArrowArcLeftIcon,
 };
 
 // ─── Universal Icon Component ────────────────────────────────────────────────
 
-export const Icon: React.FC<IconProps> = ({ name, ...props }) => {
-  if (!name) return null;
-  const Component = SVG_ICONS[name];
+export const Icon: React.FC<IconProps> = ({ name, icon, ...props }) => {
+  const iconKey = (name || icon) as IconName;
+  if (!iconKey) return null;
+  const Component = SVG_ICONS[iconKey];
   if (!Component) {
-    console.warn(`Icon "${name}" not found in SVG icon library.`);
+    console.warn(`Icon "${iconKey}" not found in SVG icon library.`);
     return null;
   }
   return <Component {...props} />;
