@@ -70,11 +70,49 @@ export const OrgPostsFilters: React.FC<OrgPostsFiltersProps> = ({
     return [];
   }, [filters.posted_by]);
 
-  const contentTypeSelections = useMemo(() => {
+  // Raw content type values from filter state
+  const rawContentType = useMemo(() => {
     if (Array.isArray(filters.content_type)) return filters.content_type;
-    if (typeof filters.content_type === 'string' && filters.content_type) return [filters.content_type];
+    if (typeof filters.content_type === 'string' && filters.content_type) {
+      return filters.content_type.split(',').map((s) => s.trim()).filter(Boolean);
+    }
     return [];
   }, [filters.content_type]);
+
+  const isAllContentTypeSelected =
+    rawContentType.length === 0 || rawContentType.every((t) => t.toLowerCase() === 'all');
+
+  const contentTypeSelections = useMemo(() => {
+    if (isAllContentTypeSelected) return ['all'];
+    return rawContentType;
+  }, [isAllContentTypeSelected, rawContentType]);
+
+  const hasContentTypeFilter = !isAllContentTypeSelected && rawContentType.length > 0;
+
+  const handleContentTypeToggle = (val: string) => {
+    const lowerVal = val.toLowerCase();
+
+    // 1. Clicked "All posts" ('all')
+    if (lowerVal === 'all') {
+      // If already on "All posts", keep it selected
+      if (isAllContentTypeSelected) return;
+      onSetFilter('content_type', null);
+      return;
+    }
+
+    // 2. Clicked a specific content type (e.g. 'text', 'image', 'video', 'poll', 'article')
+    const currentSpecific = rawContentType.filter((t) => t.toLowerCase() !== 'all');
+    const exists = currentSpecific.some((t) => t.toLowerCase() === lowerVal);
+    const nextSpecific = exists
+      ? currentSpecific.filter((t) => t.toLowerCase() !== lowerVal)
+      : [...currentSpecific, val];
+
+    if (nextSpecific.length === 0) {
+      onSetFilter('content_type', null);
+    } else {
+      onSetFilter('content_type', nextSpecific.join(','));
+    }
+  };
 
   const hashtagSelections = useMemo(() => {
     if (Array.isArray(filters.hashtag)) return filters.hashtag;
@@ -131,7 +169,8 @@ export const OrgPostsFilters: React.FC<OrgPostsFiltersProps> = ({
         title="Content type"
         options={CONTENT_TYPE_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
         selectedValues={contentTypeSelections}
-        onToggle={(val) => handleToggle('content_type', val)}
+        onToggle={handleContentTypeToggle}
+        isActive={hasContentTypeFilter}
         hasSearch={false}
         widthClass="w-[180px]"
       />
