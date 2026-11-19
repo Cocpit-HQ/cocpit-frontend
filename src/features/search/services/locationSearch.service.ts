@@ -134,12 +134,6 @@ export async function getPaginatedLocations(
       // Ignore backend error in search mode
     }
 
-    // If query has no matches at all, allow the user to select their typed search as custom location
-    if (combinedResults.length === 0 && trimmed.length >= 2) {
-      const cleanTyped = formatJobLocation(trimmed) || trimmed;
-      combinedResults.push(cleanTyped);
-    }
-
     return {
       items: combinedResults,
       nextCursor: null,

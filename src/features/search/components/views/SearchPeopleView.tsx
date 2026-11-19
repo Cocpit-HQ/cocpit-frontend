@@ -13,6 +13,7 @@ interface SearchPeopleViewProps {
   isFetchingNextPage: boolean;
   hasNextPage?: boolean;
   fetchNextPage: () => void;
+  onClearFilters?: () => void;
   query: string;
   returnTo?: string;
 }
@@ -23,6 +24,7 @@ export const SearchPeopleView: React.FC<SearchPeopleViewProps> = ({
   isFetchingNextPage,
   hasNextPage,
   fetchNextPage,
+  onClearFilters,
   query,
   returnTo,
 }) => {
@@ -54,6 +56,17 @@ export const SearchPeopleView: React.FC<SearchPeopleViewProps> = ({
             ? 'Try searching with first name, last name, or account handle.'
             : 'Try adjusting or clearing your filter options.'}
         </p>
+        {onClearFilters && (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={onClearFilters}
+              className="px-4 py-2 rounded-full bg-ds-surface-1 border border-ds-border hover:bg-ds-surface-2 text-ds-text-primary text-sm font-medium font-dm-sans transition-colors cursor-pointer"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
       </div>
     );
   }

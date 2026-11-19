@@ -80,7 +80,7 @@ export default function HashtagPage() {
             </span>
             {hashtagMetadata && (
               <span className="text-[11px] font-medium text-ds-text-muted flex items-center gap-1">
-                • {hashtagMetadata.usage_count.toLocaleString()} posts
+                • {hashtagMetadata.usage_count.toLocaleString()} {hashtagMetadata.usage_count === 1 ? 'post' : 'posts'}
               </span>
             )}
           </div>
