@@ -2,6 +2,11 @@
 
 These rules apply to **every UI change** in the `cocpit-frontend` project without exception.
 
+> [!IMPORTANT]
+> **Workflow & Investigation Rules**:
+> - **Only Analyze Relevant Code**: Inspect strictly the specific UI component, page, or style file directly tied to the task. Do not scan or read unnecessary component trees or unrelated code.
+> - **Pre-Formulate Commit Message in Plan**: Prepare the exact Git commit message upfront in the plan so that immediately after execution, it can be provided for approval without figuring out changes again from scratch.
+
 ---
 
 ## 01. Responsive & Layout

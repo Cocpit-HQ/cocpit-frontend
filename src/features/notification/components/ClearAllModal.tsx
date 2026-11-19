@@ -17,14 +17,10 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
   return (
     <ActionConfirmModal
       isOpen={isOpen}
+      type="clear_all_notifications"
       onClose={onClose}
       onConfirm={onConfirm}
       isLoading={isLoading}
-      title="Clear all notifications"
-      description="This will remove all your notifications"
-      confirmText="Clear all"
-      cancelText="Cancel"
-      buttonWidthClass="w-[85px]"
     />
   );
 };

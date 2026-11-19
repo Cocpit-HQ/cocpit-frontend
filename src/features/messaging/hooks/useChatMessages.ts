@@ -435,6 +435,8 @@ export function useChatMessages({
               entityType: replyingTo.entityType,
               entityId: replyingTo.entityId,
               isAttachment: replyingTo.isAttachment,
+              sharedPost: (replyingTo as any).sharedPost,
+              poll: (replyingTo as any).poll,
             }
           : null,
       };

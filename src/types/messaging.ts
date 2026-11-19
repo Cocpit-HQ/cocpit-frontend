@@ -20,6 +20,7 @@ export interface BackendChat {
   is_deleted_user?: boolean; // Added for deleted user handling
   is_deactivated?: boolean;
   is_requesting?: boolean;
+  is_declined?: boolean;
   created_by?: string;
   last_sender_message_at?: string | null;
   invitation_id?: string;
@@ -28,6 +29,7 @@ export interface BackendChat {
   is_muted?: boolean;
   muted_until?: string | null;
   is_pinned?: boolean;
+  pinned_message_id?: string | null;
   is_job_chat?: boolean;
   replied_msg_id?: string | null;
 }
@@ -61,6 +63,25 @@ export interface BackendMessage {
     sender_name: string;
     message_type: string;
     media?: { url: string; media_type?: string; filename?: string }[];
+    shared_profile?: {
+      name: string;
+      avatar?: string | null;
+      headline?: string;
+    } | null;
+    shared_post?: {
+      id?: string;
+      post_id?: string;
+      content?: string;
+      caption?: string;
+      media?: { url: string; media_type?: string; type?: string }[];
+      poll?: MessagePoll | null;
+      post_type?: string;
+    } | null;
+    shared_profile_id?: string | null;
+    shared_profile_type?: string | null;
+    shared_post_id?: string | null;
+    entity_type?: string | null;
+    entity_id?: string | null;
   } | null;
   shared_post?: {
     post_id: string;
@@ -133,6 +154,7 @@ export interface ChatThread {
   isDeleted?: boolean; // Frontend flag to filter out
   isDeactivated?: boolean;
   is_requesting?: boolean;
+  is_declined?: boolean;
   created_by?: string;
   last_sender_message_at?: string | null;
   invitation_id?: string;
@@ -141,6 +163,7 @@ export interface ChatThread {
   is_muted?: boolean;
   muted_until?: string | null;
   is_pinned?: boolean;
+  pinned_message_id?: string | null;
   jobIds?: string[];
   isJobChat?: boolean;
   isMock?: boolean;
@@ -220,6 +243,20 @@ export interface Message {
     entityType?: string | null;
     entityId?: string | null;
     isAttachment?: boolean;
+    sharedProfile?: {
+      name: string;
+      avatar?: string | null;
+      headline?: string;
+    } | null;
+    sharedPost?: {
+      id?: string;
+      content?: string;
+      caption?: string;
+      media?: { url: string; type?: string }[];
+      poll?: MessagePoll | null;
+      post_type?: string;
+    } | null;
+    poll?: MessagePoll | { question?: string; options?: any[] } | null;
   } | null;
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   media?: { url: string; type: 'image' | 'video' | 'document'; name?: string | null }[];

@@ -81,11 +81,12 @@ export const shareProfileInDM = async (
   return response.data;
 };
 
-export const searchUsersForMessaging = async (query?: string, cursor?: string, limit?: number) => {
+export const searchUsersForMessaging = async (query?: string, cursor?: string, limit?: number, type?: string) => {
   const params: Record<string, string | number> = {};
   if (query) params.q = query;
   if (cursor) params.cursor = cursor;
   if (limit !== undefined) params.limit = limit;
+  if (type) params.type = type;
   const response = await api.get("/messaging/search/users", { params });
   return response.data as { success: boolean; data: any[]; nextCursor: string | null; hasMore: boolean };
 };
@@ -129,8 +130,10 @@ export const unmuteGroup = async (conversationId: string) => {
   return response.data;
 };
 
-export const deletePersonalChat = async (conversationId: string) => {
-  const response = await api.delete(`/conversations/${conversationId}`);
+export const deletePersonalChat = async (conversationId: string, action: 'clear' | 'delete' = 'delete') => {
+  const response = await api.delete(`/conversations/${conversationId}`, {
+    params: { action }
+  });
   return response.data;
 };
 

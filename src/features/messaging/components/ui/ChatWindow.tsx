@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { setPinnedChatId, isChatPinned } from "../../utils/pinUtils";
 import { setPinnedMessageId } from "../../utils/pinMessageUtils";
 import { PinnedMessageBanner } from "./PinnedMessageBanner";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 
 // Modular hooks
 import { useChatSocket } from "../../hooks/useChatSocket";
@@ -198,6 +199,12 @@ export default function ChatWindow({
     pinnedMessageId,
     setPinnedMessageId: setPinnedMessageIdState,
     handleUnpinMessage,
+    isReplacePinModalOpen,
+    isRemovePinModalOpen,
+    confirmReplacePin,
+    cancelReplacePin,
+    confirmRemovePin,
+    cancelRemovePin,
   } = useMessageActions({
     chat,
     currentUserId,
@@ -274,13 +281,21 @@ export default function ChatWindow({
 
   const pinnedMessage = useMemo(() => {
     if (!pinnedMessageId) return null;
-    return messages?.find((m) => String(m.id) === String(pinnedMessageId)) || null;
+    const msg = messages?.find((m) => String(m.id) === String(pinnedMessageId));
+    if (!msg || msg.is_deleted_for_me || msg.text === "This message was deleted for you.") {
+      return null;
+    }
+    return msg;
   }, [messages, pinnedMessageId]);
+
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
   const handleScrollToPinnedMessage = useCallback((msgId: string) => {
     const el = document.getElementById(`msg-${msgId}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedMessageId(msgId);
+      setTimeout(() => setHighlightedMessageId(null), 1000);
     }
   }, []);
 
@@ -296,11 +311,29 @@ export default function ChatWindow({
         setPinnedMessageIdState(payload.pinnedMessageId);
       }
     };
+    const handleMessageDeleted = (payload: {
+      messageId: string;
+      conversationId: string;
+      deleteType?: string;
+    }) => {
+      if (
+        String(payload.conversationId) === String(chat.id) &&
+        pinnedMessageId &&
+        String(payload.messageId) === String(pinnedMessageId)
+      ) {
+        setPinnedMessageId(chat.id, null, activeProfile?.type, activeProfile?.id);
+        setPinnedMessageIdState(null);
+      }
+    };
     socket.on("message_pinned", handleMessagePinned);
+    socket.on("message_deleted", handleMessageDeleted);
+    socket.on("message_deleted_for_everyone", handleMessageDeleted);
     return () => {
       socket.off("message_pinned", handleMessagePinned);
+      socket.off("message_deleted", handleMessageDeleted);
+      socket.off("message_deleted_for_everyone", handleMessageDeleted);
     };
-  }, [socket, chat.id, activeProfile?.type, activeProfile?.id, setPinnedMessageIdState]);
+  }, [socket, chat.id, activeProfile?.type, activeProfile?.id, pinnedMessageId, setPinnedMessageIdState]);
 
   // 6. Modals management hook
   const modals = useChatModals({
@@ -326,6 +359,13 @@ export default function ChatWindow({
   // Rate limiting for requester: 1 message per 24 hours until accepted
   const isSenderWaiting24h = useMemo(() => {
     if (!chat.is_requesting || !isRequestSender) return false;
+    if (chat.is_declined) {
+      const baseTime = chat.last_sender_message_at || chat.lastMessageAt;
+      if (!baseTime) return true;
+      const lastTime = new Date(baseTime).getTime();
+      if (isNaN(lastTime)) return true;
+      return Date.now() - lastTime < 24 * 60 * 60 * 1000;
+    }
     const myMessages = messages.filter(
       (m) => m.sender === "me" || String(m.senderId) === String(currentUserId) || m.senderId === "me"
     );
@@ -344,7 +384,7 @@ export default function ChatWindow({
     const lastTime = new Date(lastSentTimestamp).getTime();
     if (isNaN(lastTime)) return true;
     return Date.now() - lastTime < 24 * 60 * 60 * 1000;
-  }, [chat.is_requesting, isRequestSender, messages, chat.last_sender_message_at, currentUserId]);
+  }, [chat.is_requesting, chat.is_declined, isRequestSender, messages, chat.last_sender_message_at, chat.lastMessageAt, currentUserId]);
 
   // Cannot Message state (matching Figma Block frame)
   const isCannotMessage = useMemo(() => {
@@ -525,11 +565,11 @@ export default function ChatWindow({
         isBlockedByMe={isBlockedByMe}
         isBlockedByOther={!!isBlockedByOther}
         typingDisplayString={typingDisplayString}
-        isDeclinedCooldown={isSenderWaiting24h}
+        isDeclinedCooldown={Boolean(chat.is_declined && isSenderWaiting24h)}
       />
 
       {/* Pinned Message Banner */}
-      {!isGroupInvitation && pinnedMessageId && (
+      {!isGroupInvitation && pinnedMessageId && pinnedMessage && (
         <PinnedMessageBanner
           message={pinnedMessage}
           pinnedMessageId={pinnedMessageId}
@@ -546,6 +586,7 @@ export default function ChatWindow({
           <MessageList
             messages={messages}
             pinnedMessageId={pinnedMessageId}
+            highlightedMessageId={highlightedMessageId}
             onLoadMore={fetchNextPage}
             hasMore={hasNextPage}
             isLoadingMore={isFetchingNextPage}
@@ -613,6 +654,7 @@ export default function ChatWindow({
                 searchUsersFn={chat.isGroup ? searchGroupMembers : searchUsers}
                 disabled={
                   isSenderWaiting24h ||
+                  chat.is_declined ||
                   (!isOrgChat && chat.is_requesting && !isRequestSender) ||
                   (!chat.otherUserId && !chat.isGroup) ||
                   !!isBlockedByOther ||
@@ -624,17 +666,19 @@ export default function ChatWindow({
                   isDeletedAccount
                 }
                 disabledMessage={
-                  isSenderWaiting24h
-                    ? "You can’t send a chat request to this user right now. Please try again after 24 hours."
-                    : (!isOrgChat && chat.is_requesting && !isRequestSender)
-                      ? "Accept or decline the chat request to start conversation"
-                      : isCannotMessage
-                        ? undefined
-                        : isJobChatDisabled
-                          ? "Permission required to participate in job chats"
-                          : isGeneralChatDisabled
-                            ? "Permission required to participate in general chat"
-                            : undefined
+                  chat.is_declined
+                    ? "You can’t send a chat request to this user right now. Please try again after 24 hours"
+                    : isSenderWaiting24h
+                      ? "You will be able to send more messages after your request is accepted"
+                      : (!isOrgChat && chat.is_requesting && !isRequestSender)
+                        ? "Accept the chat request to start the conversation"
+                        : isCannotMessage
+                          ? undefined
+                          : isJobChatDisabled
+                            ? "Permission required to participate in job chats"
+                            : isGeneralChatDisabled
+                              ? "Permission required to participate in general chat"
+                              : undefined
                 }
                 pendingEntityContext={pendingEntityContext}
                 onDismissEntityContext={() => setPendingEntityContext(null)}
@@ -664,7 +708,7 @@ export default function ChatWindow({
         <div className="w-full px-4 pb-6 pt-2 shrink-0 flex justify-center order-2">
           <div className="w-full max-w-[618px] h-[56px] flex flex-col justify-center items-center p-0 gap-2 shrink-0">
             {/* Label: You blocked this person */}
-            <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-[var(--ds-text-primary)]">
+            <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-center text-[var(--ds-text-primary)]">
               {canManageBlock
                 ? "You blocked this person"
                 : "This account is blocked by organization administrators"}
@@ -713,6 +757,22 @@ export default function ChatWindow({
         onDeleteForEveryone={handleDeleteForEveryone}
         previewMedia={previewMedia}
         onCloseMediaPreview={() => setPreviewMedia(null)}
+      />
+
+      {/* Remove Pinned Message Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={isRemovePinModalOpen}
+        type="remove_pinned_message"
+        onClose={cancelRemovePin}
+        onConfirm={confirmRemovePin}
+      />
+
+      {/* Replace Pinned Message Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={isReplacePinModalOpen}
+        type="replace_pinned_message"
+        onClose={cancelReplacePin}
+        onConfirm={confirmReplacePin}
       />
     </div>
   );

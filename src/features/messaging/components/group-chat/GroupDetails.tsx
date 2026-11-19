@@ -437,10 +437,8 @@ export default function GroupDetails({
 
             <CocpitConfirmBox
                 isOpen={userToBlock !== null}
-                title="Block this profile?"
-                message="Are you sure you want to block this user? They will not be able to interact with you."
-                confirmText="Block"
-                cancelText="Cancel"
+                type="block_profile"
+                targetName={activeGroup.members?.find(m => String(m.user_id) === String(userToBlock))?.full_name || "user"}
                 onConfirm={async () => {
                     if (!userToBlock) return;
                     try {
@@ -455,10 +453,7 @@ export default function GroupDetails({
 
             <CocpitConfirmBox
                 isOpen={invitationToCancel !== null}
-                title="Cancel Invitation"
-                message="Are you sure you want to cancel this group invitation?"
-                confirmText="Cancel Invitation"
-                cancelText="Keep"
+                type="cancel_invitation"
                 onConfirm={async () => {
                     if (!invitationToCancel) return;
                     try {
@@ -494,10 +489,8 @@ export default function GroupDetails({
 
             <CocpitConfirmBox
                 isOpen={userToRemove !== null}
-                title="Remove Member"
-                message="Are you sure you want to remove this member from the group?"
-                confirmText="Remove"
-                cancelText="Cancel"
+                type="remove_member"
+                targetName={activeGroup.members?.find(m => String(m.user_id) === String(userToRemove))?.full_name || "this member"}
                 onConfirm={async () => {
                     if (!userToRemove) return;
                     try {
@@ -518,10 +511,8 @@ export default function GroupDetails({
 
             <CocpitConfirmBox
                 isOpen={userToMakeAdmin !== null}
-                title="Make Group Admin"
-                message="Are you sure you want to make this member a group admin?"
-                confirmText="Make Admin"
-                cancelText="Cancel"
+                type="make_admin"
+                targetName={activeGroup.members?.find(m => String(m.user_id) === String(userToMakeAdmin))?.full_name || "this member"}
                 onConfirm={async () => {
                     if (!userToMakeAdmin) return;
                     try {
@@ -566,10 +557,7 @@ export default function GroupDetails({
 
             <CocpitConfirmBox
                 isOpen={showLeaveConfirm}
-                title="Leave Group"
-                message="Are you sure you want to leave this group?"
-                confirmText="Leave"
-                cancelText="Cancel"
+                type="leave_group"
                 onConfirm={async () => {
                     try {
                         await leaveGroup(activeGroup.conversation_id);
@@ -590,10 +578,7 @@ export default function GroupDetails({
 
             <CocpitConfirmBox
                 isOpen={showDeleteConfirm}
-                title="Delete Group"
-                message="Are you sure you want to delete this group? This action cannot be undone."
-                confirmText="Delete"
-                cancelText="Cancel"
+                type="delete_group"
                 onConfirm={async () => {
                     try {
                         await deleteGroup(activeGroup.conversation_id);

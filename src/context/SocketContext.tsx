@@ -52,19 +52,21 @@ const SocketContext = createContext<SocketContextType>({
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
 const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "auto";
 
+const showToast = (props: any) => {
+  const message = props.title || props.description;
+  const description = props.title && props.description ? props.description : undefined;
+
+  if (props.variant === 'destructive') {
+    sonnerToast.error(message, { description, duration: props.duration });
+  } else {
+    sonnerToast(message, { description, duration: props.duration });
+  }
+};
+
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, update } = useSession();
   const { activeProfile, refreshProfile, switchProfile } = useActiveProfile();
-  const toast = (props: any) => {
-    const message = props.title || props.description;
-    const description = props.title && props.description ? props.description : undefined;
-
-    if (props.variant === 'destructive') {
-      sonnerToast.error(message, { description, duration: props.duration });
-    } else {
-      sonnerToast(message, { description, duration: props.duration });
-    }
-  };
+  const toast = showToast;
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
@@ -404,8 +406,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
         console.log("[DEBUG] Firing standard message toast!");
 
+        let notifText = stripMentionSyntax(payload.text) || '';
+        if (payload.senderName && notifText.toLowerCase().startsWith(`${payload.senderName.toLowerCase()}:`)) {
+          notifText = notifText.slice(payload.senderName.length + 1).trim();
+        }
+        if (notifText.startsWith('"') && notifText.endsWith('"') && notifText.length >= 2) {
+          notifText = notifText.slice(1, -1).trim();
+        }
+
+        const isRequest = Boolean((payload as any).is_requesting || payload.title?.toLowerCase().includes('request'));
+        const toastTitle = isRequest
+          ? (payload.title || `New chat request from ${payload.senderName || 'Someone'}`)
+          : (payload.title || "New Message");
+
         toast({
-          title: "New Message",
+          title: toastTitle,
           description: (
             <div
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -425,7 +440,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
               )}
               */}
               <span className="text-sm">
-                {stripMentionSyntax(payload.text) || `You have a message from ${payload.senderName || "someone"}`}
+                {notifText || `You have a message from ${payload.senderName || "someone"}`}
               </span>
             </div>
           ),
@@ -583,14 +598,32 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       refreshMessagingCaches(convId);
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
-      const groupName = payload?.other_user_name || payload?.conversation_name || payload?.group_name || payload?.name;
-      const inviterName = payload?.other_user_headline;
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      if (currentPath.startsWith('/messaging')) {
+        return;
+      }
 
-      const message = inviterName
-        ? `${inviterName} invited you to join "${groupName || 'a group'}" group.`
-        : `You were invited to join "${groupName || 'a group'}" group.`;
+      const groupName = payload?.other_user_name || payload?.conversation_name || payload?.group_name || payload?.name || 'a group';
+      const inviterName = payload?.other_user_headline || 'Someone';
 
-      sonnerToast.success(message);
+      toast({
+        title: "Group Invitation",
+        description: (
+          <div
+            className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => {
+              if (convId) {
+                router.push(`/messaging?conversationId=${convId}`);
+              }
+            }}
+          >
+            <span className="text-sm">
+              {inviterName} invited you to join &quot;{groupName}&quot; group.
+            </span>
+          </div>
+        ),
+        duration: 5000,
+      });
     };
 
     const handleUserStatus = (payload: UserStatusPayload) => {
@@ -1021,6 +1054,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    const handleGlobalMessagePinned = (payload: { conversationId: string; pinnedMessageId: string | null; is_pinned?: boolean }) => {
+      if (!payload?.conversationId) return;
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations"] },
+        (oldData) => {
+          if (!oldData) return oldData;
+          return oldData.map((c) =>
+            String(c.id) === String(payload.conversationId)
+              ? { ...c, pinned_message_id: payload.pinnedMessageId }
+              : c
+          );
+        }
+      );
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -1037,6 +1085,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
     newSocket.on('auth:suspended', handleAuthSuspended);
+    newSocket.on('message_pinned', handleGlobalMessagePinned);
 
     // Also listen for the global Axios 403 interceptor event
     const handleGlobalSuspendedEvent = () => {
@@ -1106,6 +1155,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('user_unblocked', handleUnblock);
       newSocket.off('unblock_confirmed', handleUnblock);
       newSocket.off('auth:suspended', handleAuthSuspended);
+      newSocket.off('message_pinned', handleGlobalMessagePinned);
       window.removeEventListener('auth:suspended', handleGlobalSuspendedEvent);
       newSocket.off('ORGANIZATION_USER_BLOCKED', handleBlock);
       newSocket.off('ORGANIZATION_USER_UNBLOCKED', handleUnblock);

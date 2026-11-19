@@ -27,6 +27,7 @@ import { ReactionListPopup } from "../ReactionListPopup";
 import { createPortal } from "react-dom";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useSession } from "next-auth/react";
+import { useQueryClient, InfiniteData } from "@tanstack/react-query";
 import UnavailableContentCard from "../ui/UnavailableContentCard";
 import { EntityPreviewCard } from "../../EntityPreviewCard";
 import { Icon } from "@iconify/react";
@@ -121,6 +122,23 @@ export function MessageBubble(props: MessageBubbleProps) {
       ? isPinnedProp
       : isMessagePinned(conversationId, message.id, activeProfile?.type, activeProfile?.id);
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
+  const cachedOriginalMsg = useMemo(() => {
+    if (!message.repliedMessage?.messageId) return null;
+    const queries = queryClient.getQueriesData<InfiniteData<Message[]>>({
+      queryKey: ["messages"],
+    });
+    for (const [, queryData] of queries) {
+      if (queryData?.pages) {
+        for (const page of queryData.pages) {
+          const found = page.find((m) => m.id === message.repliedMessage!.messageId);
+          if (found) return found;
+        }
+      }
+    }
+    return null;
+  }, [message.repliedMessage?.messageId, queryClient]);
   const isMe = message.sender === "me";
   const isDeletedForEveryone = Boolean(message.is_deleted_for_everyone);
   const isDeletedForMe = Boolean(message.is_deleted_for_me && !isDeletedForEveryone);
@@ -210,7 +228,7 @@ export function MessageBubble(props: MessageBubbleProps) {
   const rawEntityId = message.entityId || (message as any).entity_id;
   const isPostEntity = rawEntityType === 'post' || rawEntityType === 'article';
   const textContent = message.text || message.text_content || "";
-  const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:post))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
+  const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:posts?))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
   const extractedPostId = textContent.match(postUrlRegex)?.[1];
 
   const hasPost = Boolean(
@@ -860,6 +878,7 @@ export function MessageBubble(props: MessageBubbleProps) {
               )}
 
             <div
+              style={message.repliedMessage?.senderName ? { minWidth: "210px" } : undefined}
               className={cn(
                 "relative flex min-w-0",
                 // Figma Frame 2610101: Row container with gap: 4px (gap-1) holding message bubble and retry icon
@@ -867,16 +886,21 @@ export function MessageBubble(props: MessageBubbleProps) {
                   ? "flex-row items-center gap-1 max-w-[85%] sm:max-w-[calc(100%-30%)] w-fit"
                   : isDeleted
                     ? deletedBoxWidth
-                    : "max-w-[85%] sm:max-w-[calc(100%-30%)] w-fit",
+                    : cn(
+                        "max-w-[85%] sm:max-w-[calc(100%-30%)] w-fit",
+                        message.repliedMessage?.senderName && "min-w-[210px]"
+                      ),
               )}
             >
               <div
+                style={message.repliedMessage?.senderName ? { minWidth: "210px" } : undefined}
                 className={cn(
                   "relative break-words transition-all box-border",
                   isDeleted
                     ? `${deletedBoxWidth} h-[30px] min-h-[30px] flex flex-row items-center justify-center p-2 rounded-[16px] border border-[var(--ds-border)] bg-transparent text-[var(--ds-text-muted)]`
                     : cn(
                         "w-full flex flex-col justify-center min-h-[34px]",
+                        message.repliedMessage?.senderName && "min-w-[210px]",
                         // Figma Frame 2610069: text is centered in failed bubble
                         isMe && message.status === 'failed'
                           ? "items-center text-center"
@@ -917,22 +941,72 @@ export function MessageBubble(props: MessageBubbleProps) {
                           (Boolean(activeProfile?.name) &&
                             repliedSenderRaw.trim().toLowerCase() === activeProfile?.name?.trim().toLowerCase());
                         const resolvedRepliedSenderName = isRepliedSenderMe ? "You" : repliedSenderRaw;
+                        const repliedRawContent = cachedOriginalMsg?.text || cachedOriginalMsg?.text_content || message.repliedMessage.content || "";
+                        const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:posts?))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
+                        const originalUrlMatch = (cachedOriginalMsg?.text || cachedOriginalMsg?.text_content || '')?.match(postUrlRegex);
+                        const extractedRepliedPostId =
+                          message.repliedMessage.sharedPostId ||
+                          (cachedOriginalMsg as any)?.shared_post_id ||
+                          cachedOriginalMsg?.sharedPostId ||
+                          (cachedOriginalMsg?.entityType === 'post' || cachedOriginalMsg?.entityType === 'article' ? cachedOriginalMsg?.entityId : null) ||
+                          (message.repliedMessage.entityType === 'post' || message.repliedMessage.entityType === 'article' ? message.repliedMessage.entityId : null) ||
+                          (cachedOriginalMsg?.sharedPost as any)?.id ||
+                          (cachedOriginalMsg?.sharedPost as any)?.post_id ||
+                          repliedRawContent.match(postUrlRegex)?.[1] ||
+                          originalUrlMatch?.[1];
+                        const cachedRepliedPost = extractedRepliedPostId ? (queryClient.getQueryData<any>(["repliedPostPreview", extractedRepliedPostId]) || queryClient.getQueryData<any>(["sharedPost", extractedRepliedPostId])) : null;
+
+                        const effectiveSharedProfile = cachedOriginalMsg?.sharedProfile || message.repliedMessage.sharedProfile;
+                        const effectiveSharedPost = cachedOriginalMsg?.sharedPost || cachedRepliedPost || message.repliedMessage.sharedPost;
+                        const effectivePoll = cachedOriginalMsg?.sharedPost?.poll || (cachedOriginalMsg as any)?.poll || cachedRepliedPost?.poll || (cachedRepliedPost?.post_type === 'poll' ? { question: cachedRepliedPost.content } : null) || message.repliedMessage.poll;
+                        const effectiveMediaUrl =
+                          cachedOriginalMsg?.media?.[0]?.url ||
+                          cachedOriginalMsg?.sharedPost?.media?.[0]?.url ||
+                          (cachedOriginalMsg as any)?.shared_post?.media?.[0]?.url ||
+                          cachedRepliedPost?.media?.[0]?.url ||
+                          message.repliedMessage.mediaUrl;
+                        const effectiveMediaType =
+                          cachedOriginalMsg?.media?.[0]?.type ||
+                          cachedOriginalMsg?.sharedPost?.media?.[0]?.type ||
+                          (cachedOriginalMsg as any)?.shared_post?.media?.[0]?.type ||
+                          cachedRepliedPost?.media?.[0]?.type ||
+                          (effectiveMediaUrl ? 'image' : null) ||
+                          message.repliedMessage.mediaType;
+
+                        let effectiveContent = repliedRawContent;
+                        if (effectivePoll) {
+                          const pollQ =
+                            (effectivePoll as any)?.question ||
+                            cachedRepliedPost?.content ||
+                            cachedOriginalMsg?.sharedPost?.content ||
+                            (cachedOriginalMsg?.text && !cachedOriginalMsg.text.startsWith('http') && cachedOriginalMsg.text.trim().toLowerCase() !== 'poll' ? cachedOriginalMsg.text : null);
+                          if (pollQ && !pollQ.startsWith('http') && pollQ.trim().toLowerCase() !== 'poll') {
+                            effectiveContent = pollQ;
+                          }
+                        } else if (cachedRepliedPost?.content && repliedRawContent.startsWith('http')) {
+                          effectiveContent = cachedRepliedPost.content;
+                        } else if (cachedOriginalMsg?.sharedPost?.content && repliedRawContent.startsWith('http')) {
+                          effectiveContent = cachedOriginalMsg.sharedPost.content;
+                        }
 
                         return (
                           <RepliedMessageBox
                             senderName={resolvedRepliedSenderName}
-                            content={message.repliedMessage.content}
+                            content={effectiveContent}
                             isDeleted={message.repliedMessage.isDeleted}
                             isSent={isRepliedSenderMe}
-                            mediaType={message.repliedMessage.mediaType}
+                            mediaType={effectiveMediaType}
                             mediaName={message.repliedMessage.mediaName}
-                            mediaUrl={message.repliedMessage.mediaUrl}
-                            sharedPostId={message.repliedMessage.sharedPostId}
+                            mediaUrl={effectiveMediaUrl}
+                            sharedPostId={extractedRepliedPostId || message.repliedMessage.sharedPostId}
                             sharedProfileId={message.repliedMessage.sharedProfileId}
                             sharedProfileType={message.repliedMessage.sharedProfileType}
                             entityType={message.repliedMessage.entityType}
                             entityId={message.repliedMessage.entityId}
                             isAttachment={message.repliedMessage.isAttachment}
+                            sharedProfile={effectiveSharedProfile}
+                            sharedPost={effectiveSharedPost}
+                            poll={effectivePoll}
                             onClick={() =>
                               onReplyClick?.(message.repliedMessage!.messageId)
                             }
@@ -942,7 +1016,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                     {!message.is_deleted_for_everyone &&
                       !message.is_deleted_for_me && (() => {
                         const textContent = message.text || message.text_content || "";
-                        const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:post))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
+                        const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:posts?))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
                         const extractedPostId = textContent.match(postUrlRegex)?.[1];
 
                         const profileUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/profile\/([a-zA-Z0-9_.-]+)/i;

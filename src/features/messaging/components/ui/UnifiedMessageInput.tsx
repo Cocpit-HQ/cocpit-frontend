@@ -10,6 +10,44 @@ import ReplyPreview from "../ReplyPreview"
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+const ALLOWED_IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"];
+
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+const ALLOWED_VIDEO_EXTS = [".mp4", ".webm", ".mov"];
+
+const ALLOWED_DOC_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+const ALLOWED_DOC_EXTS = [".pdf", ".doc", ".docx"];
+
+const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100MB matching backend uploadChatMedia
+const MAX_IMAGES_COUNT = 10;
+const MAX_VIDEOS_COUNT = 5;
+const MAX_DOCS_COUNT = 5;
+
+const IMAGE_ACCEPT = ["image/*", ...ALLOWED_IMAGE_TYPES, ...ALLOWED_IMAGE_EXTS].join(',');
+const VIDEO_ACCEPT = ["video/*", ...ALLOWED_VIDEO_TYPES, ...ALLOWED_VIDEO_EXTS].join(',');
+const DOC_ACCEPT = [...ALLOWED_DOC_EXTS, ...ALLOWED_DOC_TYPES].join(',');
+
+const isImageFile = (file: File) => {
+    const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    return ALLOWED_IMAGE_TYPES.includes(file.type) || ALLOWED_IMAGE_EXTS.includes(ext);
+};
+
+const isVideoFile = (file: File) => {
+    const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    return ALLOWED_VIDEO_TYPES.includes(file.type) || ALLOWED_VIDEO_EXTS.includes(ext);
+};
+
+const isDocFile = (file: File) => {
+    const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    return ALLOWED_DOC_TYPES.includes(file.type) || ALLOWED_DOC_EXTS.includes(ext);
+};
 
 interface UnifiedMessageInputProps {
     onSendMessage: (text: string, files: File[]) => void
@@ -33,6 +71,9 @@ interface UnifiedMessageInputProps {
         entityType?: string | null;
         entityId?: string | null;
         isAttachment?: boolean;
+        sharedProfile?: any;
+        sharedPost?: any;
+        poll?: any;
     } | null;
     onCancelReply?: () => void;
     editingMessage?: { id: string; text?: string; text_content?: string } | null;
@@ -73,11 +114,55 @@ export default function UnifiedMessageInput({
     const [text, setText] = useState("")
     const [inlineMentions, setInlineMentions] = useState<UserMention[]>([])
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+    const [showAttachmentMenu, setShowAttachmentMenu] = useState(false)
     const [files, setFiles] = useState<File[]>([])
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const pickerRef = useRef<HTMLDivElement>(null)
     const emojiButtonRef = useRef<HTMLButtonElement>(null)
-    const fileInputRef = useRef<HTMLInputElement>(null)
+    const attachmentMenuRef = useRef<HTMLDivElement>(null)
+    const imageInputRef = useRef<HTMLInputElement>(null)
+    const videoInputRef = useRef<HTMLInputElement>(null)
+    const docInputRef = useRef<HTMLInputElement>(null)
+    const { toast } = useToast()
+
+    const currentMediaType = React.useMemo<'image' | 'video' | 'document' | null>(() => {
+        if (files.length === 0) return null;
+        const first = files[0];
+        if (isImageFile(first)) return 'image';
+        if (isVideoFile(first)) return 'video';
+        if (isDocFile(first)) return 'document';
+        return null;
+    }, [files]);
+
+    const handlePaperclipClick = () => {
+        if (disabled || isLoading) return;
+        // If files are already attached, directly open picker for the current locked category
+        if (currentMediaType === 'image') {
+            imageInputRef.current?.click();
+            return;
+        }
+        if (currentMediaType === 'video') {
+            videoInputRef.current?.click();
+            return;
+        }
+        if (currentMediaType === 'document') {
+            docInputRef.current?.click();
+            return;
+        }
+        // If empty, toggle attachment dropdown menu
+        setShowAttachmentMenu(prev => !prev);
+    };
+
+    const handleSelectCategory = (category: 'image' | 'video' | 'document') => {
+        setShowAttachmentMenu(false);
+        if (category === 'image') {
+            imageInputRef.current?.click();
+        } else if (category === 'video') {
+            videoInputRef.current?.click();
+        } else if (category === 'document') {
+            docInputRef.current?.click();
+        }
+    };
 
     const { theme, resolvedTheme } = useTheme()
     const isDarkTheme = resolvedTheme === "dark" || theme === "dark" 
@@ -148,11 +233,87 @@ export default function UnifiedMessageInput({
         }
     }
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const newFiles = Array.from(e.target.files);
-            setFiles(prev => [...prev, ...newFiles]);
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, targetCategory?: 'image' | 'video' | 'document') => {
+        const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
+        if (selectedFiles.length === 0) return;
+
+        // Reset input value so re-selecting same file triggers change
+        e.target.value = '';
+
+        let activeType = currentMediaType || targetCategory;
+        if (!activeType) {
+            const first = selectedFiles[0];
+            if (isImageFile(first)) activeType = 'image';
+            else if (isVideoFile(first)) activeType = 'video';
+            else if (isDocFile(first)) activeType = 'document';
+            else {
+                toast({
+                    title: "Unsupported file",
+                    description: "Selected file format is not supported.",
+                    variant: "destructive"
+                });
+                return;
+            }
         }
+
+        const validFiles: File[] = [];
+        let hadIncompatibleFiles = false;
+
+        for (const file of selectedFiles) {
+            // Check file size (100MB limit)
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                toast({
+                    title: "File too large",
+                    description: `"${file.name}" exceeds the maximum allowed size of 100MB.`,
+                    variant: "destructive"
+                });
+                continue;
+            }
+
+            // Ensure selected file matches the active locked category (non-matching types hidden at file picker level)
+            if (activeType === 'image' && !isImageFile(file)) {
+                hadIncompatibleFiles = true;
+                continue;
+            }
+            if (activeType === 'video' && !isVideoFile(file)) {
+                hadIncompatibleFiles = true;
+                continue;
+            }
+            if (activeType === 'document' && !isDocFile(file)) {
+                hadIncompatibleFiles = true;
+                continue;
+            }
+
+            validFiles.push(file);
+        }
+
+        if (hadIncompatibleFiles && validFiles.length > 0) {
+            toast({
+                description: `Cannot mix different file types in one message. Only ${activeType} files were added.`,
+            });
+        }
+
+        if (validFiles.length === 0) return;
+
+        const maxLimit = activeType === 'image' ? MAX_IMAGES_COUNT : activeType === 'video' ? MAX_VIDEOS_COUNT : MAX_DOCS_COUNT;
+        const totalCount = files.length + validFiles.length;
+
+        if (totalCount > maxLimit) {
+            const allowedCount = maxLimit - files.length;
+            if (allowedCount <= 0) {
+                toast({
+                    description: `Maximum ${maxLimit} ${activeType}s allowed per message.`,
+                    variant: "destructive"
+                });
+                return;
+            }
+            toast({
+                description: `Only ${allowedCount} more ${activeType}(s) added. Maximum is ${maxLimit}.`,
+            });
+            validFiles.splice(allowedCount);
+        }
+
+        setFiles(prev => [...prev, ...validFiles]);
     };
 
     const removeFile = (index: number) => {
@@ -188,15 +349,21 @@ export default function UnifiedMessageInput({
             ) {
                 setShowEmojiPicker(false);
             }
+            if (
+                attachmentMenuRef.current &&
+                !attachmentMenuRef.current.contains(event.target as Node)
+            ) {
+                setShowAttachmentMenu(false);
+            }
         };
 
-        if (showEmojiPicker) {
+        if (showEmojiPicker || showAttachmentMenu) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [showEmojiPicker]);
+    }, [showEmojiPicker, showAttachmentMenu]);
 
     const filePreviews = React.useMemo(() => {
         return files.map(file => ({
@@ -419,21 +586,51 @@ export default function UnifiedMessageInput({
                                 : "border-[var(--ds-text-primary)] focus-within:border-[var(--ds-accent)]"
                         )}
                     >
-                        <button
-                            type="button"
-                            className={cn(
-                                "w-5 h-5 flex items-center justify-center transition-colors shrink-0 p-0",
-                                isDisabled
-                                    ? "text-[var(--ds-text-muted)] cursor-default"
-                                    : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] cursor-pointer"
+                        <div className="relative shrink-0 flex items-center justify-center" ref={attachmentMenuRef}>
+                            <button
+                                type="button"
+                                className={cn(
+                                    "w-5 h-5 flex items-center justify-center transition-colors shrink-0 p-0",
+                                    isDisabled
+                                        ? "text-[var(--ds-text-muted)] cursor-default"
+                                        : showAttachmentMenu
+                                            ? "text-[var(--ds-accent)] cursor-pointer"
+                                            : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] cursor-pointer"
+                                )}
+                                disabled={isDisabled}
+                                onClick={handlePaperclipClick}
+                                aria-label="Attach file"
+                                title="Attach file"
+                            >
+                                <Paperclip className="w-5 h-5" strokeWidth={1.5} />
+                            </button>
+
+                            {showAttachmentMenu && (
+                                <div className="absolute bottom-full mb-2 left-0 z-50 w-[99px] h-[116px] p-3 flex flex-col items-start gap-4 bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[8px] shadow-lg animate-in fade-in zoom-in-95 duration-100 box-border">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSelectCategory('image')}
+                                        className="h-5 p-0 bg-transparent border-0 font-['DM_Sans'] font-normal text-[14px] leading-5 text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors text-left cursor-pointer flex-none"
+                                    >
+                                        Photos
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSelectCategory('video')}
+                                        className="h-5 p-0 bg-transparent border-0 font-['DM_Sans'] font-normal text-[14px] leading-5 text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors text-left cursor-pointer flex-none"
+                                    >
+                                        Videos
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSelectCategory('document')}
+                                        className="h-5 p-0 bg-transparent border-0 font-['DM_Sans'] font-normal text-[14px] leading-5 text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors text-left cursor-pointer flex-none"
+                                    >
+                                        Documents
+                                    </button>
+                                </div>
                             )}
-                            disabled={isDisabled}
-                            onClick={() => fileInputRef.current?.click()}
-                            aria-label="Attach file"
-                            title="Attach file"
-                        >
-                            <Paperclip className="w-5 h-5" strokeWidth={1.5} />
-                        </button>
+                        </div>
 
                         <div className="flex-1 relative flex items-center justify-start min-w-0">
                             <MentionTextarea
@@ -457,13 +654,30 @@ export default function UnifiedMessageInput({
                         </div>
                     </div>
 
+                    {/* Dedicated hidden file inputs for Photos, Videos, and Documents */}
                     <input
+                        ref={imageInputRef}
                         type="file"
                         multiple
-                        ref={fileInputRef}
                         className="hidden"
-                        onChange={handleFileSelect}
-                        accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        onChange={(e) => handleFileSelect(e, 'image')}
+                        accept={IMAGE_ACCEPT}
+                    />
+                    <input
+                        ref={videoInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleFileSelect(e, 'video')}
+                        accept={VIDEO_ACCEPT}
+                    />
+                    <input
+                        ref={docInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleFileSelect(e, 'document')}
+                        accept={DOC_ACCEPT}
                     />
 
                     {/* Right side emoji and send buttons */}

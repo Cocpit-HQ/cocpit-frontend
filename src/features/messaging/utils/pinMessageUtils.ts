@@ -23,10 +23,15 @@ export function getPinnedMessageId(
   profileId?: string | null
 ): string | null {
   if (typeof window === "undefined" || !conversationId) return null;
-  const key = getStorageKey(conversationId, profileType, profileId);
-  if (!key) return null;
   try {
-    return localStorage.getItem(key);
+    const directKey = `${PINNED_MSG_KEY_PREFIX}${String(conversationId)}`;
+    const directVal = localStorage.getItem(directKey);
+    if (directVal) return directVal;
+
+    const pType = profileType || "USER";
+    const pId = profileId || "me";
+    const legacyKey = `${PINNED_MSG_KEY_PREFIX}${pType}_${pId}_${String(conversationId)}`;
+    return localStorage.getItem(legacyKey);
   } catch {
     return null;
   }
@@ -39,13 +44,17 @@ export function setPinnedMessageId(
   profileId?: string | null
 ): void {
   if (typeof window === "undefined" || !conversationId) return;
-  const key = getStorageKey(conversationId, profileType, profileId);
-  if (!key) return;
   try {
+    const directKey = `${PINNED_MSG_KEY_PREFIX}${String(conversationId)}`;
+    const pType = profileType || "USER";
+    const pId = profileId || "me";
+    const legacyKey = `${PINNED_MSG_KEY_PREFIX}${pType}_${pId}_${String(conversationId)}`;
     if (messageId) {
-      localStorage.setItem(key, String(messageId));
+      localStorage.setItem(directKey, String(messageId));
+      localStorage.setItem(legacyKey, String(messageId));
     } else {
-      localStorage.removeItem(key);
+      localStorage.removeItem(directKey);
+      localStorage.removeItem(legacyKey);
     }
   } catch {}
 }

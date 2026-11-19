@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Page } from "@/types/common";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -231,6 +231,12 @@ export default function MessagingPage() {
   const { user } = useAuth();
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [createGroupInitialView, setCreateGroupInitialView] = useState<'personalChat' | 'addMembers' | 'createGroup'>('personalChat');
+
+  const excludedUserIdsForPersonalChat = useMemo(() => {
+    return chats
+      .filter((c) => !c.isGroup && c.otherUserId && (c.is_requesting || c.is_declined))
+      .map((c) => String(c.otherUserId));
+  }, [chats]);
 
   const { socket } = useSocket();
   const queryClient = useQueryClient();
@@ -1210,6 +1216,7 @@ export default function MessagingPage() {
           isOpen={isCreateGroupOpen}
           onClose={() => setIsCreateGroupOpen(false)}
           initialView={createGroupInitialView}
+          excludeUserIds={createGroupInitialView === 'personalChat' ? excludedUserIdsForPersonalChat : undefined}
         />
       </GroupChatProvider>
     </div>

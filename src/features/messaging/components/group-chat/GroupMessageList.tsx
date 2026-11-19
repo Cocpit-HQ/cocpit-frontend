@@ -26,6 +26,7 @@ interface GroupMessageListProps {
     pinnedMessageId?: string | null;
     conversationId?: string;
     groupMembers?: any[];
+    highlightedMessageId?: string | null;
 }
 
 const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
@@ -48,6 +49,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
     pinnedMessageId,
     conversationId,
     groupMembers,
+    highlightedMessageId: propHighlightedMessageId,
 }, ref) => {
     const localRef = useRef<HTMLDivElement>(null);
     const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef;
@@ -93,7 +95,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
         return null;
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+    const [localHighlightedMessageId, setLocalHighlightedMessageId] = useState<string | null>(null);
+    const effectiveHighlightedMessageId = propHighlightedMessageId || localHighlightedMessageId;
     const [showScrollButton, setShowScrollButton] = useState(false);
     const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -115,8 +118,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
         const el = document.getElementById(`msg-${messageId}`);
         if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setHighlightedMessageId(messageId);
-            setTimeout(() => setHighlightedMessageId(null), 1000);
+            setLocalHighlightedMessageId(messageId);
+            setTimeout(() => setLocalHighlightedMessageId(null), 1000);
         }
     };
 
@@ -390,7 +393,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
                                         }}
                                         onReply={onReply}
                                         onReplyClick={handleReplyClick}
-                                        isHighlighted={highlightedMessageId === msg.id}
+                                        isHighlighted={effectiveHighlightedMessageId === msg.id}
                                         onReaction={onReaction}
                                         currentUserId={currentUserId}
                                         conversationId={conversationId}

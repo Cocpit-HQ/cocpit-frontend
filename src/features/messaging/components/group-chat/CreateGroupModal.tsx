@@ -120,14 +120,14 @@ export default function CreateGroupModal({
         });
     }, [searchResults, excludedIds]);
 
-    // Personal chat excludes current logged-in user
+    // Personal chat excludes current logged-in user and any excluded user IDs (e.g. pending/declined chat requests)
     const personalChatResults = useMemo(() => {
         const currentUid = String(user?.id || (user as any)?.user_id || "");
         return searchResults.filter((u) => {
             const uid = String(u.user_id || u.id);
-            return uid !== currentUid;
+            return uid !== currentUid && !excludedIds.has(uid);
         });
-    }, [searchResults, user]);
+    }, [searchResults, user, excludedIds]);
 
     // Available slots calculation
     const currentMemberCount = activeGroup?.members?.filter((m: any) => !m.left_at)?.length || 0;
@@ -158,6 +158,7 @@ export default function CreateGroupModal({
                     query || undefined,
                     cursor,
                     20,
+                    currentView === 'personalChat' ? 'personal' : undefined
                 );
                 setSearchResults((prev) => {
                     const combined = append ? [...prev, ...result.data] : result.data;
@@ -175,7 +176,7 @@ export default function CreateGroupModal({
                 setIsSearching(false);
             }
         },
-        [toast],
+        [toast, currentView],
     );
 
     useEffect(() => {
@@ -190,7 +191,7 @@ export default function CreateGroupModal({
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
-    }, [searchTerm, isOpen, runSearch]);
+    }, [searchTerm, isOpen, currentView, runSearch]);
 
     const handleLoadMore = useCallback(() => {
         if (!hasMoreUsers || isSearching) return;

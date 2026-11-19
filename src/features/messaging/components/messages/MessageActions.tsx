@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Icon } from "@iconify/react";
 import {
   CopyIcon,
   ReplyIcon,
@@ -37,7 +36,7 @@ export const CopyButton = ({
     className={cn(
       "p-0 z-50 relative transition-all cursor-pointer",
       isCopied
-        ? "text-[var(--ds-accent)] scale-110"
+        ? "text-[var(--ds-accent)]"
         : "text-[var(--ds-text-secondary)] hover:opacity-80",
       className,
     )}
@@ -53,14 +52,7 @@ export const CopyButton = ({
     title={isCopied ? "Copied" : "Copy message"}
     aria-label="Copy message"
   >
-    {isCopied ? (
-      <Icon
-        icon="solar:copy-bold"
-        className="w-5 h-5 text-[var(--ds-accent)] animate-in zoom-in-75 duration-150"
-      />
-    ) : (
-      <CopyIcon className="w-5 h-5" size={20} />
-    )}
+    <CopyIcon className="w-5 h-5" size={20} filled={isCopied} />
   </button>
 );
 

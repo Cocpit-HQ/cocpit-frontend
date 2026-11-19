@@ -32,9 +32,10 @@ interface MessageListProps {
   isCannotMessage?: boolean
   cannotMessageText?: string
   pinnedMessageId?: string | null
+  highlightedMessageId?: string | null
 }
 
-const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, selectedMessageIds, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId, otherUserType, otherUserSlug, chatAvatar, isRequesting = false, isCannotMessage = false, cannotMessageText, pinnedMessageId }, ref) => {
+const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, selectedMessageIds, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId, otherUserType, otherUserSlug, chatAvatar, isRequesting = false, isCannotMessage = false, cannotMessageText, pinnedMessageId, highlightedMessageId: propHighlightedMessageId }, ref) => {
   const localRef = useRef<HTMLDivElement>(null)
   const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
@@ -77,7 +78,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     return null;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null)
+  const [localHighlightedMessageId, setLocalHighlightedMessageId] = useState<string | null>(null)
+  const effectiveHighlightedMessageId = propHighlightedMessageId || localHighlightedMessageId
   const [showScrollButton, setShowScrollButton] = useState(false)
   const scrollTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -100,8 +102,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     const el = document.getElementById(`msg-${messageId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setHighlightedMessageId(messageId);
-      setTimeout(() => setHighlightedMessageId(null), 1000);
+      setLocalHighlightedMessageId(messageId);
+      setTimeout(() => setLocalHighlightedMessageId(null), 1000);
     }
   };
 
@@ -375,7 +377,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                     isGroup={isGroup}
                     onReply={onReply}
                     onReplyClick={handleReplyClick}
-                    isHighlighted={highlightedMessageId === msg.id}
+                    isHighlighted={effectiveHighlightedMessageId === msg.id}
                     onReaction={onReaction}
                     currentUserId={currentUserId}
                     conversationId={conversationId}
@@ -394,7 +396,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
             })}
             {isCannotMessage && (
               <div className="w-full flex justify-center items-center py-2 shrink-0">
-                <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-[var(--ds-text-secondary)] flex items-center justify-center">
+                <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-center text-[var(--ds-text-secondary)] flex items-center justify-center">
                   {cannotMessageText || "You can't message this person"}
                 </span>
               </div>

@@ -7,6 +7,7 @@ import { deletePersonalChat, muteGroup, unmuteGroup } from "@/services/api/messa
 import { leaveGroup } from "@/services/api/group-chat";
 import { useSocial } from "@/context/SocialContext";
 import { formatMuteToastMessage } from "../utils/muteUtils";
+import { setPinnedMessageId } from "../utils/pinMessageUtils";
 
 function getErrorMessage(err: unknown, fallback: string): string {
   if (err && typeof err === "object") {
@@ -96,7 +97,7 @@ export function useChatModals({
   // Confirm Delete Chat
   const onConfirmDeleteChat = async () => {
     try {
-      await deletePersonalChat(chat.id);
+      await deletePersonalChat(chat.id, 'delete');
       queryClient.removeQueries({ queryKey: ["messages", chat.id] });
       queryClient.setQueriesData<ChatThread[]>(
         {
@@ -131,9 +132,21 @@ export function useChatModals({
   // Confirm Clear Chat
   const onConfirmClearChat = async () => {
     try {
-      await deletePersonalChat(chat.id);
+      await deletePersonalChat(chat.id, 'clear');
+      setPinnedMessageId(chat.id, null, activeProfile?.type, activeProfile?.id);
       queryClient.removeQueries({ queryKey: ["messages", chat.id] });
       queryClient.invalidateQueries({ queryKey: ["messages", chat.id] });
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations"] },
+        (oldChats: ChatThread[] | undefined) => {
+          if (!oldChats) return [];
+          return oldChats.map((c) =>
+            String(c.id) === String(chat.id)
+              ? { ...c, lastMessage: "", unread: 0, is_read: true }
+              : c
+          );
+        }
+      );
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       toast({ description: "Chat cleared successfully" });
     } catch (err: unknown) {
