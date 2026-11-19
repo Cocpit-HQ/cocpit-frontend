@@ -447,6 +447,10 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
             const injected = `\u200B${content} `;
             const newValue = baseLeft + injected + textAfter;
 
+            if (props.maxLength !== undefined && newValue.length > props.maxLength) {
+                return;
+            }
+
             // Track the full name so the highlighter knows to match it with spaces
             setMentionedNames(prev => Array.from(new Set([...prev, content])));
             
@@ -688,24 +692,29 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
                     className={cn(
-                        "fixed pointer-events-auto shadow-2xl rounded-xl w-full max-w-[560px] h-[168px] p-0 box-border flex flex-col items-start bg-[var(--ds-bg)] border border-[var(--ds-border)] overflow-hidden animate-in fade-in-0 zoom-in-95",
+                        "fixed pointer-events-auto rounded-xl h-[168px] p-0 box-border flex flex-col items-start bg-[var(--ds-bg)] overflow-hidden animate-in fade-in-0 zoom-in-95",
                         popupClassName
                     )}
                     style={{
                         zIndex: computedZIndex,
                         top: (() => {
                             if (!textareaRef.current) return '40px';
-                            const rect = textareaRef.current.getBoundingClientRect();
+                            const targetEl = (textareaRef.current.closest('.border-b') as HTMLElement) || textareaRef.current;
+                            const rect = targetEl.getBoundingClientRect();
                             const isTop = placement === 'top' || (rect.bottom + 168 > window.innerHeight && rect.top > 168);
-                            return isTop ? `${rect.top - 168 - 8}px` : `${rect.top + (suggestionPosition.top ?? 24)}px`;
+                            return isTop ? `${rect.top - 168 - 8}px` : `${rect.bottom + 8}px`;
                         })(),
                         left: (() => {
                             if (!textareaRef.current) return '10px';
-                            const rect = textareaRef.current.getBoundingClientRect();
-                            const isTop = placement === 'top' || (rect.bottom + 168 > window.innerHeight && rect.top > 168);
-                            return isTop 
-                                ? `${Math.max(12, Math.min(rect.left - 32, window.innerWidth - 560 - 12))}px`
-                                : `${rect.left + (suggestionPosition.left ?? 0)}px`;
+                            const targetEl = (textareaRef.current.closest('.border-b') as HTMLElement) || textareaRef.current;
+                            const rect = targetEl.getBoundingClientRect();
+                            return `${rect.left}px`;
+                        })(),
+                        width: (() => {
+                            if (!textareaRef.current) return 'auto';
+                            const targetEl = (textareaRef.current.closest('.border-b') as HTMLElement) || textareaRef.current;
+                            const rect = targetEl.getBoundingClientRect();
+                            return `${rect.width}px`;
                         })(),
                     }}
                 >

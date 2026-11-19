@@ -49,7 +49,8 @@ export const DynamicMention = ({ displayName, handle, mentionedUsers, disableLin
     )
   );
 
-  const nameToShow = user?.full_name || displayName;
+  const rawName = user?.full_name || displayName;
+  const nameToShow = rawName ? (rawName.startsWith('@') ? rawName : `@${rawName}`) : '';
   const linkHref = isCompany
     ? `/organization/${user?.slug || user?.account_name || user?.org_id || cleanHandle}`
     : `/profile/${user?.slug || user?.account_name || user?.user_id || cleanHandle}`;

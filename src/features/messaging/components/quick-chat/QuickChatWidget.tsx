@@ -265,7 +265,7 @@ export function QuickChatWidget() {
                           otherUserId: targetUserId,
                           name: user.full_name || user.account_name || "cocpit user",
                           role: user.headline || "",
-                          avatar: user.avatar_url || "gradient-1",
+                          avatar: user.avatar_url || undefined,
                           lastMessage: "",
                           time: new Date().toISOString(),
                           lastMessageAt: new Date().toISOString(),

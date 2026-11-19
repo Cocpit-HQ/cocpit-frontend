@@ -100,23 +100,9 @@ export function useChatSharedContext({
     processedEntityContextRef.current = contextKey;
 
     const checkContext = async () => {
-      if (chatId === "new") {
-        setPendingEntityContext(initialEntityContext);
-        return;
-      }
-
-      try {
-        const { checkContextSent } = await import("@/services/api/messaging");
-        const res = await checkContextSent(
-          String(chatId),
-          initialEntityContext.id,
-          initialEntityContext.type,
-        );
-        setPendingEntityContext(res && !res.sent ? initialEntityContext : null);
-      } catch (e) {
-        console.error("Failed to check if context is sent:", e);
-        setPendingEntityContext(initialEntityContext);
-      }
+      // Whenever an explicit initialEntityContext is provided (e.g. from Job Applicants or Offer Screen),
+      // always activate the pending context so the user can send it with their message.
+      setPendingEntityContext(initialEntityContext);
 
       if (typeof window !== "undefined") {
         const newParams = new URLSearchParams(window.location.search);

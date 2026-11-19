@@ -72,6 +72,48 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
         ? (isGroupInvitationRead ? 0 : 1)
         : (chat.unread > 0 ? chat.unread : (chat.is_read === false ? 1 : 0)));
 
+  const hasMention = Boolean(
+    chat.hasMention ||
+    (chat as any).has_mention ||
+    ((chat as any).unread_mention_count && (chat as any).unread_mention_count > 0) ||
+    ((chat.unreadMentionCount ?? 0) > 0)
+  );
+
+  const hasLastMessageMention = React.useMemo(() => {
+    if (displayUnread <= 0) return false;
+    const text = chat.lastMessage || (chat as any).last_message || (chat as any).last_message_text || resolvedLastMessage || "";
+    if (!text) return false;
+    const lower = text.toLowerCase();
+
+    // 1. Broadcast mention: @everyone, @every one, @all (plain, autocomplete @[Everyone](...), or in group context)
+    if (
+      lower.includes('@everyone') ||
+      lower.includes('@every one') ||
+      lower.includes('@all') ||
+      lower.includes('@[everyone') ||
+      lower.includes('@[all') ||
+      /(?:@\[?(?:everyone|all)\]?(?:\([^)]+\))?|(?<![a-zA-Z0-9._%+-])@(?:everyone|all)\b)/i.test(text) ||
+      (chat.isGroup && /\b@?everyone\b/i.test(text))
+    ) {
+      return true;
+    }
+
+    // 2. Structured markdown mention of current user: @[Name](currentUserId) or @[Name](user:currentUserId)
+    if (currentUserId) {
+      const userMentionRegex = new RegExp(`@\\[[^\\]]+\\]\\((?:user:)?${currentUserId}\\)`, 'i');
+      if (userMentionRegex.test(text)) return true;
+    }
+
+    // 3. User name / handle mention:
+    if (currentUserName) {
+      const nameRegex = new RegExp(`@${currentUserName}\\b`, 'i');
+      if (nameRegex.test(text)) return true;
+    }
+    return false;
+  }, [displayUnread, chat.lastMessage, (chat as any).last_message, (chat as any).last_message_text, resolvedLastMessage, chat.isGroup, currentUserId, currentUserName]);
+
+  const showMentionBadge = displayUnread > 0 && (hasMention || hasLastMessageMention);
+
   const isCompanyType = chat.otherUserType === 'COMPANY';
   const entityFallbackName = isCompanyType ? 'Unknown Page' : 'Unknown User';
   const entityUnavailableText = isCompanyType ? 'Page unavailable' : 'User unavailable';
@@ -187,18 +229,34 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
                 resolvedLastMessage || "No messages yet"
               )}
             </p>
-            {displayUnread > 0 && (
-              /* Frame 2609901: 14px x 14px, border-radius 7px, background #EC6229, padding: 1px 5px 1px 4px */
-              <div
-                className={`h-[14px] bg-[var(--ds-accent)] rounded-[7px] flex flex-col justify-center items-center shrink-0 box-border order-1 ${
-                  displayUnread > 9
-                    ? "min-w-[14px] w-auto px-1 py-[1px]"
-                    : "w-[14px] pt-[1px] pr-[5px] pb-[1px] pl-[4px]"
-                }`}
-              >
-                <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-white whitespace-nowrap flex items-center justify-center order-0 select-none">
-                  {displayUnread > 99 ? '99+' : displayUnread}
-                </span>
+            {(showMentionBadge || displayUnread > 0) && (
+              <div className="flex items-center gap-2 shrink-0 order-1">
+                {showMentionBadge && (
+                  /* Frame 2609901: 15px x 14px, rounded-full, background #EC6229 (var(--ds-accent)), @ text DM Sans 10px/12px white */
+                  <div
+                    className="w-[15px] h-[14px] bg-[var(--ds-accent)] rounded-full flex items-center justify-center shrink-0"
+                    title="You were mentioned"
+                    aria-label="You were mentioned"
+                  >
+                    <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-white select-none">
+                      @
+                    </span>
+                  </div>
+                )}
+                {displayUnread > 0 && (
+                  /* Frame 2609901: 14px x 14px, border-radius 7px, background #EC6229, padding: 1px 5px 1px 4px */
+                  <div
+                    className={`h-[14px] bg-[var(--ds-accent)] rounded-[7px] flex flex-col justify-center items-center shrink-0 box-border ${
+                      displayUnread > 9
+                        ? "min-w-[14px] w-auto px-1 py-[1px]"
+                        : "w-[14px] pt-[1px] pr-[5px] pb-[1px] pl-[4px]"
+                    }`}
+                  >
+                    <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-white whitespace-nowrap flex items-center justify-center order-0 select-none">
+                      {displayUnread > 99 ? '99+' : displayUnread}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -219,8 +277,12 @@ function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProp
     prevProps.isGroupInvitationRead === nextProps.isGroupInvitationRead &&
     prevProps.chat.id === nextProps.chat.id &&
     prevProps.chat.lastMessage === nextProps.chat.lastMessage &&
+    (prevProps.chat as any).last_message === (nextProps.chat as any).last_message &&
+    (prevProps.chat as any).last_message_text === (nextProps.chat as any).last_message_text &&
     prevProps.chat.time === nextProps.chat.time &&
     prevProps.chat.unread === nextProps.chat.unread &&
+    prevProps.chat.hasMention === nextProps.chat.hasMention &&
+    prevProps.chat.unreadMentionCount === nextProps.chat.unreadMentionCount &&
     prevProps.chat.online === nextProps.chat.online &&
     prevProps.chat.name === nextProps.chat.name &&
     prevProps.chat.avatar === nextProps.chat.avatar &&

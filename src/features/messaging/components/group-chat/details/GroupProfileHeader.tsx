@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import {
     LeftArrowIcon,
@@ -15,6 +15,12 @@ import {
     PopoverTrigger,
     PopoverClose
 } from "@/components/ui/popover";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { GroupDetails } from "@/types/group-chat";
 import { MAX_GROUP_MEMBERS } from "@/constants/messaging";
 
@@ -26,7 +32,10 @@ interface GroupProfileHeaderProps {
     onEditClick: () => void;
     onAddMember: () => void;
     onSearchClick: () => void;
-    onBellClick: () => void;
+    onBellClick?: () => void;
+    onMuteWithDuration: (hours: number | null) => void;
+    onUnmuteClick: () => void;
+    isMutedActive?: boolean;
     onLeaveClick: () => void;
     onDeleteClick: () => void;
     onReportClick?: () => void;
@@ -41,10 +50,14 @@ export const GroupProfileHeader: React.FC<GroupProfileHeaderProps> = ({
     onAddMember,
     onSearchClick,
     onBellClick,
+    onMuteWithDuration,
+    onUnmuteClick,
+    isMutedActive = false,
     onLeaveClick,
     onDeleteClick,
     onReportClick
 }) => {
+    const [isMuteDropdownOpen, setIsMuteDropdownOpen] = useState(false);
     return (
         <div className="flex flex-col shrink-0 w-full font-['DM_Sans']">
             {/* 1. Header Back Button (Frame 2609475: 16px from top, 16px from left, gap: 8px, 65px x 24px) */}
@@ -143,15 +156,85 @@ export const GroupProfileHeader: React.FC<GroupProfileHeaderProps> = ({
                         <GroupActionSearchIcon size={36} className="w-[36px] h-[36px]" />
                     </button>
 
-                    <button
-                        type="button"
-                        onClick={onBellClick}
-                        title="Group actions"
-                        aria-label="Group notifications"
-                        className="p-0 border-none bg-transparent cursor-pointer hover:opacity-90 transition-opacity outline-none"
-                    >
-                        <GroupActionBellIcon size={36} className="w-[36px] h-[36px]" />
-                    </button>
+                    {isMutedActive ? (
+                        <button
+                            type="button"
+                            onClick={onUnmuteClick}
+                            title="Unmute group"
+                            aria-label="Unmute group notifications"
+                            className="p-0 border-none bg-transparent cursor-pointer hover:opacity-90 transition-opacity outline-none"
+                        >
+                            <GroupActionBellIcon size={36} className="w-[36px] h-[36px]" />
+                        </button>
+                    ) : (
+                        <DropdownMenu
+                            open={isMuteDropdownOpen}
+                            onOpenChange={setIsMuteDropdownOpen}
+                        >
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    type="button"
+                                    title="Mute group"
+                                    aria-label="Mute group notifications"
+                                    className="p-0 border-none bg-transparent cursor-pointer hover:opacity-90 transition-opacity outline-none"
+                                >
+                                    <GroupActionBellIcon size={36} className="w-[36px] h-[36px]" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="center"
+                                sideOffset={6}
+                                className="chat-mute-menu box-border flex flex-col items-center p-3 gap-4 w-[159px] min-w-[159px] h-[188px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-lg !shadow-none z-[200] outline-none overflow-hidden"
+                                style={{ borderRadius: '8px' }}
+                            >
+                                <DropdownMenuItem
+                                    onSelect={() => {
+                                        onMuteWithDuration(1);
+                                        setIsMuteDropdownOpen(false);
+                                    }}
+                                    className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-0 grow-0"
+                                >
+                                    For 1 hours
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onSelect={() => {
+                                        onMuteWithDuration(8);
+                                        setIsMuteDropdownOpen(false);
+                                    }}
+                                    className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-1 grow-0"
+                                >
+                                    For 8 hours
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onSelect={() => {
+                                        onMuteWithDuration(24);
+                                        setIsMuteDropdownOpen(false);
+                                    }}
+                                    className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-2 grow-0"
+                                >
+                                    For 24 hours
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onSelect={() => {
+                                        onMuteWithDuration(null);
+                                        setIsMuteDropdownOpen(false);
+                                    }}
+                                    className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-3 grow-0"
+                                >
+                                    Until I turn it back on
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onSelect={(e) => {
+                                        e.preventDefault();
+                                        setIsMuteDropdownOpen(false);
+                                    }}
+                                    className="chat-action-item !p-0 m-0 h-5 w-auto whitespace-nowrap shrink-0 select-none font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent focus:!bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors flex items-center justify-center text-center !text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] flex-none order-4 grow-0"
+                                >
+                                    Cancel
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
 
                     <Popover>
                         <PopoverTrigger asChild>

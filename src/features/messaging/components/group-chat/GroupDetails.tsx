@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useGroupChat } from "./groupChat.context";
@@ -8,6 +8,10 @@ import { useSocket } from "@/context/SocketContext";
 import { useSocial } from "@/context/SocialContext";
 import { useToast } from "@/hooks/use-toast";
 import { updateGroupDetails, getGroupSharedContent } from "@/services/api/group-chat";
+import { muteGroup, unmuteGroup } from "@/services/api/messaging";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { isChatMuted, formatMuteToastMessage } from "../../utils/muteUtils";
+import { encodeConversationId } from "../../utils/conversationEncryption";
 import { createReport } from "@/services/api/report";
 import { ReportModal } from "@/components/shared/ReportModal";
 import { uploadMedia } from "@/services/api/upload";
@@ -34,6 +38,8 @@ interface GroupDetailsProps {
     onAddMember: () => void;
     activeView: 'chat' | 'info' | 'edit';
     setActiveView: (view: 'chat' | 'info' | 'edit') => void;
+    isMuted?: boolean;
+    mutedUntil?: string | null;
 }
 
 export default function GroupDetails({
@@ -43,7 +49,9 @@ export default function GroupDetails({
     currentUserId,
     onAddMember,
     activeView,
-    setActiveView
+    setActiveView,
+    isMuted = false,
+    mutedUntil = null
 }: GroupDetailsProps) {
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -62,6 +70,7 @@ export default function GroupDetails({
     const { socket } = useSocket();
     const { blockUser, unblockUser, isBlocked } = useSocial();
     const { toast } = useToast();
+    const { activeProfile } = useActiveProfile();
     const searchParams = useSearchParams();
 
     // Tab Navigation State
@@ -123,6 +132,7 @@ export default function GroupDetails({
     // Confirmation Modal States
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [showUnmuteConfirm, setShowUnmuteConfirm] = useState(false);
     const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
     const [userToRemove, setUserToRemove] = useState<string | null>(null);
     const [userToMakeAdmin, setUserToMakeAdmin] = useState<string | null>(null);
@@ -135,6 +145,71 @@ export default function GroupDetails({
     const [userToBlock, setUserToBlock] = useState<string | null>(null);
     const [invitationToCancel, setInvitationToCancel] = useState<string | null>(null);
 
+    // Mute Lifecycle & State Management
+    const conversationsQueryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
+    const cachedChat = (queryClient.getQueryData(conversationsQueryKey) as any[])?.find(
+        (c) => String(c.id) === String(activeGroup?.conversation_id || groupId)
+    );
+    const effectiveIsMuted = cachedChat ? cachedChat.is_muted : isMuted;
+    const effectiveMutedUntil = cachedChat ? cachedChat.muted_until : mutedUntil;
+    const isMutedActive = isChatMuted({ is_muted: effectiveIsMuted, muted_until: effectiveMutedUntil });
+
+    const handleMuteWithDuration = async (hours: number | null) => {
+        if (!activeGroup?.conversation_id) return;
+        try {
+            const calculatedMutedUntil = hours
+                ? new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+                : null;
+
+            queryClient.setQueryData(conversationsQueryKey, (oldChats: any[] | undefined) => {
+                if (!oldChats) return [];
+                return oldChats.map(c => 
+                    String(c.id) === String(activeGroup.conversation_id)
+                        ? { ...c, is_muted: true, muted_until: calculatedMutedUntil }
+                        : c
+                );
+            });
+            await muteGroup(activeGroup.conversation_id, true, calculatedMutedUntil, hours);
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            toast({ description: formatMuteToastMessage(hours, true) });
+        } catch (err: any) {
+            const errorMsg = err?.response?.data?.message || err?.message || "Failed to mute group";
+            toast({
+                title: "Error",
+                description: errorMsg,
+                variant: "destructive"
+            });
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        }
+    };
+
+    const handleUnmute = async () => {
+        if (!activeGroup?.conversation_id) return;
+        try {
+            queryClient.setQueryData(conversationsQueryKey, (oldChats: any[] | undefined) => {
+                if (!oldChats) return [];
+                return oldChats.map(c => 
+                    String(c.id) === String(activeGroup.conversation_id)
+                        ? { ...c, is_muted: false, muted_until: null }
+                        : c
+                );
+            });
+            await unmuteGroup(activeGroup.conversation_id);
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            toast({ description: "Group unmuted successfully" });
+        } catch (err: any) {
+            const errorMsg = err?.response?.data?.message || err?.message || "Failed to unmute group";
+            toast({
+                title: "Error",
+                description: errorMsg,
+                variant: "destructive"
+            });
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        } finally {
+            setShowUnmuteConfirm(false);
+        }
+    };
+
     // Shared Content Query (Media, Posts, Links)
     const { data: sharedContent, isLoading: isSharedLoading } = useQuery<GroupSharedContent>({
         queryKey: ['group-shared-content', activeGroup?.conversation_id],
@@ -143,6 +218,42 @@ export default function GroupDetails({
         staleTime: 60 * 1000,
         refetchOnWindowFocus: false
     });
+
+    // Filter shared content by current member's joined_at timestamp
+    const myMembership = useMemo(() => {
+        if (!activeGroup?.members || !currentUserId) return null;
+        return activeGroup.members.find(m => String(m.user_id) === String(currentUserId));
+    }, [activeGroup?.members, currentUserId]);
+
+    const myJoinedAtMs = useMemo(() => {
+        if (!myMembership?.joined_at) return null;
+        const time = new Date(myMembership.joined_at).getTime();
+        return isNaN(time) ? null : time;
+    }, [myMembership?.joined_at]);
+
+    const filteredSharedContent = useMemo(() => {
+        if (!sharedContent) return null;
+        if (!myJoinedAtMs) return sharedContent;
+
+        return {
+            posts: (sharedContent.posts || []).filter(p => {
+                const timeStr = p.shared_at || p.created_at;
+                if (!timeStr) return true;
+                const time = new Date(timeStr).getTime();
+                return isNaN(time) || time >= myJoinedAtMs;
+            }),
+            media: (sharedContent.media || []).filter(m => {
+                if (!m.created_at) return true;
+                const time = new Date(m.created_at).getTime();
+                return isNaN(time) || time >= myJoinedAtMs;
+            }),
+            links: (sharedContent.links || []).filter(l => {
+                if (!l.created_at) return true;
+                const time = new Date(l.created_at).getTime();
+                return isNaN(time) || time >= myJoinedAtMs;
+            })
+        };
+    }, [sharedContent, myJoinedAtMs]);
 
     // Real-time WebSocket synchronization for shared assets & membership
     useEffect(() => {
@@ -255,7 +366,7 @@ export default function GroupDetails({
             refreshGroup();
             queryClient.invalidateQueries({ queryKey: ["conversations"] });
             queryClient.invalidateQueries({ queryKey: ['group-details', activeGroup.conversation_id] });
-            toast({ description: "Group details updated successfully" });
+            toast({ description: "You updated group details" });
             onClose('info');
         } catch (err: any) {
             console.error("Failed to update group details:", err);
@@ -302,7 +413,9 @@ export default function GroupDetails({
                                 });
                             }
                         }}
-                        onBellClick={() => setShowLeaveConfirm(true)}
+                        onMuteWithDuration={handleMuteWithDuration}
+                        onUnmuteClick={() => setShowUnmuteConfirm(true)}
+                        isMutedActive={isMutedActive}
                         onLeaveClick={() => setShowLeaveConfirm(true)}
                         onDeleteClick={() => setShowDeleteConfirm(true)}
                         onReportClick={() => setReportTarget({
@@ -360,11 +473,11 @@ export default function GroupDetails({
 
                         {activeTab === 'posts' && (
                             <GroupPostsTab
-                                posts={sharedContent?.posts}
+                                posts={filteredSharedContent?.posts}
                                 isLoading={isSharedLoading}
                                 onPostClick={(postId) => {
                                     const targetGroupId = groupId || activeGroup?.conversation_id || '';
-                                    const returnTo = `/messaging?groupId=${targetGroupId}&view=info&tab=posts`;
+                                    const returnTo = `/messaging?groupId=${encodeConversationId(targetGroupId)}&view=info&tab=posts`;
                                     router.push(`/post/${postId}?returnTo=${encodeURIComponent(returnTo)}`);
                                 }}
                             />
@@ -372,7 +485,7 @@ export default function GroupDetails({
 
                         {activeTab === 'media' && (
                             <GroupMediaTab
-                                media={sharedContent?.media}
+                                media={filteredSharedContent?.media}
                                 isLoading={isSharedLoading}
                                 onPreviewMedia={(item, idx) => {
                                     setPreviewMedia({
@@ -380,7 +493,7 @@ export default function GroupDetails({
                                         type: item.media_type,
                                         name: item.filename,
                                         initialIndex: idx,
-                                        mediaList: (sharedContent?.media || []).map(m => ({
+                                        mediaList: (filteredSharedContent?.media || []).map((m: any) => ({
                                             url: m.url,
                                             type: m.media_type,
                                             name: m.filename
@@ -392,7 +505,7 @@ export default function GroupDetails({
 
                         {activeTab === 'links' && (
                             <GroupLinksTab
-                                links={sharedContent?.links}
+                                links={filteredSharedContent?.links}
                                 isLoading={isSharedLoading}
                             />
                         )}
@@ -595,6 +708,16 @@ export default function GroupDetails({
                     }
                 }}
                 onCancel={() => setShowDeleteConfirm(false)}
+            />
+
+            <CocpitConfirmBox
+                isOpen={showUnmuteConfirm}
+                title="Unmute group notifications?"
+                message="You will receive notifications from this group again."
+                confirmText="Unmute"
+                cancelText="Cancel"
+                onConfirm={handleUnmute}
+                onCancel={() => setShowUnmuteConfirm(false)}
             />
 
             <CocpitShareModel

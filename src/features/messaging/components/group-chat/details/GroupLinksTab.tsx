@@ -30,8 +30,8 @@ export const GroupLinksTab: React.FC<GroupLinksTabProps> = ({
     isLoading
 }) => {
     return (
-        /* Frame 2610097: 16px below tabs, max-w-[618px], gap 16px, hidden scrollbar */
-        <div className="mt-4 max-w-[618px] mx-auto w-full font-['DM_Sans'] flex flex-col gap-4 max-h-[413.32px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        /* Frame 2610097: 16px below tabs, max-w-[618px], gap 16px, responsive height */
+        <div className="mt-4 max-w-[618px] mx-auto w-full font-['DM_Sans'] flex flex-col gap-4 pb-6">
             {isLoading ? (
                 /* Skeleton rows matching clean list layout */
                 <div className="flex flex-col gap-4 max-w-[618px] w-full">

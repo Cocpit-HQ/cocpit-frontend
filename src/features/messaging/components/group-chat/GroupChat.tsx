@@ -994,33 +994,12 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             socket.emit('stopGroupTyping', { groupId: groupId });
         }
 
-        const isDocFile = (f: File) =>
-            f.type === "application/pdf" ||
-            f.type.includes("word") ||
-            f.type.includes("officedocument") ||
-            /\.(doc|docx|pdf|txt|rtf|xls|xlsx|ppt|pptx)$/i.test(f.name);
-
-        const visualFiles = files ? files.filter((f) => !isDocFile(f)) : [];
-        const docFiles = files ? files.filter((f) => isDocFile(f)) : [];
-
-        if (docFiles.length > 0) {
-            if (visualFiles.length > 0 || text.trim()) {
-                sendMessageMutation.mutate({ text, files: visualFiles, replyMessageId: replyingTo?.messageId });
-                docFiles.forEach((docFile) => {
-                    sendMessageMutation.mutate({ text: "", files: [docFile] });
-                });
-            } else {
-                docFiles.forEach((docFile, idx) => {
-                    sendMessageMutation.mutate({
-                        text: "",
-                        files: [docFile],
-                        replyMessageId: idx === 0 ? replyingTo?.messageId : undefined,
-                    });
-                });
-            }
-        } else {
-            sendMessageMutation.mutate({ text, files: visualFiles, replyMessageId: replyingTo?.messageId });
-        }
+        // Send message with all attachments (visual media, multiple documents) together in one message
+        sendMessageMutation.mutate({
+            text,
+            files: files || [],
+            replyMessageId: replyingTo?.messageId,
+        });
 
         setReplyingTo(null);
     }, [socket, groupId, sendMessageMutation, replyingTo]);
@@ -1292,7 +1271,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                                 onSendMessage={handleSendMessage}
                                 onTyping={handleTypingInput}
                                 isLoading={isLoading || isMessagesLoading}
-                                placeholder="Type a message to group..."
+                                placeholder="Write a message...."
                                 replyingTo={replyingTo}
                                 onCancelReply={() => setReplyingTo(null)}
                                 editingMessage={editingMessage}
@@ -1391,6 +1370,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                         onAddMember={() => setIsAddMemberOpen(true)}
                         activeView={activeView}
                         setActiveView={setActiveView}
+                        isMuted={isMuted}
+                        mutedUntil={mutedUntil}
                     />
                 </div>
             </div>
@@ -1400,6 +1381,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                 onClose={() => setIsAddMemberOpen(false)}
                 initialView="addMembers"
                 mode="addMembers"
+                title="Add Members"
                 groupId={groupId}
             />
 

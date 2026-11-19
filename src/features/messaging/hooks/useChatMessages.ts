@@ -24,6 +24,7 @@ import {
 import { searchUsers, getSuggestedUsers, type UserMention } from "@/services/api/users";
 import type { Post } from "@/types/entities";
 import { useToast } from "@/hooks/use-toast";
+import { encodeConversationId } from "../utils/conversationEncryption";
 
 interface SocketLike {
   emit: (event: string, ...args: unknown[]) => void;
@@ -615,14 +616,15 @@ export function useChatMessages({
           }
 
           if (!isQuickChat) {
+            const encId = encodeConversationId(newConversationId);
             if (typeof window !== "undefined") {
               window.history.replaceState(
                 null,
                 "",
-                `/messaging?conversationId=${newConversationId}`,
+                `/messaging?conversationId=${encId}`,
               );
             }
-            router.replace(`/messaging?conversationId=${newConversationId}`);
+            router.replace(`/messaging?conversationId=${encId}`);
           }
         }
       }
@@ -697,56 +699,16 @@ export function useChatMessages({
         }
       }
 
-      const isDocFile = (f: File) =>
-        f.type === "application/pdf" ||
-        f.type.includes("word") ||
-        f.type.includes("officedocument") ||
-        /\.(doc|docx|pdf|txt|rtf|xls|xlsx|ppt|pptx)$/i.test(f.name);
-
-      const visualFiles = files ? files.filter((f) => !isDocFile(f)) : [];
-      const docFiles = files ? files.filter((f) => isDocFile(f)) : [];
-
-      if (docFiles.length > 0) {
-        if (visualFiles.length > 0 || text.trim() || effectiveSharedPostId || effectiveSharedProfileId) {
-          // Send visual media + message text and shared context first
-          sendMessageMutation.mutate({
-            text,
-            files: visualFiles,
-            replyMessageId: replyingTo?.messageId,
-            sharedPostId: effectiveSharedPostId,
-            sharedProfileId: effectiveSharedProfileId,
-            entityType: effectiveEntityType,
-            entityId: effectiveEntityId,
-          });
-
-          // Send each document as a separate standalone message
-          docFiles.forEach((docFile) => {
-            sendMessageMutation.mutate({
-              text: "",
-              files: [docFile],
-            });
-          });
-        } else {
-          // Only documents with no text: send each document as a separate message
-          docFiles.forEach((docFile, idx) => {
-            sendMessageMutation.mutate({
-              text: "",
-              files: [docFile],
-              replyMessageId: idx === 0 ? replyingTo?.messageId : undefined,
-            });
-          });
-        }
-      } else {
-        sendMessageMutation.mutate({
-          text,
-          files: visualFiles,
-          replyMessageId: replyingTo?.messageId,
-          sharedPostId: effectiveSharedPostId,
-          sharedProfileId: effectiveSharedProfileId,
-          entityType: effectiveEntityType,
-          entityId: effectiveEntityId,
-        });
-      }
+      // Send message with all attachments (visual media, multiple documents) together in one message
+      sendMessageMutation.mutate({
+        text,
+        files: files || [],
+        replyMessageId: replyingTo?.messageId,
+        sharedPostId: effectiveSharedPostId,
+        sharedProfileId: effectiveSharedProfileId,
+        entityType: effectiveEntityType,
+        entityId: effectiveEntityId,
+      });
 
       setReplyingTo(null);
       setPendingSharedPostId(null);
@@ -830,6 +792,7 @@ export function useChatMessages({
 
   return {
     messages,
+    groupMembers,
     isLoading,
     fetchNextPage,
     hasNextPage,

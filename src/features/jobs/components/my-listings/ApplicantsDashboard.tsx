@@ -886,7 +886,32 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                               type="button"
                               onClick={() => {
                                 if (!canJobsChat) return;
-                                router.push(`/messaging?jobContext=${listing.id}`);
+                                const candidateUserId =
+                                  candidateDetail?.applicantId ||
+                                  activeCandidate?.applicantId ||
+                                  (activeCandidate as any)?.userId ||
+                                  (activeCandidate as any)?.user_id;
+
+                                if (!candidateUserId) {
+                                  toast({
+                                    title: "Unable to start chat",
+                                    description: "Candidate information is unavailable or still loading.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+
+                                const params = new URLSearchParams();
+                                params.set('userId', candidateUserId);
+                                const companyId = (activeProfile?.type === 'COMPANY' && activeProfile.id) || listing.org_id || '';
+                                if (companyId) {
+                                  params.set('companyId', companyId);
+                                }
+                                const jobId = listing.id || (listing as any).job_id;
+                                if (jobId) {
+                                  params.set('jobContext', jobId);
+                                }
+                                router.push(`/messaging?${params.toString()}`);
                               }}
                               disabled={!canJobsChat}
                               className="w-[89px] h-9 px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-dm-sans leading-6 transition-colors text-center cursor-pointer whitespace-nowrap"

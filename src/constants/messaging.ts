@@ -10,5 +10,5 @@ export const avatarGradients: Record<string, string> = {
  * Maximum number of members allowed in a group chat (including the group creator/admin).
  * Change this single constant if group size limit changes in the future.
  */
-export const MAX_GROUP_MEMBERS = 256;
+export const MAX_GROUP_MEMBERS = 500;
 

@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useGroupChat } from "./groupChat.context";
 import { useRouter } from "next/navigation";
 import { MAX_GROUP_MEMBERS } from "@/constants/messaging";
+import { EditAvatarModal } from "@/features/profile/components/EditAvatarModal";
 
 export type ModalView = 'personalChat' | 'addMembers' | 'createGroup';
 
@@ -67,9 +68,13 @@ export default function CreateGroupModal({
     const [groupAvatarPreview, setGroupAvatarPreview] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
+    // Profile photo editor state matching ProfileEditScreen
+    const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
+    const [avatarInitialFile, setAvatarInitialFile] = useState<File | null>(null);
+    const avatarFileInputRef = useRef<HTMLInputElement>(null);
+
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Compute excluded user IDs (self, explicit excludes, active members, pending invitations)
     const excludedIds = useMemo(() => {
@@ -277,16 +282,42 @@ export default function CreateGroupModal({
         handleClose();
     };
 
-    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarClick = () => {
+        if (groupAvatarPreview) {
+            setAvatarInitialFile(null);
+            setIsEditAvatarOpen(true);
+        } else {
+            avatarFileInputRef.current?.click();
+        }
+    };
+
+    const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setGroupAvatar(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setGroupAvatarPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            setAvatarInitialFile(file);
+            setIsEditAvatarOpen(true);
         }
+        e.target.value = "";
+    };
+
+    const handleAvatarUpload = async (file: File) => {
+        if (groupAvatarPreview && groupAvatarPreview.startsWith('blob:')) {
+            URL.revokeObjectURL(groupAvatarPreview);
+        }
+        setGroupAvatar(file);
+        setGroupAvatarPreview(URL.createObjectURL(file));
+        setIsEditAvatarOpen(false);
+        setAvatarInitialFile(null);
+    };
+
+    const handleAvatarDelete = async () => {
+        if (groupAvatarPreview && groupAvatarPreview.startsWith('blob:')) {
+            URL.revokeObjectURL(groupAvatarPreview);
+        }
+        setGroupAvatar(null);
+        setGroupAvatarPreview(null);
+        setIsEditAvatarOpen(false);
+        setAvatarInitialFile(null);
     };
 
     const handleCreate = async () => {
@@ -312,6 +343,9 @@ export default function CreateGroupModal({
     };
 
     const handleClose = () => {
+        if (groupAvatarPreview && groupAvatarPreview.startsWith('blob:')) {
+            URL.revokeObjectURL(groupAvatarPreview);
+        }
         setCurrentView(initialView);
         setSearchTerm("");
         setSelectedUserIds([]);
@@ -320,6 +354,8 @@ export default function CreateGroupModal({
         setGroupAvatar(null);
         setGroupAvatarPreview(null);
         setIsSubmitting(false);
+        setIsEditAvatarOpen(false);
+        setAvatarInitialFile(null);
         onClose();
     };
 
@@ -335,18 +371,20 @@ export default function CreateGroupModal({
             : 'h-[454px]';
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent
-                className={`
-                    shadow-none outline-none p-3 !gap-3 [&>button]:hidden
-                    fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]
-                    w-[calc(100vw-32px)] sm:w-[400px] sm:min-w-[400px] sm:max-w-[400px] ${modalHeightClass}
-                    rounded-[16px] border border-[var(--ds-border)]
-                    bg-[var(--ds-bg)] text-[var(--ds-text-primary)]
-                    font-['DM_Sans'] flex flex-col items-center justify-start overflow-hidden
-                    data-[state=open]:animate-in data-[state=open]:fade-in-90 data-[state=open]:zoom-in-95
-                `}
-            >
+        <>
+            <Dialog open={isOpen} onOpenChange={handleClose}>
+                <DialogContent
+                    className={`
+                        shadow-none outline-none p-3 !gap-3 [&>button]:hidden
+                        fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]
+                        w-[calc(100vw-32px)] sm:w-[400px] sm:min-w-[400px] sm:max-w-[400px] ${modalHeightClass}
+                        rounded-[16px] border border-[var(--ds-border)]
+                        bg-[var(--ds-bg)] text-[var(--ds-text-primary)]
+                        font-['DM_Sans'] flex flex-col items-center justify-start overflow-hidden
+                        data-[state=open]:animate-in data-[state=open]:fade-in-90 data-[state=open]:zoom-in-95
+                        ${isEditAvatarOpen ? '!hidden' : ''}
+                    `}
+                >
                 {/* Header (Frame 2609688: 376px x 56px, gap: 12px) */}
                 <div className="w-full max-w-[376px] h-[56px] flex flex-col items-center p-0 gap-3 shrink-0">
                     {/* Top Row: Close button (Frame 2609536: 376px x 20px) */}
@@ -364,7 +402,7 @@ export default function CreateGroupModal({
 
                     {/* Centered Title */}
                     <DialogTitle className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-[var(--ds-text-primary)] p-0 m-0 min-w-[100px] h-[24px] flex items-center justify-center">
-                        {title || (currentView === 'personalChat' ? 'Personal Chat' : 'Create group')}
+                        {title || (mode === 'addMembers' || currentView === 'addMembers' ? 'Add Members' : currentView === 'personalChat' ? 'Personal Chat' : 'Create group')}
                     </DialogTitle>
                     <DialogDescription className="sr-only">
                         {currentView === 'personalChat'
@@ -422,7 +460,7 @@ export default function CreateGroupModal({
                                                     {avatar && avatar !== '/assets/pngegg.png' ? (
                                                         <img src={avatar} alt={name} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <span>{name.charAt(0).toUpperCase()}</span>
+                                                        <ProfileIcon className="w-3.5 h-3.5 text-[var(--ds-text-primary)]" size={14} fill="currentColor" />
                                                     )}
                                                 </div>
                                                 <span className="font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)] truncate">
@@ -585,10 +623,10 @@ export default function CreateGroupModal({
                         {/* Frame 2609544: 376px x 314px, gap: 8px */}
                         <div className="w-full max-w-[376px] h-[314px] flex flex-col items-center p-0 gap-2 shrink-0">
                             {/* Avatar Upload (Frame 2609482: 60px x 84px, gap: 8px) */}
-                            <div className="w-[60px] h-[84px] flex flex-col items-center p-0 gap-2 shrink-0">
+                            <div className="w-[60px] h-[84px] flex flex-col items-center p-0 gap-2 shrink-0 cursor-pointer">
                                 <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="w-[60px] h-[60px] rounded-full bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex flex-col items-center justify-center gap-[2px] cursor-pointer overflow-hidden shrink-0 hover:opacity-80 transition-opacity"
+                                    onClick={handleAvatarClick}
+                                    className="w-[60px] h-[60px] rounded-full bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex flex-col items-center justify-center gap-[2px] overflow-hidden shrink-0 hover:opacity-80 transition-opacity"
                                 >
                                     {groupAvatarPreview ? (
                                         <img src={groupAvatarPreview} alt="Group Avatar" className="w-full h-full object-cover" />
@@ -596,20 +634,21 @@ export default function CreateGroupModal({
                                         <ProfileIcon className="w-5 h-5 text-[var(--ds-text-primary)]" size={20} fill="currentColor" />
                                     )}
                                 </div>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleAvatarChange}
-                                />
                                 <span
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="w-[59px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-center text-[var(--ds-text-secondary)] cursor-pointer hover:text-[var(--ds-text-primary)] transition-colors shrink-0"
+                                    onClick={handleAvatarClick}
+                                    className="w-[59px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-center text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors shrink-0"
                                 >
-                                    Add photo
+                                    {groupAvatarPreview ? "Edit photo" : "Add photo"}
                                 </span>
                             </div>
+
+                            <input
+                                type="file"
+                                ref={avatarFileInputRef}
+                                className="hidden"
+                                accept="image/png,image/jpeg,image/jpg,image/webp"
+                                onChange={handleAvatarFileChange}
+                            />
 
                             {/* Group Name Input (Input with label: 376px x 62px) */}
                             <div className="w-full max-w-[376px] h-[62px] py-2 px-0 flex flex-col justify-center items-start gap-[10px] border-b border-[var(--ds-border)] shrink-0 box-border">
@@ -656,7 +695,7 @@ export default function CreateGroupModal({
                                                     {avatar && avatar !== '/assets/pngegg.png' ? (
                                                         <img src={avatar} alt={name} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <span>{name.charAt(0).toUpperCase()}</span>
+                                                        <ProfileIcon className="w-3.5 h-3.5 text-[var(--ds-text-primary)]" size={14} fill="currentColor" />
                                                     )}
                                                 </div>
                                                 <span className="font-['DM_Sans'] font-normal text-sm leading-5 text-[var(--ds-text-primary)] truncate">
@@ -712,5 +751,21 @@ export default function CreateGroupModal({
                 )}
             </DialogContent>
         </Dialog>
-    );
+
+        {/* Avatar Image Editor Modal */}
+        {isEditAvatarOpen && (
+            <EditAvatarModal
+                isOpen={isEditAvatarOpen}
+                onClose={() => {
+                    setIsEditAvatarOpen(false);
+                    setAvatarInitialFile(null);
+                }}
+                currentAvatarUrl={groupAvatarPreview}
+                initialFile={avatarInitialFile}
+                onUpload={handleAvatarUpload}
+                onDelete={handleAvatarDelete}
+            />
+        )}
+    </>
+);
 }

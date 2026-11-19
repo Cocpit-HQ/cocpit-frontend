@@ -27,7 +27,21 @@ export function SharedProfileCard({
     (initialProfile?.user_id && isBlocked(initialProfile.user_id));
 
   if (isLocalBlocked) {
-    return <UnavailableContentCard isMe={isMe} />;
+    return (
+      <ProfilePreviewCard
+        profile={{
+          name: "Unknown user",
+          avatar: null,
+          headline: "",
+          username: profileType === "user" ? profileId : undefined,
+          slug: profileType === "company" ? profileId : undefined,
+          id: profileId,
+        }}
+        profileId={profileId}
+        profileType={profileType}
+        isMe={isMe}
+      />
+    );
   }
 
   const { data: preview, isLoading, error } = useQuery({
@@ -58,13 +72,28 @@ export function SharedProfileCard({
   }
 
   if (
-    error ||
-    !preview ||
-    preview.title === "Deactivated User" ||
-    preview.title === "Deleted Page" ||
-    isBlocked(preview.entityId)
+    preview?.title === "Deactivated User" ||
+    preview?.title === "Deleted Page"
   ) {
     return <UnavailableContentCard isMe={isMe} />;
+  }
+
+  if (error || !preview) {
+    return (
+      <ProfilePreviewCard
+        profile={{
+          name: "Unknown user",
+          avatar: null,
+          headline: "",
+          username: profileType === "user" ? profileId : undefined,
+          slug: profileType === "company" ? profileId : undefined,
+          id: profileId,
+        }}
+        profileId={profileId}
+        profileType={profileType}
+        isMe={isMe}
+      />
+    );
   }
 
   const rawHeadline = preview.subtitle || initialProfile?.headline;

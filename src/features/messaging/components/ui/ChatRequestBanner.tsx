@@ -68,7 +68,7 @@ export default function ChatRequestBanner({
       <Dialog open={activeModal !== null} onOpenChange={(open) => !open && handleCloseModal()}>
         <BareDialogContent
           className="!w-[212px] !h-[158px] !p-[12px] !gap-[16px] !rounded-[16px] bg-[var(--ds-bg)] border border-[var(--ds-border)] flex flex-col items-center justify-between box-border outline-none shadow-2xl overflow-hidden select-none"
-          overlayClassName="bg-black/60 backdrop-blur-[2px]"
+          overlayClassName="bg-black/80 backdrop-blur-sm"
         >
           {activeModal === "accept" && (
             <>

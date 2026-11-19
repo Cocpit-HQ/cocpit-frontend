@@ -166,9 +166,12 @@ export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }
                         value={text}
                         searchUsersFn={searchUsers}
                         enableHashtags={false}
+                        maxLength={8000}
                         onChange={(e) => {
-                            setText(e.target.value);
-                            if (onTyping) onTyping();
+                            if (e.target.value.length <= 8000) {
+                                setText(e.target.value);
+                                if (onTyping) onTyping();
+                            }
 
                             const target = e.target;
                             if (target && 'style' in target) {
@@ -179,7 +182,7 @@ export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }
                             }
                         }}
                         onKeyDown={handleKeyDown}
-                        placeholder="Message..."
+                        placeholder="Write a message...."
                         rows={1}
                         className="w-full pl-4 pr-10 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground scrollbar-hide overflow-hidden"
                         style={{ minHeight: "44px" }}

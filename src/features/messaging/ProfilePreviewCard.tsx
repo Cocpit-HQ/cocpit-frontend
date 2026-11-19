@@ -27,11 +27,20 @@ export function ProfilePreviewCard({ profile, profileId, profileType, isUnavaila
     const router = useRouter();
     const { isBlocked } = useSocial();
 
-    const isTargetBlocked = isBlocked(profileId) || (profile?.id && isBlocked(profile.id));
+    const isTargetBlocked = Boolean(
+        isBlocked(profileId) ||
+        (profile?.id && isBlocked(profile.id)) ||
+        (profile?.username && isBlocked(profile.username))
+    );
 
-    if (isUnavailable || isTargetBlocked || !profile || profile.name === 'Deactivated User' || profile.name === 'Deleted Page') {
+    if (isUnavailable || !profile || profile.name === 'Deactivated User' || profile.name === 'Deleted Page') {
         return <UnavailableContentCard isMe={isMe} />;
     }
+
+    const isMasked = isTargetBlocked || profile.name?.toLowerCase() === "unknown user";
+    const displayName = isMasked ? "Unknown user" : profile.name;
+    const displayAvatar = isMasked ? undefined : (profile.avatar || undefined);
+    const displayHeadline = isMasked ? null : (profile.headline && profile.headline !== "Cocpit Member" ? profile.headline : null);
 
     const profileUrl = profileType === "user"
         ? `/profile/${profile.username || profileId}`
@@ -50,23 +59,24 @@ export function ProfilePreviewCard({ profile, profileId, profileType, isUnavaila
             }}
             role="button"
             tabIndex={0}
-            aria-label={`View ${profile.name}'s profile`}
+            aria-label={`View ${displayName}'s profile`}
         >
             <div className="flex flex-row items-center p-0 gap-2 h-9 w-full min-w-0">
                 <Avatar
-                    url={profile.avatar || undefined}
-                    name={profile.name}
+                    url={displayAvatar}
+                    name={displayName}
                     size="sm"
                     isCompany={profileType === "company"}
+                    isUnknown={isMasked}
                     className="w-8 h-8 shrink-0"
                 />
                 <div className="flex flex-col items-start justify-center p-0 h-9 min-w-[112px] flex-1 overflow-hidden">
                     <span className="font-['DM_Sans'] ds-text-body-2 font-semibold text-base leading-6 text-[var(--ds-text-primary)] whitespace-nowrap truncate max-w-full text-left">
-                        {profile.name}
+                        {displayName}
                     </span>
-                    {profile.headline && profile.headline !== "Cocpit Member" ? (
+                    {displayHeadline ? (
                         <span className="font-['DM_Sans'] ds-text-meta font-normal text-[10px] leading-3 text-[var(--ds-text-secondary)] w-0 min-w-full truncate text-left">
-                            {profile.headline}
+                            {displayHeadline}
                         </span>
                     ) : null}
                 </div>

@@ -18,11 +18,11 @@ export const GroupMediaTab: React.FC<GroupMediaTabProps> = ({
     onPreviewMedia
 }) => {
     return (
-        /* Frame 2608673: 16px below tabs, max-w-[618px], gap 8px */
-        <div className="mt-4 max-w-[618px] mx-auto w-full font-['DM_Sans']">
+        /* Frame 2608673: 16px below tabs, max-w-[618px], responsive height, gap 8px */
+        <div className="mt-4 max-w-[618px] mx-auto w-full font-['DM_Sans'] pb-6">
             {isLoading ? (
                 /* Skeleton showing 6 items matching Frame 2608673 */
-                <div className="grid grid-cols-3 gap-2 max-w-[618px] mx-auto w-full max-h-[413.32px] overflow-hidden">
+                <div className="grid grid-cols-3 gap-2 max-w-[618px] mx-auto w-full">
                     {[1, 2, 3, 4, 5, 6].map((n) => (
                         <div
                             key={n}
@@ -31,8 +31,8 @@ export const GroupMediaTab: React.FC<GroupMediaTabProps> = ({
                     ))}
                 </div>
             ) : media && media.length > 0 ? (
-                /* Frame 2608673: 3 columns, gap 8px (horizontal and vertical), max height 413.32px (6 visible), hidden scrollbar */
-                <div className="grid grid-cols-3 gap-2 max-w-[618px] mx-auto w-full max-h-[413.32px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                /* Frame 2608673: 3 columns, gap 8px (horizontal and vertical), responsive height */
+                <div className="grid grid-cols-3 gap-2 max-w-[618px] mx-auto w-full">
                     {media.map((item, idx) => {
                         const isVideo = Boolean(item.media_type === 'video' || item.url?.includes('.mp4'));
                         const uniqueKey = item.media_id ? `${item.media_id}-${idx}` : `media-${idx}`;

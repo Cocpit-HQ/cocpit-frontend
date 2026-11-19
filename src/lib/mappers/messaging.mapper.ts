@@ -116,13 +116,13 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
       : (backendChat.org_headline || (backendChat as any).orgHeadline || ""),
     lastMessage: (backendChat.last_message_text === 'Message unavailable' || (backendChat as any).is_unavailable)
       ? 'Message unavailable'
-      : isPostUrl(backendChat.last_message_text || (backendChat as any).lastMessage)
+      : isPostUrl(backendChat.last_message_text || (backendChat as any).last_message || (backendChat as any).lastMessage)
       ? "Shared a post"
-      : isJobUrl(backendChat.last_message_text || (backendChat as any).lastMessage)
+      : isJobUrl(backendChat.last_message_text || (backendChat as any).last_message || (backendChat as any).lastMessage)
       ? "Shared a job"
-      : isProfileUrl(backendChat.last_message_text || (backendChat as any).lastMessage)
+      : isProfileUrl(backendChat.last_message_text || (backendChat as any).last_message || (backendChat as any).lastMessage)
       ? "Shared a profile"
-      : (backendChat.last_message_text || (backendChat as any).lastMessage || ""),
+      : (backendChat.last_message_text || (backendChat as any).last_message || (backendChat as any).lastMessage || ""),
     time: (backendChat.last_message_at || backendChat.updated_at) 
       ? formatTimeAgo(backendChat.last_message_at || backendChat.updated_at) 
       : (backendChat.timeAgo || (backendChat as any).time || ""),
@@ -149,7 +149,20 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     is_muted: backendChat.is_muted ?? (backendChat as any).is_muted ?? (backendChat as any).isMuted ?? false,
     muted_until: backendChat.muted_until ?? (backendChat as any).muted_until ?? (backendChat as any).mutedUntil ?? null,
     is_pinned: backendChat.is_pinned ?? (backendChat as any).is_pinned ?? (backendChat as any).isPinned ?? false,
+    pinned_at: backendChat.pinned_at || (backendChat as any).pinned_at || (backendChat as any).pinnedAt || null,
     pinned_message_id: backendChat.pinned_message_id || (backendChat as any).pinned_message_id || (backendChat as any).pinnedMessageId || null,
+    hasMention: Boolean(
+      (backendChat as any).has_mention ??
+      (backendChat as any).hasMention ??
+      ((backendChat as any).unread_mention_count && (backendChat as any).unread_mention_count > 0) ??
+      ((backendChat as any).unreadMentionCount && (backendChat as any).unreadMentionCount > 0) ??
+      false
+    ),
+    unreadMentionCount: Number(
+      (backendChat as any).unread_mention_count ||
+      (backendChat as any).unreadMentionCount ||
+      0
+    ),
     isJobChat: backendChat.is_job_chat ?? (backendChat as any).isJobChat ?? false,
     rawName: backendChat.other_user_name || (backendChat as any).name,
     rawRole: backendChat.other_user_headline || (backendChat as any).role,

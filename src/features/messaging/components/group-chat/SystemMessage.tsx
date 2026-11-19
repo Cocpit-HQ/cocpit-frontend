@@ -32,6 +32,8 @@ export default function SystemMessage({ message, currentUserId }: SystemMessageP
         }
     } else if (action_type === 'update_avatar') {
         if (isSenderMe || isNameMe) displayText = "You updated the group icon";
+    } else if (action_type === 'update_group_details' || text.toLowerCase().includes('updated group details')) {
+        if (isSenderMe || isNameMe) displayText = "You updated group details";
     }
 
     return (

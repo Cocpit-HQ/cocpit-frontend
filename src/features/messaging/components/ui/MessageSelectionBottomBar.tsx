@@ -27,7 +27,7 @@ export default function MessageSelectionBottomBar({
   onDeleteForEveryone,
 }: MessageSelectionBottomBarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const hasMultipleDeleteOptions = Boolean(allAreMine && onDeleteForEveryone);
+  const showDeleteForEveryone = Boolean(allAreMine && onDeleteForEveryone);
 
   return (
     <div className="w-full h-[56px] min-h-[56px] px-4 md:px-6 bg-[var(--ds-bg)] border-t border-[var(--ds-border)] flex items-center justify-between z-20 shrink-0">
@@ -47,52 +47,49 @@ export default function MessageSelectionBottomBar({
         </span>
       </div>
 
-      {/* Right: Delete action - condition-based dropdown or direct delete */}
+      {/* Right: Delete action - always show dropdown menu so the user explicitly confirms the action */}
       <div className="flex items-center">
-        {hasMultipleDeleteOptions ? (
-          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="p-1.5 hover:bg-[var(--ds-surface-1)] !text-[var(--ds-error)] hover:opacity-80 rounded-md transition-colors cursor-pointer flex items-center justify-center outline-none"
-                title="Delete messages"
-                aria-label="Delete messages"
-              >
-                <DeleteIcon className="w-5 h-5 !text-[var(--ds-error)]" fill="var(--ds-error)" size={20} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              sideOffset={6}
-              className="box-border flex flex-col items-start p-3 gap-3.5 min-w-[180px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-lg shadow-lg z-[200] outline-none"
+        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="p-1.5 hover:bg-[var(--ds-surface-1)] !text-[var(--ds-error)] hover:opacity-80 rounded-md transition-colors cursor-pointer flex items-center justify-center outline-none"
+              title="Delete messages"
+              aria-label="Delete messages"
             >
-              <DropdownMenuItem
-                onClick={onDeleteForMe}
-                className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors !text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
-              >
-                <span>Delete for me</span>
-                <Icon icon="fluent:delete-16-regular" width={18} height={18} color="var(--ds-error)" />
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDeleteForEveryone}
-                className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors !text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
-              >
-                <span>Delete for everyone</span>
-                <Icon icon="fluent:delete-16-regular" width={18} height={18} color="var(--ds-error)" />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <button
-            type="button"
-            onClick={onDeleteForMe}
-            className="p-1.5 hover:bg-[var(--ds-surface-1)] !text-[var(--ds-error)] hover:opacity-80 rounded-md transition-colors cursor-pointer flex items-center justify-center outline-none"
-            title="Delete for me"
-            aria-label="Delete for me"
+              <DeleteIcon className="w-5 h-5 !text-[var(--ds-error)]" fill="var(--ds-error)" size={20} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            sideOffset={6}
+            className="box-border flex flex-col items-start p-3 gap-3.5 min-w-[180px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-lg shadow-lg z-[200] outline-none"
           >
-            <DeleteIcon className="w-5 h-5 !text-[var(--ds-error)]" fill="var(--ds-error)" size={20} />
-          </button>
-        )}
+            <DropdownMenuItem
+              onClick={() => {
+                setIsDropdownOpen(false);
+                onDeleteForMe();
+              }}
+              className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
+            >
+              <span className="!text-[var(--ds-error)]">Delete for me</span>
+              <DeleteIcon className="w-[18px] h-[18px] text-[var(--ds-error)]" fill="var(--ds-error)" size={18} />
+            </DropdownMenuItem>
+
+            {showDeleteForEveryone && (
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  onDeleteForEveryone?.();
+                }}
+                className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
+              >
+                <span className="!text-[var(--ds-error)]">Delete for everyone</span>
+                <DeleteIcon className="w-[18px] h-[18px] text-[var(--ds-error)]" fill="var(--ds-error)" size={18} />
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

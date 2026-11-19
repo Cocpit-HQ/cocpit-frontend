@@ -46,22 +46,24 @@ import {
 import { JobApplicationContextCard } from "./SharedJobMessage";
 import { SharedProfileCard } from "./SharedProfileMessage";
 import { SharedPostCard } from "./SharedPostMessage";
-import { MessageMedia } from "./MediaMessage";
+import { MessageMedia, isDocumentType } from "./MediaMessage";
 import { MessageText } from "./TextMessage";
+import { useSocial } from "@/context/SocialContext";
 
 const SeenAvatar: React.FC<{
   member: { user_id?: string; full_name?: string; avatar_url?: string; avatar?: string; is_company?: boolean };
-}> = ({ member }) => {
+  isBlockedUser?: boolean;
+}> = ({ member, isBlockedUser }) => {
   const [hasError, setHasError] = useState(false);
   const avatarUrl = member.avatar_url || member.avatar;
   const isCompany = Boolean(member.is_company);
-  const hasAvatar = Boolean(avatarUrl && avatarUrl !== "/assets/pngegg.png" && !hasError);
+  const hasAvatar = Boolean(!isBlockedUser && avatarUrl && avatarUrl !== "/assets/pngegg.png" && !hasError);
 
   if (hasAvatar) {
     return (
       <img
         src={avatarUrl}
-        alt={member.full_name || "member"}
+        alt={isBlockedUser ? "Unknown user" : (member.full_name || "member")}
         className="w-[16px] h-[16px] rounded-full border border-[var(--ds-bg,#030303)] object-cover shrink-0 select-none flex-none"
         onError={() => setHasError(true)}
       />
@@ -81,6 +83,7 @@ const SeenAvatar: React.FC<{
 
 export function MessageBubble(props: MessageBubbleProps) {
   const router = useRouter();
+  const { isBlocked } = useSocial();
   const { theme, resolvedTheme } = useTheme();
   const isDarkTheme =
     resolvedTheme === "dark" || theme === "dark";
@@ -149,9 +152,29 @@ export function MessageBubble(props: MessageBubbleProps) {
   const hasMedia = hasMessageMedia(message);
   const isSelectionMode = Boolean(hasSelection || isSelected);
 
-  // Group chat seen members resolution (only active when isGroup === true)
+  const isSenderBlocked = Boolean(
+    (message.senderId && isBlocked(message.senderId)) ||
+    message.isBlocked === true ||
+    message.isBlockedByOther === true ||
+    (message as any).is_blocked_by_other === true
+  );
+
+  const isUnknownSender = Boolean(
+    isSenderBlocked ||
+    (message as any).is_deactivated === true ||
+    (message as any).is_deleted_user === true ||
+    message.senderName === "Unknown Page" ||
+    message.senderName === "Unknown user" ||
+    message.senderName === "Unknown User" ||
+    message.senderName === "Deleted Page" ||
+    message.senderName === "Deleted User" ||
+    (message as any).sender_org_headline === "This page has been deactivated" ||
+    (message as any).sender_org_headline === "User unavailable"
+  );
+
+  // Group chat seen members resolution (only active when isGroup === true and message is sent by me)
   const seenMembers: { user_id?: string; full_name?: string; avatar_url?: string; avatar?: string; is_company?: boolean }[] = useMemo(() => {
-    if (!isGroup || message.is_deleted_for_everyone || message.is_deleted_for_me) return [];
+    if (!isMe || !isGroup || message.is_deleted_for_everyone || message.is_deleted_for_me) return [];
 
     // 1. Direct real-time / backend seen_by list
     if (message.seen_by && message.seen_by.length > 0) {
@@ -177,12 +200,12 @@ export function MessageBubble(props: MessageBubbleProps) {
     }
 
     return [];
-  }, [isGroup, message.is_deleted_for_everyone, message.is_deleted_for_me, message.seen_by, message.seen_count, message.senderId, groupMembers]);
+  }, [isMe, isGroup, message.is_deleted_for_everyone, message.is_deleted_for_me, message.seen_by, message.seen_count, message.senderId, groupMembers]);
 
   const effectiveSeenCount = useMemo(() => {
-    if (!isGroup) return 0;
+    if (!isMe || !isGroup) return 0;
     return Math.max(message.seen_count || 0, seenMembers.length);
-  }, [isGroup, message.seen_count, seenMembers.length]);
+  }, [isMe, isGroup, message.seen_count, seenMembers.length]);
 
   // Helper to determine if message is media-only
   const isMediaOnly =
@@ -221,6 +244,16 @@ export function MessageBubble(props: MessageBubbleProps) {
       return text.trim().length > 0 && !isDefaultMediaText;
     })()
   );
+
+  const isMultipleDocMessage = useMemo(() => {
+    if (!message.media || message.media.length <= 1) return false;
+    return message.media.filter((item) => isDocumentType(item)).length > 1;
+  }, [message.media]);
+
+  const isMultipleVisualMedia = useMemo(() => {
+    if (!message.media || message.media.length < 2) return false;
+    return message.media.filter((item) => !isDocumentType(item)).length >= 2;
+  }, [message.media]);
 
   // Helper to determine if message contains a shared post
   const initialPost = message.sharedPost || (message as any).shared_post;
@@ -302,9 +335,11 @@ export function MessageBubble(props: MessageBubbleProps) {
 
   const isCompanyProfile = activeProfile?.type === "COMPANY";
 
+  const isBubbleUnavailable = !isGroup && message.is_unavailable;
+
   // Helper for dynamic classes
   const getBubbleClasses = () => {
-    if (message.is_unavailable) {
+    if (isBubbleUnavailable) {
       return "bg-transparent border-none shadow-none";
     }
     if (isDeleted) {
@@ -316,6 +351,11 @@ export function MessageBubble(props: MessageBubbleProps) {
       return "rounded-[16px] border border-[var(--ds-error)] bg-transparent text-[var(--ds-text-primary)]";
     }
 
+    // Figma Frame 2610040: Multi-doc messages (with or without context) use outline bubble
+    if (isMultipleDocMessage) {
+      return "rounded-[16px] border border-[var(--ds-border)] bg-transparent text-[var(--ds-text-primary)]";
+    }
+
     // Standard outline message styling matching Figma Frame 2610036 (rounded-16px, border 1px var(--ds-border))
     const baseClasses = "rounded-[16px] border border-[var(--ds-border)] bg-transparent text-[var(--ds-text-primary)]";
     const mediaOnlyClasses = "bg-transparent rounded-[16px] shadow-none border-none";
@@ -325,17 +365,19 @@ export function MessageBubble(props: MessageBubbleProps) {
       : baseClasses;
   };
 
-  const paddingClasses = message.is_unavailable
+  const paddingClasses = isBubbleUnavailable
     ? "p-0 overflow-hidden"
     : message.is_deleted_for_everyone || message.is_deleted_for_me
       ? "p-2"
       : message.status === 'failed'
         ? "p-2" // Figma Frame 2610069: padding 8px (p-2) for failed message box
-        : hasMediaAndText || (message.media && message.media.length > 1)
-          ? "p-0 overflow-visible"
-          : (message.media && message.media.length === 1) || isCardOnly || hasPost
-            ? "p-0 overflow-hidden"
-            : "px-3 py-2";
+        : isMultipleDocMessage
+          ? "p-2" // Figma Frame 2610040: padding 8px (p-2) for multi-doc message box
+          : hasMediaAndText || (message.media && message.media.length > 1)
+            ? "p-0 overflow-visible"
+            : (message.media && message.media.length === 1) || isCardOnly || hasPost
+              ? "p-0 overflow-hidden"
+              : "px-3 py-2";
 
   // Long press mobile detection
   const [showMobileActions, setShowMobileActions] = useState(false);
@@ -385,14 +427,9 @@ export function MessageBubble(props: MessageBubbleProps) {
   };
 
   const handleDeleteClick = (e?: React.MouseEvent | Event) => {
-    if (isMe) {
-      e?.preventDefault();
-      e?.stopPropagation();
-      setMenuView("delete");
-    } else {
-      setIsMenuOpen(false);
-      onAction?.("delete_for_me", message);
-    }
+    e?.preventDefault();
+    e?.stopPropagation();
+    setMenuView("delete");
   };
 
   const renderMessageDropdownContent = (align: "start" | "end") => (
@@ -406,17 +443,19 @@ export function MessageBubble(props: MessageBubbleProps) {
     >
       {menuView === "delete" ? (
         <>
-          <DropdownMenuItem
-            onSelect={() => {
-              onAction?.("delete_for_everyone", message);
-              setIsMenuOpen(false);
-              setMenuView("main");
-            }}
-            className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors !text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
-          >
-            <span>Delete for everyone</span>
-            <Icon icon="fluent:delete-16-regular" width={18} height={18} color="var(--ds-error)" />
-          </DropdownMenuItem>
+          {isMe && (
+            <DropdownMenuItem
+              onSelect={() => {
+                onAction?.("delete_for_everyone", message);
+                setIsMenuOpen(false);
+                setMenuView("main");
+              }}
+              className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
+            >
+              <span className="!text-[var(--ds-error)]">Delete for everyone</span>
+              <DeleteIcon className="w-[18px] h-[18px] text-[var(--ds-error)]" fill="var(--ds-error)" size={18} />
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem
             onSelect={() => {
@@ -424,10 +463,10 @@ export function MessageBubble(props: MessageBubbleProps) {
               setIsMenuOpen(false);
               setMenuView("main");
             }}
-            className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors !text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
+            className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
           >
-            <span>Delete for me</span>
-            <Icon icon="fluent:delete-16-regular" width={18} height={18} color="var(--ds-error)" />
+            <span className="!text-[var(--ds-error)]">Delete for me</span>
+            <DeleteIcon className="w-[18px] h-[18px] text-[var(--ds-error)]" fill="var(--ds-error)" size={18} />
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -465,10 +504,10 @@ export function MessageBubble(props: MessageBubbleProps) {
 
           <DropdownMenuItem
             onSelect={handleDeleteClick}
-            className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-colors !text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
+            className="w-full flex items-center justify-between py-1 px-1.5 font-['DM_Sans'] font-normal text-sm leading-5 cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
           >
-            <span>Delete</span>
-            <Icon icon="fluent:delete-16-regular" width={18} height={18} color="var(--ds-error)" />
+            <span className="!text-[var(--ds-error)]">Delete</span>
+            <DeleteIcon className="w-[18px] h-[18px] text-[var(--ds-error)]" fill="var(--ds-error)" size={18} />
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -549,7 +588,9 @@ export function MessageBubble(props: MessageBubbleProps) {
     setShowEmojiPicker(true);
   };
 
-  const handleEmojiSelect = (emojiData: EmojiClickData) => {
+  const handleEmojiSelect = (emojiData: EmojiClickData, event?: MouseEvent | React.MouseEvent) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
     setShowEmojiPicker(false);
     setPickerPos(null);
     onReaction?.(message, emojiData.emoji);
@@ -605,6 +646,82 @@ export function MessageBubble(props: MessageBubbleProps) {
     return Array.from(map.entries()).map(([emoji, count]) => ({ emoji, count }));
   }, [validReactions]);
 
+  // Render reaction badge (Figma Frame 2608770) with dynamic positioning:
+  // - On context text bubble: attached to text bubble corner (isMe ? left-[2px] : right-[2px])
+  // - On multiple visual media without text: centered under front card (left-1/2 -translate-x-1/2 -bottom-[16px])
+  // - Standard bubble: (isMe ? left-[2px] : right-[2px])
+  const renderReactionBadge = (positionOverride?: string) => {
+    if (
+      message.is_deleted_for_everyone ||
+      message.is_deleted_for_me ||
+      validReactions.length === 0 ||
+      reactionGroups.length === 0
+    ) {
+      return null;
+    }
+
+    const positionClass =
+      positionOverride ||
+      (isMultipleVisualMedia && !hasMediaAndText
+        ? (isMe ? "left-[28px] -bottom-[16px]" : "right-[28px] -bottom-[16px]")
+        : isMe
+          ? "left-[2px] -bottom-[16px]"
+          : "right-[2px] -bottom-[16px]");
+
+    return (
+      <button
+        type="button"
+        onClick={handleReactionBadgeClick}
+        className={cn(
+          "absolute flex flex-row items-center justify-center gap-1 px-1 h-6 bg-[var(--ds-bg,#030303)] border border-[var(--ds-border)] rounded-[24px] shadow-sm cursor-pointer hover:scale-105 transition-all z-30 box-border min-w-[40px]",
+          positionClass,
+        )}
+        style={{
+          boxSizing: "border-box",
+        }}
+        title={validReactions.map((r) => `${r.full_name || 'User'}: ${r.emoji}`).join(', ')}
+      >
+        {reactionGroups.length === 1 ? (
+          <>
+            <span className="w-4 h-6 text-base leading-6 flex items-center justify-center select-none shrink-0 font-['Poppins']">
+              {reactionGroups[0].emoji}
+            </span>
+            {reactionGroups[0].count > 1 && (
+              <span className="min-w-[7px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 flex items-center justify-center text-[var(--ds-text-primary)] shrink-0 pr-0.5">
+                {reactionGroups[0].count}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            {reactionGroups.slice(0, 2).map((group, idx) => (
+              <span
+                key={group.emoji || idx}
+                className="w-4 h-6 text-base leading-6 flex items-center justify-center select-none shrink-0 font-['Poppins']"
+              >
+                {group.emoji}
+              </span>
+            ))}
+            {validReactions.length > 2 && (
+              <span className="min-w-[7px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 flex items-center justify-center text-[var(--ds-text-primary)] shrink-0 pr-0.5">
+                {validReactions.length}
+              </span>
+            )}
+          </>
+        )}
+      </button>
+    );
+  };
+
+  // Dynamic spacing:
+  // - Same sender sequence (!isLastInGroup): 4px normal gap, or 20px if reactions (16px reaction overhang + 4px gap)
+  // - Different sender switch (isLastInGroup): 12px normal gap, or 28px if reactions (16px reaction overhang + 12px gap)
+  const isLastInGroup = (message as any).isLastInGroup ?? true;
+  const hasReactions = validReactions.length > 0;
+  const marginBottomClass = hasReactions
+    ? (isLastInGroup ? "mb-[28px]" : "mb-[20px]")
+    : (isLastInGroup ? "mb-[12px]" : "mb-[4px]");
+
   return (
     <>
       {showMobileActions && (
@@ -617,8 +734,7 @@ export function MessageBubble(props: MessageBubbleProps) {
         id={`message-${message.id}`}
         className={cn(
           "flex w-full group transition-colors relative py-0",
-          "mb-[12px]",
-          validReactions.length > 0 && "mb-4",
+          marginBottomClass,
           isMe ? "justify-end" : "justify-start",
           message.is_deleted_for_everyone || message.is_deleted_for_me
             ? "cursor-default"
@@ -664,7 +780,7 @@ export function MessageBubble(props: MessageBubbleProps) {
             )}
 
           {/* Sender name for group/received messages */}
-          {showSenderName && !isMe && message.senderName && (
+          {showSenderName && !isMe && (message.senderName || isUnknownSender) && (
             <div className="pl-[32px] w-full">
               <span
                 className="font-['DM_Sans'] font-semibold text-[11px] leading-[14px] text-[var(--ds-text-primary)] truncate block max-w-[70%] md:max-w-[85%] cursor-pointer"
@@ -685,7 +801,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                   }
                 }}
               >
-                {message.senderName}
+                {isUnknownSender ? "Unknown user" : message.senderName}
               </span>
             </div>
           )}
@@ -749,21 +865,6 @@ export function MessageBubble(props: MessageBubbleProps) {
                       normalizedUserType === "ORGANIZATION" ||
                       normalizedUserType === "INSTITUTION";
 
-                    const isUnknownSender = Boolean(
-                      message.isBlocked === true ||
-                      message.isBlockedByOther === true ||
-                      (message as any).is_blocked_by_other === true ||
-                      (message as any).is_deactivated === true ||
-                      (message as any).is_deleted_user === true ||
-                      message.senderName === "Unknown Page" ||
-                      message.senderName === "Unknown user" ||
-                      message.senderName === "Unknown User" ||
-                      message.senderName === "Deleted Page" ||
-                      message.senderName === "Deleted User" ||
-                      (message as any).sender_org_headline === "This page has been deactivated" ||
-                      (message as any).sender_org_headline === "User unavailable"
-                    );
-
                     const effectiveAvatar = isUnknownSender
                       ? null
                       : isMe
@@ -795,7 +896,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                 )}
               </div>
             )}
-            {/* Action Icons for isMe: Smile emoji, Reply, Copy, and horizontal 3 dots */}
+            {/* Action Icons for isMe: Copy, Reply, Smile emoji, and horizontal 3 dots */}
             {isMe &&
               !message.is_deleted_for_everyone &&
               !message.is_deleted_for_me &&
@@ -808,26 +909,16 @@ export function MessageBubble(props: MessageBubbleProps) {
                   )}
                   onClick={(e) => e.stopPropagation()}
                 >
+                  {(!isMediaOnly || message.text || message.text_content) && (
+                    <CopyButton
+                      isCopied={isCopied}
+                      onClick={handleCopyClick}
+                      className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80"
+                    />
+                  )}
                   <button
                     type="button"
-                    className="text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
-                    onClick={handleEmojiButtonClick}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    title="Add reaction"
-                    aria-label="Add reaction"
-                  >
-                    <SmileIcon className="w-5 h-5" size={20} />
-                  </button>
-                  <button
-                    type="button"
-                    className="text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
+                    className="text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
                     onClick={handleReplyClick}
                     onPointerDown={(e) => {
                       e.stopPropagation();
@@ -842,13 +933,23 @@ export function MessageBubble(props: MessageBubbleProps) {
                   >
                     <CustomReplyIcon className="w-5 h-5" />
                   </button>
-                  {(!isMediaOnly || message.text || message.text_content) && (
-                    <CopyButton
-                      isCopied={isCopied}
-                      onClick={handleCopyClick}
-                      className="w-5 h-5 flex items-center justify-center"
-                    />
-                  )}
+                  <button
+                    type="button"
+                    className="text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
+                    onClick={handleEmojiButtonClick}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    title="Add reaction"
+                    aria-label="Add reaction"
+                  >
+                    <SmileIcon className="w-5 h-5" size={20} />
+                  </button>
                   <DropdownMenu
                     open={isMenuOpen}
                     onOpenChange={(open) => {
@@ -859,7 +960,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
+                        className="text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
@@ -888,7 +989,8 @@ export function MessageBubble(props: MessageBubbleProps) {
                     ? deletedBoxWidth
                     : cn(
                         "max-w-[85%] sm:max-w-[calc(100%-30%)] w-fit",
-                        message.repliedMessage?.senderName && "min-w-[210px]"
+                        message.repliedMessage?.senderName && "min-w-[210px]",
+                        isMultipleDocMessage && "max-w-[412px]"
                       ),
               )}
             >
@@ -905,6 +1007,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                         isMe && message.status === 'failed'
                           ? "items-center text-center"
                           : isMe ? "items-end" : "items-start",
+                        isMultipleDocMessage && hasMediaAndText && "gap-[10px]",
                         message.repliedMessage && message.repliedMessage.senderName
                           ? "font-['DM_Sans'] font-normal text-[12px] leading-[16px]"
                           : "font-['DM_Sans'] font-normal text-xs leading-4",
@@ -913,7 +1016,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                       ),
                 )}
               >
-                {message.is_unavailable ? (
+                {isBubbleUnavailable ? (
                   <UnavailableContentCard isMe={isMe} />
                 ) : isDeleted ? (
                   /* Frame 2610036 Text Layer: DM Sans 10px/12px italic text-muted text-center */
@@ -940,7 +1043,12 @@ export function MessageBubble(props: MessageBubbleProps) {
                             repliedSenderRaw.trim().toLowerCase() === session?.user?.name?.trim().toLowerCase()) ||
                           (Boolean(activeProfile?.name) &&
                             repliedSenderRaw.trim().toLowerCase() === activeProfile?.name?.trim().toLowerCase());
-                        const resolvedRepliedSenderName = isRepliedSenderMe ? "You" : repliedSenderRaw;
+                        const repliedSenderId = (message.repliedMessage as any).senderId || cachedOriginalMsg?.senderId;
+                        const isRepliedSenderBlocked = Boolean(
+                          (repliedSenderId && isBlocked(repliedSenderId)) ||
+                          repliedSenderRaw?.toLowerCase() === "unknown user"
+                        );
+                        const resolvedRepliedSenderName = isRepliedSenderMe ? "You" : isRepliedSenderBlocked ? "Unknown user" : repliedSenderRaw;
                         const repliedRawContent = cachedOriginalMsg?.text || cachedOriginalMsg?.text_content || message.repliedMessage.content || "";
                         const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:posts?))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
                         const originalUrlMatch = (cachedOriginalMsg?.text || cachedOriginalMsg?.text_content || '')?.match(postUrlRegex);
@@ -1091,13 +1199,15 @@ export function MessageBubble(props: MessageBubbleProps) {
                                 />
                               )}
                             {finalJobId && (
-                              <JobApplicationContextCard
-                                entityType="job"
-                                entityId={finalJobId}
-                                conversationId={conversationId}
-                                isMe={isMe}
-                                message={message}
-                              />
+                              <div className={cn("w-full", !isCardOnly && "mb-1")}>
+                                <JobApplicationContextCard
+                                  entityType="job"
+                                  entityId={finalJobId}
+                                  conversationId={conversationId}
+                                  isMe={isMe}
+                                  message={message}
+                                />
+                              </div>
                             )}
                           </>
                         );
@@ -1109,74 +1219,52 @@ export function MessageBubble(props: MessageBubbleProps) {
                       onMediaLoad={onMediaLoad}
                     />
                     {hasMediaAndText ? (
-                      <div className="rounded-[16px] border border-[var(--ds-border)] bg-transparent text-[var(--ds-text-primary)] px-3.5 py-1.5 w-fit max-w-full mt-2 box-border">
+                      isMultipleDocMessage ? (
+                        <div
+                          className={cn(
+                            "w-full font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-primary)] break-words",
+                            isMe ? "text-right" : "text-left"
+                          )}
+                        >
+                          <MessageText
+                            message={message}
+                            isMediaOnly={false}
+                            isMe={isMe}
+                            conversationId={conversationId}
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className={cn(
+                            "relative rounded-[16px] border border-[var(--ds-border)] bg-transparent text-[var(--ds-text-primary)] w-fit max-w-full min-h-[34px] px-3.5 py-2 mt-2 box-border flex items-center justify-center text-center",
+                            hasReactions && "pb-3"
+                          )}
+                        >
+                          <MessageText
+                            message={message}
+                            isMediaOnly={false}
+                            isMe={isMe}
+                            conversationId={conversationId}
+                          />
+                          {renderReactionBadge(isMe ? "left-[2px] -bottom-[16px]" : "right-[2px] -bottom-[16px]")}
+                        </div>
+                      )
+                    ) : (
+                      !isMultipleDocMessage && (
                         <MessageText
                           message={message}
-                          isMediaOnly={false}
+                          isMediaOnly={isMediaOnly || isCardOnly}
                           isMe={isMe}
                           conversationId={conversationId}
                         />
-                      </div>
-                    ) : (
-                      <MessageText
-                        message={message}
-                        isMediaOnly={isMediaOnly || isCardOnly}
-                        isMe={isMe}
-                        conversationId={conversationId}
-                      />
+                      )
                     )}
                   </>
                 )}
               </div>
 
-              {/* Overlapping Reaction Badge (Figma Frame 2608770) */}
-              {!message.is_deleted_for_everyone &&
-                !message.is_deleted_for_me &&
-                validReactions.length > 0 &&
-                reactionGroups.length > 0 && (
-                <button
-                  onClick={handleReactionBadgeClick}
-                  className={cn(
-                    "absolute flex flex-row items-center justify-center gap-1 px-1 h-6 bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-full shadow-sm cursor-pointer hover:scale-105 transition-all z-30 box-border",
-                    isMe
-                      ? "left-[2px] -bottom-[16px]"
-                      : "right-[2px] -bottom-[16px]",
-                  )}
-                  style={{
-                    boxSizing: "border-box",
-                  }}
-                  title={validReactions.map((r) => `${r.full_name || 'User'}: ${r.emoji}`).join(', ')}
-                >
-                  {reactionGroups.length === 1 ? (
-                    <>
-                      <span className="w-4 h-6 text-base leading-6 flex items-center justify-center select-none shrink-0">
-                        {reactionGroups[0].emoji}
-                      </span>
-                      {reactionGroups[0].count > 1 && (
-                        <span className="min-w-[7px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 flex items-center justify-center text-[var(--ds-text-primary)] shrink-0 pr-0.5">
-                          {reactionGroups[0].count}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {reactionGroups.slice(0, 2).map((group, idx) => (
-                        <span
-                          key={group.emoji || idx}
-                          className="w-4 h-6 text-base leading-6 flex items-center justify-center select-none shrink-0"
-                        >
-                          {group.emoji}
-                        </span>
-                      ))}
-                      {validReactions.length > 2 && (
-                        <span className="min-w-[7px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 flex items-center justify-center text-[var(--ds-text-primary)] shrink-0 pr-0.5">
-                          {validReactions.length}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </button>
-              )}
+              {/* Overlapping Reaction Badge (Figma Frame 2608770) - rendered at bubble level when not attached to context text */}
+              {!(hasMediaAndText && !isMultipleDocMessage) && renderReactionBadge()}
 
               {/* Retry Icon button (Figma Frame 2610101 - at right with 4px gap) */}
               {isMe && message.status === 'failed' && (
@@ -1195,7 +1283,7 @@ export function MessageBubble(props: MessageBubbleProps) {
               )}
             </div>
 
-            {/* Action Icons for !isMe: Smile emoji, Reply, Copy, and horizontal 3 dots */}
+            {/* Action Icons for !isMe: Copy, Reply, Smile emoji, and horizontal 3 dots */}
             {!isMe &&
               !message.is_deleted_for_everyone &&
               !message.is_deleted_for_me &&
@@ -1207,26 +1295,16 @@ export function MessageBubble(props: MessageBubbleProps) {
                   )}
                   onClick={(e) => e.stopPropagation()}
                 >
+                  {(!isMediaOnly || message.text || message.text_content) && (
+                    <CopyButton
+                      isCopied={isCopied}
+                      onClick={handleCopyClick}
+                      className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80"
+                    />
+                  )}
                   <button
                     type="button"
-                    className="text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
-                    onClick={handleEmojiButtonClick}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    title="Add reaction"
-                    aria-label="Add reaction"
-                  >
-                    <SmileIcon className="w-5 h-5" size={20} />
-                  </button>
-                  <button
-                    type="button"
-                    className="text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
+                    className="text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
                     onClick={handleReplyClick}
                     onPointerDown={(e) => {
                       e.stopPropagation();
@@ -1241,13 +1319,23 @@ export function MessageBubble(props: MessageBubbleProps) {
                   >
                     <CustomReplyIcon className="w-5 h-5" />
                   </button>
-                  {(!isMediaOnly || message.text || message.text_content) && (
-                    <CopyButton
-                      isCopied={isCopied}
-                      onClick={handleCopyClick}
-                      className="w-5 h-5 flex items-center justify-center"
-                    />
-                  )}
+                  <button
+                    type="button"
+                    className="text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
+                    onClick={handleEmojiButtonClick}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    title="Add reaction"
+                    aria-label="Add reaction"
+                  >
+                    <SmileIcon className="w-5 h-5" size={20} />
+                  </button>
                   <DropdownMenu
                     open={isMenuOpen}
                     onOpenChange={(open) => {
@@ -1258,7 +1346,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
+                        className="text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity p-0 z-50 relative cursor-pointer flex items-center justify-center outline-none"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
@@ -1277,22 +1365,26 @@ export function MessageBubble(props: MessageBubbleProps) {
               )}
           </div>
 
-          {/* Frame 2609512: Group Chat Seen Avatars Stack */}
-          {isGroup && seenMembers.length > 0 && !isDeleted && (
+          {/* Frame 2609512: Group Chat Seen Avatars Stack - only on user's own sent messages */}
+          {isMe && isGroup && seenMembers.length > 0 && !isDeleted && (
             <div
-              className={cn(
-                "flex flex-row items-center p-0 h-[16px] shrink-0 select-none cursor-pointer mt-1 -space-x-1",
-                isMe ? "justify-end" : "justify-start pl-[32px]"
-              )}
+              className="flex flex-row items-center p-0 h-[16px] shrink-0 select-none cursor-pointer mt-1 -space-x-1 justify-end"
               onClick={(e) => {
                 e.stopPropagation();
                 onAction?.("info", message);
               }}
               title="View message info"
             >
-              {seenMembers.slice(0, 3).map((member: any, idx: number) => (
-                <SeenAvatar key={member.user_id || idx} member={member} />
-              ))}
+              {seenMembers.slice(0, 3).map((member: any, idx: number) => {
+                const isMemberBlocked = Boolean(member.user_id && isBlocked(member.user_id));
+                return (
+                  <SeenAvatar
+                    key={member.user_id || idx}
+                    member={member}
+                    isBlockedUser={isMemberBlocked}
+                  />
+                );
+              })}
               {/* Frame 2610127: Rectangle 32 + count text */}
               {effectiveSeenCount > 3 && (
                 <div className="relative w-[17px] h-[16px] shrink-0 flex-none select-none">
@@ -1447,14 +1539,14 @@ export function MessageBubble(props: MessageBubbleProps) {
               </>
             )}
             <button
-              className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
+              className="flex items-center gap-3 p-4 hover:opacity-80 transition-opacity w-full text-left border-t border-border/50 text-[var(--ds-error)]"
               onClick={() => {
                 setShowMobileActions(false);
                 handleDeleteClick();
               }}
             >
-              <DeleteIcon className="w-5 h-5" size={20} />
-              <span>Delete</span>
+              <DeleteIcon className="w-5 h-5 text-[var(--ds-error)]" fill="var(--ds-error)" size={20} />
+              <span className="text-[var(--ds-error)]">Delete</span>
             </button>
           </div>
         )}

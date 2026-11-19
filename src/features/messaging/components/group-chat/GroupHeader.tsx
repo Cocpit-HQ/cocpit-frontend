@@ -21,7 +21,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isChatMuted, formatMuteToastMessage } from "../../utils/muteUtils";
-import { setPinnedChatId, isChatPinned } from "../../utils/pinUtils";
+import { setChatPinned, isChatPinned } from "../../utils/pinUtils";
 
 interface GroupHeaderProps {
     onOpenDetails: () => void;
@@ -80,8 +80,6 @@ export default function GroupHeader({
         const handlePinned = (payload: { conversationId: string; is_pinned: boolean }) => {
             if (String(payload.conversationId) === String(activeGroup.conversation_id)) {
                 setIsPinned(Boolean(payload.is_pinned));
-            } else if (payload.is_pinned) {
-                setIsPinned(false);
             }
         };
         socket.on("conversation_pinned", handlePinned);
@@ -124,8 +122,9 @@ export default function GroupHeader({
         if (!activeGroup?.conversation_id) return;
         const newPinned = !isPinned;
         setIsPinned(newPinned);
+        const nowIso = new Date().toISOString();
         const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-        setPinnedChatId(newPinned ? String(activeGroup.conversation_id) : null, activeProfile?.type, activeProfile?.id);
+        setChatPinned(String(activeGroup.conversation_id), newPinned, activeProfile?.type, activeProfile?.id, nowIso);
         queryClient.setQueriesData<any[]>(
             { queryKey: ['conversations'] },
             (oldChats) => {
@@ -133,10 +132,7 @@ export default function GroupHeader({
                 return oldChats.map(c => {
                     const isTarget = String(c.id) === String(activeGroup.conversation_id);
                     if (isTarget) {
-                        return { ...c, is_pinned: newPinned };
-                    }
-                    if (newPinned && c.is_pinned) {
-                        return { ...c, is_pinned: false };
+                        return { ...c, is_pinned: newPinned, pinned_at: newPinned ? nowIso : null };
                     }
                     return c;
                 });
@@ -147,9 +143,12 @@ export default function GroupHeader({
 
         try {
             await pinConversation(String(activeGroup.conversation_id), newPinned, companyId);
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
         } catch (err) {
             console.error("Failed to persist pin on server:", err);
             setIsPinned(!newPinned);
+            setChatPinned(String(activeGroup.conversation_id), !newPinned, activeProfile?.type, activeProfile?.id);
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
             toast({
                 title: "Error",
                 description: "Failed to update pin state on server",

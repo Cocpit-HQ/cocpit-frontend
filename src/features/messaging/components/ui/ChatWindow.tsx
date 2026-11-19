@@ -23,10 +23,12 @@ import { useCompanyPermissions } from "@/features/businessProfile";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useOrgBlockPermissions } from "@/hooks/useOrgBlockPermissions";
 import { cn } from "@/lib/utils";
-import { setPinnedChatId, isChatPinned } from "../../utils/pinUtils";
+import { setChatPinned, isChatPinned } from "../../utils/pinUtils";
+import { isChatMuted } from "../../utils/muteUtils";
 import { setPinnedMessageId } from "../../utils/pinMessageUtils";
 import { PinnedMessageBanner } from "./PinnedMessageBanner";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
+import UserDetails from "./UserDetails";
 
 // Modular hooks
 import { useChatSocket } from "../../hooks/useChatSocket";
@@ -84,6 +86,15 @@ export default function ChatWindow({
   // Typing state
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const [typingMap, setTypingMap] = useState<Map<string, string>>(new Map());
+
+  // Active view state ('chat' | 'info')
+  const [activeView, setActiveView] = useState<"chat" | "info">("chat");
+  const isMutedActive = isChatMuted(initialChat);
+
+  // Reset view when switching conversations
+  useEffect(() => {
+    setActiveView("chat");
+  }, [initialChat?.id]);
 
   // Block & availability state
   const isBlockedByMe =
@@ -245,6 +256,7 @@ export default function ChatWindow({
     handleRetryMessage,
     handleTypingInput,
     searchGroupMembers,
+    groupMembers,
   } = useChatMessages({
     chat,
     session,
@@ -472,9 +484,10 @@ export default function ChatWindow({
   const handleTogglePin = useCallback(async () => {
     const isCurrentlyPinned = isChatPinned(chat.id, activeProfile?.type, activeProfile?.id) || Boolean(chat.is_pinned);
     const newPinned = !isCurrentlyPinned;
+    const nowIso = new Date().toISOString();
     const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
 
-    setPinnedChatId(newPinned ? String(chat.id) : null, activeProfile?.type, activeProfile?.id);
+    setChatPinned(String(chat.id), newPinned, activeProfile?.type, activeProfile?.id, nowIso);
     queryClient.setQueriesData<ChatThread[]>(
       { queryKey: ["conversations"] },
       (oldChats) => {
@@ -482,10 +495,11 @@ export default function ChatWindow({
         return oldChats.map((c) => {
           const isTarget = String(c.id) === String(chat.id);
           if (isTarget) {
-            return { ...c, is_pinned: newPinned };
-          }
-          if (newPinned && c.is_pinned) {
-            return { ...c, is_pinned: false };
+            return {
+              ...c,
+              is_pinned: newPinned,
+              pinned_at: newPinned ? nowIso : null,
+            };
           }
           return c;
         });
@@ -503,63 +517,80 @@ export default function ChatWindow({
 
     try {
       await pinConversation(String(chat.id), newPinned, companyId);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     } catch (err) {
       console.error("Failed to persist pin on server:", err);
+      setChatPinned(String(chat.id), isCurrentlyPinned, activeProfile?.type, activeProfile?.id);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     }
   }, [chat.id, chat.is_pinned, chat.isGroup, activeProfile?.type, activeProfile?.id, queryClient, toast]);
 
   return (
     <div
-      className={`flex flex-col flex-1 h-full min-h-0 overflow-hidden bg-[var(--ds-bg)] ${
+      className={`flex flex-col flex-1 h-full min-h-0 overflow-hidden bg-[var(--ds-bg)] relative ${
         isMobile ? "h-dvh" : ""
       }`}
     >
       {/* Header View: Mobile vs Desktop */}
-      {isMobile ? (
-        <MobileChatHeader
-          chat={chat}
-          onBack={onBack!}
-          selectedMessage={selectedMessage}
-          selectedMessages={selectedMessages}
-          onMessageAction={(action) => handleMessageActionWithMsg(action)}
-          currentUserId={currentUserId}
-          onMuteClick={modals.openMuteConfirm}
-          onUnmuteClick={modals.openUnmuteConfirm}
-          onDeleteClick={modals.openDeleteConfirm}
-          onLeaveClick={modals.openLeaveConfirm}
-          onTogglePin={handleTogglePin}
-          isQuickChat={isQuickChat}
-        />
-      ) : (
-        <ChatDesktopHeader
-          chat={chat}
-          currentUserId={currentUserId}
-          selectedMessage={selectedMessage}
-          selectedMessages={selectedMessages}
-          isMessageSelected={isMessageSelected}
-          onMessageAction={(action) => handleMessageActionWithMsg(action)}
-          isBlockedByMe={isBlockedByMe}
-          isBlockedByOther={!!isBlockedByOther}
-          isDeletedAccount={isDeletedAccount}
-          isDeactivatedAccount={isDeactivatedAccount}
-          typingDisplayString={typingDisplayString}
-          onShareClick={modals.openShareModal}
-          onReportClick={modals.openReportConfirm}
-          onBlockClick={modals.openBlockConfirm}
-          onUnblockClick={handleUnblock}
-          onClearClick={modals.openClearConfirm}
-          onDeleteClick={modals.openDeleteConfirm}
-          onLeaveClick={modals.openLeaveConfirm}
-          onUnmuteClick={
-            chat.isGroup ? modals.openUnmuteConfirm : handleUnmuteChat
-          }
-          onMuteWithDuration={handleMuteWithDuration}
-          onTogglePin={handleTogglePin}
-        />
+      {activeView === "chat" && (
+        isMobile ? (
+          <MobileChatHeader
+            chat={chat}
+            onBack={onBack!}
+            selectedMessage={selectedMessage}
+            selectedMessages={selectedMessages}
+            onMessageAction={(action) => handleMessageActionWithMsg(action)}
+            currentUserId={currentUserId}
+            onMuteClick={modals.openMuteConfirm}
+            onUnmuteClick={modals.openUnmuteConfirm}
+            onDeleteClick={modals.openDeleteConfirm}
+            onLeaveClick={modals.openLeaveConfirm}
+            onTogglePin={handleTogglePin}
+            onOpenDetails={!chat.isGroup ? () => setActiveView("info") : undefined}
+            isQuickChat={isQuickChat}
+          />
+        ) : (
+          <ChatDesktopHeader
+            chat={chat}
+            currentUserId={currentUserId}
+            selectedMessage={selectedMessage}
+            selectedMessages={selectedMessages}
+            isMessageSelected={isMessageSelected}
+            onMessageAction={(action) => handleMessageActionWithMsg(action)}
+            isBlockedByMe={isBlockedByMe}
+            isBlockedByOther={!!isBlockedByOther}
+            isDeletedAccount={isDeletedAccount}
+            isDeactivatedAccount={isDeactivatedAccount}
+            typingDisplayString={typingDisplayString}
+            onShareClick={modals.openShareModal}
+            onReportClick={modals.openReportConfirm}
+            onBlockClick={modals.openBlockConfirm}
+            onUnblockClick={handleUnblock}
+            onClearClick={modals.openClearConfirm}
+            onDeleteClick={modals.openDeleteConfirm}
+            onLeaveClick={modals.openLeaveConfirm}
+            onUnmuteClick={
+              chat.isGroup ? modals.openUnmuteConfirm : handleUnmuteChat
+            }
+            onMuteWithDuration={handleMuteWithDuration}
+            onTogglePin={handleTogglePin}
+            onOpenDetails={!chat.isGroup ? () => setActiveView("info") : undefined}
+          />
+        )
       )}
 
-      {/* Status, Context, Typing & Block Banners */}
-      <ChatStatusBanner
+      <div className="flex-1 flex flex-row overflow-hidden relative">
+        {/* Main Chat Area */}
+        <div
+          className={cn(
+            "flex-1 flex flex-col transition-all duration-300 overflow-hidden",
+            activeView !== "chat"
+              ? "opacity-0 invisible translate-x-[-20px] pointer-events-none"
+              : "opacity-100 visible translate-x-0"
+          )}
+        >
+          {/* Status, Context, Typing & Block Banners */}
+          <ChatStatusBanner
         chat={chat}
         isGroupInvitation={isGroupInvitation}
         isBlockedByMe={isBlockedByMe}
@@ -608,6 +639,7 @@ export default function ChatWindow({
             unreadCount={chat.unread}
             isOpponentOnline={chat.online}
             isGroup={chat.isGroup}
+            groupMembers={groupMembers}
             onReply={handleReply}
             onReaction={handleReactionSelect}
             currentUserId={currentUserId}
@@ -738,6 +770,37 @@ export default function ChatWindow({
           </div>
         </div>
       )}
+        </div>
+
+        {/* 1-on-1 User Details Panel - Slides in from the right */}
+        {!chat.isGroup && (
+          <div
+            className={cn(
+              isMobile
+                ? "fixed inset-0 z-50 bg-[var(--ds-bg)] transition-all duration-300"
+                : "absolute inset-0 z-20 bg-[var(--ds-bg)] transition-all duration-300",
+              activeView === "chat"
+                ? "translate-x-full opacity-0 invisible pointer-events-none"
+                : "translate-x-0 opacity-100 visible"
+            )}
+          >
+            <UserDetails
+              chat={chat}
+              isOpen={activeView === "info"}
+              onClose={() => setActiveView("chat")}
+              currentUserId={currentUserId}
+              isMuted={isMutedActive}
+              onMuteWithDuration={handleMuteWithDuration}
+              onUnmuteClick={handleUnmuteChat}
+              onShareClick={modals.openShareModal}
+              onReportClick={modals.openReportConfirm}
+              onBlockClick={modals.openBlockConfirm}
+              onUnblockClick={handleUnblock}
+              onDeleteClick={modals.openDeleteConfirm}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Modals and Confirmation Dialogs */}
       <ChatModals

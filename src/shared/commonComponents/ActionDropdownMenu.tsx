@@ -66,14 +66,14 @@ export default function ActionDropdownMenu({
           : visibleItems.map((item) => {
               const isDestructive = item.variant === "destructive";
               const textColor = isDestructive
-                ? "text-[var(--ds-error)]"
+                ? "!text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)]"
                 : "text-[var(--ds-text-primary)]";
               const defaultIconColor = isDestructive
                 ? "var(--ds-error)"
                 : "var(--ds-text-primary)";
               const hoverBg = isDestructive
-                ? "hover:bg-[var(--ds-error)]/10 focus:bg-[var(--ds-error)]/10"
-                : "hover:bg-[var(--ds-surface-1)] focus:bg-[var(--ds-surface-1)]";
+                ? "!bg-transparent hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80 transition-opacity"
+                : "hover:bg-[var(--ds-surface-1)] focus:bg-[var(--ds-surface-1)] transition-colors";
 
               return (
                 <DropdownMenuItem
@@ -81,8 +81,9 @@ export default function ActionDropdownMenu({
                   disabled={item.disabled}
                   onClick={item.onClick}
                   className={cn(
-                    "flex items-center justify-between px-4 py-2.5 min-h-[36px] cursor-pointer rounded-md transition-colors border-none outline-none",
+                    "flex items-center justify-between px-4 py-2.5 min-h-[36px] cursor-pointer rounded-md border-none outline-none",
                     hoverBg,
+                    isDestructive && "!text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)]",
                     item.disabled && "opacity-40 pointer-events-none",
                   )}
                 >

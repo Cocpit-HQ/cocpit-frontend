@@ -168,9 +168,18 @@ export const SharedPostCard = ({
     return null;
   }
 
+  const isSenderOwnPostBlocked = Boolean(
+    message.senderId &&
+    isBlocked(message.senderId) &&
+    (!initialAuthorId ||
+      String(initialAuthorId) === String(message.senderId) ||
+      (message.senderName && initialPost?.author && message.senderName.trim().toLowerCase() === initialPost.author.trim().toLowerCase()))
+  );
+
   const isLocalBlocked =
     (initialAuthorId && isBlocked(initialAuthorId)) ||
-    (fetchedPost?.authorId && isBlocked(fetchedPost.authorId));
+    (fetchedPost?.authorId && isBlocked(fetchedPost.authorId)) ||
+    isSenderOwnPostBlocked;
 
   if (isLocalBlocked) {
     return <UnavailableContentCard isMe={isMe} />;

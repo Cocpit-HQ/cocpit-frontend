@@ -16,6 +16,7 @@ import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
 import type { BackendChat, ChatThread } from '@/types/messaging';
 import { stripMentionSyntax } from '@/lib/mentions';
+import { encodeConversationId } from '@/features/messaging/utils/conversationEncryption';
 
 type TargetedMessageNotification = NotificationPayload & {
   targetProfileType?: 'USER' | 'COMPANY';
@@ -426,7 +427,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 if (payload.conversationId) {
-                  router.push(`/messaging?conversationId=${payload.conversationId}`);
+                  router.push(`/messaging?conversationId=${encodeConversationId(payload.conversationId)}`);
                 }
               }}
             >
@@ -603,25 +604,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const groupName = payload?.other_user_name || payload?.conversation_name || payload?.group_name || payload?.name || 'a group';
-      const inviterName = payload?.other_user_headline || 'Someone';
+      const inviterName =
+        payload?.other_user_headline ||
+        payload?.inviter_name ||
+        payload?.sender_name ||
+        payload?.created_by_name ||
+        (payload?.last_message_text?.match(/^(.*?)\s+invited you to join/i)?.[1]) ||
+        'Someone';
+
+      const groupName =
+        payload?.other_user_name ||
+        payload?.conversation_name ||
+        payload?.group_name ||
+        payload?.name ||
+        'a group';
 
       toast({
-        title: "Group Invitation",
-        description: (
-          <div
-            className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => {
-              if (convId) {
-                router.push(`/messaging?conversationId=${convId}`);
-              }
-            }}
-          >
-            <span className="text-sm">
-              {inviterName} invited you to join &quot;{groupName}&quot; group.
-            </span>
-          </div>
-        ),
+        description: `${inviterName} invited you to join "${groupName}" group`,
         duration: 5000,
       });
     };

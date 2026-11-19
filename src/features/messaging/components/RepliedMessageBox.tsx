@@ -309,7 +309,15 @@ export default function RepliedMessageBox({
             )
           ) : null}
           <div className="flex flex-col justify-center items-start flex-1 min-w-0 min-h-[32px] py-0.5">
-            <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-primary)] line-clamp-2 break-words text-left">
+            <span
+              className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-primary)] line-clamp-4 break-words text-left"
+              style={{
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical',
+                WebkitLineClamp: 4,
+                overflow: 'hidden',
+              }}
+            >
               {stripMentionSyntax(textToDisplay || effectiveSharedPost?.content || '')}
             </span>
           </div>
@@ -337,9 +345,17 @@ export default function RepliedMessageBox({
           )}
         </div>
       ) : (
-        /* Case 6: Pure text message -> 2 lines max with truncation at end */
+        /* Case 6: Pure text message -> 4 lines max with truncation at end */
         <div className="w-full min-w-0 text-left">
-          <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-primary)] line-clamp-2 break-words text-left block">
+          <span
+            className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-primary)] line-clamp-4 break-words text-left"
+            style={{
+              display: '-webkit-box',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 4,
+              overflow: 'hidden',
+            }}
+          >
             {stripMentionSyntax(effectiveSharedPost?.content || content) || (mediaName || (isAttachment ? "Attachment" : ""))}
           </span>
         </div>

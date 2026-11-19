@@ -11,6 +11,7 @@ import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { JobInputContextCard } from "../messages/SharedJobMessage"
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 const ALLOWED_IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"];
@@ -29,6 +30,7 @@ const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100MB matching backend uploadC
 const MAX_IMAGES_COUNT = 10;
 const MAX_VIDEOS_COUNT = 5;
 const MAX_DOCS_COUNT = 5;
+const MAX_MESSAGE_LENGTH = 8000;
 
 const IMAGE_ACCEPT = ["image/*", ...ALLOWED_IMAGE_TYPES, ...ALLOWED_IMAGE_EXTS].join(',');
 const VIDEO_ACCEPT = ["video/*", ...ALLOWED_VIDEO_TYPES, ...ALLOWED_VIDEO_EXTS].join(',');
@@ -184,7 +186,9 @@ export default function UnifiedMessageInput({
                     const len = initialText.length;
                     textareaRef.current.setSelectionRange(len, len);
                     textareaRef.current.style.height = 'auto';
-                    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 68)}px`;
+                    const scrollH = textareaRef.current.scrollHeight;
+                    textareaRef.current.style.height = `${Math.min(scrollH, 240)}px`;
+                    textareaRef.current.style.overflowY = scrollH > 240 ? 'auto' : 'hidden';
                 }
             }, 0);
         }
@@ -195,6 +199,7 @@ export default function UnifiedMessageInput({
         if (editingMessage && onSaveEdit) {
             if (text.trim()) {
                 const formattedText = formatMentionsForBackend(text, inlineMentions);
+                if (formattedText.length > MAX_MESSAGE_LENGTH) return;
                 onSaveEdit(editingMessage.id, formattedText);
                 setText("");
                 setInlineMentions([]);
@@ -208,6 +213,7 @@ export default function UnifiedMessageInput({
         }
         if (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile) {
             const formattedText = formatMentionsForBackend(text, inlineMentions);
+            if (formattedText.length > MAX_MESSAGE_LENGTH) return;
             onSendMessage(formattedText, files)
             setText("")
             setInlineMentions([])
@@ -235,10 +241,13 @@ export default function UnifiedMessageInput({
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, targetCategory?: 'image' | 'video' | 'document') => {
         const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
-        if (selectedFiles.length === 0) return;
-
         // Reset input value so re-selecting same file triggers change
         e.target.value = '';
+        processSelectedFiles(selectedFiles, targetCategory);
+    };
+
+    const processSelectedFiles = (selectedFiles: File[], targetCategory?: 'image' | 'video' | 'document') => {
+        if (selectedFiles.length === 0) return;
 
         let activeType = currentMediaType || targetCategory;
         if (!activeType) {
@@ -323,13 +332,17 @@ export default function UnifiedMessageInput({
     const insertEmoji = (emoji: string) => {
         const textarea = textareaRef.current;
         if (!textarea) {
-            setText(prev => prev + emoji);
+            setText(prev => {
+                if (prev.length + emoji.length > MAX_MESSAGE_LENGTH) return prev;
+                return prev + emoji;
+            });
             return;
         }
 
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const newText = text.substring(0, start) + emoji + text.substring(end);
+        if (newText.length > MAX_MESSAGE_LENGTH) return;
 
         setText(newText);
 
@@ -384,9 +397,98 @@ export default function UnifiedMessageInput({
         };
     }, [filePreviews]);
 
+    // Drag-and-drop file upload handlers
+    const [isDraggingOver, setIsDraggingOver] = useState(false);
+    const dragCounter = useRef(0);
+
+    const handleDragEnter = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isDisabled) return;
+        dragCounter.current += 1;
+        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+            setIsDraggingOver(true);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isDisabled && e.dataTransfer) {
+            e.dataTransfer.dropEffect = "copy";
+        }
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter.current -= 1;
+        if (dragCounter.current <= 0) {
+            dragCounter.current = 0;
+            setIsDraggingOver(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter.current = 0;
+        setIsDraggingOver(false);
+        if (isDisabled) return;
+        const droppedFiles = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+        if (droppedFiles.length > 0) {
+            processSelectedFiles(droppedFiles);
+        }
+    };
+
+    // Attachment preview scroll handlers (horizontal drag-to-scroll & mouse wheel)
+    const previewScrollRef = useRef<HTMLDivElement>(null);
+    const [isMouseDown, setIsMouseDown] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+
+    const handlePreviewMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.button !== 0 || !previewScrollRef.current) return;
+        setIsMouseDown(true);
+        setStartX(e.pageX - previewScrollRef.current.offsetLeft);
+        setScrollLeft(previewScrollRef.current.scrollLeft);
+    };
+
+    const handlePreviewMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isMouseDown || !previewScrollRef.current) return;
+        e.preventDefault();
+        const x = e.pageX - previewScrollRef.current.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        previewScrollRef.current.scrollLeft = scrollLeft - walk;
+    };
+
+    const handlePreviewMouseUpOrLeave = () => {
+        setIsMouseDown(false);
+    };
+
+    const handlePreviewWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+        if (e.deltaY !== 0 && previewScrollRef.current) {
+            e.currentTarget.scrollLeft += e.deltaY;
+        }
+    };
+
     return (
-        <div className={`w-full px-4 py-0 bg-[var(--ds-bg)] shrink-0 ${isQuickChat ? 'p-3' : ''}`}>
+        <div
+            className={`w-full px-4 py-0 bg-[var(--ds-bg)] shrink-0 ${isQuickChat ? 'p-3' : ''}`}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
             <div className="flex flex-col w-full bg-transparent transition-all relative">
+                {/* Visual drop indicator overlay when user drags files over the chat input */}
+                {isDraggingOver && (
+                    <div className="absolute inset-0 -top-1 -bottom-1 -left-1 -right-1 z-50 flex items-center justify-center bg-[var(--ds-bg)]/90 backdrop-blur-sm border-2 border-dashed border-[var(--ds-accent)] rounded-lg pointer-events-none transition-all">
+                        <span className="font-['DM_Sans'] text-xs md:text-sm font-medium text-[var(--ds-accent)] flex items-center gap-2">
+                            Drop files to attach
+                        </span>
+                    </div>
+                )}
                 {/* Frame 2610122: Editing message banner matching Figma */}
                 {editingMessage && onCancelEdit && (
                     <div className="flex flex-row items-center justify-between gap-2 w-full h-5 mb-2 self-stretch">
@@ -471,51 +573,81 @@ export default function UnifiedMessageInput({
                 )}
 
                 {pendingEntityContext && onDismissEntityContext && (
-                    <div className="flex items-center justify-between gap-3 w-full relative px-3 py-2 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-lg mb-1.5">
-                        <div className="flex items-center gap-3 overflow-hidden flex-1">
-                            <div className="size-8 rounded-full overflow-hidden bg-[var(--ds-surface-2)] flex items-center justify-center shrink-0 border border-[var(--ds-border)]">
-                                <span className="text-xs">
-                                    {pendingEntityContext.type === 'job' ? '💼' : pendingEntityContext.type === 'event' ? '📅' : '📝'}
-                                </span>
+                    pendingEntityContext.type === 'job' || pendingEntityContext.type === 'offer' ? (
+                        <JobInputContextCard
+                            entityId={pendingEntityContext.id}
+                            entityType={pendingEntityContext.type}
+                            onDismiss={onDismissEntityContext}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-between gap-3 w-full relative px-3 py-2 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-lg mb-1.5">
+                            <div className="flex items-center gap-3 overflow-hidden flex-1">
+                                <div className="size-8 rounded-full overflow-hidden bg-[var(--ds-surface-2)] flex items-center justify-center shrink-0 border border-[var(--ds-border)]">
+                                    <span className="text-xs">
+                                        {pendingEntityContext.type === 'event' ? '📅' : '📝'}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col text-left overflow-hidden">
+                                    <span className="font-['DM_Sans'] font-medium text-xs text-[var(--ds-text-primary)] truncate">
+                                        {pendingEntityContext.type === 'event' ? 'Event Context' : 'Context'}
+                                    </span>
+                                    <span className="font-['DM_Sans'] font-normal text-[10px] text-[var(--ds-text-secondary)] truncate">
+                                        This context will be attached to your first message
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex flex-col text-left overflow-hidden">
-                                <span className="font-['DM_Sans'] font-medium text-xs text-[var(--ds-text-primary)] truncate">
-                                    {pendingEntityContext.type === 'job' ? 'Job Application Context' : pendingEntityContext.type === 'event' ? 'Event Context' : 'Job Offer Context'}
-                                </span>
-                                <span className="font-['DM_Sans'] font-normal text-[10px] text-[var(--ds-text-secondary)] truncate">
-                                    This context will be attached to your first message
-                                </span>
-                            </div>
+                            <button
+                                onClick={onDismissEntityContext}
+                                className="text-[var(--ds-text-muted)] hover:text-[var(--ds-text-primary)] p-1 rounded-full transition-colors shrink-0"
+                                aria-label="Remove context"
+                            >
+                                <X className="w-4 h-4" strokeWidth={2} />
+                            </button>
                         </div>
-                        <button
-                            onClick={onDismissEntityContext}
-                            className="text-[var(--ds-text-muted)] hover:text-[var(--ds-text-primary)] p-1 rounded-full transition-colors shrink-0"
-                            aria-label="Remove context"
-                        >
-                            <X className="w-4 h-4" strokeWidth={2} />
-                        </button>
-                    </div>
+                    )
                 )}
 
                 {/* Frame 2610066: File Previews inside the input box matching Figma */}
                 {filePreviews.length > 0 && (
-                    <div className="w-full px-3 py-0 flex flex-row items-center gap-2.5 h-10 overflow-x-auto overflow-y-hidden scrollbar-none mb-1.5 shrink-0 self-stretch">
+                    <div
+                        ref={previewScrollRef}
+                        onMouseDown={handlePreviewMouseDown}
+                        onMouseMove={handlePreviewMouseMove}
+                        onMouseUp={handlePreviewMouseUpOrLeave}
+                        onMouseLeave={handlePreviewMouseUpOrLeave}
+                        onWheel={handlePreviewWheel}
+                        className={cn(
+                            "w-full max-w-full px-3 py-0 flex flex-row items-center gap-2.5 h-10 mb-1.5 shrink-0 self-stretch",
+                            "overflow-x-auto overflow-y-hidden touch-pan-x select-none",
+                            "scrollbar-hide no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+                            isMouseDown ? "cursor-grabbing" : "cursor-grab"
+                        )}
+                        style={{
+                            scrollbarWidth: "none",
+                            msOverflowStyle: "none"
+                        }}
+                    >
                         {filePreviews.map(({ file, url, isDoc, isVideo, isImg }, index) => {
                             if (isImg) {
                                 return (
                                     <div
                                         key={index}
-                                        className="relative w-[60px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)]"
+                                        className="relative w-[60px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)] select-none"
                                     >
                                         <img
                                             src={url}
                                             alt={file.name}
-                                            className="w-[60px] h-10 object-cover"
+                                            draggable={false}
+                                            className="w-[60px] h-10 object-cover pointer-events-none select-none"
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => removeFile(index)}
-                                            className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0"
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeFile(index);
+                                            }}
+                                            className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0 cursor-pointer"
                                             aria-label="Remove image"
                                         >
                                             <X className="w-3 h-3 stroke-[2.5]" />
@@ -528,11 +660,11 @@ export default function UnifiedMessageInput({
                                 return (
                                     <div
                                         key={index}
-                                        className="relative w-[60px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)]"
+                                        className="relative w-[60px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)] select-none"
                                     >
                                         <video
                                             src={url}
-                                            className="w-[60px] h-10 object-cover pointer-events-none"
+                                            className="w-[60px] h-10 object-cover pointer-events-none select-none"
                                             preload="metadata"
                                         />
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -540,8 +672,12 @@ export default function UnifiedMessageInput({
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => removeFile(index)}
-                                            className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0"
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeFile(index);
+                                            }}
+                                            className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0 cursor-pointer"
                                             aria-label="Remove video"
                                         >
                                             <X className="w-3 h-3 stroke-[2.5]" />
@@ -553,9 +689,9 @@ export default function UnifiedMessageInput({
                             return (
                                 <div
                                     key={index}
-                                    className="relative w-[50px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)]"
+                                    className="relative w-[50px] h-10 rounded-[8px] overflow-hidden shrink-0 border border-[var(--ds-border)] bg-[var(--ds-surface-1)] select-none"
                                 >
-                                    <div className="w-full h-full flex flex-col items-center justify-center px-1 py-0 select-none">
+                                    <div className="w-full h-full flex flex-col items-center justify-center px-1 py-0 select-none pointer-events-none">
                                         <FileTextIcon className="w-5 h-5 text-[var(--ds-text-primary)] shrink-0" size={20} />
                                         <span className="font-['DM_Sans'] text-[10px] leading-3 font-normal text-[var(--ds-text-primary)] text-center truncate max-w-[38px]">
                                             {file.name}
@@ -563,8 +699,12 @@ export default function UnifiedMessageInput({
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => removeFile(index)}
-                                        className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeFile(index);
+                                        }}
+                                        className="absolute top-0 right-0 w-4 h-4 flex items-center justify-center text-[var(--ds-error)] hover:opacity-80 transition-opacity z-10 p-0 cursor-pointer"
                                         aria-label="Remove document"
                                     >
                                         <X className="w-3 h-3 stroke-[2.5]" />
@@ -576,17 +716,17 @@ export default function UnifiedMessageInput({
                 )}
 
                 {/* Frame 2610043: Input row matching Figma */}
-                <div className="self-stretch flex flex-row items-center p-0 gap-2.5 w-full min-h-[40px]">
+                <div className="self-stretch flex flex-row items-end p-0 gap-2.5 w-full min-h-[40px]">
                     {/* Search / Left Underline Input with Paperclip */}
                     <div
                         className={cn(
-                            "box-border flex flex-row items-center px-3 py-1.5 gap-2.5 flex-1 min-h-[40px] h-10 border-b transition-colors",
+                            "box-border flex flex-row items-end px-3 py-2 gap-2.5 flex-1 min-h-[40px] border-b transition-colors",
                             isDisabled
                                 ? "border-[var(--ds-text-muted)]"
-                                : "border-[var(--ds-text-primary)] focus-within:border-[var(--ds-accent)]"
+                                : "border-[var(--ds-text-primary)]"
                         )}
                     >
-                        <div className="relative shrink-0 flex items-center justify-center" ref={attachmentMenuRef}>
+                        <div className="relative shrink-0 flex items-center justify-center mb-0.5" ref={attachmentMenuRef}>
                             <button
                                 type="button"
                                 className={cn(
@@ -632,23 +772,27 @@ export default function UnifiedMessageInput({
                             )}
                         </div>
 
-                        <div className="flex-1 relative flex items-center justify-start min-w-0">
+                        <div className="flex-1 relative flex items-center justify-start min-w-0 py-0.5">
                             <MentionTextarea
                                 ref={textareaRef}
                                 value={text}
                                 searchUsersFn={searchUsersFn}
                                 placement="top"
                                 onMentionsChange={setInlineMentions}
-                                maxHeight={68}
+                                maxHeight={240}
                                 enableHashtags={false}
+                                maxLength={MAX_MESSAGE_LENGTH}
                                 onChange={(e) => {
-                                    setText(e.target.value);
-                                    if (onTyping) onTyping();
+                                    const val = e.target.value;
+                                    if (val.length <= MAX_MESSAGE_LENGTH) {
+                                        setText(val);
+                                        if (onTyping) onTyping();
+                                    }
                                 }}
                                 onKeyDown={handleKeyDown}
                                 placeholder={disabledMessage || (isQuickChat ? "Write a message..." : (placeholder || (isDisabled ? "Loading..." : "Write a message...")))}
                                 rows={1}
-                                className="w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide text-xs leading-4 font-normal font-['DM_Sans'] text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] p-0 min-h-4 max-h-[68px] overflow-y-auto"
+                                className="w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide text-xs leading-4 font-normal font-['DM_Sans'] text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] p-0 min-h-4 max-h-[240px] overflow-y-auto"
                                 disabled={isDisabled}
                             />
                         </div>
@@ -686,7 +830,7 @@ export default function UnifiedMessageInput({
                         type="button"
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                         className={cn(
-                            "w-5 h-5 flex items-center justify-center transition-colors shrink-0 p-0",
+                            "w-5 h-5 flex items-center justify-center transition-colors shrink-0 p-0 mb-2.5",
                             isDisabled
                                 ? "text-[var(--ds-text-muted)] cursor-default"
                                 : showEmojiPicker
@@ -705,7 +849,7 @@ export default function UnifiedMessageInput({
                         onClick={handleSend}
                         disabled={isDisabled || (!text.trim() && files.length === 0 && !pendingSharedPost && !pendingSharedProfile)}
                         className={cn(
-                            "w-5 h-5 flex items-center justify-center transition-all shrink-0 p-0",
+                            "w-5 h-5 flex items-center justify-center transition-all shrink-0 p-0 mb-2.5",
                             isDisabled
                                 ? "text-[var(--ds-text-muted)] cursor-default"
                                 : text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile

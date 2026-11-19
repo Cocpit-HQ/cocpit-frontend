@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Message } from "@/types/messaging";
-import { PinIcon, PollIcon, FileTextIcon } from "@/components/icons";
+import { PinIcon, PollIcon, FileTextIcon, BriefcaseIcon } from "@/components/icons";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { stripMentionSyntax } from "@/lib/mentions";
@@ -66,6 +66,50 @@ export function PinnedMessageBanner({
     enabled: Boolean(effectivePostId),
     staleTime: 300000,
     gcTime: 600000,
+  });
+
+  const isJobEntity =
+    message?.entityType === "job" ||
+    message?.entityType === "offer" ||
+    (message as any)?.entity_type === "job" ||
+    (message as any)?.entity_type === "offer";
+  const jobUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/jobs\/([a-zA-Z0-9_-]+)/i;
+  const matchJobUrl = rawText.match(jobUrlRegex);
+  const effectiveJobId =
+    (isJobEntity && (message?.entityId || (message as any)?.entity_id)) ||
+    matchJobUrl?.[1] ||
+    null;
+  const isJob = Boolean(effectiveJobId);
+
+  const hasJobMessageText = Boolean(
+    rawText &&
+    !rawText.startsWith("http://") &&
+    !rawText.startsWith("https://") &&
+    ![
+      "",
+      "shared a job",
+      "shared job",
+      "shared an offer",
+      "job",
+      "offer",
+    ].includes(rawText.trim().toLowerCase()) &&
+    !jobUrlRegex.test(rawText.trim())
+  );
+  const isJobCardOnly = isJob && !hasJobMessageText;
+
+  const { data: asyncJob } = useQuery({
+    queryKey: ["jobContext", message?.entityType || "job", effectiveJobId],
+    queryFn: async () => {
+      if (!effectiveJobId) return null;
+      const { safeGetJobById } = await import("../messages/SharedJobMessage");
+      const jobData = await safeGetJobById(effectiveJobId);
+      if (jobData && !("notFound" in jobData)) {
+        return jobData;
+      }
+      return null;
+    },
+    enabled: Boolean(effectiveJobId),
+    staleTime: 300000,
   });
 
   const effectiveSharedPost = message?.sharedPost || asyncPost;
@@ -156,7 +200,46 @@ export function PinnedMessageBanner({
     >
       {/* Message row (Frame 2610125) */}
       <div className="w-full flex items-center justify-between gap-[10px] shrink-0 self-stretch">
-        {isProfile ? (
+        {isJobCardOnly ? (
+          /* Job Variant */
+          <button
+            type="button"
+            onClick={handleClick}
+            aria-label={`Scroll to pinned job: ${asyncJob?.title || "Job"}`}
+            title="Scroll to pinned job"
+            className="box-border min-w-[219px] max-w-[calc(100%-34px)] sm:max-w-[340px] h-[54px] p-[8px_12px] flex flex-row items-center gap-2 rounded-[16px] border border-[var(--ds-border)] bg-transparent hover:bg-[var(--ds-surface-2)] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--ds-accent)]"
+          >
+            <div className="w-9 h-9 rounded-[8px] bg-[var(--ds-surface-2)] flex items-center justify-center shrink-0">
+              <BriefcaseIcon className="w-4 h-4 text-[var(--ds-text-primary)]" size={18} />
+            </div>
+            <div className="flex flex-col justify-center items-start min-w-0 flex-1 overflow-hidden">
+              <div className="flex flex-row items-center min-w-0 max-w-full">
+                <span className="font-['DM_Sans'] font-medium text-sm leading-5 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[140px]">
+                  {asyncJob?.title || "Job"}
+                </span>
+                {(asyncJob?.company || (asyncJob as any)?.company_name) && (
+                  <>
+                    <span className="font-['DM_Sans'] font-medium text-sm leading-5 text-[var(--ds-text-secondary)] mx-1 shrink-0">
+                      •
+                    </span>
+                    <span className="font-['DM_Sans'] font-medium text-sm leading-5 text-[var(--ds-text-secondary)] truncate min-w-0">
+                      {asyncJob?.company || (asyncJob as any)?.company_name}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-row items-center min-w-0 max-w-full">
+                <span className="font-['DM_Sans'] font-normal text-[11px] leading-3 text-[var(--ds-text-secondary)] truncate">
+                  {[
+                    asyncJob?.workMode || (asyncJob as any)?.work_mode || "Hybrid",
+                    asyncJob?.location?.split(",")[0]?.trim() || "Remote",
+                    asyncJob?.experience || (asyncJob as any)?.experience_level || "0-2Yrs",
+                  ].filter(Boolean).join(" • ")}
+                </span>
+              </div>
+            </div>
+          </button>
+        ) : isProfile ? (
           /* Profile Variant (Frame 2610036 + Frame 2608571) */
           <button
             type="button"

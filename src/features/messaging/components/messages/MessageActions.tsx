@@ -34,10 +34,10 @@ export const CopyButton = ({
 }) => (
   <button
     className={cn(
-      "p-0 z-50 relative transition-all cursor-pointer",
+      "p-0 z-50 relative transition-all cursor-pointer outline-none",
       isCopied
         ? "text-[var(--ds-accent)]"
-        : "text-[var(--ds-text-secondary)] hover:opacity-80",
+        : "text-[var(--ds-text-primary)] hover:opacity-80",
       className,
     )}
     onClick={onClick}
@@ -111,16 +111,18 @@ export const MessageActionsDropdown = ({
         )}
         <DropdownMenuItem
           onClick={() => onAction("delete_for_me", message)}
-          className="text-destructive focus:text-destructive"
+          className="cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
         >
-          <DeleteIcon className="w-4 h-4 mr-2" size={16} /> Delete for me
+          <DeleteIcon className="w-4 h-4 mr-2 text-[var(--ds-error)]" fill="var(--ds-error)" size={16} />
+          <span className="!text-[var(--ds-error)]">Delete for me</span>
         </DropdownMenuItem>
         {(message.senderId === currentUserId || message.sender === "me") && (
           <DropdownMenuItem
             onClick={() => onAction("delete_for_everyone", message)}
-            className="text-destructive focus:text-destructive"
+            className="cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
           >
-            <DeleteIcon className="w-4 h-4 mr-2" size={16} /> Delete for everyone
+            <DeleteIcon className="w-4 h-4 mr-2 text-[var(--ds-error)]" fill="var(--ds-error)" size={16} />
+            <span className="!text-[var(--ds-error)]">Delete for everyone</span>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

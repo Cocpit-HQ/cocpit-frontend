@@ -529,6 +529,71 @@ export const MediaStackFan = ({
   );
 };
 
+export const MultiDocMediaCard = ({
+  item,
+  index,
+  allMedia,
+  isSending,
+  onMediaClick,
+}: {
+  item: { url: string; type: string; name?: string | null };
+  index: number;
+  allMedia?: { url: string; type: string; name?: string | null }[];
+  isSending?: boolean;
+  onMediaClick?: (
+    url: string,
+    type: "image" | "video" | "document",
+    name?: string,
+    allMedia?: { url: string; type: string; name?: string | null }[],
+    index?: number,
+  ) => void;
+}) => {
+  const displayName = item.name || (item as any).filename || `Document-${index + 1}`;
+  const fileExt = displayName.includes(".")
+    ? displayName.split(".").pop()!.toLowerCase()
+    : "";
+  const extLabel = fileExt ? fileExt.toUpperCase() : "PDF";
+
+  if (isSending) {
+    return (
+      <div className="box-border flex flex-row items-center p-2 gap-1 w-[126px] h-[46px] border border-[var(--ds-border)] rounded-[16px] bg-[var(--ds-surface-1)] animate-pulse select-none shrink-0">
+        <div className="w-5 h-5 rounded bg-[var(--ds-surface-2)] shrink-0" />
+        <div className="w-[84px] h-[28px] flex flex-col justify-center items-start overflow-hidden">
+          <div className="h-3 w-16 bg-[var(--ds-surface-2)] rounded" />
+          <div className="h-2 w-8 bg-[var(--ds-surface-2)] rounded mt-1" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        onMediaClick?.(
+          item.url,
+          "document",
+          displayName,
+          allMedia,
+          index,
+        );
+      }}
+      className="box-border flex flex-row items-center p-2 gap-1 w-[126px] h-[46px] border border-[var(--ds-border)] rounded-[16px] bg-transparent hover:bg-[var(--ds-surface-1)]/50 transition-colors cursor-pointer select-none shrink-0"
+      title={displayName}
+    >
+      <FileTextIcon className="w-5 h-5 shrink-0 text-[var(--ds-text-primary)]" size={20} />
+      <div className="w-[84px] h-[28px] flex flex-col justify-center items-start overflow-hidden">
+        <span className="w-[84px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-primary)] truncate text-left select-none">
+          {displayName}
+        </span>
+        <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-text-secondary)] uppercase text-left select-none">
+          {extLabel}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export const DocumentMediaCard = ({
   item,
   index,
@@ -665,20 +730,34 @@ export const MessageMedia = ({
         />
       )}
 
-      {/* 2. Document Media (PDFs & Docs - Frame 2610036) */}
+      {/* 2. Document Media (PDFs & Docs - Frame 2610147 & 2610036) */}
       {docMedia.length > 0 && (
-        <div className="flex flex-col gap-1.5 w-fit max-w-full">
-          {docMedia.map((item, docIdx) => (
+        docMedia.length > 1 ? (
+          /* Multi-doc grid wrapping up to 3 per row (Frame 2610148 & 2610149) */
+          <div className="flex flex-wrap gap-2 max-w-[394px] w-fit items-start">
+            {docMedia.map((item, docIdx) => (
+              <MultiDocMediaCard
+                key={docIdx}
+                item={item}
+                index={docIdx}
+                allMedia={message.media}
+                isSending={isSending}
+                onMediaClick={onMediaClick}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5 w-fit max-w-full">
             <DocumentMediaCard
-              key={docIdx}
-              item={item}
-              index={docIdx}
+              key={0}
+              item={docMedia[0]}
+              index={0}
               allMedia={message.media}
               isSending={isSending}
               onMediaClick={onMediaClick}
             />
-          ))}
-        </div>
+          </div>
+        )
       )}
     </div>
   );

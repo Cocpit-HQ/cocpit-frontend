@@ -36,6 +36,7 @@ interface ChatDesktopHeaderProps {
   onUnmuteClick: () => void;
   onMuteWithDuration: (hours: number | null) => void;
   onTogglePin?: () => void;
+  onOpenDetails?: () => void;
 }
 
 export default function ChatDesktopHeader({
@@ -60,6 +61,7 @@ export default function ChatDesktopHeader({
   onUnmuteClick,
   onMuteWithDuration,
   onTogglePin,
+  onOpenDetails,
 }: ChatDesktopHeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [menuView, setMenuView] = useState<"main" | "mute">("main");
@@ -102,12 +104,17 @@ export default function ChatDesktopHeader({
             </>
           ) : (
             <>
-              <Link
-                href={profileHref}
-                className={`w-8 h-8 relative flex-none order-0 ${
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenDetails && !isAccountUnavailable) {
+                    onOpenDetails();
+                  }
+                }}
+                className={`w-8 h-8 relative flex-none order-0 p-0 bg-transparent border-0 text-left ${
                   isAccountUnavailable
                     ? "pointer-events-none cursor-default"
-                    : "transition-opacity hover:opacity-80"
+                    : "transition-opacity hover:opacity-80 cursor-pointer"
                 }`}
               >
                 <Avatar
@@ -144,14 +151,19 @@ export default function ChatDesktopHeader({
                     aria-hidden="true"
                   />
                 )}
-              </Link>
+              </button>
               <div className="flex flex-col items-start justify-center p-0 min-w-0 flex-1 h-9 flex-none order-1 grow-0">
-                <Link
-                  href={profileHref}
-                  className={`w-full min-w-0 ${
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenDetails && !isAccountUnavailable) {
+                      onOpenDetails();
+                    }
+                  }}
+                  className={`w-full min-w-0 p-0 bg-transparent border-0 text-left ${
                     isAccountUnavailable
                       ? "pointer-events-none cursor-default"
-                      : "transition-opacity hover:opacity-80"
+                      : "transition-opacity hover:opacity-80 cursor-pointer"
                   }`}
                 >
                   <h2 className="font-['DM_Sans'] font-semibold text-base leading-6 flex items-center text-[var(--ds-text-primary)] w-full h-6 flex-none order-0 grow-0 min-w-0">
@@ -162,7 +174,7 @@ export default function ChatDesktopHeader({
                           : "Unknown User")}
                     </span>
                   </h2>
-                </Link>
+                </button>
                 <p className="font-['DM_Sans'] font-normal text-[10px] leading-3 flex items-center text-[var(--ds-text-secondary)] w-full h-3 flex-none order-1 grow-0 min-w-0">
                   <span className="truncate">
                     {isAccountUnavailable

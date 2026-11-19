@@ -155,7 +155,7 @@ const PRESETS: Record<
       </span>
     ),
     description: "They won’t be able to view your profile, follow you, or connect with you",
-    confirmText: "Remove",
+    confirmText: "Block",
     buttonWidthClass: "!box-border !w-[84px] !min-w-[84px] !h-[36px] !px-3 !py-1.5 !rounded-full !font-['DM_Sans'] !font-medium !text-[16px] !leading-[24px] !text-[var(--ds-text-primary)]",
     modalClassName: "!box-border !w-[237px] !max-w-[237px] !h-[154px] !min-h-[154px] !p-3 !gap-4 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] !rounded-[16px]",
     textContainerClassName: "!w-[211px] !h-[76px] !gap-2",

@@ -29,6 +29,7 @@ export interface BackendChat {
   is_muted?: boolean;
   muted_until?: string | null;
   is_pinned?: boolean;
+  pinned_at?: string | null;
   pinned_message_id?: string | null;
   is_job_chat?: boolean;
   replied_msg_id?: string | null;
@@ -163,7 +164,10 @@ export interface ChatThread {
   is_muted?: boolean;
   muted_until?: string | null;
   is_pinned?: boolean;
+  pinned_at?: string | null;
   pinned_message_id?: string | null;
+  hasMention?: boolean;
+  unreadMentionCount?: number;
   jobIds?: string[];
   isJobChat?: boolean;
   isMock?: boolean;

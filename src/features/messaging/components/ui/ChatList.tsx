@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { Search } from "lucide-react"
 import { AddIcon } from "@/components/icons"
-import { toast } from "sonner"
+import { useToast } from "@/hooks/use-toast"
 import { ChatThread } from "@/types/messaging"
 import ChatListItem from "./ChatListItem"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -73,6 +73,7 @@ export function ChatList({
   const queryClient = useQueryClient();
   const parentRef = React.useRef<HTMLDivElement>(null);
   const { flags } = useFeatureFlags();
+  const { toast } = useToast();
 
   const { data: session } = useSession();
 
@@ -109,6 +110,25 @@ export function ChatList({
     if (!socket) return;
     const handleInvite = (payload?: any) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
+      const inviterName =
+        payload?.other_user_headline ||
+        payload?.inviter_name ||
+        payload?.sender_name ||
+        payload?.created_by_name ||
+        (payload?.last_message_text?.match(/^(.*?)\s+invited you to join/i)?.[1]) ||
+        'Someone';
+
+      const groupName =
+        payload?.other_user_name ||
+        payload?.conversation_name ||
+        payload?.group_name ||
+        payload?.name ||
+        'a group';
+
+      toast({
+        description: `${inviterName} invited you to join "${groupName}" group`,
+      });
     };
     const handleInvitationUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -245,10 +265,20 @@ export function ChatList({
       return (chat.name || "").toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-    // Pinned chat stays strictly at the top (like other messaging platforms), then sort by latest message timestamp
+    // Pinned chats stay strictly at the top, ordered chronologically (first pinned at first, next pinned after)
     return [...filteredList].sort((a, b) => {
       if (a.is_pinned && !b.is_pinned) return -1;
       if (!a.is_pinned && b.is_pinned) return 1;
+
+      if (a.is_pinned && b.is_pinned) {
+        const pinA = a.pinned_at ? new Date(a.pinned_at).getTime() : 0;
+        const pinB = b.pinned_at ? new Date(b.pinned_at).getTime() : 0;
+        const validPinA = isNaN(pinA) ? 0 : pinA;
+        const validPinB = isNaN(pinB) ? 0 : pinB;
+        if (validPinA !== validPinB) {
+          return validPinA - validPinB;
+        }
+      }
 
       const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
       const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
@@ -421,7 +451,7 @@ export function ChatList({
           </div>
         )}
         {!isLoading && !error && filteredChats.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground">
+          <div className="p-8 text-center text-[var(--ds-text-secondary)] font-['DM_Sans'] text-sm">
             No conversations found
           </div>
         )}
