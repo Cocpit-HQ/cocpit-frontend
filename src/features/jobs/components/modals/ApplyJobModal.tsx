@@ -65,11 +65,21 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 type: r.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'Document',
               }));
               setFetchedResumes(formatted);
+              if (formatted.length === 1) {
+                setSelectedResumeId(formatted[0].id);
+              }
             })
             .catch((err) => console.error('Failed to fetch resumes', err));
         });
     }
   }, [isOpen]);
+
+  // Automatically select resume if user has exactly one resume uploaded and hasn't selected or uploaded another
+  useEffect(() => {
+    if (isOpen && fetchedResumes.length === 1 && !uploadedFile && !selectedResumeId) {
+      setSelectedResumeId(fetchedResumes[0].id);
+    }
+  }, [isOpen, fetchedResumes, uploadedFile, selectedResumeId]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

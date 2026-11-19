@@ -207,6 +207,7 @@ export default function SearchClient() {
             isFetchingNextPage={isFetchingNextPage}
             hasNextPage={hasNextPage}
             fetchNextPage={fetchNextPage}
+            onClearFilters={clearAllFilters}
             query={q}
             returnTo={currentSearchUrl}
           />

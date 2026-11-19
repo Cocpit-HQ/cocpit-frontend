@@ -23,6 +23,7 @@ interface PeopleFilterPopoverProps {
   buttonWidthClass?: string;
   loadOptions?: (term: string) => Promise<(string | PeopleFilterOption)[]>;
   customSearchFilter?: (term: string) => (string | PeopleFilterOption)[];
+  isActive?: boolean;
 }
 
 export const PeopleFilterPopover: React.FC<PeopleFilterPopoverProps> = ({
@@ -38,6 +39,7 @@ export const PeopleFilterPopover: React.FC<PeopleFilterPopoverProps> = ({
   buttonWidthClass = 'w-auto',
   loadOptions,
   customSearchFilter,
+  isActive: isActiveProp,
 }) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,13 +75,13 @@ export const PeopleFilterPopover: React.FC<PeopleFilterPopoverProps> = ({
     baseOptions.forEach((opt) => knownMap.set(opt.value.toLowerCase(), opt));
     currentSelections.forEach((val) => {
       const lower = val.toLowerCase();
-      const lowerNoUnderscore = lower.replace(/_/g, ' ');
+      const lowerNorm = lower.replace(/[-_ ]+/g, ' ');
       const existing = baseOptions.find(
         (o) =>
           o.value.toLowerCase() === lower ||
           o.label.toLowerCase() === lower ||
-          o.value.toLowerCase().replace(/_/g, ' ') === lowerNoUnderscore ||
-          o.label.toLowerCase().replace(/_/g, ' ') === lowerNoUnderscore
+          o.value.toLowerCase().replace(/[-_ ]+/g, ' ') === lowerNorm ||
+          o.label.toLowerCase().replace(/[-_ ]+/g, ' ') === lowerNorm
       );
       if (!existing && !knownMap.has(lower)) {
         knownMap.set(lower, { label: val, value: val });
@@ -215,7 +217,7 @@ export const PeopleFilterPopover: React.FC<PeopleFilterPopoverProps> = ({
     return matched;
   }, [asyncOptions, customSearchFilter, searchTerm, allKnownOptions, currentSelections]);
 
-  const isActive = currentSelections.length > 0;
+  const isActive = isActiveProp !== undefined ? isActiveProp : currentSelections.length > 0;
 
   const handleSelect = (val: string) => {
     if (onToggle) {
@@ -304,11 +306,14 @@ export const PeopleFilterPopover: React.FC<PeopleFilterPopoverProps> = ({
                 const sLower = sel.toLowerCase();
                 const vLower = opt.value.toLowerCase();
                 const lLower = opt.label.toLowerCase();
+                const sNorm = sLower.replace(/[-_ ]+/g, ' ');
+                const vNorm = vLower.replace(/[-_ ]+/g, ' ');
+                const lNorm = lLower.replace(/[-_ ]+/g, ' ');
                 return (
                   sLower === vLower ||
                   sLower === lLower ||
-                  sLower.replace(/_/g, ' ') === vLower ||
-                  sLower.replace(/_/g, ' ') === lLower
+                  sNorm === vNorm ||
+                  sNorm === lNorm
                 );
               });
               return (

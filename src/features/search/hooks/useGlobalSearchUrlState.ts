@@ -358,13 +358,12 @@ export function useGlobalSearchUrlState() {
         : [];
 
       const lowerVal = value.toLowerCase();
-      const lowerNoUnderscore = lowerVal.replace(/_/g, ' ');
+      const lowerNormalized = lowerVal.replace(/[-_ ]+/g, ' ');
       const existsIndex = currentArr.findIndex((item) => {
         const itemLower = item.toLowerCase();
         return (
           itemLower === lowerVal ||
-          itemLower === lowerNoUnderscore ||
-          itemLower.replace(/_/g, ' ') === lowerNoUnderscore
+          itemLower.replace(/[-_ ]+/g, ' ') === lowerNormalized
         );
       });
 

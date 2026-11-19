@@ -238,8 +238,8 @@ export const SearchableLocationFilterChip: React.FC<SearchableLocationFilterChip
               Loading locations...
             </div>
           ) : displayItems.length === 0 ? (
-            <div className="py-2 text-center text-xs text-ds-text-secondary font-dm-sans w-full">
-              No matching locations
+            <div className="py-3 text-center text-xs text-ds-text-secondary font-dm-sans w-full">
+              No results found
             </div>
           ) : (
             displayItems.map((loc) => {
