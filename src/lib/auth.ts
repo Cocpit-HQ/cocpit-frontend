@@ -1,18 +1,24 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { jwtDecode } from "jwt-decode";
-import { JWT } from "next-auth/jwt";
-import { env } from "@/config/env";
+import { NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { jwtDecode } from 'jwt-decode';
+import { JWT } from 'next-auth/jwt';
+import { env } from '@/config/env';
 
 const inFlightRefreshByToken = new Map<string, Promise<JWT>>();
-const recentRefreshByToken = new Map<string, { accessToken: string; refreshToken: string; expiresAt: number }>();
+const recentRefreshByToken = new Map<
+  string,
+  { accessToken: string; refreshToken: string; expiresAt: number }
+>();
 const REFRESH_CACHE_TTL_MS = 15_000;
 
 /**
  * Helper to extract a specific cookie value from a Set-Cookie header.
  * Handles both string (single cookie) and array (multiple cookies) formats.
  */
-function getCookieValue(cookieHeader: string | string[] | undefined | null, key: string): string | null {
+function getCookieValue(
+  cookieHeader: string | string[] | undefined | null,
+  key: string
+): string | null {
   if (!cookieHeader) return null;
 
   const cookies = Array.isArray(cookieHeader) ? cookieHeader : [cookieHeader];
@@ -29,7 +35,9 @@ function getCookieValue(cookieHeader: string | string[] | undefined | null, key:
   return null;
 }
 
-function getRecentRefresh(refreshToken: string): { accessToken: string; refreshToken: string } | null {
+function getRecentRefresh(
+  refreshToken: string
+): { accessToken: string; refreshToken: string } | null {
   const cached = recentRefreshByToken.get(refreshToken);
   if (!cached) return null;
 
@@ -49,13 +57,13 @@ async function refreshAccessTokenCoordinated(token: JWT): Promise<JWT> {
   if (!refreshToken) {
     return {
       ...token,
-      error: "RefreshAccessTokenError",
+      error: 'RefreshAccessTokenError',
     };
   }
 
   const recent = getRecentRefresh(refreshToken);
   if (recent) {
-    console.log("Using recently refreshed tokens for stale parallel request.");
+    console.log('Using recently refreshed tokens for stale parallel request.');
     const mergedToken = {
       ...token,
       accessToken: recent.accessToken,
@@ -67,7 +75,7 @@ async function refreshAccessTokenCoordinated(token: JWT): Promise<JWT> {
 
   const inFlight = inFlightRefreshByToken.get(refreshToken);
   if (inFlight) {
-    console.log("Awaiting in-flight refresh for the same refresh token.");
+    console.log('Awaiting in-flight refresh for the same refresh token.');
     return inFlight;
   }
 
@@ -96,34 +104,34 @@ async function refreshAccessTokenCoordinated(token: JWT): Promise<JWT> {
 }
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
-  console.log("Attempting to refresh access token with token:", token);
+  console.log('Attempting to refresh access token with token:', token);
   try {
     const response = await fetch(`${env.API_URL}/auth/refresh`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ refreshToken: token.refreshToken }),
     });
-    console.log("Refresh API response status:", response.status);
+    console.log('Refresh API response status:', response.status);
 
     const text = await response.text();
-    console.log("Refresh API response text:", text);
+    console.log('Refresh API response text:', text);
     let refreshedTokens;
     try {
       refreshedTokens = JSON.parse(text);
     } catch {
-      console.error("Failed to parse refresh response", text);
+      console.error('Failed to parse refresh response', text);
       throw new Error(`Invalid JSON response: ${text}`);
     }
 
     if (!response.ok) {
       console.error(`Refresh failed with status ${response.status}:`, refreshedTokens);
       // Return a special error if the session is invalid
-      if (refreshedTokens.error === "SESSION_INVALID") {
+      if (refreshedTokens.error === 'SESSION_INVALID') {
         return {
           ...token,
-          error: "SESSION_INVALID",
+          error: 'SESSION_INVALID',
         } as JWT;
       }
       throw refreshedTokens;
@@ -133,15 +141,15 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     // Note: fetch in Node (via Next.js) might put headers in a Headers object.
     // We try getSetCookie() if available (Node 18+ / Next 13+), else get("set-cookie")
     let newRefreshToken = token.refreshToken;
-    const setCookieHeader = typeof response.headers.getSetCookie === 'function'
-      ? response.headers.getSetCookie()
-      : response.headers.get("set-cookie");
+    const setCookieHeader =
+      typeof response.headers.getSetCookie === 'function'
+        ? response.headers.getSetCookie()
+        : response.headers.get('set-cookie');
     console.log("Refresh API response 'set-cookie' header:", setCookieHeader);
 
-
-    const rotatedRefreshToken = getCookieValue(setCookieHeader, "refreshToken");
+    const rotatedRefreshToken = getCookieValue(setCookieHeader, 'refreshToken');
     if (rotatedRefreshToken) {
-      console.log("Extracted new rotated refresh token.");
+      console.log('Extracted new rotated refresh token.');
       newRefreshToken = rotatedRefreshToken;
     } else {
       console.log("No new rotated refresh token found in 'set-cookie' header.");
@@ -152,14 +160,14 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       accessToken: refreshedTokens.accessToken,
       refreshToken: newRefreshToken,
     };
-    console.log("Successfully refreshed tokens:", newTokens);
+    console.log('Successfully refreshed tokens:', newTokens);
     return newTokens;
   } catch (error) {
-    console.error("RefreshAccessTokenError", error);
+    console.error('RefreshAccessTokenError', error);
 
     return {
       ...token,
-      error: "RefreshAccessTokenError",
+      error: 'RefreshAccessTokenError',
     };
   }
 }
@@ -167,20 +175,20 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
         // Social OAuth fields (Google & Apple)
-        idToken: { label: "Social ID Token", type: "text" },
-        provider: { label: "Provider", type: "text" },
-        fullName: { label: "Full Name", type: "text" },
-        accountType: { label: "Account Type", type: "text" },
-        action: { label: "Action", type: "text" },
+        idToken: { label: 'Social ID Token', type: 'text' },
+        provider: { label: 'Provider', type: 'text' },
+        fullName: { label: 'Full Name', type: 'text' },
+        accountType: { label: 'Account Type', type: 'text' },
+        action: { label: 'Action', type: 'text' },
       },
       async authorize(credentials, req) {
         const isSocialLogin = !!credentials?.idToken;
-        const provider = credentials?.provider || (isSocialLogin ? "google" : null);
+        const provider = credentials?.provider || (isSocialLogin ? 'google' : null);
 
         console.log(
           isSocialLogin
@@ -190,45 +198,48 @@ export const authOptions: NextAuthOptions = {
 
         // Validate required fields based on login type
         if (!isSocialLogin && (!credentials?.email || !credentials?.password)) {
-          throw new Error("Email and password are required");
+          throw new Error('Email and password are required');
         }
         if (isSocialLogin && !credentials?.idToken) {
-          throw new Error(`${provider || "Social"} ID token is required`);
+          throw new Error(`${provider || 'Social'} ID token is required`);
         }
 
         try {
-          const requestHeaders = (req as { headers?: Record<string, string | string[] | undefined> }).headers;
-          const userAgentHeader = requestHeaders?.["user-agent"];
-          const forwardedHeader = requestHeaders?.["x-forwarded-for"];
-          const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader[0] : (userAgentHeader || "node");
-          const xForwardedFor = Array.isArray(forwardedHeader) ? forwardedHeader[0] : (forwardedHeader || "");
+          const requestHeaders = (
+            req as { headers?: Record<string, string | string[] | undefined> }
+          ).headers;
+          const userAgentHeader = requestHeaders?.['user-agent'];
+          const forwardedHeader = requestHeaders?.['x-forwarded-for'];
+          const userAgent = Array.isArray(userAgentHeader)
+            ? userAgentHeader[0]
+            : userAgentHeader || 'node';
+          const xForwardedFor = Array.isArray(forwardedHeader)
+            ? forwardedHeader[0]
+            : forwardedHeader || '';
 
           // Branch: /auth/apple for Apple, /auth/google for Google, /auth/login for credentials
-          const endpoint = provider === "apple"
-            ? "/auth/apple"
-            : isSocialLogin
-              ? "/auth/google"
-              : "/auth/login";
+          const endpoint =
+            provider === 'apple' ? '/auth/apple' : isSocialLogin ? '/auth/google' : '/auth/login';
 
           const body = isSocialLogin
             ? {
-              idToken: credentials!.idToken,
-              ...(credentials!.fullName ? { fullName: credentials!.fullName } : {}),
-              ...(credentials!.accountType ? { accountType: credentials!.accountType } : {}),
-              ...(credentials!.action ? { action: credentials!.action } : {}),
-            }
+                idToken: credentials!.idToken,
+                ...(credentials!.fullName ? { fullName: credentials!.fullName } : {}),
+                ...(credentials!.accountType ? { accountType: credentials!.accountType } : {}),
+                ...(credentials!.action ? { action: credentials!.action } : {}),
+              }
             : {
-              email: credentials!.email,
-              password: credentials!.password,
-            };
+                email: credentials!.email,
+                password: credentials!.password,
+              };
 
           const res = await fetch(`${env.API_URL}${endpoint}`, {
-            method: "POST",
+            method: 'POST',
             body: JSON.stringify(body),
             headers: {
-              "Content-Type": "application/json",
-              "User-Agent": userAgent,
-              "X-Forwarded-For": xForwardedFor,
+              'Content-Type': 'application/json',
+              'User-Agent': userAgent,
+              'X-Forwarded-For': xForwardedFor,
             },
           });
           console.log(`${endpoint} API response status:`, res.status);
@@ -239,21 +250,25 @@ export const authOptions: NextAuthOptions = {
           if (!res.ok) {
             console.error(`${endpoint} failed:`, res.status, data);
             // Encode structured errors as JSON so the login page can parse them
-            if (data?.code === "ACCOUNT_PENDING_DELETION") {
-              throw new Error(JSON.stringify({
-                code: "ACCOUNT_PENDING_DELETION",
-                message: data.message,
-                deletionDate: data.deletionDate,
-                email: data.email,
-              }));
+            if (data?.code === 'ACCOUNT_PENDING_DELETION') {
+              throw new Error(
+                JSON.stringify({
+                  code: 'ACCOUNT_PENDING_DELETION',
+                  message: data.message,
+                  deletionDate: data.deletionDate,
+                  email: data.email,
+                })
+              );
             }
-            if (data?.code === "ACCOUNT_NOT_FOUND") {
-              throw new Error(JSON.stringify({
-                code: "ACCOUNT_NOT_FOUND",
-                message: data.message,
-              }));
+            if (data?.code === 'ACCOUNT_NOT_FOUND') {
+              throw new Error(
+                JSON.stringify({
+                  code: 'ACCOUNT_NOT_FOUND',
+                  message: data.message,
+                })
+              );
             }
-            throw new Error(data?.message || "Authentication failed");
+            throw new Error(data?.message || 'Authentication failed');
           }
 
           if (data?.accessToken && data?.user) {
@@ -261,12 +276,13 @@ export const authOptions: NextAuthOptions = {
             // but fall back to the response body value if header extraction fails.
             // This is a server-to-server fetch so the browser cookie jar is not involved;
             // the body fallback ensures the refresh token is always captured.
-            const setCookieHeader = typeof res.headers.getSetCookie === 'function'
-              ? res.headers.getSetCookie()
-              : res.headers.get("set-cookie");
+            const setCookieHeader =
+              typeof res.headers.getSetCookie === 'function'
+                ? res.headers.getSetCookie()
+                : res.headers.get('set-cookie');
 
-            const refreshTokenFromCookie = getCookieValue(setCookieHeader, "refreshToken");
-            const refreshToken = refreshTokenFromCookie || data.refreshToken || "";
+            const refreshTokenFromCookie = getCookieValue(setCookieHeader, 'refreshToken');
+            const refreshToken = refreshTokenFromCookie || data.refreshToken || '';
 
             const userPayload = {
               id: data.user.id,
@@ -278,14 +294,17 @@ export const authOptions: NextAuthOptions = {
               refreshToken,
               onboarding_complete: data.user.onboarding_complete === true,
             };
-            console.log("Authorize returning user. Onboarding complete:", userPayload.onboarding_complete);
+            console.log(
+              'Authorize returning user. Onboarding complete:',
+              userPayload.onboarding_complete
+            );
             return userPayload;
           }
 
           return null;
         } catch (error: unknown) {
-          console.error("Login error in authorize:", error);
-          const message = error instanceof Error ? error.message : "Authentication failed";
+          console.error('Login error in authorize:', error);
+          const message = error instanceof Error ? error.message : 'Authentication failed';
           throw new Error(message);
         }
       },
@@ -295,7 +314,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger, session }) {
       // Initial sign in
       if (user) {
-        console.log("JWT Callback: Initial sign in. Onboarding status:", user.onboarding_complete);
+        console.log('JWT Callback: Initial sign in. Onboarding status:', user.onboarding_complete);
         return {
           ...token,
           id: user.id,
@@ -310,7 +329,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       // Handle session update
-      if (trigger === "update") {
+      if (trigger === 'update') {
         if (session?.image !== undefined) {
           token.picture = session.image;
         }
@@ -325,17 +344,17 @@ export const authOptions: NextAuthOptions = {
       // Return previous token if the access token has not expired yet
       try {
         // If the token already has an error, return it immediately to stop the loop
-        if (token.error === "RefreshAccessTokenError" || token.error === "SESSION_INVALID") {
+        if (token.error === 'RefreshAccessTokenError' || token.error === 'SESSION_INVALID') {
           return token;
         }
 
         const decoded = jwtDecode<{ exp: number }>(token.accessToken);
         // Subtract 60 seconds to refresh early and account for clock skew
-        if (decoded.exp && Date.now() < (decoded.exp * 1000 - 60 * 1000)) {
+        if (decoded.exp && Date.now() < decoded.exp * 1000 - 60 * 1000) {
           return token;
         }
       } catch (error) {
-        console.error("Error decoding token:", error);
+        console.error('Error decoding token:', error);
         // If decoding fails, we assume it's invalid/expired and try to refresh
       }
 
@@ -343,13 +362,13 @@ export const authOptions: NextAuthOptions = {
       const refreshedToken = await refreshAccessTokenCoordinated(token);
 
       // Keep JWT payload as an object; returning null here crashes NextAuth encode flow.
-      if (refreshedToken.error === "SESSION_INVALID") {
-        console.warn("JWT Callback: Session is invalid. Marking token as invalid.");
+      if (refreshedToken.error === 'SESSION_INVALID') {
+        console.warn('JWT Callback: Session is invalid. Marking token as invalid.');
         return {
           ...token,
-          accessToken: "",
-          refreshToken: "",
-          error: "SESSION_INVALID",
+          accessToken: '',
+          refreshToken: '',
+          error: 'SESSION_INVALID',
         };
       }
 
@@ -370,16 +389,16 @@ export const authOptions: NextAuthOptions = {
     },
     // Ensures clean subdomain and relative URL resolution on staging/UAT environments
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
   },
   pages: {
-    signIn: "/", // Custom login page
+    signIn: '/', // Custom login page
   },
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
     // 7 days — matches the backend refresh token TTL.
     // Without maxAge, NextAuth creates a session-scoped cookie that is wiped
     // when the browser closes, causing logout on every restart.
@@ -393,9 +412,11 @@ export const authOptions: NextAuthOptions = {
       options: {
         httpOnly: true,
         // Use 'lax' instead of 'none' to fix WebKit Bug 188165 where older Safari misinterprets 'None' as 'Strict' and drops CSRF cookies on POST requests
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
+        sameSite: 'lax',
+        path: '/',
+        secure:
+          process.env.NODE_ENV === 'production' &&
+          (process.env.NEXTAUTH_URL?.startsWith('https://') ?? false),
         // Explicit maxAge makes this a persistent cookie (survives browser restarts).
         // Matches session.maxAge above.
         maxAge: 7 * 24 * 60 * 60,
@@ -404,18 +425,22 @@ export const authOptions: NextAuthOptions = {
     callbackUrl: {
       name: `next-auth.callback-url`,
       options: {
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
+        sameSite: 'lax',
+        path: '/',
+        secure:
+          process.env.NODE_ENV === 'production' &&
+          (process.env.NEXTAUTH_URL?.startsWith('https://') ?? false),
       },
     },
     csrfToken: {
       name: `next-auth.csrf-token`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
+        sameSite: 'lax',
+        path: '/',
+        secure:
+          process.env.NODE_ENV === 'production' &&
+          (process.env.NEXTAUTH_URL?.startsWith('https://') ?? false),
       },
     },
   },
