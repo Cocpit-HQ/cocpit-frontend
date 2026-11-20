@@ -7,10 +7,10 @@ on:
 
 jobs:
   deploy:
-    name: Auto-Deploy to EC2
+    name: Atomic Deploy to EC2
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to EC2 via SSH
+      - name: Execute Atomic Release on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -19,24 +19,10 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            echo "🚀 Starting automated frontend deployment on EC2..."
-            cd /var/www/cocpit/frontend
-            
-            # Fetch latest changes
-            git fetch origin uat
-            git reset --hard origin/uat
-            
-            # Install all dependencies
-            npm ci
-            
-            # Build Next.js production bundle
-            npm run build
-            
-            # Zero-downtime PM2 reload
-            pm2 reload cocpit-frontend --update-env
-            pm2 save
+            echo "🚀 Starting atomic frontend release for commit ${{ github.sha }}..."
+            /var/www/cocpit/bin/deploy-frontend.sh "${{ github.sha }}"
             
             # Verify health
             sleep 3
-            curl -f http://localhost:3000/api/health || exit 1
+            curl -f http://localhost:3000 || exit 1
             echo "✅ Frontend successfully deployed and healthy!"
