@@ -32,11 +32,11 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
   const displayCompany = displayName;
   const expiryText = rawOffer.offer_expiry_text || (offer.days_remaining ? `Offer ends in ${offer.days_remaining} day${offer.days_remaining === 1 ? '' : 's'}` : 'Offer ends soon');
   const isCompanyOffer = Boolean(offer.org_id || rawOffer.org_id || rawOffer.company_id);
-  const noteSenderName = isCompanyOffer ? displayCompany : (offer.recruiter?.name || displayCompany);
-  const noteAvatar = isCompanyOffer ? (rawOffer.company_logo || offer.recruiter?.avatar) : offer.recruiter?.avatar;
-  const noteSenderTitle = isCompanyOffer
-    ? (rawOffer.company_headline || offer.recruiter?.headline || rawOffer.sent_by_headline)
-    : offer.recruiter?.headline;
+  const noteSenderName = rawOffer.offer_sender_name || rawOffer.sent_by_name || (isCompanyOffer ? displayCompany : (offer.recruiter?.name || displayCompany));
+  const noteAvatar = rawOffer.offer_sender_avatar || rawOffer.sent_by_avatar || (isCompanyOffer ? (rawOffer.company_logo || offer.recruiter?.avatar) : offer.recruiter?.avatar);
+  const noteSenderTitle = rawOffer.offer_sender_headline || rawOffer.sent_by_headline || (isCompanyOffer
+    ? (rawOffer.company_headline || offer.recruiter?.headline)
+    : offer.recruiter?.headline);
   const offerNote = (offer.note || rawOffer.message || rawOffer.note)?.trim();
   const workMode = offer.work_mode || rawOffer.work_mode || rawOffer.work_model || '';
   const location = offer.location || rawOffer.location || '';

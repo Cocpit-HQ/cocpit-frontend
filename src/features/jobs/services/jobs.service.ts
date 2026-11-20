@@ -220,25 +220,34 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
         } else if (typeof filters.salary_range === 'string' && filters.salary_range.includes(',')) {
           params.salaryRanges = filters.salary_range;
         } else {
-          // Legacy single-string fallback: map to numeric min/max
-          switch (filters.salary_range) {
-            case 'Under 3L':
-              params.salary_max = 300000;
-              break;
-            case '3L-5L':
-              params.salary_min = 300000;
-              params.salary_max = 500000;
-              break;
-            case '6L-10L':
-              params.salary_min = 600000;
-              params.salary_max = 1000000;
-              break;
-            case '10L+':
-              params.salary_min = 1000000;
-              break;
-            default:
-              params.salaryRanges = filters.salary_range;
-              break;
+          const customSalaryMatch = typeof filters.salary_range === 'string' && filters.salary_range.match(/^Custom:(\d+)?-(\d+)?$/i);
+          if (customSalaryMatch) {
+            const parsedMin = customSalaryMatch[1] ? Number(customSalaryMatch[1]) : 0;
+            const parsedMax = customSalaryMatch[2] ? Number(customSalaryMatch[2]) : 0;
+            if (parsedMin > 0) params.salary_min = parsedMin;
+            if (parsedMax > 0) params.salary_max = parsedMax;
+            params.salaryRanges = filters.salary_range;
+          } else {
+            // Legacy single-string fallback: map to numeric min/max
+            switch (filters.salary_range) {
+              case 'Under 3L':
+                params.salary_max = 300000;
+                break;
+              case '3L-5L':
+                params.salary_min = 300000;
+                params.salary_max = 500000;
+                break;
+              case '6L-10L':
+                params.salary_min = 600000;
+                params.salary_max = 1000000;
+                break;
+              case '10L+':
+                params.salary_min = 1000000;
+                break;
+              default:
+                params.salaryRanges = filters.salary_range;
+                break;
+            }
           }
         }
       }
@@ -273,6 +282,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.published_at || job.created_at),
       published_at: job.published_at,
+      closed_at: job.closed_at,
       created_at: job.created_at,
       description: job.description,
       experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience),
@@ -488,6 +498,7 @@ export const getRecommendations = async (): Promise<Job[]> => {
       salary_currency: job.salary_currency,
       posted_at: getRelativeTime(job.published_at || job.created_at),
       published_at: job.published_at,
+      closed_at: job.closed_at,
       created_at: job.created_at,
       description: job.description,
       experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience),
@@ -656,6 +667,7 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.published_at || job.created_at),
       published_at: job.published_at,
+      closed_at: job.closed_at,
       created_at: job.created_at,
       description: job.description,
       experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label || job.experience),
@@ -804,6 +816,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.published_at || job.created_at),
       published_at: job.published_at,
+      closed_at: job.closed_at,
       created_at: job.created_at,
       description: job.description || '',
       requirements: extractRequirements(job.description),
@@ -832,6 +845,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       recruiter_avatar: (job.org_id || job.orgId)
         ? (job.company_logo || job.offer_sender_avatar || undefined)
         : (job.offer_sender_avatar || job.sent_by_avatar || job.recruiter_avatar || job.recruiterAvatar || job.avatar_url || undefined),
+      offer_sender_name: job.offer_sender_name || job.sent_by_name || undefined,
+      offer_sender_avatar: job.offer_sender_avatar || job.sent_by_avatar || undefined,
+      offer_sender_headline: job.offer_sender_headline || job.sent_by_headline || undefined,
       recruiter_message: job.recruiter_message || job.message || job.note || undefined,
       response_rate: job.response_rate,
       avg_reply: job.avg_reply,
@@ -1104,6 +1120,12 @@ export const getMyOffers = async (): Promise<Job[]> => {
         recruiter_avatar: (job.org_id || job.job_org_id)
           ? (job.company_logo || job.sent_by_avatar || undefined)
           : (job.sent_by_avatar || job.recruiter_avatar || undefined),
+        offer_sender_name: job.offer_sender_name || job.sent_by_name || undefined,
+        offer_sender_avatar: job.offer_sender_avatar || job.sent_by_avatar || undefined,
+        offer_sender_headline: job.offer_sender_headline || job.sent_by_headline || undefined,
+        sent_by_name: job.offer_sender_name || job.sent_by_name || undefined,
+        sent_by_avatar: job.offer_sender_avatar || job.sent_by_avatar || undefined,
+        sent_by_headline: job.offer_sender_headline || job.sent_by_headline || undefined,
         recruiter_message: job.message || job.recruiter_message || undefined,
       };
 
@@ -1169,6 +1191,7 @@ export const getMyListings = async (
       rejection_reason: job.rejection_reason,
       posted_at: getRelativeTime(job.published_at || job.created_at),
       published_at: job.published_at,
+      closed_at: job.closed_at,
       created_at: job.created_at,
       last_edited: job.updated_at,
       company: job.company_name,
@@ -1414,6 +1437,12 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     is_active: raw.is_active,
     job_status: raw.job_status,
     org_id: raw.org_id || raw.company_id,
+    sent_by_name: raw.offer_sender_name || raw.sent_by_name || undefined,
+    sent_by_avatar: raw.offer_sender_avatar || raw.sent_by_avatar || undefined,
+    sent_by_headline: raw.offer_sender_headline || raw.sent_by_headline || undefined,
+    offer_sender_name: raw.offer_sender_name || raw.sent_by_name || undefined,
+    offer_sender_avatar: raw.offer_sender_avatar || raw.sent_by_avatar || undefined,
+    offer_sender_headline: raw.offer_sender_headline || raw.sent_by_headline || undefined,
     recruiter: {
       id: raw.sent_by || raw.recruiter_id,
       name: (raw.org_id || raw.company_id)

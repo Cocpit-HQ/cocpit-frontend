@@ -221,7 +221,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ isCompanyMode: propIsCompany
 
   const tabs = [
     { id: "Explore", label: "Explore" },
-    { id: "My Applications", label: "My applications", featureKey: "enableApplicationTracking" },
+    { id: "My Applications", label: "My Application", featureKey: "enableApplicationTracking" },
     { id: "Offers", label: "Offers", featureKey: "enableJobOffers" },
     { id: "Saved", label: "Saved", featureKey: "saved_jobs" },
   ];

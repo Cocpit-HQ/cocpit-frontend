@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { SearchCategory, SearchFilterState } from '../types/search.types';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export const isSafeExitUrl = (url: string | null | undefined): boolean => {
   if (!url || typeof url !== 'string' || !url.startsWith('/')) return false;
@@ -39,11 +40,33 @@ export function useGlobalSearchUrlState() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const { isCompany, activeProfile } = useActiveProfile();
+
+  const isOrgActor = Boolean(
+    isCompany ||
+    activeProfile?.type === 'COMPANY' ||
+    activeProfile?.entityType === 'COMPANY' ||
+    activeProfile?.entityType === 'INSTITUTION' ||
+    (typeof window !== 'undefined' && (() => {
+      try {
+        const stored = sessionStorage.getItem('cocpit_active_profile');
+        if (!stored) return false;
+        const p = JSON.parse(stored) as { type?: string; entityType?: string };
+        return p?.type === 'COMPANY' || p?.type === 'ORGANIZATION' || p?.entityType === 'COMPANY' || p?.entityType === 'INSTITUTION';
+      } catch {
+        return false;
+      }
+    })())
+  );
+
+  const allowedCategories: SearchCategory[] = isOrgActor
+    ? ['all', 'people', 'companies', 'institutes', 'posts', 'hashtags']
+    : ['all', 'people', 'jobs', 'companies', 'institutes', 'posts', 'hashtags'];
 
   const q = searchParams.get('q') || '';
   const rawType = searchParams.get('type') || 'all';
   const type: SearchCategory = (
-    ['all', 'people', 'jobs', 'companies', 'institutes', 'posts', 'hashtags'].includes(rawType)
+    allowedCategories.includes(rawType as SearchCategory)
       ? rawType
       : 'all'
   ) as SearchCategory;
@@ -275,6 +298,29 @@ export function useGlobalSearchUrlState() {
     },
     [type, updateUrl]
   );
+
+  // Normalize invalid or bookmarked type=jobs URLs to 'all' for organization accounts
+  useEffect(() => {
+    if (isOrgActor && rawType === 'jobs') {
+      updateUrl(
+        {
+          type: 'all',
+          job_type: null,
+          experience_level: null,
+          work_mode: null,
+          min_salary: null,
+          max_salary: null,
+          salary_range: null,
+          industry: null,
+          date_posted: null,
+          company: null,
+          is_verified: null,
+          actively_hiring: null,
+        },
+        { push: false }
+      );
+    }
+  }, [isOrgActor, rawType, updateUrl]);
 
   const exitSearch = useCallback(() => {
     let targetDestination: string | null = null;

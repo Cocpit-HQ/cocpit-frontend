@@ -226,6 +226,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
       toast.success('Article deleted successfully');
       const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
       if (savedPath && savedPath !== window.location.pathname && !savedPath.includes('/article/')) {

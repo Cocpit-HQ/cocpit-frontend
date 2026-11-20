@@ -87,6 +87,9 @@ export const useFeed = (enableInitialFetch = true) => {
       await apiDeletePost(id, companyId);
       toast.success("Post deleted successfully");
 
+      // Invalidate analytics queries so deleted post is immediately excluded
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+
       // Dispatch global event so other lists (like profile) can update instantly
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent("postDeleted", { detail: { id: id.toString() } }));

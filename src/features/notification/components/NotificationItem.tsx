@@ -207,14 +207,20 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         meta.isCompanyActor ||
         meta.is_company_actor ||
         meta.follower_org_id ||
-        meta.followerOrgId
+        meta.followerOrgId ||
+        (notification.type as string) === 'ORG_ONBOARDED'
     );
 
     const isUserDocVerification =
       (notification.type as string) === 'doc_verification_success' ||
       (notification.type as string) === 'doc_verification_rejected' ||
       (notification.type as string) === 'user_identity_verification';
-    const effectiveAvatar = notification.actor_avatar || (isUserDocVerification && !isCompany ? (activeProfile?.avatar_url || (activeProfile as any)?.avatar) : null);
+    const effectiveAvatar =
+      notification.actor_avatar ||
+      (meta.actor_avatar as string) ||
+      (meta.org_logo as string) ||
+      (meta.orgLogo as string) ||
+      (isUserDocVerification && !isCompany ? (activeProfile?.avatar_url || (activeProfile as any)?.avatar) : null);
 
     if (visualKind === 'company' && !effectiveAvatar) {
       return <OrgAvatarFallbackIcon className="w-6 h-6 shrink-0" size={24} />;

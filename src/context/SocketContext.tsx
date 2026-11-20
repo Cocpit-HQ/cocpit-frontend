@@ -16,6 +16,7 @@ import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
 import type { BackendChat, ChatThread } from '@/types/messaging';
 import { stripMentionSyntax } from '@/lib/mentions';
+import { useJobStore } from '@/store/job.store';
 import { encodeConversationId } from '@/features/messaging/utils/conversationEncryption';
 
 type TargetedMessageNotification = NotificationPayload & {
@@ -580,7 +581,44 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         queryClient.invalidateQueries({ queryKey: ['my-profile'] });
         queryClient.invalidateQueries({ queryKey: ['profileStats'] });
       }
+
+      if (
+        payload?.type === 'application_shortlisted' ||
+        payload?.type === 'job_offer' ||
+        payload?.type === 'offer_accepted' ||
+        payload?.type === 'offer_declined' ||
+        payload?.type?.includes('shortlist') ||
+        payload?.type?.includes('application')
+      ) {
+        const targetJobId = payload.referenceId || (payload as any).reference_id || payload.metadata?.job_id;
+        if (targetJobId && (payload?.type === 'application_shortlisted' || payload?.type?.includes('shortlist'))) {
+          useJobStore.getState().setApplicationStatus(String(targetJobId), 'Shortlisted');
+        }
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('job-application-updated', {
+            detail: { jobId: targetJobId, status: 'Shortlisted' }
+          }));
+        }
+      }
+
       window.dispatchEvent(new CustomEvent('notifications-updated'));
+    };
+
+    const handleJobApplicationUpdated = (payload: any) => {
+      const jobId = payload?.jobId || payload?.job_id;
+      const status = payload?.status;
+      if (jobId && status) {
+        useJobStore.getState().setApplicationStatus(String(jobId), status);
+      }
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('job-application-updated', {
+          detail: payload
+        }));
+      }
     };
 
     const handleNewMessage = (payload: any) => {
@@ -1000,6 +1038,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleActivityUpdated = (payload: any) => {
       console.log("[Socket] activity_updated event received:", payload);
+      queryClient.invalidateQueries({ queryKey: ['team', 'activity-logs'] });
       queryClient.invalidateQueries({ queryKey: ['activityLogs'] });
     };
 
@@ -1121,6 +1160,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('post_updated', handlePostUpdated);
     newSocket.on('post_deleted', handlePostUpdated);
     newSocket.on('feed_updated', handlePostCreated);
+    newSocket.on('job_application_updated', handleJobApplicationUpdated);
     socketRef.current = newSocket;
 
 
@@ -1187,6 +1227,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('post_updated', handlePostUpdated);
       newSocket.off('post_deleted', handlePostUpdated);
       newSocket.off('feed_updated', handlePostCreated);
+      newSocket.off('job_application_updated', handleJobApplicationUpdated);
       newSocket.disconnect();
       tokenRef.current = null;
       socketRef.current = null;

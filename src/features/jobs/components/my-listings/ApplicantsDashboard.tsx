@@ -6,7 +6,8 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/businessProfile';
 import { useToast } from '@/hooks/use-toast';
 import { useBodyScrollLock } from '@/hooks';
-import { CyphexAIIcon, PdfFileIcon, EyeIcon, UserIcon, LeftArrowIcon, BriefcaseIcon, Icon as CustomIcon } from '@/components/icons';
+import { CyphexAIIcon, PdfFileIcon, EyeIcon, DownloadIcon, UserIcon, LeftArrowIcon, BriefcaseIcon, Icon as CustomIcon } from '@/components/icons';
+import { downloadFile } from '@/lib/download';
 import { ApplicantsMobileDrawer } from '../drawers/ApplicantsMobileDrawer';
 import Avatar from '@/components/shared/Avatar';
 import { JobListing } from '../../types/jobs.types';
@@ -975,20 +976,56 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                           {displayResumeName}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (candidateDetail?.resumeUrl) {
-                            window.open(candidateDetail.resumeUrl, '_blank');
-                          } else {
-                            toast({ title: 'Resume Preview', description: `Viewing document: ${displayResumeName}` });
-                          }
-                        }}
-                        className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent cursor-pointer focus:outline-none transition-colors shrink-0"
-                        aria-label="View resume"
-                      >
-                        <EyeIcon className="w-5 h-5 text-ds-text-primary hover:text-ds-accent transition-colors" />
-                      </button>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const resumeUrl =
+                              candidateDetail?.resumeUrl ||
+                              activeCandidate?.resumeUrl ||
+                              (activeCandidate as any)?.resume_url;
+                            if (resumeUrl) {
+                              const downloadName =
+                                displayResumeName && displayResumeName.toLowerCase() !== 'resume.pdf'
+                                  ? displayResumeName
+                                  : displayName
+                                    ? `${displayName.trim().replace(/\s+/g, '_')}_Resume.pdf`
+                                    : 'Resume.pdf';
+                              downloadFile(resumeUrl, downloadName);
+                            } else {
+                              toast({
+                                title: 'Download unavailable',
+                                description: 'Resume file URL is not available for this candidate.',
+                              });
+                            }
+                          }}
+                          className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent cursor-pointer focus:outline-none transition-colors shrink-0"
+                          aria-label="Download resume"
+                          title="Download resume"
+                        >
+                          <DownloadIcon className="w-5 h-5 text-ds-text-primary hover:text-ds-accent transition-colors" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const resumeUrl =
+                              candidateDetail?.resumeUrl ||
+                              activeCandidate?.resumeUrl ||
+                              (activeCandidate as any)?.resume_url;
+                            if (resumeUrl) {
+                              window.open(resumeUrl, '_blank');
+                            } else {
+                              toast({ title: 'Resume Preview', description: `Viewing document: ${displayResumeName}` });
+                            }
+                          }}
+                          className="size-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent cursor-pointer focus:outline-none transition-colors shrink-0"
+                          aria-label="View resume"
+                          title="View resume"
+                        >
+                          <EyeIcon className="w-5 h-5 text-ds-text-primary hover:text-ds-accent transition-colors" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Frame 2609091: Candidate Note Card */}

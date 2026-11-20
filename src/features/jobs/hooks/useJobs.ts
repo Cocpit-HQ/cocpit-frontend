@@ -34,6 +34,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     addSavedIds,
     addAppliedIds,
     setOfferResponse,
+    applicationStatuses,
+    setApplicationStatuses,
   } = useJobStore(
     useShallow((state) => ({
       activeTab: state.ui.activeCandidateTab,
@@ -56,6 +58,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       addSavedIds: state.addSavedIds,
       addAppliedIds: state.addAppliedIds,
       setOfferResponse: state.setOfferResponse,
+      applicationStatuses: state.applicationStatuses,
+      setApplicationStatuses: state.setApplicationStatuses,
     }))
   );
 
@@ -178,11 +182,23 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       if (!pageParam) {
         jobsService.getApplicationStats().then(stats => setApplicationStats(stats)).catch(console.error);
       }
-      return jobsService.getMyApplications(selectedStatusFilter, pageParam as string | undefined);
+      const res = await jobsService.getMyApplications(selectedStatusFilter, pageParam as string | undefined);
+      if (res?.data && res.data.length > 0) {
+        const statusMap: Record<string, string> = {};
+        res.data.forEach((j: Job) => {
+          if (j.id && j.application_status) {
+            statusMap[j.id] = j.application_status;
+          }
+        });
+        setApplicationStatuses(statusMap);
+      }
+      return res;
     },
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined as string | undefined,
-    staleTime: 1000 * 60 * 3,
+    staleTime: 1000 * 10,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     enabled: !isCompanyMode && !!token && activeTab === 'My Applications',
   });
 
@@ -236,11 +252,12 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     const offerStatus = offerResp
       ? (offerResp === 'accept' ? 'accepted' : 'declined')
       : job.offerStatus;
+    const storedStatus = applicationStatuses[job.id];
     const applicationStatus = isWithdrawn
       ? 'Withdrawn'
       : offerResp
         ? (offerResp === 'accept' ? 'Accepted' : 'Declined')
-        : job.application_status;
+        : (storedStatus || job.application_status);
 
     return {
       ...job,
@@ -249,7 +266,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       offerStatus,
       application_status: applicationStatus,
     };
-  }, [savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers]);
+  }, [savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers, applicationStatuses]);
 
   const recommendedJobs = useMemo(
     () => rawRecommendations.map(enhanceJob).filter(isJobVisibleInCandidateExplore),

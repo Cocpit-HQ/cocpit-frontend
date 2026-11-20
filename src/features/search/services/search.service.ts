@@ -59,6 +59,19 @@ export const searchService = {
       if (f.salary_range && f.salary_range.length > 0) {
         queryParams.salary_range = f.salary_range.join(',');
         queryParams.salaryRanges = queryParams.salary_range;
+
+        if (!queryParams.min_salary && !queryParams.max_salary) {
+          for (const item of f.salary_range) {
+            const m = typeof item === 'string' && item.match(/^Custom:(\d+)?-(\d+)?$/i);
+            if (m) {
+              const pMin = m[1] ? Number(m[1]) : 0;
+              const pMax = m[2] ? Number(m[2]) : 0;
+              if (pMin > 0) queryParams.min_salary = pMin;
+              if (pMax > 0) queryParams.max_salary = pMax;
+              break;
+            }
+          }
+        }
       }
       if (f.industry && f.industry.length > 0) {
         queryParams.industry = Array.isArray(f.industry) ? f.industry.join('|') : f.industry;

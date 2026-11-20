@@ -1088,8 +1088,17 @@ export const getNotificationRoute = (
       : '/profile';
   }
 
+  // SCRUM-1660: Business account status notifications should mark as read without redirecting
   if (
     type === 'company_deactivated' ||
+    type === 'company_reactivated' ||
+    type === 'company_deleted' ||
+    type === 'company_recovered'
+  ) {
+    return null;
+  }
+
+  if (
     type === 'organization_suspension' ||
     type === 'organization_appeal_approved' ||
     type === 'organization_appeal_rejected'
@@ -1109,31 +1118,6 @@ export const getNotificationRoute = (
     return isInstitution
       ? '/profile?section=education#education-section'
       : '/profile?section=experience#experience-section';
-  }
-
-  if (type === 'company_deleted') {
-    const meta = (notification.metadata as Record<string, unknown>) || {};
-    const canRecover = Boolean(
-      notification.can_recover ??
-      notification.canRecover ??
-      notification.is_owner ??
-      notification.isOwner ??
-      meta.can_recover ??
-      meta.canRecover ??
-      meta.is_owner ??
-      meta.isOwner ??
-      (currentUserId && (meta.owner_id === currentUserId || meta.ownerId === currentUserId))
-    );
-    // Only stakeholders who have the recover option (Owner) are redirected to settings/organizations.
-    // Associated team members cannot recover the deleted company and should NOT be redirected anywhere.
-    return canRecover ? '/settings/organizations' : null;
-  }
-  if (type === 'company_reactivated' || type === 'company_recovered') {
-    const slug =
-      notification.actor_slug ||
-      ((notification.metadata as Record<string, unknown>)?.org_slug as string) ||
-      ((notification.metadata as Record<string, unknown>)?.orgSlug as string);
-    return slug ? `/organization/${slug}` : '/settings/organizations';
   }
 
   return null;

@@ -656,7 +656,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
           <div className="flex items-center gap-3">
             {(['Job listings', 'Sent offers'] as SubTab[]).map(tab => {
               const isActive = activeSubTab === tab;
-              const label = tab === 'Sent offers' ? 'Sent Offers' : tab;
+              const label = tab === 'Sent offers' ? 'Sent Offers' : tab === 'Job listings' ? 'Job Listing' : tab;
               return (
                 <button
                   type="button"

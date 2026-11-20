@@ -83,7 +83,9 @@ export const formatMentionsForBackend = (content: string, inlineMentions: UserMe
             const prefix = isOrg ? 'org:' : 'user:';
 
             // Always prefer immutable UUID user_id as the stable identifier; fallback to account_name for legacy unedited mentions
-            const stableIdentifier = mention.id && isUUID(mention.id) ? `${prefix}${mention.id}` : mention.account_name;
+            const stableIdentifier = mention.id && isUUID(mention.id) 
+                ? `${prefix}${mention.id}` 
+                : (isOrg ? `org:${mention.account_name || mention.slug || mention.id}` : mention.account_name);
             
             // Format tag as @[Full Name](type:user_id)
             finalContent = finalContent.replace(regex, `@[${mention.full_name}](${stableIdentifier})`);

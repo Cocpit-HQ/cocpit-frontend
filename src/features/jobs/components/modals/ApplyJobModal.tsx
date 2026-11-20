@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+  import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useBodyScrollLock } from '@/hooks';
@@ -136,7 +136,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none w-full outline-none z-[101] [&>button]:hidden max-md:fixed max-md:bottom-0 max-md:top-auto max-md:left-0 max-md:right-0 max-md:translate-x-0 max-md:translate-y-0 max-md:max-w-none max-md:flex max-md:justify-center md:max-w-[320px]">
-        <div className={`w-full max-w-[393px] md:w-[300px] ${step === 2 ? 'md:h-[296px]' : 'md:h-[344px]'} p-[8px_12px_24px] md:p-3 bg-ds-bg rounded-t-[8px] md:rounded-2xl rounded-b-none md:rounded-b-2xl border-t md:border border-ds-border flex flex-col justify-between items-center overflow-hidden box-border shadow-2xl gap-4 md:gap-0`}>
+        <div className={`w-full max-w-[393px] md:w-[300px] ${step === 2 ? 'md:h-[296px]' : 'md:min-h-[344px] md:max-h-[520px] md:h-auto'} p-[8px_12px_24px] md:p-3 bg-ds-bg rounded-t-[8px] md:rounded-2xl rounded-b-none md:rounded-b-2xl border-t md:border border-ds-border flex flex-col justify-between items-center overflow-hidden box-border shadow-2xl gap-4 md:gap-3`}>
           {/* Mobile Drag Handle */}
           <div className="w-full flex md:hidden flex-col items-center justify-center shrink-0 h-5">
             <div className="w-[50px] h-[3px] bg-ds-text-muted rounded-full" />
@@ -215,81 +215,83 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               {/* Recent Resume Section */}
               <div className="self-stretch flex flex-col justify-start items-start gap-2">
                 <span className="text-center justify-start text-ds-text-secondary text-xs font-normal font-dm-sans leading-4">
-                  Recent resume
+                  Recent resumes {fetchedResumes.length > 0 && `(${fetchedResumes.length}/10)`}
                 </span>
 
-                {/* Uploaded File */}
-                {uploadedFile && (
-                  <div className="self-stretch flex justify-between items-center py-0.5">
-                    <div
-                      onClick={() => setSelectedResumeId(null)}
-                      className={`flex justify-start items-center gap-2 min-w-0 flex-1 cursor-pointer ${
-                        !selectedResumeId ? 'text-ds-accent font-medium' : 'text-ds-text-primary'
-                      }`}
-                    >
-                      <PdfFileIcon
-                        size={20}
-                        className={`size-5 shrink-0 ${!selectedResumeId ? 'text-ds-accent' : 'text-ds-text-primary'}`}
-                        fill="currentColor"
-                      />
-                      <span className="text-center justify-start text-base font-normal font-dm-sans leading-6 truncate">
-                        {uploadedFile.name}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setUploadedFile(null)}
-                      type="button"
-                      aria-label="Remove uploaded file"
-                      className="size-5 flex items-center justify-center text-ds-error hover:text-ds-error/80 transition-colors cursor-pointer p-0 bg-transparent border-none outline-none"
-                    >
-                      <DeleteIcon size={20} className="size-5 text-ds-error shrink-0" fill="currentColor" />
-                    </button>
-                  </div>
-                )}
-
-                {/* Fetched Resumes */}
-                {fetchedResumes.length === 0 && !uploadedFile && (
-                  <span className="text-ds-text-muted text-xs font-dm-sans py-1">
-                    No recent resumes found
-                  </span>
-                )}
-
-                {fetchedResumes.map((resume) => {
-                  const isSelected = selectedResumeId === resume.id;
-                  return (
-                    <div
-                      key={resume.id}
-                      className="self-stretch flex justify-between items-center py-0.5"
-                    >
+                <div className="self-stretch flex flex-col gap-1 max-h-[140px] md:max-h-[160px] overflow-y-auto pr-1">
+                  {/* Uploaded File */}
+                  {uploadedFile && (
+                    <div className="self-stretch flex justify-between items-center py-0.5">
                       <div
-                        onClick={() => handleResumeSelect(resume.id)}
+                        onClick={() => setSelectedResumeId(null)}
                         className={`flex justify-start items-center gap-2 min-w-0 flex-1 cursor-pointer ${
-                          isSelected ? 'text-ds-accent font-medium' : 'text-ds-text-primary'
+                          !selectedResumeId ? 'text-ds-accent font-medium' : 'text-ds-text-primary'
                         }`}
                       >
                         <PdfFileIcon
                           size={20}
-                          className={`size-5 shrink-0 ${isSelected ? 'text-ds-accent' : 'text-ds-text-primary'}`}
+                          className={`size-5 shrink-0 ${!selectedResumeId ? 'text-ds-accent' : 'text-ds-text-primary'}`}
                           fill="currentColor"
                         />
                         <span className="text-center justify-start text-base font-normal font-dm-sans leading-6 truncate">
-                          {resume.name}
+                          {uploadedFile.name}
                         </span>
                       </div>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteResume(resume.id, resume.name, resume.url);
-                        }}
+                        onClick={() => setUploadedFile(null)}
                         type="button"
-                        aria-label={`Delete ${resume.name}`}
+                        aria-label="Remove uploaded file"
                         className="size-5 flex items-center justify-center text-ds-error hover:text-ds-error/80 transition-colors cursor-pointer p-0 bg-transparent border-none outline-none"
                       >
                         <DeleteIcon size={20} className="size-5 text-ds-error shrink-0" fill="currentColor" />
                       </button>
                     </div>
-                  );
-                })}
+                  )}
+
+                  {/* Fetched Resumes */}
+                  {fetchedResumes.length === 0 && !uploadedFile && (
+                    <span className="text-ds-text-muted text-xs font-dm-sans py-1">
+                      No recent resumes found
+                    </span>
+                  )}
+
+                  {fetchedResumes.map((resume) => {
+                    const isSelected = selectedResumeId === resume.id;
+                    return (
+                      <div
+                        key={resume.id}
+                        className="self-stretch flex justify-between items-center py-0.5"
+                      >
+                        <div
+                          onClick={() => handleResumeSelect(resume.id)}
+                          className={`flex justify-start items-center gap-2 min-w-0 flex-1 cursor-pointer ${
+                            isSelected ? 'text-ds-accent font-medium' : 'text-ds-text-primary'
+                          }`}
+                        >
+                          <PdfFileIcon
+                            size={20}
+                            className={`size-5 shrink-0 ${isSelected ? 'text-ds-accent' : 'text-ds-text-primary'}`}
+                            fill="currentColor"
+                          />
+                          <span className="text-center justify-start text-base font-normal font-dm-sans leading-6 truncate">
+                            {resume.name}
+                          </span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteResume(resume.id, resume.name, resume.url);
+                          }}
+                          type="button"
+                          aria-label={`Delete ${resume.name}`}
+                          className="size-5 flex items-center justify-center text-ds-error hover:text-ds-error/80 transition-colors cursor-pointer p-0 bg-transparent border-none outline-none"
+                        >
+                          <DeleteIcon size={20} className="size-5 text-ds-error shrink-0" fill="currentColor" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Action Buttons */}

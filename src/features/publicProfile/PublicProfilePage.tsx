@@ -131,21 +131,26 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     return publicPosts.filter((post) => post.visibility !== "private") as Post[];
   }, [publicPosts]);
 
+  const [isRedirectingToCompany, setIsRedirectingToCompany] = useState(false);
+
   // Fallback: if user not found, check if it's an organization and redirect
   useEffect(() => {
     if (userError && userId) {
       const errorData = (userError as any)?.response?.data;
       if (errorData?.redirect_url) {
+        setIsRedirectingToCompany(true);
         router.replace(errorData.redirect_url);
         return;
       }
       if (errorData?.is_company && (errorData?.slug || errorData?.org_id)) {
+        setIsRedirectingToCompany(true);
         router.replace(`/organization/${errorData.slug || errorData.org_id}`);
         return;
       }
       companyService.getCompany(userId)
         .then((comp) => {
           if (comp && (comp.slug || comp.org_id)) {
+            setIsRedirectingToCompany(true);
             router.replace(`/organization/${comp.slug || comp.org_id}`);
           }
         })
@@ -565,6 +570,21 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   }
 
   const userDataForModal = user as unknown as any;
+
+  const errorData = (userError as any)?.response?.data;
+  const isCompanyRedirect = Boolean(
+    isRedirectingToCompany ||
+    errorData?.is_company ||
+    errorData?.redirect_url
+  );
+
+  if (isCompanyRedirect) {
+    return (
+      <div className="min-h-screen w-full bg-[var(--ds-bg)] flex items-center justify-center p-5 select-none">
+        <div className="w-8 h-8 border-2 border-[var(--ds-accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (userError || !user) {
     return (

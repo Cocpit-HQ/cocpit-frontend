@@ -50,8 +50,8 @@ export function useActivityLogs(tab: ActivityTab, companyId?: string) {
       );
       toast.success("Activity removed");
     },
-    onError: () => {
-      toast.error("Failed to remove activity");
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to remove activity");
     },
   });
 
