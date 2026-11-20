@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -30,6 +30,7 @@ import {
     GroupMediaTab,
     GroupLinksTab,
 } from "../group-chat/details";
+import { SharedMediaItem } from "@/types/group-chat";
 import MediaDetailViewer from "./MediaDetailViewer";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +85,34 @@ export default function UserDetails({
         enabled: Boolean(chat.id && isOpen),
         staleTime: 60000,
     });
+
+    // Aggregate direct media attachments and shared post/repost media
+    const combinedUserMedia = useMemo(() => {
+        const directMedia = sharedContent?.media || [];
+        const postMedia: SharedMediaItem[] = (sharedContent?.posts || []).flatMap((post) => {
+            if (!post.media || post.media.length === 0) return [];
+            return post.media.map((m, idx) => ({
+                media_id: `${post.post_id}-media-${idx}`,
+                url: m.url,
+                media_type: m.media_type || (m.url?.includes('.mp4') ? 'video' : 'image'),
+                filename: post.caption || post.title || 'Shared post media',
+                created_at: post.shared_at || post.created_at,
+                message_id: post.message_id
+            }));
+        });
+
+        const seen = new Set<string>();
+        const all = [...directMedia, ...postMedia];
+        return all.filter((item) => {
+            if (!item.url || seen.has(item.url)) return false;
+            seen.add(item.url);
+            return true;
+        }).sort((a, b) => {
+            const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return timeB - timeA;
+        });
+    }, [sharedContent]);
 
     const isCompany = chat.otherUserType === "COMPANY";
     const isBlockedByMe = Boolean(chat.isBlockedByMe || (chat as any).isBlocked);
@@ -402,7 +431,7 @@ export default function UserDetails({
 
                 {activeTab === 'media' && (
                     <GroupMediaTab
-                        media={sharedContent?.media}
+                        media={combinedUserMedia}
                         isLoading={isSharedLoading}
                         onPreviewMedia={(item, idx) => {
                             setPreviewMedia({
@@ -410,7 +439,7 @@ export default function UserDetails({
                                 type: item.media_type,
                                 name: item.filename,
                                 initialIndex: idx,
-                                mediaList: (sharedContent?.media || []).map(m => ({
+                                mediaList: (combinedUserMedia || []).map((m: any) => ({
                                     url: m.url,
                                     type: m.media_type,
                                     name: m.filename,

@@ -18,7 +18,7 @@ import { uploadMedia } from "@/services/api/upload";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import MediaDetailViewer from "../ui/MediaDetailViewer";
-import { GroupSharedContent } from "@/types/group-chat";
+import { GroupSharedContent, SharedMediaItem } from "@/types/group-chat";
 import {
     GroupProfileHeader,
     GroupTabsNav,
@@ -255,6 +255,34 @@ export default function GroupDetails({
         };
     }, [sharedContent, myJoinedAtMs]);
 
+    // Aggregate direct media attachments and shared post/repost media
+    const combinedGroupMedia = useMemo(() => {
+        const directMedia = filteredSharedContent?.media || [];
+        const postMedia: SharedMediaItem[] = (filteredSharedContent?.posts || []).flatMap((post) => {
+            if (!post.media || post.media.length === 0) return [];
+            return post.media.map((m, idx) => ({
+                media_id: `${post.post_id}-media-${idx}`,
+                url: m.url,
+                media_type: m.media_type || (m.url?.includes('.mp4') ? 'video' : 'image'),
+                filename: post.caption || post.title || 'Shared post media',
+                created_at: post.shared_at || post.created_at,
+                message_id: post.message_id
+            }));
+        });
+
+        const seen = new Set<string>();
+        const all = [...directMedia, ...postMedia];
+        return all.filter((item) => {
+            if (!item.url || seen.has(item.url)) return false;
+            seen.add(item.url);
+            return true;
+        }).sort((a, b) => {
+            const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return timeB - timeA;
+        });
+    }, [filteredSharedContent]);
+
     // Real-time WebSocket synchronization for shared assets & membership
     useEffect(() => {
         if (!socket || !activeGroup?.conversation_id) return;
@@ -485,7 +513,7 @@ export default function GroupDetails({
 
                         {activeTab === 'media' && (
                             <GroupMediaTab
-                                media={filteredSharedContent?.media}
+                                media={combinedGroupMedia}
                                 isLoading={isSharedLoading}
                                 onPreviewMedia={(item, idx) => {
                                     setPreviewMedia({
@@ -493,7 +521,7 @@ export default function GroupDetails({
                                         type: item.media_type,
                                         name: item.filename,
                                         initialIndex: idx,
-                                        mediaList: (filteredSharedContent?.media || []).map((m: any) => ({
+                                        mediaList: (combinedGroupMedia || []).map((m: any) => ({
                                             url: m.url,
                                             type: m.media_type,
                                             name: m.filename

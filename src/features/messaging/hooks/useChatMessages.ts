@@ -25,6 +25,7 @@ import { searchUsers, getSuggestedUsers, type UserMention } from "@/services/api
 import type { Post } from "@/types/entities";
 import { useToast } from "@/hooks/use-toast";
 import { encodeConversationId } from "../utils/conversationEncryption";
+import { markJobContextSent } from "./useChatSharedContext";
 
 interface SocketLike {
   emit: (event: string, ...args: unknown[]) => void;
@@ -97,6 +98,7 @@ interface UseChatMessagesProps {
   router: { replace: (url: string) => void };
   onChatCreated?: (createdChat: ChatThread) => void;
   isQuickChat?: boolean;
+  sendAs?: 'applicant' | 'recruiter';
   setTypingUser: (user: string | null) => void;
   setTypingMap: React.Dispatch<React.SetStateAction<Map<string, string>>>;
 }
@@ -124,6 +126,7 @@ export function useChatMessages({
   router,
   onChatCreated,
   isQuickChat,
+  sendAs,
   setTypingUser,
   setTypingMap,
 }: UseChatMessagesProps) {
@@ -174,9 +177,10 @@ export function useChatMessages({
 
   // Load group members if group
   useEffect(() => {
-    if (chat.isGroup) {
+    if (chat.isGroup && !chat.is_requesting) {
       getGroupDetails(chat.id)
         .then((details) => {
+          if (!details) return;
           const members =
             details.members ||
             (details as unknown as { participants?: GroupMember[]; users?: GroupMember[] }).participants ||
@@ -185,15 +189,16 @@ export function useChatMessages({
           setGroupMembers(members);
         })
         .catch((err) => {
+          if (err?.response?.status === 403) return;
           console.error("Failed to load group members:", err);
         });
     }
-  }, [chat.id, chat.isGroup]);
+  }, [chat.id, chat.isGroup, chat.is_requesting]);
 
   // Mention autocomplete search for group members (first priority) + external users & orgs
   const searchGroupMembers = useCallback(
     async (query: string): Promise<UserMention[]> => {
-      if (!chat.isGroup) return [];
+      if (!chat.isGroup || chat.is_requesting) return [];
 
       let membersToFilter = groupMembers;
       if (membersToFilter.length === 0) {
@@ -206,8 +211,10 @@ export function useChatMessages({
             [];
           setGroupMembers(members);
           membersToFilter = members;
-        } catch (e) {
-          console.error("Delayed fetch of group members failed", e);
+        } catch (e: any) {
+          if (e?.response?.status !== 403) {
+            console.error("Delayed fetch of group members failed", e);
+          }
         }
       }
 
@@ -325,13 +332,29 @@ export function useChatMessages({
         return sendGroupMessage(chat.id, text, "text", files, replyMessageId);
       }
 
+      let effectiveAuthorCompanyId: string | undefined = undefined;
+      if (sendAs === "recruiter") {
+        effectiveAuthorCompanyId =
+          activeProfile?.type === "COMPANY"
+            ? activeProfile.id
+            : ((chat as any).companyId ||
+               (chat as any).org_id ||
+               (chat as any).company_id ||
+               searchParams?.get("companyId"));
+      } else if (sendAs === "applicant") {
+        effectiveAuthorCompanyId = undefined;
+      } else {
+        effectiveAuthorCompanyId =
+          activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+      }
+
       if (!chat.otherUserId) throw new Error("Target user ID missing");
       return sendMessage(
         chat.otherUserId,
         text,
         sharedPostId,
         files,
-        activeProfile?.type === "COMPANY" ? activeProfile.id : undefined,
+        effectiveAuthorCompanyId,
         replyMessageId,
         sharedProfileId,
         entityType,
@@ -385,6 +408,11 @@ export function useChatMessages({
         };
       });
 
+      const isSendingAsCompany = sendAs === "recruiter" || (sendAs !== "applicant" && activeProfile?.type === "COMPANY");
+      const resolvedCompanyId = activeProfile?.type === "COMPANY"
+        ? activeProfile.id
+        : ((chat as any).companyId || (chat as any).org_id || (chat as any).company_id || searchParams?.get("companyId"));
+
       const newMessage: Message = {
         id: "temp-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
         sender: "me",
@@ -395,14 +423,13 @@ export function useChatMessages({
           minute: "2-digit",
         }),
         senderId:
-          activeProfile?.type === "COMPANY"
-            ? activeProfile.id
-            : session?.user?.id || "me",
+          isSendingAsCompany
+            ? (resolvedCompanyId || "company")
+            : (session?.user?.id || "me"),
         senderMemberName:
-          session?.user?.full_name ||
-          session?.user?.name ||
-          activeProfile?.name ||
-          "Member",
+          isSendingAsCompany
+            ? (activeProfile?.name || "Recruiter")
+            : (session?.user?.full_name || session?.user?.name || "Applicant"),
         created_at: new Date().toISOString(),
         type: "text",
         read_at: null,
@@ -519,6 +546,10 @@ export function useChatMessages({
     onSuccess: (data, variables, context) => {
       setTypingMap(new Map());
       setTypingUser(null);
+
+      if (variables?.entityType === "job" || variables?.entityType === "offer") {
+        markJobContextSent(chat.id, variables.entityId);
+      }
 
       const realMessage = mapBackendMessageToMessage(
         data.data || data,
@@ -710,6 +741,10 @@ export function useChatMessages({
         entityId: effectiveEntityId,
       });
 
+      if (effectiveEntityType === "job" || effectiveEntityType === "offer") {
+        markJobContextSent(chat.id, effectiveEntityId);
+      }
+
       setReplyingTo(null);
       setPendingSharedPostId(null);
       setPendingSharedPost(null);
@@ -742,6 +777,7 @@ export function useChatMessages({
       pendingEntityContext,
       searchParams,
       router,
+      sendAs,
       setReplyingTo,
       setPendingSharedPostId,
       setPendingSharedPost,

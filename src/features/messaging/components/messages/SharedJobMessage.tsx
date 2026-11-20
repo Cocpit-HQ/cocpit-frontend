@@ -86,13 +86,13 @@ export function JobApplicationContextCard({
   });
 
   const wrapperClass =
-    "box-border flex flex-row items-center p-2 gap-2.5 w-full sm:w-fit min-w-0 sm:min-w-[219px] max-w-[340px] h-[58px] border border-[var(--ds-border)] rounded-[16px] bg-[var(--ds-bg)] cursor-pointer hover:bg-[var(--ds-surface-1)]/50 transition-colors select-none";
+    "box-border flex flex-row items-center p-2 gap-2.5 w-full min-w-0 max-w-full sm:max-w-[340px] h-[58px] border border-[var(--ds-border)] rounded-[16px] bg-transparent cursor-pointer hover:bg-[var(--ds-surface-1)] transition-colors select-none";
 
   if (loading) {
     return (
       <div className={cn(wrapperClass, "animate-pulse cursor-default")}>
         <div className="flex flex-row items-center p-0 gap-2 h-10 w-full min-w-0">
-          <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-1)] shrink-0" />
+          <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-2)] shrink-0" />
           <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
             <div className="h-3.5 bg-[var(--ds-surface-1)] rounded w-3/4" />
             <div className="h-2.5 bg-[var(--ds-surface-1)] rounded w-1/2" />
@@ -165,23 +165,23 @@ export function JobApplicationContextCard({
     >
       <div className="flex flex-row items-center p-0 gap-2 h-10 w-full min-w-0">
         {/* Frame 2609815: Icon Box */}
-        <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-1)] flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-2)] flex items-center justify-center shrink-0">
           <BriefcaseIcon className="w-5 h-5 text-[var(--ds-text-primary)]" size={20} />
         </div>
 
         {/* Frame 2609957: Text Box */}
         <div className="flex flex-col justify-center items-start p-0 h-10 min-w-0 flex-1 overflow-hidden">
           {/* Frame 2609814: Title • Org */}
-          <div className="h-6 flex flex-row items-center min-w-0 max-w-full">
-            <span className="font-['DM_Sans'] font-medium text-sm sm:text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[140px] sm:max-w-[180px]">
+          <div className="h-6 flex flex-row items-center min-w-0 w-full overflow-hidden">
+            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[60%]">
               {job.title}
             </span>
             {companyName && (
               <>
-                <span className="font-['DM_Sans'] font-medium text-sm sm:text-base leading-6 text-[var(--ds-text-secondary)] mx-1 shrink-0">
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] mx-1 shrink-0">
                   •
                 </span>
-                <span className="font-['DM_Sans'] font-medium text-sm sm:text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0">
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0 flex-1">
                   {companyName}
                 </span>
               </>
@@ -189,7 +189,7 @@ export function JobApplicationContextCard({
           </div>
 
           {/* Subtitle: Type • Location • Experience */}
-          <div className="h-4 flex flex-row items-center min-w-0 max-w-full">
+          <div className="h-4 flex flex-row items-center min-w-0 w-full overflow-hidden">
             <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-secondary)] truncate">
               {[workMode, getCity(job.location), exp].filter(Boolean).join(" • ")}
             </span>
@@ -254,15 +254,15 @@ export function JobInputContextCard({
         <div className="flex flex-col justify-center items-start p-0 h-10 min-w-0 flex-1 overflow-hidden">
           {/* Frame 2609814: Title • Org */}
           <div className="h-6 flex flex-row items-center min-w-0 max-w-full">
-            <span className="font-['DM_Sans'] font-medium text-sm sm:text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[280px]">
+            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[280px]">
               {isLoading ? "Loading job..." : title}
             </span>
             {companyName && (
               <>
-                <span className="font-['DM_Sans'] font-medium text-sm sm:text-base leading-6 text-[var(--ds-text-secondary)] mx-1 shrink-0">
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] mx-1 shrink-0">
                   •
                 </span>
-                <span className="font-['DM_Sans'] font-medium text-sm sm:text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0">
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0">
                   {companyName}
                 </span>
               </>
@@ -469,8 +469,8 @@ export const JobPreview = ({
         {/* Frame 2609957: Text Box */}
         <div className="flex flex-col justify-center items-start p-0 h-10 min-w-0 flex-1 overflow-hidden">
           {/* Frame 2609814: Title • Org */}
-          <div className="h-6 flex flex-row items-center min-w-0 max-w-full">
-            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[180px]">
+          <div className="h-6 flex flex-row items-center min-w-0 w-full overflow-hidden">
+            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[60%]">
               {job.title}
             </span>
             {companyName && (
@@ -478,7 +478,7 @@ export const JobPreview = ({
                 <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] mx-1 shrink-0">
                   •
                 </span>
-                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0">
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0 flex-1">
                   {companyName}
                 </span>
               </>
@@ -486,7 +486,7 @@ export const JobPreview = ({
           </div>
 
           {/* Subtitle: Type • Location • Experience */}
-          <div className="h-4 flex flex-row items-center min-w-0 max-w-full">
+          <div className="h-4 flex flex-row items-center min-w-0 w-full overflow-hidden">
             <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-secondary)] truncate">
               {[workMode, getCity(job.location), exp].filter(Boolean).join(" • ")}
             </span>

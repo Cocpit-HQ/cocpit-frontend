@@ -32,7 +32,11 @@ import UserDetails from "./UserDetails";
 
 // Modular hooks
 import { useChatSocket } from "../../hooks/useChatSocket";
-import { useChatSharedContext } from "../../hooks/useChatSharedContext";
+import {
+  useChatSharedContext,
+  markJobContextSent,
+  checkHasJobCardInMessages,
+} from "../../hooks/useChatSharedContext";
 import { useChatMessages } from "../../hooks/useChatMessages";
 import { useMessageActions } from "../../hooks/useMessageActions";
 import { useChatConversation } from "../../hooks/useChatConversation";
@@ -151,6 +155,13 @@ export default function ChatWindow({
       ? activeProfile.id
       : session?.user?.id || "";
 
+  const defaultSendAs = activeProfile?.type === "COMPANY" ? "recruiter" : "applicant";
+  const [sendAs, setSendAs] = useState<"applicant" | "recruiter">(defaultSendAs);
+
+  useEffect(() => {
+    setSendAs(activeProfile?.type === "COMPANY" ? "recruiter" : "applicant");
+  }, [activeProfile?.type]);
+
   // 1. Shared URL & Context management hook
   const {
     pendingSharedPostId,
@@ -167,6 +178,9 @@ export default function ChatWindow({
     chatId: chat.id,
     initialEntityContext,
     searchParams,
+    queryClient,
+    activeProfileId: activeProfile?.id,
+    chatJobId: (chat.jobIds && chat.jobIds.length > 0) ? chat.jobIds[0] : undefined,
   });
 
   // 2. Real-time socket listener hook
@@ -282,9 +296,28 @@ export default function ChatWindow({
     router,
     onChatCreated,
     isQuickChat,
+    sendAs,
     setTypingUser,
     setTypingMap,
   });
+
+  // Reactive listener: clear pendingEntityContext only if an active (non-deleted for everyone) job card is detected in messages
+  useEffect(() => {
+    if (!pendingEntityContext) return;
+    if (
+      pendingEntityContext.type === "job" ||
+      pendingEntityContext.type === "offer"
+    ) {
+      const hasActiveJobCard = checkHasJobCardInMessages(
+        messages,
+        pendingEntityContext.id,
+      );
+      if (hasActiveJobCard) {
+        markJobContextSent(chat.id, pendingEntityContext.id);
+        setPendingEntityContext(null);
+      }
+    }
+  }, [messages, pendingEntityContext, chat.id, setPendingEntityContext]);
 
   const editingMessage = useMemo(() => {
     if (!editingMessageId) return null;
@@ -731,6 +764,9 @@ export default function ChatWindow({
                   setPendingSharedProfile(null);
                 }}
                 isQuickChat={isQuickChat}
+                showSendAs={false}
+                sendAs={sendAs}
+                onSendAsChange={setSendAs}
               />
             )
           )}

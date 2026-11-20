@@ -42,17 +42,17 @@ export const GroupMediaTab: React.FC<GroupMediaTabProps> = ({
                             <div
                                 key={uniqueKey}
                                 onClick={() => onPreviewMedia(item, idx)}
-                                className="h-[202.66px] w-full rounded-[8px] overflow-hidden relative cursor-pointer group bg-[var(--ds-bg)] border border-[var(--ds-border)] transition-transform hover:opacity-95"
+                                className="h-[202.66px] w-full rounded-[8px] overflow-hidden relative cursor-pointer group bg-[var(--ds-surface-1)] border border-[var(--ds-border)] transition-transform hover:opacity-95 flex items-center justify-center"
                             >
                                 {isVideo ? (
-                                    /* Video Media: Edge-to-edge video fill with subtle play overlay */
+                                    /* Video Media: Full view contain without cropping */
                                     <div className="w-full h-full relative bg-black flex items-center justify-center">
                                         <video
                                             src={item.url}
                                             preload="metadata"
                                             muted
                                             playsInline
-                                            className="w-full h-full object-cover rounded-[8px]"
+                                            className="w-full h-full object-contain rounded-[8px]"
                                         />
                                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
                                             <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white">
@@ -61,14 +61,14 @@ export const GroupMediaTab: React.FC<GroupMediaTabProps> = ({
                                         </div>
                                     </div>
                                 ) : (
-                                    /* Image Media: Edge-to-edge image fill */
-                                    <div className="w-full h-full relative bg-[var(--ds-surface-1)]">
+                                    /* Image Media: Full view contain without cropping */
+                                    <div className="w-full h-full relative bg-[var(--ds-surface-1)] flex items-center justify-center p-0.5">
                                         <Image
                                             src={item.url}
                                             alt={item.filename || "Group media"}
                                             fill
                                             sizes="(max-width: 768px) 33vw, 200px"
-                                            className="object-cover rounded-[8px] group-hover:scale-105 transition-transform duration-300"
+                                            className="object-contain rounded-[8px] group-hover:scale-105 transition-transform duration-300"
                                         />
                                     </div>
                                 )}

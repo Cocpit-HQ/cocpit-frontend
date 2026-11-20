@@ -1111,9 +1111,9 @@ export const FeedPost = (props: FeedPostProps) => {
           <CocpitShareModel
             isOpen={isShareModalOpen}
             onClose={() => setIsShareModalOpen(false)}
-            postId={targetId.toString()}
+            postId={(id || targetId).toString()}
             entityType={isArticlePost ? "article" : "post"}
-            entityId={targetId.toString()}
+            entityId={(id || targetId).toString()}
             onShare={(selectedIds) => {
               if (selectedIds.length > 0) {
                 // If room is managed (e.g. post details view), backend post_share_updated socket event handles the count update

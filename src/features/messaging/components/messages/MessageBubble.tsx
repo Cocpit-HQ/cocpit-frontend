@@ -275,6 +275,11 @@ export function MessageBubble(props: MessageBubbleProps) {
     extractedPostId
   );
 
+  const isJobEntity = message.entityType === "job" || message.entityType === "offer";
+  const jobUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/jobs\/([a-zA-Z0-9_-]+)/i;
+  const extractedJobId = textContent.match(jobUrlRegex)?.[1];
+  const hasJob = Boolean((isJobEntity && message.entityId) || (!hasPost && extractedJobId));
+
   // Helper to determine if message is card-only (contains a shared card and no other text)
   const isCardOnly = (() => {
     if (message.is_deleted_for_everyone || message.is_deleted_for_me) return false;
@@ -288,18 +293,13 @@ export function MessageBubble(props: MessageBubbleProps) {
     const channelUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/channels\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$/i;
     const extractedChannelId = textContent.match(channelUrlRegex)?.[1];
 
-    const jobUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/jobs\/([a-zA-Z0-9_-]+)/i;
-    const extractedJobId = textContent.match(jobUrlRegex)?.[1];
-
     const finalProfileId = message.sharedProfileId || ((message.entityType === 'profile' || message.entityType === 'company') ? message.entityId : null) || extractedProfileId || extractedOrgId;
     const hasProfile = Boolean(finalProfileId) && !hasPost;
 
     const fallbackChannelId = !message.sharedProfileId && !hasPost && !extractedProfileId && !extractedOrgId ? extractedChannelId : null;
     const hasChannel = Boolean(fallbackChannelId || ((message.entityType === 'channel' || message.entityType === 'community') && message.entityId));
 
-    const isJobEntity = message.entityType === "job" || message.entityType === "offer";
     const finalJobId = (isJobEntity && message.entityId) || (!hasPost && !hasProfile && !hasChannel ? extractedJobId : null);
-    const hasJob = Boolean(finalJobId);
 
     const hasCard = hasPost || hasProfile || hasChannel || hasJob;
     if (!hasCard) return false;
@@ -321,6 +321,9 @@ export function MessageBubble(props: MessageBubbleProps) {
 
     return isDefaultCardText || isJustUrl;
   })();
+
+  // Helper to determine if message contains both a job card and accompanying text (Figma Frame 2610040 container pattern)
+  const isJobWithMessage = Boolean(hasJob && !isCardOnly);
 
   // Helper to determine if message is editable (authored by me, not media/card only, and within 15 minutes of sending)
   const isEditable = (() => {
@@ -351,8 +354,8 @@ export function MessageBubble(props: MessageBubbleProps) {
       return "rounded-[16px] border border-[var(--ds-error)] bg-transparent text-[var(--ds-text-primary)]";
     }
 
-    // Figma Frame 2610040: Multi-doc messages (with or without context) use outline bubble
-    if (isMultipleDocMessage) {
+    // Figma Frame 2610040: Multi-doc messages or Job Context with text use outline bubble container
+    if (isMultipleDocMessage || isJobWithMessage) {
       return "rounded-[16px] border border-[var(--ds-border)] bg-transparent text-[var(--ds-text-primary)]";
     }
 
@@ -360,7 +363,7 @@ export function MessageBubble(props: MessageBubbleProps) {
     const baseClasses = "rounded-[16px] border border-[var(--ds-border)] bg-transparent text-[var(--ds-text-primary)]";
     const mediaOnlyClasses = "bg-transparent rounded-[16px] shadow-none border-none";
 
-    return isMediaOnly || isCardOnly || hasPost || hasMediaAndText
+    return isMediaOnly || isCardOnly || hasPost || (hasJob && isCardOnly) || hasMediaAndText
       ? mediaOnlyClasses
       : baseClasses;
   };
@@ -371,12 +374,12 @@ export function MessageBubble(props: MessageBubbleProps) {
       ? "p-2"
       : message.status === 'failed'
         ? "p-2" // Figma Frame 2610069: padding 8px (p-2) for failed message box
-        : isMultipleDocMessage
-          ? "p-2" // Figma Frame 2610040: padding 8px (p-2) for multi-doc message box
+        : isMultipleDocMessage || isJobWithMessage
+          ? "p-2" // Figma Frame 2610040: padding 8px (p-2) for containerized message box
           : hasMediaAndText || (message.media && message.media.length > 1)
             ? "p-0 overflow-visible"
-            : (message.media && message.media.length === 1) || isCardOnly || hasPost
-              ? "p-0 overflow-hidden"
+            : (message.media && message.media.length === 1) || isCardOnly || hasPost || (hasJob && isCardOnly)
+              ? "p-0 overflow-visible"
               : "px-3 py-2";
 
   // Long press mobile detection
@@ -990,7 +993,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                     : cn(
                         "max-w-[85%] sm:max-w-[calc(100%-30%)] w-fit",
                         message.repliedMessage?.senderName && "min-w-[210px]",
-                        isMultipleDocMessage && "max-w-[412px]"
+                        (isMultipleDocMessage || isJobWithMessage) && "w-fit min-w-[260px] max-w-[85%] sm:max-w-[412px]"
                       ),
               )}
             >
@@ -1003,11 +1006,12 @@ export function MessageBubble(props: MessageBubbleProps) {
                     : cn(
                         "w-full flex flex-col justify-center min-h-[34px]",
                         message.repliedMessage?.senderName && "min-w-[210px]",
+                        isJobWithMessage && "min-w-[260px]",
                         // Figma Frame 2610069: text is centered in failed bubble
                         isMe && message.status === 'failed'
                           ? "items-center text-center"
                           : isMe ? "items-end" : "items-start",
-                        isMultipleDocMessage && hasMediaAndText && "gap-[10px]",
+                        ((isMultipleDocMessage && hasMediaAndText) || isJobWithMessage) && "gap-2",
                         message.repliedMessage && message.repliedMessage.senderName
                           ? "font-['DM_Sans'] font-normal text-[12px] leading-[16px]"
                           : "font-['DM_Sans'] font-normal text-xs leading-4",
@@ -1199,7 +1203,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                                 />
                               )}
                             {finalJobId && (
-                              <div className={cn("w-full", !isCardOnly && "mb-1")}>
+                              <div className={cn(isJobWithMessage ? "w-full min-w-0" : "w-fit max-w-full")}>
                                 <JobApplicationContextCard
                                   entityType="job"
                                   entityId={finalJobId}
@@ -1249,6 +1253,20 @@ export function MessageBubble(props: MessageBubbleProps) {
                           {renderReactionBadge(isMe ? "left-[2px] -bottom-[16px]" : "right-[2px] -bottom-[16px]")}
                         </div>
                       )
+                    ) : isJobWithMessage ? (
+                      <div
+                        className={cn(
+                          "w-full font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-primary)] break-words px-1 pt-0.5",
+                          isMe ? "text-right" : "text-left"
+                        )}
+                      >
+                        <MessageText
+                          message={message}
+                          isMediaOnly={false}
+                          isMe={isMe}
+                          conversationId={conversationId}
+                        />
+                      </div>
                     ) : (
                       !isMultipleDocMessage && (
                         <MessageText
@@ -1263,7 +1281,7 @@ export function MessageBubble(props: MessageBubbleProps) {
                 )}
               </div>
 
-              {/* Overlapping Reaction Badge (Figma Frame 2608770) - rendered at bubble level when not attached to context text */}
+              {/* Overlapping Reaction Badge (Figma Frame 2608770) - rendered at bubble level */}
               {!(hasMediaAndText && !isMultipleDocMessage) && renderReactionBadge()}
 
               {/* Retry Icon button (Figma Frame 2610101 - at right with 4px gap) */}

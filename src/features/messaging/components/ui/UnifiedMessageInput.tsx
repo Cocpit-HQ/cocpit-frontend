@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { Paperclip, Send, Smile, Mic, X, Play } from "lucide-react"
+import { Paperclip, Send, Smile, Mic, X, Play, User, Building2, ChevronDown, Check } from "lucide-react"
 import { FileTextIcon, CancelIcon } from "@/components/icons"
 import { MentionTextarea } from "@/components/ui/MentionTextarea"
 import { UserMention } from "@/services/api/users"
@@ -88,6 +88,12 @@ interface UnifiedMessageInputProps {
     pendingEntityContext?: { type: 'job' | 'offer' | 'event', id: string } | null;
     onDismissEntityContext?: () => void;
     isQuickChat?: boolean;
+    /** @deprecated Feature deprecated: manual sendAs switcher removed per product specification */
+    showSendAs?: boolean;
+    /** @deprecated Feature deprecated: manual sendAs switcher removed per product specification */
+    sendAs?: 'applicant' | 'recruiter';
+    /** @deprecated Feature deprecated: manual sendAs switcher removed per product specification */
+    onSendAsChange?: (identity: 'applicant' | 'recruiter') => void;
 }
 
 const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
@@ -111,17 +117,22 @@ export default function UnifiedMessageInput({
     onCancelPendingSharedProfile,
     pendingEntityContext,
     onDismissEntityContext,
-    isQuickChat
+    isQuickChat,
+    showSendAs,
+    sendAs = 'applicant',
+    onSendAsChange
 }: UnifiedMessageInputProps) {
     const [text, setText] = useState("")
     const [inlineMentions, setInlineMentions] = useState<UserMention[]>([])
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
     const [showAttachmentMenu, setShowAttachmentMenu] = useState(false)
+    const [showSendAsMenu, setShowSendAsMenu] = useState(false)
     const [files, setFiles] = useState<File[]>([])
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const pickerRef = useRef<HTMLDivElement>(null)
     const emojiButtonRef = useRef<HTMLButtonElement>(null)
     const attachmentMenuRef = useRef<HTMLDivElement>(null)
+    const sendAsMenuRef = useRef<HTMLDivElement>(null)
     const imageInputRef = useRef<HTMLInputElement>(null)
     const videoInputRef = useRef<HTMLInputElement>(null)
     const docInputRef = useRef<HTMLInputElement>(null)
@@ -368,15 +379,21 @@ export default function UnifiedMessageInput({
             ) {
                 setShowAttachmentMenu(false);
             }
+            if (
+                sendAsMenuRef.current &&
+                !sendAsMenuRef.current.contains(event.target as Node)
+            ) {
+                setShowSendAsMenu(false);
+            }
         };
 
-        if (showEmojiPicker || showAttachmentMenu) {
+        if (showEmojiPicker || showAttachmentMenu || showSendAsMenu) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [showEmojiPicker, showAttachmentMenu]);
+    }, [showEmojiPicker, showAttachmentMenu, showSendAsMenu]);
 
     const filePreviews = React.useMemo(() => {
         return files.map(file => ({
@@ -714,6 +731,86 @@ export default function UnifiedMessageInput({
                         })}
                     </div>
                 )}
+
+                {/* 
+                  @deprecated [DEPRECATED] Send As identity switcher feature is not required per product specification.
+                  Keeping implementation commented for reference if multi-identity switching is reintroduced.
+                */}
+                {/* 
+                {showSendAs && (
+                    <div className="flex items-center justify-between w-full mb-1.5 px-0.5">
+                        <div className="relative" ref={sendAsMenuRef}>
+                            <button
+                                type="button"
+                                onClick={() => setShowSendAsMenu(prev => !prev)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-[100px] bg-[var(--ds-surface-1)] hover:bg-[var(--ds-surface-2)] border border-[var(--ds-border)] transition-colors text-xs font-['DM_Sans'] text-[var(--ds-text-primary)] cursor-pointer select-none"
+                                aria-label="Switch sending identity"
+                                title="Switch between Applicant and Recruiter identity"
+                            >
+                                <span className="text-[var(--ds-text-secondary)] text-[11px] font-normal">Send as:</span>
+                                {sendAs === 'recruiter' ? (
+                                    <span className="flex items-center gap-1 text-[var(--ds-accent)] font-medium">
+                                        <Building2 className="w-3.5 h-3.5" />
+                                        Recruiter
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-1 text-[var(--ds-accent)] font-medium">
+                                        <User className="w-3.5 h-3.5" />
+                                        Applicant
+                                    </span>
+                                )}
+                                <ChevronDown
+                                    className="w-3 h-3 text-[var(--ds-text-secondary)] transition-transform duration-200"
+                                    style={{ transform: showSendAsMenu ? 'rotate(180deg)' : 'none' }}
+                                />
+                            </button>
+
+                            {showSendAsMenu && (
+                                <div className="absolute bottom-full mb-1 left-0 z-50 min-w-[150px] p-1.5 flex flex-col gap-1 bg-[var(--ds-surface-2)] border border-[var(--ds-border)] rounded-[8px] shadow-lg animate-in fade-in zoom-in-95 duration-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onSendAsChange?.('applicant');
+                                            setShowSendAsMenu(false);
+                                        }}
+                                        className={cn(
+                                            "flex items-center justify-between w-full px-2.5 py-1.5 rounded-[6px] text-xs font-['DM_Sans'] transition-colors text-left cursor-pointer",
+                                            sendAs === 'applicant'
+                                                ? "bg-[var(--ds-surface-1)] text-[var(--ds-accent)] font-medium"
+                                                : "text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-1)]"
+                                        )}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <User className="w-3.5 h-3.5" />
+                                            Applicant
+                                        </span>
+                                        {sendAs === 'applicant' && <Check className="w-3.5 h-3.5 text-[var(--ds-accent)]" />}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onSendAsChange?.('recruiter');
+                                            setShowSendAsMenu(false);
+                                        }}
+                                        className={cn(
+                                            "flex items-center justify-between w-full px-2.5 py-1.5 rounded-[6px] text-xs font-['DM_Sans'] transition-colors text-left cursor-pointer",
+                                            sendAs === 'recruiter'
+                                                ? "bg-[var(--ds-surface-1)] text-[var(--ds-accent)] font-medium"
+                                                : "text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-1)]"
+                                        )}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Building2 className="w-3.5 h-3.5" />
+                                            Recruiter
+                                        </span>
+                                        {sendAs === 'recruiter' && <Check className="w-3.5 h-3.5 text-[var(--ds-accent)]" />}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+                */}
 
                 {/* Frame 2610043: Input row matching Figma */}
                 <div className="self-stretch flex flex-row items-end p-0 gap-2.5 w-full min-h-[40px]">

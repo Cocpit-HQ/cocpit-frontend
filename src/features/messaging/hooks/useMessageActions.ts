@@ -15,6 +15,7 @@ import {
   getPinnedMessageId,
   setPinnedMessageId,
 } from "@/features/messaging/utils/pinMessageUtils";
+import { unmarkJobContextSent } from "./useChatSharedContext";
 
 interface ToastFunction {
   (props: {
@@ -342,6 +343,16 @@ export function useMessageActions({
       updateCache,
     );
     queryClient.setQueryData(["messages", chat.id], updateCache);
+
+    // If job/offer card message was deleted for everyone, clear the sent record for that specific entityId
+    // so subsequent actions from the application dashboard for that job can re-attach the context
+    targetMsgs.forEach((m) => {
+      const mType = (m as any).entityType || (m as any).entity_type;
+      const mId = (m as any).entityId || (m as any).entity_id;
+      if (mType === "job" || mType === "offer") {
+        unmarkJobContextSent(chat.id, mId);
+      }
+    });
 
     try {
       await Promise.allSettled(targetMsgs.map((m) => deleteMessage(m.id, true)));
