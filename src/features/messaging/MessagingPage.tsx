@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Page } from "@/types/common";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -28,7 +28,13 @@ import { useCompanyPermissions } from "@/features/businessProfile";
 import { useToast } from "@/hooks/use-toast";
 import { DUMMY_JOB_CHATS } from "@/features/messaging/data/companyMessagingMockData";
 import { companyService } from "@/services/organization.service";
-import { getPinnedChatId, isChatPinned, setPinnedChatId } from "./utils/pinUtils";
+import {
+  isChatPinned,
+  setChatPinned,
+  syncPinnedChatsFromBackend,
+  getPinnedChatTimestamp,
+} from "./utils/pinUtils";
+import { encodeConversationId, decodeConversationId } from "./utils/conversationEncryption";
 import ChatWindowSkeleton from "./components/skeletons/ChatWindowSkeleton";
 
 const routes: Record<string, string> = {
@@ -57,6 +63,7 @@ export default function MessagingPage() {
   const prevConversationIdRef = React.useRef<string | null>(null);
   const hasForcedJobTabRef = React.useRef<boolean>(false);
   const [initialEntityContext, setInitialEntityContext] = useState<{ type: 'job' | 'offer' | 'event', id: string; targetId: string } | null>(null);
+  const hasActivatedEntityContextRef = React.useRef<boolean>(false);
 
   // Detect URL search params for job/offer context immediately on mount/param change (Company mode only)
   useEffect(() => {
@@ -116,12 +123,35 @@ export default function MessagingPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!selectedChat || !initialEntityContext) return;
-    const chatOtherId = selectedChat.otherUserId || "";
-    if (chatOtherId !== initialEntityContext.targetId) {
-      setInitialEntityContext(null);
+    if (initialEntityContext?.targetId) {
+      hasActivatedEntityContextRef.current = false;
     }
-  }, [selectedChat?.id, selectedChat?.otherUserId, initialEntityContext?.targetId]);
+  }, [initialEntityContext?.targetId, initialEntityContext?.id]);
+
+  useEffect(() => {
+    if (!selectedChat || !initialEntityContext) return;
+    const chatOtherId = String(selectedChat.otherUserId || "");
+    const chatSlug = String(selectedChat.otherUserSlug || "");
+    const chatIdStr = String(selectedChat.id || "");
+    const target = String(initialEntityContext.targetId || "").toLowerCase();
+
+    const isMatch =
+      !target ||
+      chatOtherId.toLowerCase() === target ||
+      chatSlug.toLowerCase() === target ||
+      chatIdStr.toLowerCase() === target;
+
+    if (isMatch) {
+      hasActivatedEntityContextRef.current = true;
+      return;
+    }
+
+    // Only reset context if it was already activated for the target conversation and the user switched away
+    if (hasActivatedEntityContextRef.current) {
+      setInitialEntityContext(null);
+      hasActivatedEntityContextRef.current = false;
+    }
+  }, [selectedChat?.id, selectedChat?.otherUserId, selectedChat?.otherUserSlug, initialEntityContext]);
 
   // Default activeTab based on granular CHAT vs JOBS_CHAT permission
   useEffect(() => {
@@ -169,15 +199,19 @@ export default function MessagingPage() {
             }
           : {};
       const backendChats = await getConversations(params);
-      const pinnedId = getPinnedChatId(activeProfile?.type, activeProfile?.id);
-      return backendChats.map((b) => {
-        const thread = mapBackendChatToChatThread(b);
-        if (pinnedId && String(thread.id) === String(pinnedId)) {
-          thread.is_pinned = true;
-        } else {
-          thread.is_pinned = false;
-        }
-        return thread;
+      const threads = backendChats.map((b) => mapBackendChatToChatThread(b));
+      syncPinnedChatsFromBackend(threads, activeProfile?.type, activeProfile?.id);
+      return threads.map((thread) => {
+        const locallyPinned = isChatPinned(thread.id, activeProfile?.type, activeProfile?.id);
+        const pinnedAt =
+          getPinnedChatTimestamp(thread.id, activeProfile?.type, activeProfile?.id) ||
+          thread.pinned_at ||
+          null;
+        return {
+          ...thread,
+          is_pinned: locallyPinned || Boolean(thread.is_pinned),
+          pinned_at: pinnedAt,
+        };
       });
     },
     staleTime: 0,
@@ -191,12 +225,15 @@ export default function MessagingPage() {
   // to prevent React "duplicate key" errors in the chat list.
   const chats = React.useMemo(() => {
     const all = rawChatsQuery.data || [];
-    const pinnedId = getPinnedChatId(activeProfile?.type, activeProfile?.id);
     const seen = new Map<string, (typeof all)[number]>();
     for (const c of all) {
       if (!seen.has(c.id)) {
-        const isPinned = pinnedId ? String(c.id) === String(pinnedId) : Boolean(c.is_pinned);
-        seen.set(c.id, { ...c, is_pinned: isPinned });
+        const isPinned = isChatPinned(c.id, activeProfile?.type, activeProfile?.id) || Boolean(c.is_pinned);
+        const pinnedAt =
+          getPinnedChatTimestamp(c.id, activeProfile?.type, activeProfile?.id) ||
+          c.pinned_at ||
+          null;
+        seen.set(c.id, { ...c, is_pinned: isPinned, pinned_at: pinnedAt });
       }
     }
     return Array.from(seen.values());
@@ -213,7 +250,7 @@ export default function MessagingPage() {
         : null);
 
     if (foundChat) {
-      const isPinned = isChatPinned(foundChat.id, activeProfile?.type, activeProfile?.id);
+      const isPinned = isChatPinned(foundChat.id, activeProfile?.type, activeProfile?.id) || Boolean(foundChat.is_pinned);
       return {
         ...selectedChat,
         ...foundChat,
@@ -232,6 +269,12 @@ export default function MessagingPage() {
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [createGroupInitialView, setCreateGroupInitialView] = useState<'personalChat' | 'addMembers' | 'createGroup'>('personalChat');
 
+  const excludedUserIdsForPersonalChat = useMemo(() => {
+    return chats
+      .filter((c) => !c.isGroup && c.otherUserId && (c.is_requesting || c.is_declined))
+      .map((c) => String(c.otherUserId));
+  }, [chats]);
+
   const { socket } = useSocket();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -241,9 +284,12 @@ export default function MessagingPage() {
     if (isLoading) return;
 
     const userId = searchParams.get("userId");
-    const groupId = searchParams.get("groupId");
-    const conversationId = searchParams.get("conversationId");
+    const rawGroupId = searchParams.get("groupId");
+    const rawConversationId = searchParams.get("conversationId");
     const companyId = searchParams.get("companyId");
+
+    const groupId = rawGroupId ? decodeConversationId(rawGroupId) : null;
+    const conversationId = rawConversationId ? decodeConversationId(rawConversationId) : null;
 
     // Don't re-run if no relevant URL params are present
     if (!userId && !groupId && !conversationId && !companyId) {
@@ -292,7 +338,7 @@ export default function MessagingPage() {
           setSelectedChat(targetChat);
           processedUserIdRef.current = conversationId;
           if (!isMobile && typeof window !== 'undefined') {
-            window.history.replaceState(null, "", `/messaging?conversationId=${conversationId}`);
+            window.history.replaceState(null, "", `/messaging?conversationId=${encodeConversationId(conversationId)}`);
           }
         } else if (!isLoading) {
           // Conversation not found or was deleted — clean up URL to prevent infinite skeleton loading
@@ -353,9 +399,11 @@ export default function MessagingPage() {
               const newChat: ChatThread = {
                 id: "new",
                 otherUserId: targetUser.id,
+                otherUserSlug: targetUser.account_name || (targetUser as any).username || "",
+                otherUserType: "USER",
                 name: targetUser.name,
                 role: targetUser.headline || "",
-                avatar: targetUser.avatar || "gradient-1",
+                avatar: targetUser.avatar || undefined,
                 lastMessage: "",
                 time: new Date().toISOString(),
                 lastMessageAt: new Date().toISOString(),
@@ -406,7 +454,7 @@ export default function MessagingPage() {
           safelySetSelectedChat(existingChat);
           processedUserIdRef.current = userId;
           if (!isMobile && typeof window !== 'undefined') {
-            window.history.replaceState(null, "", `/messaging?conversationId=${existingChat.id}`);
+            window.history.replaceState(null, "", `/messaging?conversationId=${encodeConversationId(existingChat.id)}`);
           }
         } else {
           if (userId === processedUserIdRef.current) return;
@@ -425,9 +473,11 @@ export default function MessagingPage() {
             const newChat: ChatThread = {
               id: "new",
               otherUserId: user.id,
+              otherUserSlug: user.account_name || (user as any).username || "",
+              otherUserType: "USER",
               name: user.name,
               role: user.headline || "",
-              avatar: user.avatar || "gradient-1",
+              avatar: user.avatar || undefined,
               lastMessage: "",
               time: new Date().toISOString(),
               lastMessageAt: new Date().toISOString(),
@@ -474,7 +524,7 @@ export default function MessagingPage() {
               otherUserId: response.org_id || response.company_id || companyId,
               name: response.name,
               role: response.industry || "Company",
-              avatar: response.logo_url || "gradient-1",
+              avatar: response.logo_url || undefined,
               lastMessage: "",
               time: new Date().toISOString(),
               lastMessageAt: new Date().toISOString(),
@@ -720,7 +770,7 @@ export default function MessagingPage() {
               conversation_id: conversationId,
               other_user_id: payload.other_user_id || payload.otherUserId,
               other_user_name: payload.other_user_name || payload.otherUserName || "New Contact",
-              other_user_avatar: payload.other_user_avatar || payload.otherUserAvatar || "gradient-1",
+              other_user_avatar: payload.other_user_avatar || payload.otherUserAvatar || undefined,
               other_user_headline: payload.other_user_headline || payload.otherUserHeadline || "",
               other_user_slug: payload.other_user_slug || payload.otherUserSlug || "",
               other_user_type: payload.other_user_type || payload.otherUserType || "USER",
@@ -965,18 +1015,27 @@ export default function MessagingPage() {
     const handleConversationPinned = (payload: {
       conversationId: string;
       is_pinned: boolean;
+      pinned_at?: string | null;
     }) => {
-      setPinnedChatId(payload.is_pinned ? String(payload.conversationId) : null, activeProfile?.type, activeProfile?.id);
+      const nowIso = payload.pinned_at || (payload.is_pinned ? new Date().toISOString() : null);
+      setChatPinned(
+        String(payload.conversationId),
+        payload.is_pinned,
+        activeProfile?.type,
+        activeProfile?.id,
+        nowIso
+      );
       queryClient.setQueriesData<ChatThread[]>(
         { queryKey: ["conversations"] },
         (oldData) => {
           if (!oldData || !Array.isArray(oldData)) return oldData;
           return oldData.map((c) => {
             if (String(c.id) === String(payload.conversationId)) {
-              return { ...c, is_pinned: payload.is_pinned };
-            }
-            if (payload.is_pinned && c.is_pinned) {
-              return { ...c, is_pinned: false };
+              return {
+                ...c,
+                is_pinned: payload.is_pinned,
+                pinned_at: payload.is_pinned ? (nowIso || c.pinned_at) : null,
+              };
             }
             return c;
           });
@@ -1085,12 +1144,13 @@ export default function MessagingPage() {
               onSelectChat={React.useCallback(
                 (chat: ChatThread) => {
                   const isGroupChat = !!(chat.isGroup || (chat as any).is_group);
+                  const encodedId = encodeConversationId(chat.id);
                   if (isMobile) {
-                    router.push(isGroupChat ? `/messaging?groupId=${chat.id}` : `/messaging?conversationId=${chat.id}`);
+                    router.push(isGroupChat ? `/messaging?groupId=${encodedId}` : `/messaging?conversationId=${encodedId}`);
                   } else {
                     setSelectedChat(chat);
                     if (typeof window !== 'undefined') {
-                      const queryParam = isGroupChat ? `groupId=${chat.id}` : `conversationId=${chat.id}`;
+                      const queryParam = isGroupChat ? `groupId=${encodedId}` : `conversationId=${encodedId}`;
                       window.history.replaceState(null, "", `/messaging?${queryParam}`);
                     }
                   }
@@ -1132,7 +1192,7 @@ export default function MessagingPage() {
             className={`${
               isMobile && selectedChat
                 ? "fixed inset-0 z-50 bg-[var(--ds-bg)] w-full h-[100dvh] flex flex-col"
-                : "hidden md:flex flex-col flex-1 min-w-0 h-full overflow-hidden bg-[var(--ds-bg)] border-none md:order-2"
+                : "hidden md:flex flex-col flex-1 min-w-0 h-full overflow-hidden bg-[var(--ds-bg)] border-none md:order-2 relative"
             }`}
           >
           {activeChat ? (
@@ -1210,6 +1270,7 @@ export default function MessagingPage() {
           isOpen={isCreateGroupOpen}
           onClose={() => setIsCreateGroupOpen(false)}
           initialView={createGroupInitialView}
+          excludeUserIds={createGroupInitialView === 'personalChat' ? excludedUserIdsForPersonalChat : undefined}
         />
       </GroupChatProvider>
     </div>

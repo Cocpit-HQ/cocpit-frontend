@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useLayoutEffect, useState, useMemo, forwardRef } from "react";
 import { Message } from "@/types/messaging";
 import SystemMessage from "./SystemMessage";
-import { Loader2, ChevronDown } from "lucide-react";
+import { Loader2, ChevronDown, AtSign } from "lucide-react";
 import MessageBubble from "../ui/MessageBubble";
 import MessageSkeleton from "../skeletons/MessageSkeleton";
 import { formatTime } from "@/lib/mappers/messaging.mapper";
+
+const BROADCAST_MENTION_REGEX = /(?:@\[?(?:everyone|all)\]?(?:\([^)]+\))?|(?<![a-zA-Z0-9._%+-])@(?:everyone|every\s+one|all)\b|\b@?(?:everyone|every\s+one|all)\b)/i;
+const STRUCTURED_MENTION_REGEX = /@\[([^\]]+)\]\(([^)]+)\)/g;
 
 interface GroupMessageListProps {
     messages: Message[];
@@ -26,6 +29,7 @@ interface GroupMessageListProps {
     pinnedMessageId?: string | null;
     conversationId?: string;
     groupMembers?: any[];
+    highlightedMessageId?: string | null;
 }
 
 const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
@@ -48,6 +52,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
     pinnedMessageId,
     conversationId,
     groupMembers,
+    highlightedMessageId: propHighlightedMessageId,
 }, ref) => {
     const localRef = useRef<HTMLDivElement>(null);
     const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef;
@@ -73,10 +78,69 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
     const prevScrollHeightRef = useRef<number>(0);
     const wasLoadingMoreRef = useRef<boolean>(false);
     const lastMessageIdRef = useRef<string | null>(null);
+    const prevMessageCountRef = useRef<number>(0);
+    const isReactingRef = useRef<boolean>(false);
+
+    const handleReaction = (message: Message, emoji: string) => {
+        isReactingRef.current = true;
+        updateShouldScrollToBottom(false);
+        onReaction?.(message, emoji);
+    };
 
     // Freeze the initial unread count so it doesn't disappear when marked as read
-    const [initialUnread] = useState(unreadCount);
+    const [initialUnread, setInitialUnread] = useState(unreadCount);
     const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
+
+    // Track conversation changes and read message boundaries (WhatsApp style: only unread mentions trigger the @ button)
+    const lastConversationIdRef = useRef<string | undefined>(conversationId);
+    const hasInitializedRef = useRef<boolean>(false);
+    const readMessageIdsRef = useRef<Set<string>>(new Set());
+    const firstKnownMessageIdRef = useRef<string | null>(null);
+
+    const [seenMentionIds, setSeenMentionIds] = useState<Set<string>>(() => new Set());
+    const [offscreenMentionIds, setOffscreenMentionIds] = useState<string[]>([]);
+
+    if (lastConversationIdRef.current !== conversationId) {
+        lastConversationIdRef.current = conversationId;
+        hasInitializedRef.current = false;
+        readMessageIdsRef.current.clear();
+        firstKnownMessageIdRef.current = null;
+        prevMessageCountRef.current = 0;
+        setInitialUnread(unreadCount);
+        setSeenMentionIds(new Set());
+        setOffscreenMentionIds([]);
+    }
+
+    // Initialize read history boundaries once messages are loaded
+    if (messages.length > 0) {
+        if (!hasInitializedRef.current) {
+            hasInitializedRef.current = true;
+            firstKnownMessageIdRef.current = messages[0]?.id || null;
+
+            if (initialUnread <= 0) {
+                // Opened with 0 unread messages: ALL existing messages are already read
+                for (let i = 0; i < messages.length; i++) {
+                    readMessageIdsRef.current.add(messages[i].id);
+                }
+            } else {
+                // Opened with initialUnread > 0: only messages before the unread window are read
+                const unreadStartIndex = Math.max(0, messages.length - initialUnread);
+                for (let i = 0; i < unreadStartIndex; i++) {
+                    readMessageIdsRef.current.add(messages[i].id);
+                }
+            }
+        } else if (firstKnownMessageIdRef.current) {
+            // Check if older messages were prepended by pagination
+            const previousFirstIdx = messages.findIndex(m => m.id === firstKnownMessageIdRef.current);
+            if (previousFirstIdx > 0) {
+                // Messages from 0 up to previousFirstIdx are older paginated history -> mark as read
+                for (let i = 0; i < previousFirstIdx; i++) {
+                    readMessageIdsRef.current.add(messages[i].id);
+                }
+                firstKnownMessageIdRef.current = messages[0]?.id || null;
+            }
+        }
+    }
 
     const firstUnreadMessageId = useMemo(() => {
         if (initialUnread <= 0 || messages.length === 0) return null;
@@ -93,9 +157,163 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
         return null;
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+    const [localHighlightedMessageId, setLocalHighlightedMessageId] = useState<string | null>(null);
+    const effectiveHighlightedMessageId = propHighlightedMessageId || localHighlightedMessageId;
     const [showScrollButton, setShowScrollButton] = useState(false);
     const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const scrollThrottleRafRef = useRef<number | null>(null);
+
+    // Cancel animation frame on unmount
+    useEffect(() => {
+        return () => {
+            if (scrollThrottleRafRef.current) {
+                cancelAnimationFrame(scrollThrottleRafRef.current);
+            }
+        };
+    }, []);
+
+    // Unread @ Mention detection and jump functionality (WhatsApp style)
+    const currentMember = useMemo(() => {
+        return groupMembers?.find(m => String(m.user_id || m.id) === String(currentUserId));
+    }, [groupMembers, currentUserId]);
+
+    const isMessageMentioningMe = (msg: Message): boolean => {
+        const isMe = msg.sender === 'me' || (msg.senderId && currentUserId && String(msg.senderId) === String(currentUserId));
+        if (isMe || msg.type === 'system') return false;
+
+        const text = msg.text || msg.text_content || '';
+
+        // 1. Broadcast mention: @everyone or @all (plain text, structured tag @[Everyone](...), or word boundary)
+        if (BROADCAST_MENTION_REGEX.test(text)) return true;
+        if ((msg as any).is_everyone_mention || (msg as any).mention_all) return true;
+
+        // 2. Mentioned users array (individual or broadcast everyone)
+        if (msg.mentioned_users && msg.mentioned_users.length > 0) {
+            const isMentionedInArray = msg.mentioned_users.some(u => {
+                const uId = String(u.user_id || (u as any).id || '').toLowerCase();
+                const uAccount = String(u.account_name || '').toLowerCase();
+                const uName = String(u.full_name || '').toLowerCase();
+
+                // Check broadcast in mentioned_users
+                if (uId === 'everyone' || uId === 'all' || uAccount === 'everyone' || uAccount === 'all' || uName === 'everyone' || uName === 'all') {
+                    return true;
+                }
+
+                if (String(u.user_id) === String(currentUserId)) return true;
+                if (currentMember?.account_name && u.account_name && u.account_name.toLowerCase() === currentMember.account_name.toLowerCase()) return true;
+                if (currentMember?.full_name && u.full_name && u.full_name.toLowerCase() === currentMember.full_name.toLowerCase()) return true;
+                return false;
+            });
+            if (isMentionedInArray) return true;
+        }
+
+        // 3. Structured markdown mention: @[Full Name](user:id) or @[Full Name](id)
+        STRUCTURED_MENTION_REGEX.lastIndex = 0;
+        let match;
+        while ((match = STRUCTURED_MENTION_REGEX.exec(text)) !== null) {
+            const displayName = match[1].toLowerCase();
+            const rawId = match[2];
+            const cleanId = rawId.replace(/^(user|org|company):/i, '');
+
+            // Broadcast structured match
+            if (displayName === 'everyone' || displayName === 'all' || cleanId.toLowerCase() === 'everyone' || cleanId.toLowerCase() === 'all') {
+                return true;
+            }
+
+            if (String(cleanId) === String(currentUserId)) return true;
+            if (currentMember?.account_name && cleanId.toLowerCase() === currentMember.account_name.toLowerCase()) return true;
+        }
+
+        // 4. Plain @handle in text
+        if (currentMember?.account_name) {
+            const handleRegex = new RegExp(`@${currentMember.account_name}\\b`, 'i');
+            if (handleRegex.test(text)) return true;
+        }
+
+        return false;
+    };
+
+    const candidateMentions = useMemo(() => {
+        return messages.filter(m => {
+            // Must NOT be an already-read historical message
+            if (readMessageIdsRef.current.has(m.id)) return false;
+            // Must NOT have been already seen/read during this session
+            if (seenMentionIds.has(m.id)) return false;
+            // Must mention me or @everyone
+            return isMessageMentioningMe(m);
+        });
+    }, [messages, currentUserId, currentMember, seenMentionIds]);
+
+    const updateOffscreenMentions = () => {
+        if (!scrollRef.current) return;
+        if (candidateMentions.length === 0) {
+            if (offscreenMentionIds.length > 0) setOffscreenMentionIds([]);
+            return;
+        }
+        const container = scrollRef.current;
+        const containerRect = container.getBoundingClientRect();
+
+        const offscreen: string[] = [];
+        const newlySeen: string[] = [];
+
+        for (const m of candidateMentions) {
+            if (seenMentionIds.has(m.id) || readMessageIdsRef.current.has(m.id)) continue;
+
+            const el = document.getElementById(`msg-${m.id}`);
+            if (!el) {
+                offscreen.push(m.id);
+            } else {
+                const elRect = el.getBoundingClientRect();
+                const isVisible = elRect.bottom > containerRect.top + 20 && elRect.top < containerRect.bottom - 20;
+                if (isVisible) {
+                    newlySeen.push(m.id);
+                } else {
+                    offscreen.push(m.id);
+                }
+            }
+        }
+
+        if (newlySeen.length > 0) {
+            newlySeen.forEach(id => {
+                readMessageIdsRef.current.add(id);
+            });
+            setSeenMentionIds(prev => {
+                const next = new Set(prev);
+                newlySeen.forEach(id => next.add(id));
+                return next;
+            });
+        }
+
+        setOffscreenMentionIds(offscreen);
+    };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            updateOffscreenMentions();
+        }, 150);
+        return () => clearTimeout(timer);
+    }, [candidateMentions, messages.length]);
+
+    const handleJumpToNextMention = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (offscreenMentionIds.length === 0) return;
+
+        const targetId = offscreenMentionIds[0];
+        const el = document.getElementById(`msg-${targetId}`);
+
+        if (el && scrollRef.current) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        setLocalHighlightedMessageId(targetId);
+        setTimeout(() => {
+            setLocalHighlightedMessageId(prev => (prev === targetId ? null : prev));
+        }, 2500);
+
+        readMessageIdsRef.current.add(targetId);
+        setSeenMentionIds(prev => new Set(prev).add(targetId));
+        setOffscreenMentionIds(prev => prev.filter(id => id !== targetId));
+    };
 
     // Skeletons list for pagination loading (older messages)
     const displayMessages = useMemo(() => {
@@ -115,8 +333,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
         const el = document.getElementById(`msg-${messageId}`);
         if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setHighlightedMessageId(messageId);
-            setTimeout(() => setHighlightedMessageId(null), 1000);
+            setLocalHighlightedMessageId(messageId);
+            setTimeout(() => setLocalHighlightedMessageId(null), 1000);
         }
     };
 
@@ -134,6 +352,11 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
     useEffect(() => {
         if (!scrollRef.current) return;
 
+        if (isReactingRef.current) {
+            isReactingRef.current = false;
+            return;
+        }
+
         const lastMessage = displayMessages[displayMessages.length - 1];
         const isNewMessageSent = !!(
             lastMessage &&
@@ -141,6 +364,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
             !lastMessage.id.startsWith('skeleton-') &&
             (lastMessage.sender === 'me' || lastMessage.senderId === currentUserId)
         );
+        const isNewMessageAdded = displayMessages.length > prevMessageCountRef.current;
+        prevMessageCountRef.current = displayMessages.length;
 
         if (initialUnread > 0 && !hasScrolledToUnread && displayMessages.length > 0) {
             const targetId = firstUnreadMessageId || displayMessages[Math.max(0, displayMessages.length - initialUnread)]?.id;
@@ -150,13 +375,13 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
             }
             setHasScrolledToUnread(true);
             updateShouldScrollToBottom(false);
-        } else if ((shouldScrollToBottomRef.current || isNewMessageSent) && displayMessages.length > 0) {
+        } else if ((isNewMessageSent || (shouldScrollToBottomRef.current && isNewMessageAdded)) && displayMessages.length > 0) {
             if (scrollRef.current) {
                 scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
             }
 
             const timer = setTimeout(() => {
-                if (scrollRef.current && (shouldScrollToBottomRef.current || isNewMessageSent)) {
+                if (scrollRef.current && (isNewMessageSent || (shouldScrollToBottomRef.current && isNewMessageAdded))) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                 }
             }, 150);
@@ -194,6 +419,22 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
         }
     }, [isLoadingMore, displayMessages.length, scrollRef]);
 
+    // Keep last message visible when container resizes (e.g. input expands up to 12 lines)
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el || typeof ResizeObserver === 'undefined') return;
+
+        const observer = new ResizeObserver(() => {
+            if (isReactingRef.current) return;
+            if (shouldScrollToBottomRef.current) {
+                el.scrollTop = el.scrollHeight;
+            }
+        });
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const target = e.currentTarget;
         const currentScrollTop = target.scrollTop;
@@ -201,6 +442,16 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
         // 1. Detect scrolling UP vs DOWN
         const isScrollingUp = currentScrollTop < lastScrollTopRef.current;
         lastScrollTopRef.current = currentScrollTop;
+
+        // Update offscreen mentions list as user scrolls (throttled with RAF to prevent layout thrashing)
+        if (candidateMentions.length > 0) {
+            if (!scrollThrottleRafRef.current) {
+                scrollThrottleRafRef.current = requestAnimationFrame(() => {
+                    updateOffscreenMentions();
+                    scrollThrottleRafRef.current = null;
+                });
+            }
+        }
 
         // 2. Infinite scroll trigger at TOP
         if (currentScrollTop < 50 && hasMore && !isLoadingMore) {
@@ -215,8 +466,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
             setShowScrollButton(false);
             if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
         } else {
+            updateShouldScrollToBottom(false);
             if (isScrollingUp) {
-                updateShouldScrollToBottom(false);
                 setShowScrollButton(true);
                 if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
                 scrollTimerRef.current = setTimeout(() => {
@@ -390,8 +641,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
                                         }}
                                         onReply={onReply}
                                         onReplyClick={handleReplyClick}
-                                        isHighlighted={highlightedMessageId === msg.id}
-                                        onReaction={onReaction}
+                                        isHighlighted={effectiveHighlightedMessageId === msg.id}
+                                        onReaction={handleReaction}
                                         currentUserId={currentUserId}
                                         conversationId={conversationId}
                                         isPinned={Boolean(pinnedMessageId && String(msg.id) === String(pinnedMessageId))}
@@ -404,20 +655,49 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
                 </div>
             </div>
 
-            {showScrollButton && !shouldScrollToBottom && (
-                <button
-                    className="absolute bottom-4 right-4 md:right-8 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] shadow-lg text-[var(--ds-text-primary)] hover:text-[var(--ds-accent)] p-2 rounded-full z-50 hover:bg-[var(--ds-surface-2)] transition-all"
-                    onClick={() => {
-                        if (scrollRef.current) {
-                            scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-                        }
-                    }}
-                    onMouseEnter={handleScrollButtonMouseEnter}
-                    onMouseLeave={handleScrollButtonMouseLeave}
-                >
-                    <ChevronDown className="w-5 h-5" />
-                </button>
-            )}
+            {/* Floating Action Buttons: @ Mention Jump Button + Scroll to Bottom Button */}
+            <div className="absolute bottom-4 right-4 md:right-8 flex flex-col items-center gap-2.5 z-50 pointer-events-none">
+                {/* 1. @ Mention Redirect Button (WhatsApp style, matching Figma Frame 2610153 & Frame 2609902) */}
+                {offscreenMentionIds.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={handleJumpToNextMention}
+                        className="pointer-events-auto relative w-10 h-10 rounded-full bg-[var(--ds-surface-1)] border border-[var(--ds-border)] shadow-lg flex items-center justify-center text-white hover:bg-[var(--ds-surface-2)] transition-all cursor-pointer group animate-in fade-in zoom-in-95 duration-200"
+                        aria-label={`Jump to mention (${offscreenMentionIds.length} unread)`}
+                        title={`Jump to unread mention (${offscreenMentionIds.length} remaining)`}
+                    >
+                        {/* Frame 2610153: @ text in DM Sans 16px/21px #FFFFFF */}
+                        <span className="font-['DM_Sans'] font-normal text-[16px] leading-[21px] text-white text-center select-none flex items-center justify-center">
+                            @
+                        </span>
+                        {/* Frame 2609902: 14x14px badge at left: 28px, top: 0px */}
+                        <div className="absolute left-[28px] top-0 h-[14px] min-w-[14px] px-1 bg-[var(--ds-accent)] rounded-[7px] flex items-center justify-center shadow-md">
+                            <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-white select-none">
+                                {offscreenMentionIds.length > 99 ? '99+' : offscreenMentionIds.length}
+                            </span>
+                        </div>
+                    </button>
+                )}
+
+                {/* 2. Scroll to bottom down arrow button (matching Figma Frame 2610152: 40x40, rounded 999px, 20x20 arrow) */}
+                {showScrollButton && !shouldScrollToBottom && (
+                    <button
+                        type="button"
+                        className="pointer-events-auto w-10 h-10 rounded-full bg-[var(--ds-surface-1)] border border-[var(--ds-border)] shadow-lg flex items-center justify-center text-[var(--ds-text-primary)] hover:text-[var(--ds-accent)] hover:bg-[var(--ds-surface-2)] transition-all cursor-pointer"
+                        onClick={() => {
+                            if (scrollRef.current) {
+                                scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+                            }
+                        }}
+                        onMouseEnter={handleScrollButtonMouseEnter}
+                        onMouseLeave={handleScrollButtonMouseLeave}
+                        aria-label="Scroll to bottom"
+                        title="Scroll to bottom"
+                    >
+                        <ChevronDown className="w-5 h-5 text-[var(--ds-text-primary)]" />
+                    </button>
+                )}
+            </div>
         </div>
     );
 });

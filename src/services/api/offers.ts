@@ -34,6 +34,10 @@ export interface JobOffer {
     // From JOIN with users
     sent_by_name: string;
     sent_by_avatar?: string;
+    sent_by_headline?: string;
+    offer_sender_name?: string;
+    offer_sender_avatar?: string;
+    offer_sender_headline?: string;
     // Extra fields for company view
     recipient_name?: string;
     recipient_avatar?: string;
@@ -115,6 +119,8 @@ export interface OfferRecipient {
     avatar_url: string | null;
     headline: string | null;
     sent_by_name: string | null;
+    sent_by_headline?: string | null;
+    sent_by_avatar?: string | null;
 }
 
 /** Company: Get individual recipients for a specific job's offers */

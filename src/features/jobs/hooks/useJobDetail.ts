@@ -20,13 +20,15 @@ export const useJobDetail = (jobId: string) => {
     withdrawnJobIds,
     respondedOffers,
     followedCompanies,
+    applicationStatuses,
     addSavedId,
     removeSavedId,
     addAppliedId,
     removeAppliedId,
     addWithdrawnId,
     setOfferResponse,
-    toggleFollowCompany
+    toggleFollowCompany,
+    setApplicationStatus,
   } = useJobStore();
 
   const fetchJob = useCallback(async () => {
@@ -70,6 +72,19 @@ export const useJobDetail = (jobId: string) => {
     };
   }, [jobId, fetchJob]);
 
+  // Real-time synchronization when applicant status changes (e.g. recruiter shortlists candidate)
+  useEffect(() => {
+    const handleAppUpdated = (e: any) => {
+      const detail = e.detail;
+      const targetJobId = detail?.jobId || detail?.job_id;
+      if (targetJobId === jobId && detail?.status) {
+        setRawJob(prev => prev ? { ...prev, application_status: detail.status } : prev);
+      }
+    };
+    window.addEventListener('job-application-updated', handleAppUpdated);
+    return () => window.removeEventListener('job-application-updated', handleAppUpdated);
+  }, [jobId]);
+
   // Dynamically compute the merged job object
   const job = useMemo(() => {
     if (!rawJob) return null;
@@ -80,6 +95,8 @@ export const useJobDetail = (jobId: string) => {
     processed.is_applied = !isWithdrawn && (processed.is_applied || appliedJobIds.has(processed.id));
     if (isWithdrawn) {
       processed.application_status = 'Withdrawn';
+    } else if (applicationStatuses[processed.id]) {
+      processed.application_status = applicationStatuses[processed.id];
     }
 
     // Handle offer statuses
@@ -100,15 +117,20 @@ export const useJobDetail = (jobId: string) => {
     // Handle followed status for company
     processed.is_followed = processed.is_followed || followedCompanies.has(processed.company);
     return processed;
-  }, [rawJob, savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers, followedCompanies]);
+  }, [rawJob, savedJobIds, appliedJobIds, withdrawnJobIds, respondedOffers, followedCompanies, applicationStatuses]);
 
   // Seed the store with initial values from the API (only once per job load)
   useEffect(() => {
     if (!rawJob) return;
 
-    // Invalidate explore sections & recently-viewed so returning to them reflects this view
+    if (rawJob.application_status) {
+      setApplicationStatus(rawJob.id, rawJob.application_status);
+    }
+
+    // Invalidate explore sections, recently-viewed, and applied so returning to them reflects this view
     queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-sections'] });
     queryClient.invalidateQueries({ queryKey: ['jobs', 'explore-section', 'recently-viewed'] });
+    queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
 
     if (rawJob.is_applied && !appliedJobIds.has(rawJob.id)) {
       addAppliedId(rawJob.id);
@@ -126,7 +148,7 @@ export const useJobDetail = (jobId: string) => {
 
   const toggleSave = useCallback(async () => {
     if (!job) return;
-    const isCurrentlySaved = savedJobIds.has(job.id);
+    const isCurrentlySaved = Boolean(job.is_saved ?? savedJobIds.has(job.id));
     const nextSavedState = !isCurrentlySaved;
 
     // Optimistically update local state & global store

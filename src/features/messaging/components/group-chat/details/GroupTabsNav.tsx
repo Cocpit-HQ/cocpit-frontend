@@ -39,7 +39,7 @@ export const GroupTabsNav: React.FC<GroupTabsNavProps> = ({ activeTab, onTabChan
                             {tab.label}
                         </span>
                         {isActive && (
-                            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--ds-accent)] rounded-full" />
+                            <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] bg-[var(--ds-accent)] rounded-full" />
                         )}
                     </button>
                 );

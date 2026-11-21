@@ -31,6 +31,7 @@ export interface OverviewApiResponse {
     score: number;
     missingFields: string[];
     message: string;
+    isVerified?: boolean;
   };
   insights: string[];
 }
@@ -95,6 +96,8 @@ export interface OpportunitiesApiResponse {
     };
   };
   topOrganizations: {
+    id?: string;
+    slug?: string;
     name: string;
     industry: string;
     visits: string;

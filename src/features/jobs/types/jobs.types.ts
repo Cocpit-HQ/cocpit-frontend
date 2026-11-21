@@ -47,6 +47,7 @@ export interface Job {
   applied_date_display?: string;
   applied_at?: string;
   published_at?: string;
+  closed_at?: string;
   created_at?: string;
   is_available?: boolean;
   context_sent?: boolean;
@@ -60,6 +61,12 @@ export interface Job {
   recruiter_title?: string;
   recruiter_avatar?: string;
   recruiter_message?: string;
+  offer_sender_name?: string;
+  offer_sender_avatar?: string;
+  offer_sender_headline?: string;
+  sent_by_name?: string;
+  sent_by_avatar?: string;
+  sent_by_headline?: string;
   offer_id?: string;
   offerStatus?: string;
   applicants?: number;
@@ -106,6 +113,7 @@ export interface JobListing {
   title: string;
   published_at?: string;
   posted_at?: string;
+  closed_at?: string;
   last_edited?: string;
   status: 'ACTIVE' | 'IN REVIEW' | 'DRAFT' | 'CLOSED' | string;
   moderation_status?: 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | string;
@@ -153,6 +161,12 @@ export interface JobOffer {
   is_active?: boolean;
   job_status?: string;
   org_id?: string;
+  sent_by_name?: string;
+  sent_by_avatar?: string;
+  sent_by_headline?: string;
+  offer_sender_name?: string;
+  offer_sender_avatar?: string;
+  offer_sender_headline?: string;
   recruiter: {
     id?: string;
     name: string;

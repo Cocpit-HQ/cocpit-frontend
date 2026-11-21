@@ -140,9 +140,9 @@ export const GroupMembersTab: React.FC<GroupMembersTabProps> = ({
                         >
                             {/* Left content: Avatar + Text column (Name & Headline + 8px gap + Admin Badge) */}
                             <div
-                                className={cn("flex flex-row items-center gap-2 h-[36px] flex-1 min-w-0", !isUnknown && "cursor-pointer")}
+                                className="flex flex-row items-center gap-2 h-[36px] flex-1 min-w-0 cursor-pointer"
                                 onClick={() => {
-                                    if (isUnknown) return;
+                                    if (!member.user_id) return;
                                     const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
                                     router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
                                 }}

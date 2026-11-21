@@ -113,7 +113,7 @@ export function TagPeopleSelector({
                                 key={user.id}
                                 className="flex items-center gap-2 h-10 px-4 bg-[#EEF2FF] border border-[#EEF2FF] rounded-lg shrink-0"
                             >
-                                <span className="text-[#6366F1] text-sm font-medium font-roboto leading-5 tracking-tight">
+                                <span className="text-[#6366F1] text-sm font-medium font-['DM_Sans'] leading-5 tracking-tight">
                                     {user.full_name}
                                 </span>
                                 <button

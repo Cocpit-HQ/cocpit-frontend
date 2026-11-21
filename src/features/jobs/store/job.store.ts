@@ -71,6 +71,7 @@ export interface JobsUIState {
   withdrawnJobIds: Set<string>;
   respondedOffers: Record<string, 'accept' | 'decline'>;
   followedCompanies: Set<string>;
+  applicationStatuses: Record<string, string>;
 
   // ─── UI Actions ───────────────────────────────────────────
   setActiveCandidateTab: (tab: string) => void;
@@ -99,6 +100,8 @@ export interface JobsUIState {
   removeWithdrawnId: (id: string) => void;
   setOfferResponse: (id: string, action: 'accept' | 'decline') => void;
   toggleFollowCompany: (companyName: string) => void;
+  setApplicationStatus: (jobId: string, status: string) => void;
+  setApplicationStatuses: (statuses: Record<string, string>) => void;
 
   // ─── Recruiter Mutations ────────────────────────────────────
   addRecruiterJob: (listKey: 'published' | 'drafts' | 'archived', job: Job) => void;
@@ -198,6 +201,7 @@ export const useJobStore = create<JobsUIState>()(
       withdrawnJobIds: new Set<string>(),
       respondedOffers: {},
       followedCompanies: new Set<string>(),
+      applicationStatuses: {},
 
       // ─── UI Actions ───────────────────────────────────────────
       setActiveCandidateTab: (tab) =>
@@ -368,6 +372,22 @@ export const useJobStore = create<JobsUIState>()(
       setOfferResponse: (id, action) =>
         set((state) => ({
           respondedOffers: { ...state.respondedOffers, [id]: action },
+        })),
+
+      setApplicationStatus: (jobId, status) =>
+        set((state) => ({
+          applicationStatuses: {
+            ...state.applicationStatuses,
+            [jobId]: status,
+          },
+        })),
+
+      setApplicationStatuses: (statuses) =>
+        set((state) => ({
+          applicationStatuses: {
+            ...state.applicationStatuses,
+            ...statuses,
+          },
         })),
 
       toggleFollowCompany: (companyName) =>

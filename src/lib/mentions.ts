@@ -83,7 +83,9 @@ export const formatMentionsForBackend = (content: string, inlineMentions: UserMe
             const prefix = isOrg ? 'org:' : 'user:';
 
             // Always prefer immutable UUID user_id as the stable identifier; fallback to account_name for legacy unedited mentions
-            const stableIdentifier = mention.id && isUUID(mention.id) ? `${prefix}${mention.id}` : mention.account_name;
+            const stableIdentifier = mention.id && isUUID(mention.id) 
+                ? `${prefix}${mention.id}` 
+                : (isOrg ? `org:${mention.account_name || mention.slug || mention.id}` : mention.account_name);
             
             // Format tag as @[Full Name](type:user_id)
             finalContent = finalContent.replace(regex, `@[${mention.full_name}](${stableIdentifier})`);
@@ -97,10 +99,12 @@ export const formatMentionsForBackend = (content: string, inlineMentions: UserMe
 };
 
 /**
- * Strips raw markdown mention syntax `@[Full Name](type:id)` down to clean `@Full Name`
- * for display in reply bubbles, input reply previews, toast notifications, and chat lists.
+ * Strips raw markdown mention syntax `@[Full Name](type:id)` down to plain `Full Name` (no @)
+ * for clean display in analytics post titles and previews.
  */
 export const stripMentionSyntax = (text?: string | null): string => {
     if (!text || typeof text !== 'string') return '';
-    return text.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1');
+    return text
+        .replace(/@\[([^\]]+)\](?:\([^)]*\)?|\([^\s)]*)?/g, (m, name) => name.trim())
+        .replace(/^@/, '');
 };

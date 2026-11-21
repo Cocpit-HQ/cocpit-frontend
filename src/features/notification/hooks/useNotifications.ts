@@ -44,9 +44,26 @@ export const useNotifications = () => {
       setHasError(false);
 
       const notifsData = await getNotifications(orgId);
-      // Filter out chat messages per spec (images 6 & 7)
+      // Filter out chat messages and user-side job application notifications on business side
       const filteredData = notifsData.filter(
-        (n: { type?: string }) => n.type !== 'message' && n.type !== 'new_message'
+        (n: { type?: string }) => {
+          if (n.type === 'message' || n.type === 'new_message') return false;
+          if (isCompany && (
+            n.type === 'application_submitted' ||
+            n.type === 'application_under_review' ||
+            n.type === 'application_shortlisted' ||
+            n.type === 'application_rejected' ||
+            n.type === 'application_declined' ||
+            n.type === 'job_offer' ||
+            n.type === 'offer_expiring' ||
+            n.type === 'job_alert' ||
+            n.type === 'job_offer_received' ||
+            n.type === 'job_offer_withdrawn'
+          )) {
+            return false;
+          }
+          return true;
+        }
       );
 
       // Sort by date descending (newest first) to maintain stable chronological position

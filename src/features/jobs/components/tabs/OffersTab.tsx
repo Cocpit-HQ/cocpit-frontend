@@ -160,6 +160,9 @@ export const OffersTab: React.FC<OffersTabProps> = ({
               const formattedLocation = formatJobLocation(offer.location || rawOffer.location) || '';
               const workMode = offer.work_mode || rawOffer.work_mode || rawOffer.work_model || '';
               const recruiter = offer.recruiter || rawOffer.recruiter || {};
+              const noteSenderName = rawOffer.offer_sender_name || rawOffer.sent_by_name || recruiter.name || displayCompany;
+              const noteSenderAvatar = rawOffer.offer_sender_avatar || rawOffer.sent_by_avatar || recruiter.avatar;
+              const noteSenderHeadline = rawOffer.offer_sender_headline || rawOffer.sent_by_headline || recruiter.headline || (displayCompany ? `Hiring Team at ${displayCompany}` : 'Hiring Team');
 
               return (
                 <div
@@ -216,15 +219,15 @@ export const OffersTab: React.FC<OffersTabProps> = ({
                       {/* Frame 2609968 */}
                       <div className="flex items-center gap-2 h-9 w-full min-w-0">
                         <RecruiterAvatar
-                          avatar={recruiter.avatar}
-                          name={recruiter.name || displayCompany}
+                          avatar={noteSenderAvatar}
+                          name={noteSenderName}
                         />
                         <div className="flex flex-col justify-start items-start min-w-0 flex-1">
-                          <span className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6 truncate block w-full" title={recruiter.name || displayCompany}>
-                            {recruiter.name || displayCompany}
+                          <span className="text-ds-text-primary text-base font-semibold font-dm-sans leading-6 truncate block w-full" title={noteSenderName}>
+                            {noteSenderName}
                           </span>
-                          <span className="text-ds-text-secondary text-[10px] font-normal font-dm-sans leading-3 truncate block w-full" title={recruiter.headline || (displayCompany ? `Founder and CEO at ${displayCompany}` : 'Hiring Team')}>
-                            {recruiter.headline || (displayCompany ? `Founder and CEO at ${displayCompany}` : 'Hiring Team')}
+                          <span className="text-ds-text-secondary text-[10px] font-normal font-dm-sans leading-3 truncate block w-full" title={noteSenderHeadline}>
+                            {noteSenderHeadline}
                           </span>
                         </div>
                       </div>

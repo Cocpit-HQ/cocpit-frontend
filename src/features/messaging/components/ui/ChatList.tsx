@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { Search } from "lucide-react"
 import { AddIcon } from "@/components/icons"
-import { toast } from "sonner"
+import { useToast } from "@/hooks/use-toast"
 import { ChatThread } from "@/types/messaging"
 import ChatListItem from "./ChatListItem"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -22,6 +22,7 @@ import ConversationListSkeleton from "../skeletons/ConversationListSkeleton"
 import { FeatureDisabledTooltip } from "@/components/feature-flags"
 import { useFeatureFlags } from "@/context/FeatureFlagContext"
 import { ChatFilterDropdown, ChatFilterOption } from "./ChatFilterDropdown"
+import { UnderlineTabs, TabItem } from "@/components/ui/UnderlineTabs"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +73,7 @@ export function ChatList({
   const queryClient = useQueryClient();
   const parentRef = React.useRef<HTMLDivElement>(null);
   const { flags } = useFeatureFlags();
+  const { toast } = useToast();
 
   const { data: session } = useSession();
 
@@ -108,6 +110,25 @@ export function ChatList({
     if (!socket) return;
     const handleInvite = (payload?: any) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
+      const inviterName =
+        payload?.other_user_headline ||
+        payload?.inviter_name ||
+        payload?.sender_name ||
+        payload?.created_by_name ||
+        (payload?.last_message_text?.match(/^(.*?)\s+invited you to join/i)?.[1]) ||
+        'Someone';
+
+      const groupName =
+        payload?.other_user_name ||
+        payload?.conversation_name ||
+        payload?.group_name ||
+        payload?.name ||
+        'a group';
+
+      toast({
+        description: `${inviterName} invited you to join "${groupName}" group`,
+      });
     };
     const handleInvitationUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -244,10 +265,20 @@ export function ChatList({
       return (chat.name || "").toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-    // Pinned chat stays strictly at the top (like other messaging platforms), then sort by latest message timestamp
+    // Pinned chats stay strictly at the top, ordered chronologically (first pinned at first, next pinned after)
     return [...filteredList].sort((a, b) => {
       if (a.is_pinned && !b.is_pinned) return -1;
       if (!a.is_pinned && b.is_pinned) return 1;
+
+      if (a.is_pinned && b.is_pinned) {
+        const pinA = a.pinned_at ? new Date(a.pinned_at).getTime() : 0;
+        const pinB = b.pinned_at ? new Date(b.pinned_at).getTime() : 0;
+        const validPinA = isNaN(pinA) ? 0 : pinA;
+        const validPinB = isNaN(pinB) ? 0 : pinB;
+        if (validPinA !== validPinB) {
+          return validPinA - validPinB;
+        }
+      }
 
       const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
       const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
@@ -287,85 +318,21 @@ export function ChatList({
 
         {/* Frame 2609925: Tabs Row + Action Button */}
         <div className="self-stretch px-3 flex justify-between items-center h-9 gap-3">
-          {/* Frame 2610064: Tabs group */}
-          <div className="flex flex-row items-center gap-3 h-9">
-            {/* Sub tab 1: Chat */}
-            <button
-              onClick={() => { if (canChat) setActiveTab('chat'); }}
-              disabled={!canChat}
-              className="w-[69px] h-9 inline-flex flex-col justify-start items-center cursor-pointer transition-all p-0"
-            >
-              {/* Frame 724 */}
-              <div className="w-[69px] h-9 flex flex-col justify-center items-center px-3 py-1.5 gap-2.5 [filter:drop-shadow(0px_2px_4px_rgba(255,236,230,0.08))]">
-                {/* Frame 2609499 */}
-                <div className="flex flex-row justify-center items-center p-0 gap-1 h-6">
-                  {/* Ellipse 15: Unread badge shown only when unread messages are present */}
-                  {hasUnreadChats && (
-                    <div className="w-1 h-1 rounded-full bg-[var(--ds-accent)] shadow-[-1px_-1px_4px_rgba(255,236,230,0.4),1px_1px_4px_rgba(255,236,230,0.4)] shrink-0" />
-                  )}
-                  <span className={`font-['DM_Sans'] text-base leading-6 ${effectiveTab === 'chat' ? 'text-[var(--ds-text-primary)] font-medium' : 'text-[var(--ds-text-secondary)] font-normal'}`}>
-                    Chat
-                  </span>
-                </div>
-              </div>
-              {/* Line 1: Active accent underline */}
-              {effectiveTab === 'chat' && (
-                <div className="self-stretch w-[69px] h-0 border-b-[1.5px] border-[var(--ds-accent)]" />
-              )}
-            </button>
-
-            {/* Sub tab 2: Request / Jobs */}
-            {!isCompany ? (
-              (flags?.enableMessageRequests ?? true) && (
-                <button
-                  onClick={() => setActiveTab('requests')}
-                  className="w-[94px] h-9 inline-flex flex-col justify-start items-center cursor-pointer transition-all p-0"
-                >
-                  {/* Frame 724 */}
-                  <div className="w-[94px] h-9 flex flex-col justify-center items-center px-3 py-1.5 gap-2.5 [filter:drop-shadow(0px_2px_4px_rgba(255,236,230,0.08))]">
-                    {/* Frame 2609500 */}
-                    <div className="flex flex-row justify-center items-center p-0 gap-1 h-6">
-                      {/* Ellipse 15: Unread badge shown only when unread requests are present */}
-                      {hasUnreadRequests && (
-                        <div className="w-1 h-1 rounded-full bg-[var(--ds-accent)] shadow-[-1px_-1px_4px_rgba(255,236,230,0.4),1px_1px_4px_rgba(255,236,230,0.4)] shrink-0" />
-                      )}
-                      <span className={`font-['DM_Sans'] text-base leading-6 ${effectiveTab === 'requests' ? 'text-[var(--ds-text-primary)] font-medium' : 'text-[var(--ds-text-secondary)] font-normal'}`}>
-                        Request
-                      </span>
-                    </div>
-                  </div>
-                  {/* Line 1: Active accent underline */}
-                  {effectiveTab === 'requests' && (
-                    <div className="self-stretch w-[94px] h-0 border-b-[1.5px] border-[var(--ds-accent)]" />
-                  )}
-                </button>
-              )
-            ) : (
-              <button
-                onClick={() => { if (canJobsChat) setActiveTab('jobs'); }}
-                disabled={!canJobsChat}
-                className="w-[94px] h-9 inline-flex flex-col justify-start items-center cursor-pointer transition-all p-0"
-              >
-                {/* Frame 724 */}
-                <div className="w-[94px] h-9 flex flex-col justify-center items-center px-3 py-1.5 gap-2.5 [filter:drop-shadow(0px_2px_4px_rgba(255,236,230,0.08))]">
-                  {/* Frame 2609500 */}
-                  <div className="flex flex-row justify-center items-center p-0 gap-1 h-6">
-                    {/* Ellipse 15: Unread badge shown only when unread job chats are present */}
-                    {hasUnreadJobChats && (
-                      <div className="w-1 h-1 rounded-full bg-[var(--ds-accent)] shadow-[-1px_-1px_4px_rgba(255,236,230,0.4),1px_1px_4px_rgba(255,236,230,0.4)] shrink-0" />
-                    )}
-                    <span className={`font-['DM_Sans'] text-base leading-6 ${effectiveTab === 'jobs' ? 'text-[var(--ds-text-primary)] font-medium' : 'text-[var(--ds-text-secondary)] font-normal'}`}>
-                      Jobs
-                    </span>
-                  </div>
-                </div>
-                {/* Line 1: Active accent underline */}
-                {effectiveTab === 'jobs' && (
-                  <div className="self-stretch w-[94px] h-0 border-b-[1.5px] border-[var(--ds-accent)]" />
-                )}
-              </button>
-            )}
-          </div>
+          <UnderlineTabs<'chat' | 'requests' | 'jobs'>
+            tabs={[
+              { id: 'chat', label: 'Chat', badge: hasUnreadChats, disabled: !canChat },
+              ...(!isCompany
+                ? (flags?.enableMessageRequests ?? true)
+                  ? [{ id: 'requests' as const, label: 'Request', badge: hasUnreadRequests }]
+                  : []
+                : [{ id: 'jobs' as const, label: 'Jobs', badge: hasUnreadJobChats, disabled: !canJobsChat }]
+              ),
+            ]}
+            activeTab={effectiveTab}
+            onChange={(tabId) => setActiveTab(tabId)}
+            size="md"
+            className="w-auto h-9"
+          />
 
           {/* Frame 2610103: Create new button with AddIcon & Dropdown matching Figma */}
           <DropdownMenu modal={false}>
@@ -484,7 +451,7 @@ export function ChatList({
           </div>
         )}
         {!isLoading && !error && filteredChats.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground">
+          <div className="p-8 text-center text-[var(--ds-text-secondary)] font-['DM_Sans'] text-sm">
             No conversations found
           </div>
         )}

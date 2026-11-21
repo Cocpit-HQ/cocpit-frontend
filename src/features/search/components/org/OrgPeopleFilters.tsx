@@ -168,6 +168,7 @@ export const OrgPeopleFilters: React.FC<OrgPeopleFiltersProps> = ({
         onToggle={(_, val) => handleToggle('role', val)}
         buttonWidthClass="w-auto"
         widthClass="w-auto min-w-[200px] max-w-[320px]"
+        allowCustomValue={true}
       />
 
       {/* 6. Company */}

@@ -41,7 +41,17 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
 
     const { data: activeGroup, isLoading, refetch, error: queryError } = useQuery({
         queryKey: ['group-details', groupId],
-        queryFn: () => groupId ? getGroupDetails(groupId) : null,
+        queryFn: async () => {
+            if (!groupId) return null;
+            try {
+                return await getGroupDetails(groupId);
+            } catch (err: any) {
+                if (err?.response?.status === 403 || err?.status === 403) {
+                    return null;
+                }
+                throw err;
+            }
+        },
         enabled: !!groupId,
         staleTime: 0,
         retry: false // Avoid background retries on 403s

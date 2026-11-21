@@ -176,12 +176,12 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
 
   const getCurrentTabInfo = () => {
     const s = statusFilter.toLowerCase();
-    if (s === 'active') return { title: 'Active Jobs', count: counts?.active || (s === 'active' ? listings.length : 0) };
-    if (s === 'close' || s === 'closed') return { title: 'Closed Jobs', count: counts?.closed || (s === 'close' || s === 'closed' ? listings.length : 0) };
-    if (s === 'in review' || s === 'in_review') return { title: 'In Review Jobs', count: counts?.inReview || (s === 'in review' || s === 'in_review' ? listings.length : 0) };
-    if (s === 'draft' || s === 'drafts') return { title: 'Draft Jobs', count: counts?.draft || (s === 'draft' || s === 'drafts' ? listings.length : 0) };
+    if (s === 'active') return { title: 'Active Jobs', count: counts?.active ?? (s === 'active' ? listings.length : 0) };
+    if (s === 'close' || s === 'closed') return { title: 'Closed Jobs', count: counts?.closed ?? (s === 'close' || s === 'closed' ? listings.length : 0) };
+    if (s === 'in review' || s === 'in_review') return { title: 'In Review Jobs', count: counts?.inReview ?? (s === 'in review' || s === 'in_review' ? listings.length : 0) };
+    if (s === 'draft' || s === 'drafts') return { title: 'Draft Jobs', count: counts?.draft ?? (s === 'draft' || s === 'drafts' ? listings.length : 0) };
     if (s === 'rejected') return { title: 'Rejected Jobs', count: counts?.rejected ?? 0 };
-    return { title: 'All Jobs', count: counts?.all || listings.length };
+    return { title: 'All Jobs', count: counts?.all ?? listings.length };
   };
 
   const { title: tabTitle, count: tabCount } = getCurrentTabInfo();
@@ -191,7 +191,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
          (c.key === 'Close' && statusFilter.toLowerCase() === 'closed') ||
          (c.key === 'Draft' && statusFilter.toLowerCase() === 'drafts') ||
          (c.key === 'Rejected' && statusFilter.toLowerCase() === 'rejected')
-  )?.count || counts.all || listings.length;
+  )?.count ?? counts.all ?? listings.length;
 
   return (
     <div className="w-full max-w-[800px] flex flex-col gap-4 font-dm-sans">
@@ -226,7 +226,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
           {tabTitle}
         </h3>
         <span className="text-ds-text-secondary ds-text-small font-normal">
-          {tabCount > 0 ? `Total jobs - ${tabCount}` : (isLoading ? 'Total jobs' : `Total jobs - ${currentCount}`)}
+          {isLoading ? 'Total jobs' : `Total jobs - ${tabCount ?? currentCount ?? 0}`}
         </span>
       </div>
 
@@ -443,7 +443,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                             </div>
                           )}
                         </div>
-                      ) : !isRejected ? (
+                      ) : !isUnderReview ? (
                         <button
                           type="button"
                           onClick={(e) => {

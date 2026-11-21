@@ -16,6 +16,8 @@ import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
 import type { BackendChat, ChatThread } from '@/types/messaging';
 import { stripMentionSyntax } from '@/lib/mentions';
+import { useJobStore } from '@/store/job.store';
+import { encodeConversationId } from '@/features/messaging/utils/conversationEncryption';
 
 type TargetedMessageNotification = NotificationPayload & {
   targetProfileType?: 'USER' | 'COMPANY';
@@ -52,19 +54,21 @@ const SocketContext = createContext<SocketContextType>({
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
 const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "auto";
 
+const showToast = (props: any) => {
+  const message = props.title || props.description;
+  const description = props.title && props.description ? props.description : undefined;
+
+  if (props.variant === 'destructive') {
+    sonnerToast.error(message, { description, duration: props.duration });
+  } else {
+    sonnerToast(message, { description, duration: props.duration });
+  }
+};
+
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, update } = useSession();
   const { activeProfile, refreshProfile, switchProfile } = useActiveProfile();
-  const toast = (props: any) => {
-    const message = props.title || props.description;
-    const description = props.title && props.description ? props.description : undefined;
-
-    if (props.variant === 'destructive') {
-      sonnerToast.error(message, { description, duration: props.duration });
-    } else {
-      sonnerToast(message, { description, duration: props.duration });
-    }
-  };
+  const toast = showToast;
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
@@ -395,23 +399,36 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
 
-        // Suppress message toast on feed screen (uncomment if QuickChatWidget is re-enabled in the future):
-        // const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        // if (currentPath === '/feed' || currentPath === '/') {
-        //   console.log("[DEBUG] Suppressed: on feed path", currentPath);
-        //   return;
-        // }
+        // Suppress message toast on feed screen since QuickChatWidget handles it:
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        if (currentPath === '/feed' || currentPath === '/') {
+          console.log("[DEBUG] Suppressed: on feed path", currentPath);
+          return;
+        }
 
         console.log("[DEBUG] Firing standard message toast!");
 
+        let notifText = stripMentionSyntax(payload.text) || '';
+        if (payload.senderName && notifText.toLowerCase().startsWith(`${payload.senderName.toLowerCase()}:`)) {
+          notifText = notifText.slice(payload.senderName.length + 1).trim();
+        }
+        if (notifText.startsWith('"') && notifText.endsWith('"') && notifText.length >= 2) {
+          notifText = notifText.slice(1, -1).trim();
+        }
+
+        const isRequest = Boolean((payload as any).is_requesting || payload.title?.toLowerCase().includes('request'));
+        const toastTitle = isRequest
+          ? (payload.title || `New chat request from ${payload.senderName || 'Someone'}`)
+          : (payload.title || "New Message");
+
         toast({
-          title: "New Message",
+          title: toastTitle,
           description: (
             <div
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 if (payload.conversationId) {
-                  router.push(`/messaging?conversationId=${payload.conversationId}`);
+                  router.push(`/messaging?conversationId=${encodeConversationId(payload.conversationId)}`);
                 }
               }}
             >
@@ -425,7 +442,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
               )}
               */}
               <span className="text-sm">
-                {stripMentionSyntax(payload.text) || `You have a message from ${payload.senderName || "someone"}`}
+                {notifText || `You have a message from ${payload.senderName || "someone"}`}
               </span>
             </div>
           ),
@@ -544,10 +561,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else {
         if (payload.text) {
-          // If it's a message, don't show the standard toast on the feed screen (uncomment if QuickChatWidget is re-enabled in the future):
-          // if ((payload.type === 'message' || payload.type === 'new_message') && (pathname === '/feed' || pathname === '/')) {
-          //   return;
-          // }
+          // If it's a message, don't show the standard toast on the feed screen since QuickChatWidget is active:
+          if ((payload.type === 'message' || payload.type === 'new_message') && (pathname === '/feed' || pathname === '/')) {
+            return;
+          }
 
           toast({
             title: payload.type === 'message' || payload.type === 'new_message' ? 'New Message' : payload.title,
@@ -564,7 +581,44 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         queryClient.invalidateQueries({ queryKey: ['my-profile'] });
         queryClient.invalidateQueries({ queryKey: ['profileStats'] });
       }
+
+      if (
+        payload?.type === 'application_shortlisted' ||
+        payload?.type === 'job_offer' ||
+        payload?.type === 'offer_accepted' ||
+        payload?.type === 'offer_declined' ||
+        payload?.type?.includes('shortlist') ||
+        payload?.type?.includes('application')
+      ) {
+        const targetJobId = payload.referenceId || (payload as any).reference_id || payload.metadata?.job_id;
+        if (targetJobId && (payload?.type === 'application_shortlisted' || payload?.type?.includes('shortlist'))) {
+          useJobStore.getState().setApplicationStatus(String(targetJobId), 'Shortlisted');
+        }
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('job-application-updated', {
+            detail: { jobId: targetJobId, status: 'Shortlisted' }
+          }));
+        }
+      }
+
       window.dispatchEvent(new CustomEvent('notifications-updated'));
+    };
+
+    const handleJobApplicationUpdated = (payload: any) => {
+      const jobId = payload?.jobId || payload?.job_id;
+      const status = payload?.status;
+      if (jobId && status) {
+        useJobStore.getState().setApplicationStatus(String(jobId), status);
+      }
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('job-application-updated', {
+          detail: payload
+        }));
+      }
     };
 
     const handleNewMessage = (payload: any) => {
@@ -583,14 +637,30 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       refreshMessagingCaches(convId);
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
-      const groupName = payload?.other_user_name || payload?.conversation_name || payload?.group_name || payload?.name;
-      const inviterName = payload?.other_user_headline;
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      if (currentPath.startsWith('/messaging')) {
+        return;
+      }
 
-      const message = inviterName
-        ? `${inviterName} invited you to join "${groupName || 'a group'}" group.`
-        : `You were invited to join "${groupName || 'a group'}" group.`;
+      const inviterName =
+        payload?.other_user_headline ||
+        payload?.inviter_name ||
+        payload?.sender_name ||
+        payload?.created_by_name ||
+        (payload?.last_message_text?.match(/^(.*?)\s+invited you to join/i)?.[1]) ||
+        'Someone';
 
-      sonnerToast.success(message);
+      const groupName =
+        payload?.other_user_name ||
+        payload?.conversation_name ||
+        payload?.group_name ||
+        payload?.name ||
+        'a group';
+
+      toast({
+        description: `${inviterName} invited you to join "${groupName}" group`,
+        duration: 5000,
+      });
     };
 
     const handleUserStatus = (payload: UserStatusPayload) => {
@@ -968,6 +1038,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleActivityUpdated = (payload: any) => {
       console.log("[Socket] activity_updated event received:", payload);
+      queryClient.invalidateQueries({ queryKey: ['team', 'activity-logs'] });
       queryClient.invalidateQueries({ queryKey: ['activityLogs'] });
     };
 
@@ -1021,6 +1092,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    const handleGlobalMessagePinned = (payload: { conversationId: string; pinnedMessageId: string | null; is_pinned?: boolean }) => {
+      if (!payload?.conversationId) return;
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations"] },
+        (oldData) => {
+          if (!oldData) return oldData;
+          return oldData.map((c) =>
+            String(c.id) === String(payload.conversationId)
+              ? { ...c, pinned_message_id: payload.pinnedMessageId }
+              : c
+          );
+        }
+      );
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -1037,6 +1123,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
     newSocket.on('auth:suspended', handleAuthSuspended);
+    newSocket.on('message_pinned', handleGlobalMessagePinned);
 
     // Also listen for the global Axios 403 interceptor event
     const handleGlobalSuspendedEvent = () => {
@@ -1073,6 +1160,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('post_updated', handlePostUpdated);
     newSocket.on('post_deleted', handlePostUpdated);
     newSocket.on('feed_updated', handlePostCreated);
+    newSocket.on('job_application_updated', handleJobApplicationUpdated);
     socketRef.current = newSocket;
 
 
@@ -1106,6 +1194,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('user_unblocked', handleUnblock);
       newSocket.off('unblock_confirmed', handleUnblock);
       newSocket.off('auth:suspended', handleAuthSuspended);
+      newSocket.off('message_pinned', handleGlobalMessagePinned);
       window.removeEventListener('auth:suspended', handleGlobalSuspendedEvent);
       newSocket.off('ORGANIZATION_USER_BLOCKED', handleBlock);
       newSocket.off('ORGANIZATION_USER_UNBLOCKED', handleUnblock);
@@ -1138,6 +1227,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('post_updated', handlePostUpdated);
       newSocket.off('post_deleted', handlePostUpdated);
       newSocket.off('feed_updated', handlePostCreated);
+      newSocket.off('job_application_updated', handleJobApplicationUpdated);
       newSocket.disconnect();
       tokenRef.current = null;
       socketRef.current = null;

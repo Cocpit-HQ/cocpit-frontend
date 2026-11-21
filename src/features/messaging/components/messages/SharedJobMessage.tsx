@@ -10,6 +10,7 @@ import { useSocial } from "@/context/SocialContext";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { BriefcaseIcon } from "@/components/icons";
+import { X } from "lucide-react";
 import UnavailableContentCard from "../ui/UnavailableContentCard";
 
 export const safeGetJobById = async (
@@ -85,13 +86,13 @@ export function JobApplicationContextCard({
   });
 
   const wrapperClass =
-    "box-border flex flex-row items-center p-2 gap-2.5 min-w-[219px] max-w-[340px] w-fit h-[58px] border border-[var(--ds-border)] rounded-[16px] bg-[var(--ds-bg)] cursor-pointer hover:bg-[var(--ds-surface-1)]/50 transition-colors select-none";
+    "box-border flex flex-row items-center p-2 gap-2.5 w-full min-w-0 max-w-full sm:max-w-[340px] h-[58px] border border-[var(--ds-border)] rounded-[16px] bg-transparent cursor-pointer hover:bg-[var(--ds-surface-1)] transition-colors select-none";
 
   if (loading) {
     return (
       <div className={cn(wrapperClass, "animate-pulse cursor-default")}>
         <div className="flex flex-row items-center p-0 gap-2 h-10 w-full min-w-0">
-          <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-1)] shrink-0" />
+          <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-2)] shrink-0" />
           <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
             <div className="h-3.5 bg-[var(--ds-surface-1)] rounded w-3/4" />
             <div className="h-2.5 bg-[var(--ds-surface-1)] rounded w-1/2" />
@@ -112,13 +113,25 @@ export function JobApplicationContextCard({
     rawJob.recruiter_name === "Unknown User" ||
     rawJob.recruiter_name === "Unknown user" ||
     rawJob.is_deactivated === true;
+  const isSenderOwnJobBlocked = Boolean(
+    message?.senderId &&
+    isBlocked(message.senderId) &&
+    (!rawJob?.posterId ||
+      String(rawJob.posterId) === String(message.senderId) ||
+      String(rawJob.recruiter_id) === String(message.senderId) ||
+      (message.senderName && (rawJob?.recruiter_name || rawJob?.company_name) &&
+        (message.senderName.trim().toLowerCase() === rawJob?.recruiter_name?.trim().toLowerCase() ||
+         message.senderName.trim().toLowerCase() === rawJob?.company_name?.trim().toLowerCase())))
+  );
+
   const isJobBlocked = Boolean(
-    rawJob &&
+    (rawJob &&
       ((rawJob.companyId && isBlocked(rawJob.companyId)) ||
         (rawJob.posterId && isBlocked(rawJob.posterId)) ||
         (rawJob.company_id && isBlocked(rawJob.company_id)) ||
         (rawJob.poster_id && isBlocked(rawJob.poster_id)) ||
-        (rawJob.recruiter_id && isBlocked(rawJob.recruiter_id)))
+        (rawJob.recruiter_id && isBlocked(rawJob.recruiter_id)))) ||
+      isSenderOwnJobBlocked
   );
 
   if (error || isNotFound || isJobBlocked) {
@@ -152,6 +165,87 @@ export function JobApplicationContextCard({
     >
       <div className="flex flex-row items-center p-0 gap-2 h-10 w-full min-w-0">
         {/* Frame 2609815: Icon Box */}
+        <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-2)] flex items-center justify-center shrink-0">
+          <BriefcaseIcon className="w-5 h-5 text-[var(--ds-text-primary)]" size={20} />
+        </div>
+
+        {/* Frame 2609957: Text Box */}
+        <div className="flex flex-col justify-center items-start p-0 h-10 min-w-0 flex-1 overflow-hidden">
+          {/* Frame 2609814: Title • Org */}
+          <div className="h-6 flex flex-row items-center min-w-0 w-full overflow-hidden">
+            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[60%]">
+              {job.title}
+            </span>
+            {companyName && (
+              <>
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] mx-1 shrink-0">
+                  •
+                </span>
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0 flex-1">
+                  {companyName}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Subtitle: Type • Location • Experience */}
+          <div className="h-4 flex flex-row items-center min-w-0 w-full overflow-hidden">
+            <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-secondary)] truncate">
+              {[workMode, getCity(job.location), exp].filter(Boolean).join(" • ")}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function JobInputContextCard({
+  entityId,
+  entityType = "job",
+  onDismiss,
+}: {
+  entityId: string;
+  entityType?: "job" | "offer" | "event";
+  onDismiss: () => void;
+}) {
+  const { data: job, isLoading } = useQuery({
+    queryKey: ["jobContext", entityType, entityId],
+    queryFn: async () => {
+      const jobData = await safeGetJobById(entityId);
+      if (jobData && !("notFound" in jobData)) {
+        return jobData;
+      }
+      if (entityType === "offer") {
+        const { getOfferDetail } = await import("@/services/api/offers");
+        const data = await getOfferDetail(entityId).catch(() => null);
+        if (data && data.job_id) {
+          return safeGetJobById(data.job_id);
+        }
+      }
+      return null;
+    },
+    staleTime: 60000,
+  });
+
+  const isJobObj = Boolean(job && typeof job === "object" && !("notFound" in job));
+  const validJob = isJobObj ? (job as Job) : null;
+  const rawJob = validJob as any;
+  const companyName = validJob?.company || rawJob?.company_name || "";
+  const workMode = validJob?.workMode || rawJob?.work_mode || "Hybrid";
+  const exp = validJob?.experience || rawJob?.experience_level || "0-2Yrs";
+  const getCity = (loc?: string) => {
+    if (!loc) return "Remote";
+    const city = loc.split(",")[0].trim();
+    return city || loc;
+  };
+
+  const title = validJob?.title || (entityType === "offer" ? "Job Offer Context" : "Job Application Context");
+
+  return (
+    <div className="box-border flex flex-row items-center p-2 gap-2.5 w-full self-stretch h-[58px] border border-[var(--ds-border)] rounded-[16px] bg-transparent relative select-none mb-1.5 shrink-0 transition-all">
+      <div className="flex flex-row items-center p-0 gap-2 h-10 w-full min-w-0">
+        {/* Frame 2609815: Icon Box */}
         <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-1)] flex items-center justify-center shrink-0">
           <BriefcaseIcon className="w-5 h-5 text-[var(--ds-text-primary)]" size={20} />
         </div>
@@ -160,8 +254,8 @@ export function JobApplicationContextCard({
         <div className="flex flex-col justify-center items-start p-0 h-10 min-w-0 flex-1 overflow-hidden">
           {/* Frame 2609814: Title • Org */}
           <div className="h-6 flex flex-row items-center min-w-0 max-w-full">
-            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[180px]">
-              {job.title}
+            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[280px]">
+              {isLoading ? "Loading job..." : title}
             </span>
             {companyName && (
               <>
@@ -178,10 +272,25 @@ export function JobApplicationContextCard({
           {/* Subtitle: Type • Location • Experience */}
           <div className="h-4 flex flex-row items-center min-w-0 max-w-full">
             <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-secondary)] truncate">
-              {[workMode, getCity(job.location), exp].filter(Boolean).join(" • ")}
+              {isLoading
+                ? "This context will be attached to your first message"
+                : [workMode, getCity(validJob?.location), exp].filter(Boolean).join(" • ")}
             </span>
           </div>
         </div>
+
+        {/* Dismiss Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismiss();
+          }}
+          className="text-[var(--ds-text-muted)] hover:text-[var(--ds-text-primary)] p-1 rounded-full transition-colors shrink-0"
+          aria-label="Remove job context"
+        >
+          <X className="w-4 h-4" strokeWidth={2} />
+        </button>
       </div>
     </div>
   );
@@ -360,8 +469,8 @@ export const JobPreview = ({
         {/* Frame 2609957: Text Box */}
         <div className="flex flex-col justify-center items-start p-0 h-10 min-w-0 flex-1 overflow-hidden">
           {/* Frame 2609814: Title • Org */}
-          <div className="h-6 flex flex-row items-center min-w-0 max-w-full">
-            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[180px]">
+          <div className="h-6 flex flex-row items-center min-w-0 w-full overflow-hidden">
+            <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-primary)] truncate shrink-0 max-w-[60%]">
               {job.title}
             </span>
             {companyName && (
@@ -369,7 +478,7 @@ export const JobPreview = ({
                 <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] mx-1 shrink-0">
                   •
                 </span>
-                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0">
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[var(--ds-text-secondary)] truncate min-w-0 flex-1">
                   {companyName}
                 </span>
               </>
@@ -377,7 +486,7 @@ export const JobPreview = ({
           </div>
 
           {/* Subtitle: Type • Location • Experience */}
-          <div className="h-4 flex flex-row items-center min-w-0 max-w-full">
+          <div className="h-4 flex flex-row items-center min-w-0 w-full overflow-hidden">
             <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-secondary)] truncate">
               {[workMode, getCity(job.location), exp].filter(Boolean).join(" • ")}
             </span>

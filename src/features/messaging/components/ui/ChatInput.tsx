@@ -154,9 +154,12 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
           <textarea
             ref={textareaRef}
             value={text}
+            maxLength={8000}
             onChange={(e) => {
-              setText(e.target.value)
-              onTyping?.()
+              if (e.target.value.length <= 8000) {
+                setText(e.target.value)
+                onTyping?.()
+              }
 
               const target = e.target;
               target.style.height = 'auto';

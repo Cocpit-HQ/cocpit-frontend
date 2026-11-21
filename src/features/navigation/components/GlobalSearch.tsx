@@ -12,6 +12,7 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useToast } from '@/hooks/use-toast';
 import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock';
 import { MobileSearchScreen } from './MobileSearchScreen';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface GlobalSearchProps {
   hasSidebar?: boolean;
@@ -32,7 +33,26 @@ export function GlobalSearch({
 }: GlobalSearchProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const isJobsRoute = Boolean(pathname?.startsWith('/jobs'));
+  const { isCompany, activeProfile } = useActiveProfile();
+
+  const isOrgActor = Boolean(
+    isCompany ||
+    activeProfile?.type === 'COMPANY' ||
+    activeProfile?.entityType === 'COMPANY' ||
+    activeProfile?.entityType === 'INSTITUTION' ||
+    (typeof window !== 'undefined' && (() => {
+      try {
+        const stored = sessionStorage.getItem('cocpit_active_profile');
+        if (!stored) return false;
+        const p = JSON.parse(stored) as { type?: string; entityType?: string };
+        return p?.type === 'COMPANY' || p?.type === 'ORGANIZATION' || p?.entityType === 'COMPANY' || p?.entityType === 'INSTITUTION';
+      } catch {
+        return false;
+      }
+    })())
+  );
+
+  const isJobsRoute = Boolean(pathname?.startsWith('/jobs')) && !isOrgActor;
   
   const [searchQuery, setSearchQuery] = useState(initialQuery || '');
   const [isFocused, setIsFocused] = useState(false);

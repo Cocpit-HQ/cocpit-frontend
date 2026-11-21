@@ -128,7 +128,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         note: item.message || undefined,
         sentByName: item.sent_by_name,
         sentByHeadline: item.sent_by_headline || undefined,
-        sentByAvatar: item.sent_by_avatar || item.sent_by_avatar_url || (item.org_id && activeProfile && activeProfile.id === item.org_id ? (activeProfile as any)?.avatar_url : undefined),
+        sentByAvatar: item.sent_by_avatar || item.sent_by_avatar_url || undefined,
         orgId: item.org_id || undefined,
       }));
       setCandidates(mapped);
@@ -443,7 +443,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                         <Avatar
                           src={cand.sentByAvatar || null}
                           name={cand.sentByName}
-                          isCompany={Boolean(cand.orgId)}
+                          isCompany={false}
                           className="size-8 shrink-0"
                         />
                         <div className="flex-1 flex flex-col justify-center items-start min-w-0">

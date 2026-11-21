@@ -27,11 +27,11 @@ export function ChatFilterDropdown({ value, onChange }: ChatFilterDropdownProps)
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
-          className="flex justify-center items-center p-1 rounded-md text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-1)] transition-colors outline-none cursor-pointer"
+          className="w-5 h-5 flex justify-center items-center rounded-md text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-1)] transition-colors outline-none cursor-pointer flex-none order-1 grow-0"
           title={`Filter: ${value}`}
           aria-label="Filter conversations"
         >
-          <FilterIcon size={16} className="w-4 h-4 text-[var(--ds-text-primary)]" />
+          <FilterIcon size={20} className="w-5 h-5 text-[var(--ds-text-primary)]" />
         </button>
       </DropdownMenuTrigger>
       {/* Frame: Filter - width: 71px, height: 116px, padding: 12px, gap: 16px, background: #030303, border: 1px solid #2C2C33, border-radius: 8px */}

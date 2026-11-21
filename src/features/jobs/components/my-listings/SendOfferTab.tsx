@@ -335,7 +335,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
         )}
 
         {/* Infinite scroll loader trigger */}
-        {hasMore ? (
+        {hasMore && (
           <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center">
             {isFetchingMore ? (
               <div className="flex items-center gap-2 text-ds-accent font-medium ds-text-small font-dm-sans">
@@ -346,13 +346,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
               <div className="h-4 w-full" />
             )}
           </div>
-        ) : sentOffers.length > 0 ? (
-          <div className="w-full py-4 flex justify-center items-center">
-            <span className="text-ds-text-secondary ds-text-meta bg-ds-surface-1 border border-ds-border px-3 py-1 rounded-full">
-              You've reached the end of your sent offers.
-            </span>
-          </div>
-        ) : null}
+        )}
       </div>
 
       {!onOpenSendOfferModal && (

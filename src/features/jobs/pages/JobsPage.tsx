@@ -17,6 +17,9 @@ import JobsErrorState from "../components/states/JobsErrorState";
 import SavedJobsTab from "../components/tabs/SavedJobsTab";
 import MyApplicationsTab from "../components/tabs/MyApplicationsTab";
 import OffersTab from "../components/tabs/OffersTab";
+import { UnderlineTabs, TabItem } from "@/components/ui/UnderlineTabs";
+import { useCompanyPermissions } from "@/features/businessProfile";
+import { AccessDenied } from "@/features/access-denied";
 
 interface JobsPageProps {
   isCompanyMode?: boolean;
@@ -25,6 +28,7 @@ interface JobsPageProps {
 export const JobsPage: React.FC<JobsPageProps> = ({ isCompanyMode: propIsCompanyMode = false }) => {
   const router = useRouter();
   const { isCompany, activeProfile } = useActiveProfile();
+  const companyPerms = useCompanyPermissions(activeProfile);
   const { isFeatureActive } = useFeatureFlags();
 
   const isCompanyStored = typeof window !== "undefined" && (() => {
@@ -217,13 +221,51 @@ export const JobsPage: React.FC<JobsPageProps> = ({ isCompanyMode: propIsCompany
 
   const tabs = [
     { id: "Explore", label: "Explore" },
-    { id: "My Applications", label: "My applications", featureKey: "enableApplicationTracking" },
+    { id: "My Applications", label: "My Application", featureKey: "enableApplicationTracking" },
     { id: "Offers", label: "Offers", featureKey: "enableJobOffers" },
     { id: "Saved", label: "Saved", featureKey: "saved_jobs" },
   ];
 
+  const jobsTabItems: TabItem<string>[] = tabs.map((tab) => ({
+    id: tab.id,
+    label: tab.id === "Saved" ? "Saved" : tab.label,
+    wrapper: tab.featureKey
+      ? (btn: React.ReactElement) => (
+          <FeatureDisabledTooltip key={tab.id} featureKey={tab.featureKey!}>
+            {btn}
+          </FeatureDisabledTooltip>
+        )
+      : undefined,
+  }));
+
+  const postedJobsButton = (
+    <FeatureDisabledTooltip featureKey="enableMyListings">
+      <button
+        type="button"
+        onClick={() => handleTabChange("My Listings")}
+        className="w-[139px] h-9 px-3 py-1.5 bg-transparent hover:bg-ds-surface-1 border border-ds-border rounded-full inline-flex items-center justify-center gap-2.5 text-ds-text-primary font-dm-sans transition-colors shrink-0 cursor-pointer"
+      >
+        <span className="w-[89px] h-6 text-base font-medium font-dm-sans leading-6 text-ds-text-primary whitespace-nowrap text-center">
+          Posted jobs
+        </span>
+        <Icon icon="solar:alt-arrow-right-linear" className="w-4 h-4 text-ds-text-primary shrink-0" />
+      </button>
+    </FeatureDisabledTooltip>
+  );
+
   const effectiveTab = urlTab || activeTab;
   if (effectiveTab === "My Listings" || isCompanyMode || isFullScreenView) {
+    if (isCompanyMode) {
+      const hasJobsAccess = companyPerms.checkPermission('JOBS') || companyPerms.checkPermission('POST_JOBS');
+      if (!hasJobsAccess) {
+        return (
+          <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans flex flex-col items-center justify-center pt-8 pb-16 px-4">
+            <AccessDenied title="You don't have access to this screen" />
+          </div>
+        );
+      }
+    }
+
     const returnTo = urlParams?.get('returnTo') || urlParams?.get('from');
     const shouldShowBack = !isCompanyMode || Boolean(returnTo);
 
@@ -277,102 +319,25 @@ export const JobsPage: React.FC<JobsPageProps> = ({ isCompanyMode: propIsCompany
             </FeatureDisabledTooltip>
           </div>
 
-          {/* Mobile Tabs Row (Figma: inline-flex justify-start items-center gap-3 overflow-x-auto no-scrollbar) */}
-          <div className="w-full inline-flex justify-start items-center gap-3 overflow-x-auto no-scrollbar">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              const tabButton = (
-                <button
-                  type="button"
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`relative inline-flex flex-col justify-start items-center cursor-pointer shrink-0 ${
-                    isActive ? "text-ds-text-primary" : "text-ds-text-muted hover:text-ds-text-primary"
-                  }`}
-                >
-                  <div className="px-3 py-1.5 flex flex-col justify-center items-center">
-                    <span className="text-base font-medium font-dm-sans leading-6 whitespace-nowrap">
-                      {tab.id === "Saved" ? "Saved" : tab.label}
-                    </span>
-                  </div>
-                  {isActive ? (
-                    <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
-                  ) : (
-                    <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
-                  )}
-                </button>
-              );
-
-              if (tab.featureKey) {
-                return (
-                  <FeatureDisabledTooltip key={tab.id} featureKey={tab.featureKey}>
-                    {tabButton}
-                  </FeatureDisabledTooltip>
-                );
-              }
-
-              return tabButton;
-            })}
+          {/* Mobile Tabs Row */}
+          <div className="w-full">
+            <UnderlineTabs
+              tabs={jobsTabItems}
+              activeTab={activeTab}
+              onChange={handleTabChange}
+            />
           </div>
         </div>
 
-        {/* Desktop Sticky Top Navigation Bar matching Figma Frame 2609735 (>= md, strictly preserved) */}
+        {/* Desktop Sticky Top Navigation Bar */}
         <div className="hidden md:flex sticky top-[64px] z-30 w-full max-w-[800px] bg-ds-bg/95 backdrop-blur-md h-9 items-center justify-between gap-5 mb-5">
-          {/* Left Tabs: Explore, My applications, Offers, Saved (Frame 2609925 w:392px h:36px gap:12px) */}
-          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar h-9">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            // Precise width per tab from Figma CSS: Explore (81px), My applications (144px), Offers (71px), Save (60px)
-            const tabWidthClass = 
-              tab.id === "Explore" ? "w-[81px]" :
-              tab.id === "My Applications" ? "w-[144px]" :
-              tab.id === "Offers" ? "w-[71px]" : "w-[60px]";
-
-            const tabButton = (
-              <button
-                type="button"
-                onClick={() => handleTabChange(tab.id)}
-                className={`relative h-9 ${tabWidthClass} flex flex-col justify-center items-center text-sm sm:text-base font-medium font-dm-sans focus:outline-none transition-colors whitespace-nowrap cursor-pointer shrink-0 ${
-                  isActive ? "text-ds-text-primary" : "text-ds-text-secondary hover:text-ds-text-primary"
-                }`}
-              >
-                <span>{tab.label}</span>
-                {isActive && (
-                  <span className="absolute bottom-0 left-[1%] right-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
-                )}
-              </button>
-            );
-
-            if (tab.featureKey) {
-              return (
-                <FeatureDisabledTooltip key={tab.id} featureKey={tab.featureKey}>
-                  {tabButton}
-                </FeatureDisabledTooltip>
-              );
-            }
-
-            return (
-              <React.Fragment key={tab.id}>
-                {tabButton}
-              </React.Fragment>
-            );
-          })}
+          <UnderlineTabs
+            tabs={jobsTabItems}
+            activeTab={activeTab}
+            onChange={handleTabChange}
+            rightElement={postedJobsButton}
+          />
         </div>
-
-        {/* Right side: 'Posted jobs' pill button (Frame secondary button with Icon w:139px h:36px padding:6px 12px gap:10px border:#2C2C33) */}
-        <FeatureDisabledTooltip featureKey="enableMyListings">
-          <button
-            type="button"
-            onClick={() => handleTabChange("My Listings")}
-            className="w-[139px] h-9 px-3 py-1.5 bg-transparent hover:bg-ds-surface-1 border border-ds-border rounded-full inline-flex items-center justify-center gap-2.5 text-ds-text-primary font-dm-sans transition-colors shrink-0 cursor-pointer"
-          >
-            <span className="w-[89px] h-6 text-base font-medium font-dm-sans leading-6 text-ds-text-primary whitespace-nowrap text-center">
-              Posted jobs
-            </span>
-            <Icon icon="solar:alt-arrow-right-linear" className="w-4 h-4 text-ds-text-primary shrink-0" />
-          </button>
-        </FeatureDisabledTooltip>
-      </div>
 
       {/* Tab Content Views or Error State */}
       {isTabError ? (

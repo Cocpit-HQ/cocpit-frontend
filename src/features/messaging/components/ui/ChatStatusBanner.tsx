@@ -24,8 +24,8 @@ export default function ChatStatusBanner({
     <>
       {/* Declined Request 24h Cooldown Banner */}
       {!isBlockedByMe && isDeclinedCooldown && (
-        <div className="px-4 py-2 my-1 flex items-center justify-center text-center shrink-0">
-          <span className="text-xs font-medium text-[var(--ds-text-secondary)] bg-[var(--ds-surface-1)] px-4 py-1.5 rounded-full border border-[var(--ds-border)] font-['DM_Sans']">
+        <div className="px-4 py-2 my-5 flex items-center justify-center text-center shrink-0">
+          <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-[var(--ds-text-secondary)]">
             You can’t send a chat request to this user right now. Please try again after 24 hours.
           </span>
         </div>

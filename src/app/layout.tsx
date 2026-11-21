@@ -1,6 +1,6 @@
 // Invalidate layout cache to reload global styles - timestamp 1725259560
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Poppins, Roboto, DM_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, DM_Sans } from "next/font/google";
 import "./globals.css";
 import "./newGlobal.css"; // New design system — typography, motion, spacing tokens
 
@@ -30,12 +30,6 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
-});
-
-const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -129,7 +123,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden scrollbar-hide bg-background text-foreground`}
+        className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased overflow-x-hidden scrollbar-hide bg-background text-foreground`}
       >
         <Providers>
           <div className="w-full max-w-full overflow-x-hidden flex flex-col min-h-[100dvh]">

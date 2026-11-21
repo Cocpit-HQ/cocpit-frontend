@@ -133,7 +133,8 @@ export const PostMedia = ({
 
   if (validImages.length === 0 && !effectiveVideoSrc) return null;
 
-  const showTagBadge = tags && tags.length > 0;
+  // [CLEANUP][LEGACY][SCRUM-9 / SCRUM-1848] Deprecated: Legacy tagged people badge overlay on post media
+  // const showTagBadge = tags && tags.length > 0;
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -213,6 +214,7 @@ export const PostMedia = ({
             showDots={true}
             arrowPlacement={isProfileView ? 'inside' : 'outside'}
             dotsClassName="mt-[12px]"
+            /* [CLEANUP][LEGACY][SCRUM-9 / SCRUM-1848] Deprecated: Legacy tagged people badge overlay on carousel
             overlay={
               showTagBadge && (
                 <div className="absolute bottom-3 right-3 w-[32px] h-[32px] rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm pointer-events-auto hover:bg-black/80 transition-colors z-20">
@@ -220,6 +222,7 @@ export const PostMedia = ({
                 </div>
               )
             }
+            */
           />
         </div>
       ) : (
@@ -417,12 +420,13 @@ export const PostMedia = ({
             />
           )}
 
-          {/* Tagged People Badge Overlay */}
+          {/* [CLEANUP][LEGACY][SCRUM-9 / SCRUM-1848] Deprecated: Legacy tagged people badge overlay on post media
           {showTagBadge && (
             <div className="absolute bottom-3 right-3 w-[32px] h-[32px] rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm pointer-events-auto hover:bg-black/80 transition-colors">
               <Icon name="user" className="w-[16px] h-[16px] text-white" />
             </div>
           )}
+          */}
         </div>
       )}
     </div>

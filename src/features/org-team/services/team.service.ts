@@ -131,17 +131,21 @@ function formatAction(action: string, metadata?: any): string {
     case 'DELETE_ROLE':
       return 'deleted role';
     case 'CREATE_JOB':
+    case 'POST_JOB':
       return 'created job';
+    case 'UPDATE_JOB':
+    case 'EDIT_JOB':
+      return 'updated job';
     case 'CLOSE_JOB':
       return 'closed job';
     case 'DELETE_JOB':
       return 'deleted job';
     case 'SEND_OFFER':
-      return 'sent offer to candidate for';
+      return metadata?.candidateName ? `sent offer to ${metadata.candidateName} for` : 'sent offer to candidate for';
     case 'SHORTLIST_APPLICATION':
-      return 'shortlisted application for';
+      return metadata?.candidateName ? `shortlisted ${metadata.candidateName} for` : 'shortlisted application for';
     case 'DECLINE_APPLICATION':
-      return 'declined application for';
+      return metadata?.candidateName ? `declined application from ${metadata.candidateName} for` : 'declined application for';
     case 'CREATE_POST':
       return 'created a';
     case 'EDIT_POST':
@@ -504,10 +508,26 @@ function mapActivityLog(row: any): ActivityLogEntry {
     if (!highlightedText) highlightedText = 'post';
     if (!linkUrl && targetId && actionUpper !== 'DELETE_POST') linkUrl = `/post/${targetId}`;
     highlightedLinkUrl = linkUrl;
-  } else if (actionUpper === 'CREATE_JOB' || actionUpper === 'CLOSE_JOB' || actionUpper === 'DELETE_JOB' || actionUpper === 'SEND_OFFER') {
+  } else if (
+    actionUpper === 'CREATE_JOB' ||
+    actionUpper === 'POST_JOB' ||
+    actionUpper === 'UPDATE_JOB' ||
+    actionUpper === 'EDIT_JOB' ||
+    actionUpper === 'CLOSE_JOB' ||
+    actionUpper === 'DELETE_JOB' ||
+    actionUpper === 'SEND_OFFER' ||
+    actionUpper === 'SHORTLIST_APPLICATION' ||
+    actionUpper === 'DECLINE_APPLICATION'
+  ) {
     if (!targetName) targetName = metadata.jobTitle || metadata.title || '';
-    if (!linkUrl && targetId && actionUpper !== 'DELETE_JOB') linkUrl = `/jobs/${targetId}`;
+    const resolvedJobId = metadata.jobId || (metadata.targetType === 'job' ? targetId : '') || '';
+    if (!linkUrl && resolvedJobId && actionUpper !== 'DELETE_JOB') {
+      linkUrl = `/jobs/${resolvedJobId}`;
+    } else if (!linkUrl && targetId && actionUpper !== 'DELETE_JOB') {
+      linkUrl = `/jobs/${targetId}`;
+    }
     targetLinkUrl = linkUrl;
+    isTargetClickable = actionUpper !== 'DELETE_JOB';
   } else if (actionUpper === 'VIEW_USER_PROFILE') {
     actionFormatted = 'viewed';
     const rawTargetName = (targetName || metadata.targetName || metadata.targetUserName || metadata.name || '').trim();

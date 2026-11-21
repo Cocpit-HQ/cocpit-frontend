@@ -587,6 +587,7 @@ const FeedComposerInline = ({
         queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] });
         queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] });
         queryClient.invalidateQueries({ queryKey: ['company-posts'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics'] });
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
 
         setUploadPhase('success');
@@ -627,6 +628,7 @@ const FeedComposerInline = ({
         queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] });
         queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] });
         queryClient.invalidateQueries({ queryKey: ['company-posts'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics'] });
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
         if (resolvedRepostData?.id) toast.success("Post reposted successfully!");
 
@@ -671,6 +673,7 @@ const FeedComposerInline = ({
       queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] });
       queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] });
       queryClient.invalidateQueries({ queryKey: ['company-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
       window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
       if (sharedPostId) toast.success("Post reposted successfully!");
 

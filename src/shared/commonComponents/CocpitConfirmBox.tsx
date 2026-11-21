@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
-import { ActionConfirmModal } from './ActionConfirmModal';
+import { ActionConfirmModal, ConfirmPresetType } from './ActionConfirmModal';
 
 export interface CocpitConfirmBoxProps {
   isOpen: any;
-  title: React.ReactNode;
+  type?: ConfirmPresetType;
+  targetName?: string;
+  title?: React.ReactNode;
   message?: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
@@ -14,23 +16,33 @@ export interface CocpitConfirmBoxProps {
   isLoading?: boolean;
   buttonWidthClass?: string;
   modalClassName?: string;
+  buttonsClassName?: string;
+  titleClassName?: string;
+  descriptionClassName?: string;
 }
 
 export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
   isOpen,
+  type = "custom",
+  targetName,
   title,
   message,
-  confirmText = "Confirm",
+  confirmText,
   cancelText = "Cancel",
   onConfirm,
   onCancel,
   isLoading = false,
   buttonWidthClass,
   modalClassName,
+  buttonsClassName,
+  titleClassName,
+  descriptionClassName,
 }) => {
   return (
     <ActionConfirmModal
       isOpen={Boolean(isOpen)}
+      type={type}
+      targetName={targetName}
       onClose={onCancel}
       onConfirm={onConfirm}
       title={title}
@@ -40,9 +52,11 @@ export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
       isLoading={isLoading}
       buttonWidthClass={buttonWidthClass}
       modalClassName={modalClassName}
+      buttonsClassName={buttonsClassName}
+      titleClassName={titleClassName}
+      descriptionClassName={descriptionClassName}
     />
   );
 };
 
 export default CocpitConfirmBox;
-

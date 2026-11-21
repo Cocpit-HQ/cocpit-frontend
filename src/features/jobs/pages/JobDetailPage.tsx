@@ -125,7 +125,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           Boolean(isOwnerFlag) ||
           perms.includes('*') ||
           perms.includes('MANAGE_COMPANY') ||
-          perms.includes('POST_JOBS')
+          perms.includes('POST_JOBS') ||
+          perms.includes('JOBS')
         );
       })
     );
@@ -250,17 +251,14 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     return undefined;
   })();
 
-  // Share & Bookmark visibility rules based on Figma:
-  // - Share icon: Visible ONLY for standard active jobs (Apply now / Withdraw). Hidden for closed jobs and offers.
-  // - Bookmark/Save icon: Visible for standard active jobs, pending offers (Accept / Decline), and closed jobs (Follow / Unfollow)
-  // - Both icons hidden for chat states (Chat now), terminal offer states (expired/declined), and rejected jobs
-  const showShare = !job.is_offer && !job.is_closed && job.application_status !== 'Rejected' && !isShortlisted && !isAccepted;
-  const showSave = (
+  // Share & Bookmark visibility rules:
+  // - Share icon: Available for all jobs
+  // - Bookmark/Save icon: Available for all candidate accounts when feature flag is active
+  const showShare = Boolean(job && job.id);
+  const showSave = Boolean(
     !isCompany &&
-    job.application_status !== 'Rejected' &&
-    !isShortlisted &&
-    !isAccepted &&
-    !isTerminalOffer &&
+    job &&
+    job.id &&
     flags?.saved_jobs !== false
   );
 
@@ -609,6 +607,33 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary shrink-0" />
           <span>Back</span>
         </button>
+
+        <div className="flex items-center gap-2">
+          {showShare && (
+            <button
+              onClick={() => setShowShareModal(true)}
+              aria-label="Share Job"
+              type="button"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-all bg-transparent border-none outline-none cursor-pointer p-0 active:scale-95"
+            >
+              <ShareIcon size={20} className="w-5 h-5 shrink-0" fill="currentColor" />
+            </button>
+          )}
+          {showSave && (
+            <button
+              onClick={toggleSave}
+              aria-label={job.is_saved ? 'Unsave job' : 'Save job'}
+              type="button"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-all bg-transparent border-none outline-none cursor-pointer p-0 active:scale-95"
+            >
+              {job.is_saved ? (
+                <SaveFilledIcon size={20} className="w-5 h-5 text-ds-accent shrink-0" fill="currentColor" />
+              ) : (
+                <SaveIcon size={20} className="w-5 h-5 text-ds-text-primary hover:text-ds-accent shrink-0" fill="currentColor" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Column (Desktop: centered max-w-[768px], pt-[60px], pb-28; Mobile: pt-2, pb-24, px-4) */}
@@ -616,18 +641,42 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
         {/* Job Header & Metadata */}
         <div className="w-full flex flex-col justify-start items-start gap-3">
-          {/* Top Row: Job Title left, Offer Expiry right (matching Figma Frame 2608872 / Offer Detail) */}
+          {/* Top Row: Job Title left, Offer Expiry and Share/Save right */}
           <div className="w-full flex items-start justify-between gap-3">
             <h1 className="flex-1 text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] font-bold font-dm-sans text-ds-text-primary">
               {job.title}
             </h1>
-            {job.is_offer && offerExpiryText && (
-              <div className="shrink-0 pt-2.5 sm:pt-3.5">
-                <span className={`text-xs font-normal font-dm-sans leading-4 ${isExpired ? 'text-ds-error' : 'text-ds-warning'}`}>
+            <div className="flex items-center gap-2 shrink-0 pt-2.5 sm:pt-3.5">
+              {job.is_offer && offerExpiryText && (
+                <span className={`text-xs font-normal font-dm-sans leading-4 mr-2 ${isExpired ? 'text-ds-error' : 'text-ds-warning'}`}>
                   {offerExpiryText}
                 </span>
-              </div>
-            )}
+              )}
+              {showShare && (
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  aria-label="Share Job"
+                  type="button"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-all bg-transparent border-none outline-none cursor-pointer p-0 active:scale-95"
+                >
+                  <ShareIcon size={20} className="w-5 h-5 shrink-0" fill="currentColor" />
+                </button>
+              )}
+              {showSave && (
+                <button
+                  onClick={toggleSave}
+                  aria-label={job.is_saved ? 'Unsave job' : 'Save job'}
+                  type="button"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-all bg-transparent border-none outline-none cursor-pointer p-0 active:scale-95"
+                >
+                  {job.is_saved ? (
+                    <SaveFilledIcon size={20} className="w-5 h-5 text-ds-accent shrink-0" fill="currentColor" />
+                  ) : (
+                    <SaveIcon size={20} className="w-5 h-5 text-ds-text-primary hover:text-ds-accent shrink-0" fill="currentColor" />
+                  )}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Posted By & Active Status Badge (Frame 2608872) */}
@@ -761,15 +810,15 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
         {/* Offer Recruiter Note (Figma Frame 2609030) */}
         {job.is_offer && job.recruiter_message && (() => {
           const isCompanyJob = Boolean(job.org_id || (job as any).orgId || (job as any).company_id || (job as any).posted_as_company);
-          const noteDisplayName = isCompanyJob
+          const noteDisplayName = (job as any).offer_sender_name || (job as any).sent_by_name || (isCompanyJob
             ? (job.company || job.company_name || job.recruiter_name || 'Company')
-            : (job.recruiter_name || job.company || 'Recruiter');
-          const noteDisplayAvatar = isCompanyJob
+            : (job.recruiter_name || job.company || 'Recruiter'));
+          const noteDisplayAvatar = (job as any).offer_sender_avatar || (job as any).sent_by_avatar || (isCompanyJob
             ? (job.company_logo || job.recruiter_avatar)
-            : job.recruiter_avatar;
-          const noteDisplayTitle = isCompanyJob
-            ? ((job as any).company_headline || (job as any).offer_sender_headline || job.recruiter_title)
-            : job.recruiter_title;
+            : job.recruiter_avatar);
+          const noteDisplayTitle = (job as any).offer_sender_headline || (job as any).sent_by_headline || (isCompanyJob
+            ? ((job as any).company_headline || job.recruiter_title)
+            : job.recruiter_title);
 
           return (
             <div className="w-full max-w-[700px] min-w-0 p-3 bg-ds-surface-1 border-l-2 border-ds-accent rounded-r-2xl rounded-bl-2xl rounded-tl-none flex flex-col items-start gap-2 self-stretch flex-none box-border">
@@ -1041,7 +1090,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 onClick={() => setShowShareModal(true)}
                 aria-label="Share Job"
                 type="button"
-                className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none cursor-pointer flex-none p-0"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-all bg-transparent border-none outline-none cursor-pointer flex-none p-0 active:scale-95"
               >
                 <ShareIcon size={20} className="w-5 h-5 shrink-0" fill="currentColor" />
               </button>
@@ -1052,7 +1101,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 onClick={toggleSave}
                 aria-label={job.is_saved ? 'Unsave job' : 'Save job'}
                 type="button"
-                className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none cursor-pointer flex-none p-0"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-all bg-transparent border-none outline-none cursor-pointer flex-none p-0 active:scale-95"
               >
                 {job.is_saved ? (
                   <SaveFilledIcon size={20} className="w-5 h-5 text-ds-accent shrink-0" fill="currentColor" />
@@ -1080,7 +1129,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             onClick={() => setShowShareModal(true)}
             aria-label="Share Job"
             type="button"
-            className="w-9 h-9 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none cursor-pointer shrink-0 p-0"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-all bg-transparent border-none outline-none cursor-pointer shrink-0 p-0 active:scale-95"
           >
             <ShareIcon size={20} className="w-5 h-5 shrink-0" fill="currentColor" />
           </button>
@@ -1092,7 +1141,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             onClick={toggleSave}
             aria-label={job.is_saved ? 'Unsave job' : 'Save job'}
             type="button"
-            className="w-9 h-9 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors bg-transparent border-none outline-none cursor-pointer shrink-0 p-0"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-all bg-transparent border-none outline-none cursor-pointer shrink-0 p-0 active:scale-95"
           >
             {job.is_saved ? (
               <SaveFilledIcon size={20} className="w-5 h-5 text-ds-accent shrink-0" fill="currentColor" />

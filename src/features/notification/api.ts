@@ -1,11 +1,28 @@
 import api from "@/lib/axios";
 import { Notification } from "@/types/social";
 
+const USER_SIDE_JOB_NOTIFICATION_TYPES = new Set([
+    'application_submitted',
+    'application_under_review',
+    'application_shortlisted',
+    'application_rejected',
+    'application_declined',
+    'job_offer',
+    'offer_expiring',
+    'job_alert',
+    'job_offer_received',
+    'job_offer_withdrawn',
+]);
+
 export const getNotifications = async (orgId?: string): Promise<Notification[]> => {
     try {
         const params = orgId ? { orgId, companyId: orgId } : {};
         const response = await api.get("/notifications", { params });
-        return response.data;
+        const list: Notification[] = Array.isArray(response.data) ? response.data : [];
+        if (orgId) {
+            return list.filter((n) => !USER_SIDE_JOB_NOTIFICATION_TYPES.has(n?.type as string));
+        }
+        return list;
     } catch (error: any) {
         if (error?.response?.status === 403) {
             return [];

@@ -23,13 +23,20 @@ import { useCompanyPermissions } from "@/features/businessProfile";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useOrgBlockPermissions } from "@/hooks/useOrgBlockPermissions";
 import { cn } from "@/lib/utils";
-import { setPinnedChatId, isChatPinned } from "../../utils/pinUtils";
+import { setChatPinned, isChatPinned } from "../../utils/pinUtils";
+import { isChatMuted } from "../../utils/muteUtils";
 import { setPinnedMessageId } from "../../utils/pinMessageUtils";
 import { PinnedMessageBanner } from "./PinnedMessageBanner";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
+import UserDetails from "./UserDetails";
 
 // Modular hooks
 import { useChatSocket } from "../../hooks/useChatSocket";
-import { useChatSharedContext } from "../../hooks/useChatSharedContext";
+import {
+  useChatSharedContext,
+  markJobContextSent,
+  checkHasJobCardInMessages,
+} from "../../hooks/useChatSharedContext";
 import { useChatMessages } from "../../hooks/useChatMessages";
 import { useMessageActions } from "../../hooks/useMessageActions";
 import { useChatConversation } from "../../hooks/useChatConversation";
@@ -83,6 +90,15 @@ export default function ChatWindow({
   // Typing state
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const [typingMap, setTypingMap] = useState<Map<string, string>>(new Map());
+
+  // Active view state ('chat' | 'info')
+  const [activeView, setActiveView] = useState<"chat" | "info">("chat");
+  const isMutedActive = isChatMuted(initialChat);
+
+  // Reset view when switching conversations
+  useEffect(() => {
+    setActiveView("chat");
+  }, [initialChat?.id]);
 
   // Block & availability state
   const isBlockedByMe =
@@ -139,6 +155,13 @@ export default function ChatWindow({
       ? activeProfile.id
       : session?.user?.id || "";
 
+  const defaultSendAs = activeProfile?.type === "COMPANY" ? "recruiter" : "applicant";
+  const [sendAs, setSendAs] = useState<"applicant" | "recruiter">(defaultSendAs);
+
+  useEffect(() => {
+    setSendAs(activeProfile?.type === "COMPANY" ? "recruiter" : "applicant");
+  }, [activeProfile?.type]);
+
   // 1. Shared URL & Context management hook
   const {
     pendingSharedPostId,
@@ -155,6 +178,9 @@ export default function ChatWindow({
     chatId: chat.id,
     initialEntityContext,
     searchParams,
+    queryClient,
+    activeProfileId: activeProfile?.id,
+    chatJobId: (chat.jobIds && chat.jobIds.length > 0) ? chat.jobIds[0] : undefined,
   });
 
   // 2. Real-time socket listener hook
@@ -198,6 +224,12 @@ export default function ChatWindow({
     pinnedMessageId,
     setPinnedMessageId: setPinnedMessageIdState,
     handleUnpinMessage,
+    isReplacePinModalOpen,
+    isRemovePinModalOpen,
+    confirmReplacePin,
+    cancelReplacePin,
+    confirmRemovePin,
+    cancelRemovePin,
   } = useMessageActions({
     chat,
     currentUserId,
@@ -238,6 +270,7 @@ export default function ChatWindow({
     handleRetryMessage,
     handleTypingInput,
     searchGroupMembers,
+    groupMembers,
   } = useChatMessages({
     chat,
     session,
@@ -263,9 +296,28 @@ export default function ChatWindow({
     router,
     onChatCreated,
     isQuickChat,
+    sendAs,
     setTypingUser,
     setTypingMap,
   });
+
+  // Reactive listener: clear pendingEntityContext only if an active (non-deleted for everyone) job card is detected in messages
+  useEffect(() => {
+    if (!pendingEntityContext) return;
+    if (
+      pendingEntityContext.type === "job" ||
+      pendingEntityContext.type === "offer"
+    ) {
+      const hasActiveJobCard = checkHasJobCardInMessages(
+        messages,
+        pendingEntityContext.id,
+      );
+      if (hasActiveJobCard) {
+        markJobContextSent(chat.id, pendingEntityContext.id);
+        setPendingEntityContext(null);
+      }
+    }
+  }, [messages, pendingEntityContext, chat.id, setPendingEntityContext]);
 
   const editingMessage = useMemo(() => {
     if (!editingMessageId) return null;
@@ -274,13 +326,21 @@ export default function ChatWindow({
 
   const pinnedMessage = useMemo(() => {
     if (!pinnedMessageId) return null;
-    return messages?.find((m) => String(m.id) === String(pinnedMessageId)) || null;
+    const msg = messages?.find((m) => String(m.id) === String(pinnedMessageId));
+    if (!msg || msg.is_deleted_for_me || msg.text === "This message was deleted for you.") {
+      return null;
+    }
+    return msg;
   }, [messages, pinnedMessageId]);
+
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
   const handleScrollToPinnedMessage = useCallback((msgId: string) => {
     const el = document.getElementById(`msg-${msgId}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedMessageId(msgId);
+      setTimeout(() => setHighlightedMessageId(null), 1000);
     }
   }, []);
 
@@ -296,11 +356,29 @@ export default function ChatWindow({
         setPinnedMessageIdState(payload.pinnedMessageId);
       }
     };
+    const handleMessageDeleted = (payload: {
+      messageId: string;
+      conversationId: string;
+      deleteType?: string;
+    }) => {
+      if (
+        String(payload.conversationId) === String(chat.id) &&
+        pinnedMessageId &&
+        String(payload.messageId) === String(pinnedMessageId)
+      ) {
+        setPinnedMessageId(chat.id, null, activeProfile?.type, activeProfile?.id);
+        setPinnedMessageIdState(null);
+      }
+    };
     socket.on("message_pinned", handleMessagePinned);
+    socket.on("message_deleted", handleMessageDeleted);
+    socket.on("message_deleted_for_everyone", handleMessageDeleted);
     return () => {
       socket.off("message_pinned", handleMessagePinned);
+      socket.off("message_deleted", handleMessageDeleted);
+      socket.off("message_deleted_for_everyone", handleMessageDeleted);
     };
-  }, [socket, chat.id, activeProfile?.type, activeProfile?.id, setPinnedMessageIdState]);
+  }, [socket, chat.id, activeProfile?.type, activeProfile?.id, pinnedMessageId, setPinnedMessageIdState]);
 
   // 6. Modals management hook
   const modals = useChatModals({
@@ -326,6 +404,13 @@ export default function ChatWindow({
   // Rate limiting for requester: 1 message per 24 hours until accepted
   const isSenderWaiting24h = useMemo(() => {
     if (!chat.is_requesting || !isRequestSender) return false;
+    if (chat.is_declined) {
+      const baseTime = chat.last_sender_message_at || chat.lastMessageAt;
+      if (!baseTime) return true;
+      const lastTime = new Date(baseTime).getTime();
+      if (isNaN(lastTime)) return true;
+      return Date.now() - lastTime < 24 * 60 * 60 * 1000;
+    }
     const myMessages = messages.filter(
       (m) => m.sender === "me" || String(m.senderId) === String(currentUserId) || m.senderId === "me"
     );
@@ -344,7 +429,7 @@ export default function ChatWindow({
     const lastTime = new Date(lastSentTimestamp).getTime();
     if (isNaN(lastTime)) return true;
     return Date.now() - lastTime < 24 * 60 * 60 * 1000;
-  }, [chat.is_requesting, isRequestSender, messages, chat.last_sender_message_at, currentUserId]);
+  }, [chat.is_requesting, chat.is_declined, isRequestSender, messages, chat.last_sender_message_at, chat.lastMessageAt, currentUserId]);
 
   // Cannot Message state (matching Figma Block frame)
   const isCannotMessage = useMemo(() => {
@@ -432,9 +517,10 @@ export default function ChatWindow({
   const handleTogglePin = useCallback(async () => {
     const isCurrentlyPinned = isChatPinned(chat.id, activeProfile?.type, activeProfile?.id) || Boolean(chat.is_pinned);
     const newPinned = !isCurrentlyPinned;
+    const nowIso = new Date().toISOString();
     const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
 
-    setPinnedChatId(newPinned ? String(chat.id) : null, activeProfile?.type, activeProfile?.id);
+    setChatPinned(String(chat.id), newPinned, activeProfile?.type, activeProfile?.id, nowIso);
     queryClient.setQueriesData<ChatThread[]>(
       { queryKey: ["conversations"] },
       (oldChats) => {
@@ -442,10 +528,11 @@ export default function ChatWindow({
         return oldChats.map((c) => {
           const isTarget = String(c.id) === String(chat.id);
           if (isTarget) {
-            return { ...c, is_pinned: newPinned };
-          }
-          if (newPinned && c.is_pinned) {
-            return { ...c, is_pinned: false };
+            return {
+              ...c,
+              is_pinned: newPinned,
+              pinned_at: newPinned ? nowIso : null,
+            };
           }
           return c;
         });
@@ -463,73 +550,90 @@ export default function ChatWindow({
 
     try {
       await pinConversation(String(chat.id), newPinned, companyId);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     } catch (err) {
       console.error("Failed to persist pin on server:", err);
+      setChatPinned(String(chat.id), isCurrentlyPinned, activeProfile?.type, activeProfile?.id);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     }
   }, [chat.id, chat.is_pinned, chat.isGroup, activeProfile?.type, activeProfile?.id, queryClient, toast]);
 
   return (
     <div
-      className={`flex flex-col flex-1 h-full min-h-0 overflow-hidden bg-[var(--ds-bg)] ${
+      className={`flex flex-col flex-1 h-full min-h-0 overflow-hidden bg-[var(--ds-bg)] relative ${
         isMobile ? "h-dvh" : ""
       }`}
     >
       {/* Header View: Mobile vs Desktop */}
-      {isMobile ? (
-        <MobileChatHeader
-          chat={chat}
-          onBack={onBack!}
-          selectedMessage={selectedMessage}
-          selectedMessages={selectedMessages}
-          onMessageAction={(action) => handleMessageActionWithMsg(action)}
-          currentUserId={currentUserId}
-          onMuteClick={modals.openMuteConfirm}
-          onUnmuteClick={modals.openUnmuteConfirm}
-          onDeleteClick={modals.openDeleteConfirm}
-          onLeaveClick={modals.openLeaveConfirm}
-          onTogglePin={handleTogglePin}
-          isQuickChat={isQuickChat}
-        />
-      ) : (
-        <ChatDesktopHeader
-          chat={chat}
-          currentUserId={currentUserId}
-          selectedMessage={selectedMessage}
-          selectedMessages={selectedMessages}
-          isMessageSelected={isMessageSelected}
-          onMessageAction={(action) => handleMessageActionWithMsg(action)}
-          isBlockedByMe={isBlockedByMe}
-          isBlockedByOther={!!isBlockedByOther}
-          isDeletedAccount={isDeletedAccount}
-          isDeactivatedAccount={isDeactivatedAccount}
-          typingDisplayString={typingDisplayString}
-          onShareClick={modals.openShareModal}
-          onReportClick={modals.openReportConfirm}
-          onBlockClick={modals.openBlockConfirm}
-          onUnblockClick={handleUnblock}
-          onClearClick={modals.openClearConfirm}
-          onDeleteClick={modals.openDeleteConfirm}
-          onLeaveClick={modals.openLeaveConfirm}
-          onUnmuteClick={
-            chat.isGroup ? modals.openUnmuteConfirm : handleUnmuteChat
-          }
-          onMuteWithDuration={handleMuteWithDuration}
-          onTogglePin={handleTogglePin}
-        />
+      {activeView === "chat" && (
+        isMobile ? (
+          <MobileChatHeader
+            chat={chat}
+            onBack={onBack!}
+            selectedMessage={selectedMessage}
+            selectedMessages={selectedMessages}
+            onMessageAction={(action) => handleMessageActionWithMsg(action)}
+            currentUserId={currentUserId}
+            onMuteClick={modals.openMuteConfirm}
+            onUnmuteClick={modals.openUnmuteConfirm}
+            onDeleteClick={modals.openDeleteConfirm}
+            onLeaveClick={modals.openLeaveConfirm}
+            onTogglePin={handleTogglePin}
+            onOpenDetails={!chat.isGroup ? () => setActiveView("info") : undefined}
+            isQuickChat={isQuickChat}
+          />
+        ) : (
+          <ChatDesktopHeader
+            chat={chat}
+            currentUserId={currentUserId}
+            selectedMessage={selectedMessage}
+            selectedMessages={selectedMessages}
+            isMessageSelected={isMessageSelected}
+            onMessageAction={(action) => handleMessageActionWithMsg(action)}
+            isBlockedByMe={isBlockedByMe}
+            isBlockedByOther={!!isBlockedByOther}
+            isDeletedAccount={isDeletedAccount}
+            isDeactivatedAccount={isDeactivatedAccount}
+            typingDisplayString={typingDisplayString}
+            onShareClick={modals.openShareModal}
+            onReportClick={modals.openReportConfirm}
+            onBlockClick={modals.openBlockConfirm}
+            onUnblockClick={handleUnblock}
+            onClearClick={modals.openClearConfirm}
+            onDeleteClick={modals.openDeleteConfirm}
+            onLeaveClick={modals.openLeaveConfirm}
+            onUnmuteClick={
+              chat.isGroup ? modals.openUnmuteConfirm : handleUnmuteChat
+            }
+            onMuteWithDuration={handleMuteWithDuration}
+            onTogglePin={handleTogglePin}
+            onOpenDetails={!chat.isGroup ? () => setActiveView("info") : undefined}
+          />
+        )
       )}
 
-      {/* Status, Context, Typing & Block Banners */}
-      <ChatStatusBanner
+      <div className="flex-1 flex flex-row overflow-hidden relative">
+        {/* Main Chat Area */}
+        <div
+          className={cn(
+            "flex-1 flex flex-col transition-all duration-300 overflow-hidden",
+            activeView !== "chat"
+              ? "opacity-0 invisible translate-x-[-20px] pointer-events-none"
+              : "opacity-100 visible translate-x-0"
+          )}
+        >
+          {/* Status, Context, Typing & Block Banners */}
+          <ChatStatusBanner
         chat={chat}
         isGroupInvitation={isGroupInvitation}
         isBlockedByMe={isBlockedByMe}
         isBlockedByOther={!!isBlockedByOther}
         typingDisplayString={typingDisplayString}
-        isDeclinedCooldown={isSenderWaiting24h}
+        isDeclinedCooldown={Boolean(chat.is_declined && isSenderWaiting24h)}
       />
 
       {/* Pinned Message Banner */}
-      {!isGroupInvitation && pinnedMessageId && (
+      {!isGroupInvitation && pinnedMessageId && pinnedMessage && (
         <PinnedMessageBanner
           message={pinnedMessage}
           pinnedMessageId={pinnedMessageId}
@@ -546,6 +650,7 @@ export default function ChatWindow({
           <MessageList
             messages={messages}
             pinnedMessageId={pinnedMessageId}
+            highlightedMessageId={highlightedMessageId}
             onLoadMore={fetchNextPage}
             hasMore={hasNextPage}
             isLoadingMore={isFetchingNextPage}
@@ -567,6 +672,7 @@ export default function ChatWindow({
             unreadCount={chat.unread}
             isOpponentOnline={chat.online}
             isGroup={chat.isGroup}
+            groupMembers={groupMembers}
             onReply={handleReply}
             onReaction={handleReactionSelect}
             currentUserId={currentUserId}
@@ -613,6 +719,7 @@ export default function ChatWindow({
                 searchUsersFn={chat.isGroup ? searchGroupMembers : searchUsers}
                 disabled={
                   isSenderWaiting24h ||
+                  chat.is_declined ||
                   (!isOrgChat && chat.is_requesting && !isRequestSender) ||
                   (!chat.otherUserId && !chat.isGroup) ||
                   !!isBlockedByOther ||
@@ -624,17 +731,19 @@ export default function ChatWindow({
                   isDeletedAccount
                 }
                 disabledMessage={
-                  isSenderWaiting24h
-                    ? "You can’t send a chat request to this user right now. Please try again after 24 hours."
-                    : (!isOrgChat && chat.is_requesting && !isRequestSender)
-                      ? "Accept or decline the chat request to start conversation"
-                      : isCannotMessage
-                        ? undefined
-                        : isJobChatDisabled
-                          ? "Permission required to participate in job chats"
-                          : isGeneralChatDisabled
-                            ? "Permission required to participate in general chat"
-                            : undefined
+                  chat.is_declined
+                    ? "You can’t send a chat request to this user right now. Please try again after 24 hours"
+                    : isSenderWaiting24h
+                      ? "You will be able to send more messages after your request is accepted"
+                      : (!isOrgChat && chat.is_requesting && !isRequestSender)
+                        ? "Accept the chat request to start the conversation"
+                        : isCannotMessage
+                          ? undefined
+                          : isJobChatDisabled
+                            ? "Permission required to participate in job chats"
+                            : isGeneralChatDisabled
+                              ? "Permission required to participate in general chat"
+                              : undefined
                 }
                 pendingEntityContext={pendingEntityContext}
                 onDismissEntityContext={() => setPendingEntityContext(null)}
@@ -655,6 +764,9 @@ export default function ChatWindow({
                   setPendingSharedProfile(null);
                 }}
                 isQuickChat={isQuickChat}
+                showSendAs={false}
+                sendAs={sendAs}
+                onSendAsChange={setSendAs}
               />
             )
           )}
@@ -664,7 +776,7 @@ export default function ChatWindow({
         <div className="w-full px-4 pb-6 pt-2 shrink-0 flex justify-center order-2">
           <div className="w-full max-w-[618px] h-[56px] flex flex-col justify-center items-center p-0 gap-2 shrink-0">
             {/* Label: You blocked this person */}
-            <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-[var(--ds-text-primary)]">
+            <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-center text-[var(--ds-text-primary)]">
               {canManageBlock
                 ? "You blocked this person"
                 : "This account is blocked by organization administrators"}
@@ -694,6 +806,37 @@ export default function ChatWindow({
           </div>
         </div>
       )}
+        </div>
+
+        {/* 1-on-1 User Details Panel - Slides in from the right */}
+        {!chat.isGroup && (
+          <div
+            className={cn(
+              isMobile
+                ? "fixed inset-0 z-50 bg-[var(--ds-bg)] transition-all duration-300"
+                : "absolute inset-0 z-20 bg-[var(--ds-bg)] transition-all duration-300",
+              activeView === "chat"
+                ? "translate-x-full opacity-0 invisible pointer-events-none"
+                : "translate-x-0 opacity-100 visible"
+            )}
+          >
+            <UserDetails
+              chat={chat}
+              isOpen={activeView === "info"}
+              onClose={() => setActiveView("chat")}
+              currentUserId={currentUserId}
+              isMuted={isMutedActive}
+              onMuteWithDuration={handleMuteWithDuration}
+              onUnmuteClick={handleUnmuteChat}
+              onShareClick={modals.openShareModal}
+              onReportClick={modals.openReportConfirm}
+              onBlockClick={modals.openBlockConfirm}
+              onUnblockClick={handleUnblock}
+              onDeleteClick={modals.openDeleteConfirm}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Modals and Confirmation Dialogs */}
       <ChatModals
@@ -713,6 +856,22 @@ export default function ChatWindow({
         onDeleteForEveryone={handleDeleteForEveryone}
         previewMedia={previewMedia}
         onCloseMediaPreview={() => setPreviewMedia(null)}
+      />
+
+      {/* Remove Pinned Message Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={isRemovePinModalOpen}
+        type="remove_pinned_message"
+        onClose={cancelRemovePin}
+        onConfirm={confirmRemovePin}
+      />
+
+      {/* Replace Pinned Message Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={isReplacePinModalOpen}
+        type="replace_pinned_message"
+        onClose={cancelReplacePin}
+        onConfirm={confirmReplacePin}
       />
     </div>
   );

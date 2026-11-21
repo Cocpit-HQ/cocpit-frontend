@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSocial } from "@/context/SocialContext";
 import Avatar from "@/components/shared/Avatar";
 import UnavailableContentCard from "../ui/UnavailableContentCard";
+import SharedPreview from "@/features/feed/components/create-post/SharedPreview";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -137,6 +138,7 @@ export const SharedPostCard = ({
         poll: backendPost.poll,
         title: backendPost.title,
         media: media,
+        shared_post: backendPost.shared_post || (backendPost as any).sharedPost || null,
       };
     },
     enabled: Boolean(effectivePostId),
@@ -168,9 +170,18 @@ export const SharedPostCard = ({
     return null;
   }
 
+  const isSenderOwnPostBlocked = Boolean(
+    message.senderId &&
+    isBlocked(message.senderId) &&
+    (!initialAuthorId ||
+      String(initialAuthorId) === String(message.senderId) ||
+      (message.senderName && initialPost?.author && message.senderName.trim().toLowerCase() === initialPost.author.trim().toLowerCase()))
+  );
+
   const isLocalBlocked =
     (initialAuthorId && isBlocked(initialAuthorId)) ||
-    (fetchedPost?.authorId && isBlocked(fetchedPost.authorId));
+    (fetchedPost?.authorId && isBlocked(fetchedPost.authorId)) ||
+    isSenderOwnPostBlocked;
 
   if (isLocalBlocked) {
     return <UnavailableContentCard isMe={isMe} />;
@@ -385,6 +396,41 @@ export const SharedPostCard = ({
       </div>
     </div>
   );
+
+  const effectiveSharedPost = (postToRender as any).shared_post || (postToRender as any).sharedPost;
+
+  // ── Render: Repost / Shared Post Card (matching feed layout) ─────────────────
+  if (effectiveSharedPost) {
+    return (
+      <div
+        className="w-[328px] max-w-full h-auto box-border p-2.5 rounded-[16px] border border-[var(--ds-border)] bg-transparent flex flex-col justify-start items-stretch cursor-pointer hover:opacity-95 transition-all overflow-hidden shrink-0 select-none gap-2.5"
+        onClick={() => router.push(`/post/${postId}`)}
+        role="button"
+        tabIndex={0}
+      >
+        {/* Frame: Reposter Header */}
+        {renderCardHeader()}
+
+        {/* Reposter Thoughts / Content (if any) */}
+        {postContent && (
+          <div className="w-full text-left">
+            <p className="font-['DM_Sans'] font-normal text-xs leading-4 text-[var(--ds-text-primary)] break-words whitespace-pre-line line-clamp-4">
+              {renderContentWithMentions(postContent)}
+            </p>
+          </div>
+        )}
+
+        {/* Embedded Original Post Card */}
+        <div className="w-full" onClick={(e) => e.stopPropagation()}>
+          <SharedPreview
+            sharedPost={effectiveSharedPost}
+            sharedPostId={effectiveSharedPost.id?.toString() || effectiveSharedPost.post_id?.toString()}
+            isMobile={true}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (isPoll) {
     const poll = postToRender.poll;

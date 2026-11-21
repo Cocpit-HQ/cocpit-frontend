@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useGroupChat } from "./groupChat.context";
 import GroupHeader from "./GroupHeader";
@@ -31,6 +31,7 @@ import { getMessageCopyText } from "@/features/messaging/utils/messageCopy";
 import { searchUsers, getSuggestedUsers, UserMention } from "@/services/api/users";
 import { getPinnedMessageId, setPinnedMessageId } from "@/features/messaging/utils/pinMessageUtils";
 import { PinnedMessageBanner } from "../ui/PinnedMessageBanner";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 
 interface GroupChatProps {
     groupId: string;
@@ -61,12 +62,16 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
 
     const conversationId = activeGroup?.conversation_id || groupId;
     const [pinnedMessageId, setPinnedMessageIdState] = useState<string | null>(() => {
-        return getPinnedMessageId(conversationId, activeProfile?.type, activeProfile?.id);
+        return (activeGroup as any)?.pinned_message_id || getPinnedMessageId(conversationId, activeProfile?.type, activeProfile?.id);
     });
 
     useEffect(() => {
-        setPinnedMessageIdState(getPinnedMessageId(conversationId, activeProfile?.type, activeProfile?.id));
-    }, [conversationId, activeProfile?.type, activeProfile?.id]);
+        const initialPinnedId = (activeGroup as any)?.pinned_message_id || getPinnedMessageId(conversationId, activeProfile?.type, activeProfile?.id);
+        setPinnedMessageIdState(initialPinnedId);
+        if ((activeGroup as any)?.pinned_message_id && conversationId) {
+            setPinnedMessageId(conversationId, (activeGroup as any).pinned_message_id, activeProfile?.type, activeProfile?.id);
+        }
+    }, [conversationId, (activeGroup as any)?.pinned_message_id, activeProfile?.type, activeProfile?.id]);
 
     useEffect(() => {
         if (!socket) return;
@@ -74,6 +79,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             if (String(payload.conversationId) === String(conversationId)) {
                 setPinnedMessageId(conversationId, payload.pinnedMessageId, activeProfile?.type, activeProfile?.id);
                 setPinnedMessageIdState(payload.pinnedMessageId);
+                pinnedMessageIdRef.current = payload.pinnedMessageId;
             }
         };
         socket.on("message_pinned", handleMessagePinned);
@@ -83,6 +89,58 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
     }, [socket, conversationId, activeProfile?.type, activeProfile?.id]);
 
     const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false);
+    const pinnedMessageIdRef = useRef<string | null>(pinnedMessageId);
+    useEffect(() => {
+        pinnedMessageIdRef.current = pinnedMessageId;
+    }, [pinnedMessageId]);
+
+    const [pendingGroupPinMsgId, setPendingGroupPinMsgId] = useState<string | null>(null);
+    const [isReplacePinModalOpen, setIsReplacePinModalOpen] = useState(false);
+    const [isRemovePinModalOpen, setIsRemovePinModalOpen] = useState(false);
+
+    const executePinGroupMessage = useCallback((msgId: string) => {
+        const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+        setPinnedMessageId(conversationId, msgId, activeProfile?.type, activeProfile?.id);
+        setPinnedMessageIdState(String(msgId));
+        pinnedMessageIdRef.current = String(msgId);
+        toast({ description: "A message was pinned" });
+        pinMessage(String(conversationId), String(msgId), true, companyId).catch((err) => {
+            console.error("Failed to pin group message on server:", err);
+        });
+    }, [activeProfile?.id, activeProfile?.type, conversationId, toast]);
+
+    const executeUnpinGroupMessage = useCallback(() => {
+        const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+        setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
+        setPinnedMessageIdState(null);
+        pinnedMessageIdRef.current = null;
+        toast({ description: "A message was unpinned" });
+        pinMessage(String(conversationId), null, false, companyId).catch((err) => {
+            console.error("Failed to unpin group message on server:", err);
+        });
+    }, [activeProfile?.id, activeProfile?.type, conversationId, toast]);
+
+    const confirmReplaceGroupPin = useCallback(() => {
+        if (pendingGroupPinMsgId) {
+            executePinGroupMessage(pendingGroupPinMsgId);
+            setPendingGroupPinMsgId(null);
+        }
+        setIsReplacePinModalOpen(false);
+    }, [executePinGroupMessage, pendingGroupPinMsgId]);
+
+    const cancelReplaceGroupPin = useCallback(() => {
+        setPendingGroupPinMsgId(null);
+        setIsReplacePinModalOpen(false);
+    }, []);
+
+    const confirmRemoveGroupPin = useCallback(() => {
+        executeUnpinGroupMessage();
+        setIsRemovePinModalOpen(false);
+    }, [executeUnpinGroupMessage]);
+
+    const cancelRemoveGroupPin = useCallback(() => {
+        setIsRemovePinModalOpen(false);
+    }, []);
     const [messageInfoMessage, setMessageInfoMessage] = useState<Message | null>(null);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [previewMedia, setPreviewMedia] = useState<{
@@ -129,6 +187,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         if (pinnedMessageId && targetIds.has(pinnedMessageId)) {
             setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
             setPinnedMessageIdState(null);
+            // Delete for Me hides the pinned message locally for this user only; does not unpin for other group members
         }
 
         queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
@@ -194,6 +253,10 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         if (pinnedMessageId && targetIds.has(pinnedMessageId)) {
             setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
             setPinnedMessageIdState(null);
+            const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+            pinMessage(String(conversationId), null, false, companyId).catch((err) => {
+                console.error("Failed to unpin deleted group message on server:", err);
+            });
         }
 
         queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
@@ -284,23 +347,17 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             setSelectedMessages([]);
         } else if (action === 'pin') {
             if (targetMsg) {
-                const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
-                setPinnedMessageId(conversationId, targetMsg.id, activeProfile?.type, activeProfile?.id);
-                setPinnedMessageIdState(String(targetMsg.id));
-                toast({ description: "Message pinned" });
-                pinMessage(String(conversationId), String(targetMsg.id), true, companyId).catch((err) => {
-                    console.error("Failed to pin group message on server:", err);
-                });
+                const currentPinnedId = pinnedMessageIdRef.current || pinnedMessageId;
+                if (currentPinnedId && String(currentPinnedId) !== String(targetMsg.id)) {
+                    setPendingGroupPinMsgId(String(targetMsg.id));
+                    setIsReplacePinModalOpen(true);
+                } else {
+                    executePinGroupMessage(String(targetMsg.id));
+                }
             }
             setSelectedMessages([]);
         } else if (action === 'unpin') {
-            const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
-            setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
-            setPinnedMessageIdState(null);
-            toast({ description: "Message unpinned" });
-            pinMessage(String(conversationId), null, false, companyId).catch((err) => {
-                console.error("Failed to unpin group message on server:", err);
-            });
+            setIsRemovePinModalOpen(true);
             setSelectedMessages([]);
         } else if (action === 'delete') {
             setDeleteTargetMessage(msg || targetMsg || null);
@@ -312,7 +369,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         } else if (action === 'close') {
             setSelectedMessages([]);
         }
-    }, [selectedMessage, selectedMessages, handleDeleteForMe, handleDeleteForEveryone, toast]);
+    }, [selectedMessage, selectedMessages, handleDeleteForMe, handleDeleteForEveryone, toast, pinnedMessageId, executePinGroupMessage]);
 
     const handleMessageClick = React.useCallback((message: Message) => {
         setSelectedMessages((prev) => {
@@ -568,6 +625,10 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
 
         const handleMessageDeleted = (payload: { messageId: string; conversationId: string; deleteType?: string }) => {
             if (payload.conversationId !== groupId) return;
+            if (pinnedMessageId && String(payload.messageId) === String(pinnedMessageId)) {
+                setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
+                setPinnedMessageIdState(null);
+            }
             const isDeleteForMe = payload.deleteType === 'me';
 
             queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
@@ -933,33 +994,12 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             socket.emit('stopGroupTyping', { groupId: groupId });
         }
 
-        const isDocFile = (f: File) =>
-            f.type === "application/pdf" ||
-            f.type.includes("word") ||
-            f.type.includes("officedocument") ||
-            /\.(doc|docx|pdf|txt|rtf|xls|xlsx|ppt|pptx)$/i.test(f.name);
-
-        const visualFiles = files ? files.filter((f) => !isDocFile(f)) : [];
-        const docFiles = files ? files.filter((f) => isDocFile(f)) : [];
-
-        if (docFiles.length > 0) {
-            if (visualFiles.length > 0 || text.trim()) {
-                sendMessageMutation.mutate({ text, files: visualFiles, replyMessageId: replyingTo?.messageId });
-                docFiles.forEach((docFile) => {
-                    sendMessageMutation.mutate({ text: "", files: [docFile] });
-                });
-            } else {
-                docFiles.forEach((docFile, idx) => {
-                    sendMessageMutation.mutate({
-                        text: "",
-                        files: [docFile],
-                        replyMessageId: idx === 0 ? replyingTo?.messageId : undefined,
-                    });
-                });
-            }
-        } else {
-            sendMessageMutation.mutate({ text, files: visualFiles, replyMessageId: replyingTo?.messageId });
-        }
+        // Send message with all attachments (visual media, multiple documents) together in one message
+        sendMessageMutation.mutate({
+            text,
+            files: files || [],
+            replyMessageId: replyingTo?.messageId,
+        });
 
         setReplyingTo(null);
     }, [socket, groupId, sendMessageMutation, replyingTo]);
@@ -1072,24 +1112,26 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
 
     const pinnedMessage = useMemo(() => {
         if (!pinnedMessageId) return null;
-        return displayMessages.find((m) => String(m.id) === String(pinnedMessageId)) || null;
+        const msg = displayMessages.find((m) => String(m.id) === String(pinnedMessageId));
+        if (!msg || msg.is_deleted_for_me || msg.text === "This message was deleted for you.") {
+            return null;
+        }
+        return msg;
     }, [displayMessages, pinnedMessageId]);
+
+    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
     const handleScrollToPinnedMessage = (msgId: string) => {
         const el = document.getElementById(`msg-${msgId}`);
         if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setHighlightedMessageId(msgId);
+            setTimeout(() => setHighlightedMessageId(null), 1000);
         }
     };
 
     const handleUnpinPinnedMessage = () => {
-        const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
-        setPinnedMessageId(conversationId, null, activeProfile?.type, activeProfile?.id);
-        setPinnedMessageIdState(null);
-        toast({ description: "Message unpinned" });
-        pinMessage(String(conversationId), null, false, companyId).catch((err) => {
-            console.error("Failed to unpin group message on server:", err);
-        });
+        setIsRemovePinModalOpen(true);
     };
 
     if (isLoading && !fetchedMessages.length) {
@@ -1149,7 +1191,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     activeView !== 'chat' ? "opacity-0 invisible translate-x-[-20px]" : "opacity-100 visible translate-x-0"
                 )}>
                     <div className="flex-1 flex flex-col overflow-hidden relative">
-                        {pinnedMessageId && (
+                        {pinnedMessageId && pinnedMessage && (
                             <PinnedMessageBanner
                                 message={pinnedMessage}
                                 pinnedMessageId={pinnedMessageId}
@@ -1160,6 +1202,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                         <GroupMessageList
                             messages={displayMessages}
                             pinnedMessageId={pinnedMessageId}
+                            highlightedMessageId={highlightedMessageId}
                             conversationId={conversationId}
                             groupMembers={activeGroup?.members}
                             currentUserId={currentUser.id || currentUser.user_id || ""}
@@ -1228,7 +1271,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                                 onSendMessage={handleSendMessage}
                                 onTyping={handleTypingInput}
                                 isLoading={isLoading || isMessagesLoading}
-                                placeholder="Type a message to group..."
+                                placeholder="Write a message...."
                                 replyingTo={replyingTo}
                                 onCancelReply={() => setReplyingTo(null)}
                                 editingMessage={editingMessage}
@@ -1327,6 +1370,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                         onAddMember={() => setIsAddMemberOpen(true)}
                         activeView={activeView}
                         setActiveView={setActiveView}
+                        isMuted={isMuted}
+                        mutedUntil={mutedUntil}
                     />
                 </div>
             </div>
@@ -1336,6 +1381,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                 onClose={() => setIsAddMemberOpen(false)}
                 initialView="addMembers"
                 mode="addMembers"
+                title="Add Members"
                 groupId={groupId}
             />
 
@@ -1417,6 +1463,22 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     }
                 }}
                 onCancel={() => setShowLeaveConfirm(false)}
+            />
+
+            {/* Remove Pinned Message Confirmation Modal */}
+            <ActionConfirmModal
+                isOpen={isRemovePinModalOpen}
+                type="remove_pinned_message"
+                onClose={cancelRemoveGroupPin}
+                onConfirm={confirmRemoveGroupPin}
+            />
+
+            {/* Replace Pinned Message Confirmation Modal */}
+            <ActionConfirmModal
+                isOpen={isReplacePinModalOpen}
+                type="replace_pinned_message"
+                onClose={cancelReplaceGroupPin}
+                onConfirm={confirmReplaceGroupPin}
             />
         </div>
     );

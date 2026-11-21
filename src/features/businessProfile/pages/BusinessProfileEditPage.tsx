@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Building2 as BusinessBuildingIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { businessProfileService } from "../services/businessProfile.service";
 import BusinessEditProfileTab from "../components/edit/BusinessEditProfileTab";
 import BusinessEditAboutTab from "../components/edit/BusinessEditAboutTab";
-import { BusinessBuildingIcon } from "@/components/icons";
+import { UnderlineTabs, TabItem } from "@/components/ui/UnderlineTabs";
 import { cn } from "@/lib/utils";
 import { AccessDenied } from "@/features/access-denied";
 import {
@@ -171,105 +171,16 @@ export function BusinessProfileEditPage() {
           </button>
         </div>
 
-        {/* Tab Switcher (Matching Figma Frame 2609634) */}
-        <div className="self-stretch inline-flex justify-start items-center gap-3">
-          {/* Profile Tab */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("profile")}
-            className="inline-flex flex-col justify-start items-center cursor-pointer group focus:outline-none bg-transparent border-0 p-0"
-          >
-            <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
-              <div className="inline-flex justify-center items-center gap-1">
-                <span
-                  className={cn(
-                    "text-base font-medium font-['DM_Sans'] leading-6 transition-colors",
-                    activeTab === "profile"
-                      ? "text-ds-text-primary"
-                      : "text-ds-text-secondary group-hover:text-ds-text-primary"
-                  )}
-                >
-                  Profile
-                </span>
-              </div>
-            </div>
-            {activeTab === "profile" ? (
-              <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
-            ) : (
-              <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
-            )}
-          </button>
-
-          {/* About Tab */}
-          <button
-            type="button"
-            onClick={() => setActiveTab("about")}
-            className="inline-flex flex-col justify-start items-center cursor-pointer group focus:outline-none bg-transparent border-0 p-0"
-          >
-            <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
-              <div className="inline-flex justify-center items-center gap-1">
-                <span
-                  className={cn(
-                    "text-base font-medium font-['DM_Sans'] leading-6 transition-colors",
-                    activeTab === "about"
-                      ? "text-ds-text-primary"
-                      : "text-ds-text-secondary group-hover:text-ds-text-primary"
-                  )}
-                >
-                  About
-                </span>
-              </div>
-            </div>
-            {activeTab === "about" ? (
-              <div className="self-stretch mx-[1%] h-[3px] rounded-full bg-ds-accent shadow-[0px_2px_4px_0px_rgba(255,236,230,0.08)]" />
-            ) : (
-              <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
-            )}
-          </button>
-
-          {/* Verification Tab (Mobile only to match Figma mobile, hidden on desktop) */}
-          {!canVerify ? (
-            <TooltipProvider>
-              <Tooltip delayDuration={100} enableTouch>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex cursor-not-allowed">
-                    <button
-                      type="button"
-                      onClick={(e) => e.preventDefault()}
-                      className="sm:hidden inline-flex flex-col justify-start items-center cursor-not-allowed group focus:outline-none bg-transparent border-0 p-0"
-                    >
-                      <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
-                        <div className="inline-flex justify-center items-center gap-1">
-                          <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
-                            Verification
-                          </span>
-                        </div>
-                      </div>
-                      <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
-                    </button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
-                  You don't have access to verify on the behalf of company
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <button
-              type="button"
-              onClick={() => router.push(`/organization/${rawSlug}/verify`)}
-              className="sm:hidden inline-flex flex-col justify-start items-center cursor-pointer group focus:outline-none bg-transparent border-0 p-0"
-            >
-              <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
-                <div className="inline-flex justify-center items-center gap-1">
-                  <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
-                    Verification
-                  </span>
-                </div>
-              </div>
-              <div className="self-stretch mx-[1%] h-[3px] bg-transparent" />
-            </button>
-          )}
+        {/* Tab Switcher */}
+        <div className="self-stretch">
+          <UnderlineTabs
+            tabs={[
+              { id: "profile", label: "Profile" },
+              { id: "about", label: "About" },
+            ]}
+            activeTab={activeTab}
+            onChange={(tab) => setActiveTab(tab as "profile" | "about")}
+          />
         </div>
 
         {/* Tab Content Panels */}

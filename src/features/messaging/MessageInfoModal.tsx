@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { CheckCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { CancelIcon } from "@/components/icons";
 import Avatar from "@/components/shared/Avatar";
 import { getMessageReadReceipts } from "@/services/api/group-chat";
 import { Message, ChatThread } from "@/types/messaging";
 import { cn } from "@/lib/utils";
+import { useSocial } from "@/context/SocialContext";
 
 interface MessageInfoModalProps {
   isOpen: boolean;
@@ -135,6 +136,7 @@ export default function MessageInfoModal({
   isGroup,
   currentUserId,
 }: MessageInfoModalProps) {
+  const { isBlocked } = useSocial();
   const [seenBy, setSeenBy] = useState<SeenByUser[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -177,6 +179,83 @@ export default function MessageInfoModal({
   const editedRawTime = message?.edited_at;
   const editedFormatted = useMemo(() => (editedRawTime ? formatExactMessageTime(editedRawTime) : null), [editedRawTime]);
 
+  // Helper to parse mentions in text e.g. @[Name](uuid) -> @Name
+  const renderTextWithMentions = (text: string) => {
+    if (!text) return null;
+    const regex = /(@\[[^\]]+\]\([^)]+\))/g;
+    const parts = text.split(regex);
+    if (parts.length <= 1) {
+      const match = text.match(/^@\[([^\]]+)\]\([^)]+\)$/);
+      if (match) {
+        const name = match[1];
+        return (
+          <span className="font-semibold text-[var(--ds-accent)] !text-[var(--ds-accent)]">
+            {name.startsWith("@") ? name : `@${name}`}
+          </span>
+        );
+      }
+      return text;
+    }
+
+    return parts.map((part, index) => {
+      const match = part.match(/^@\[([^\]]+)\]\([^)]+\)$/);
+      if (match) {
+        const name = match[1];
+        return (
+          <span
+            key={index}
+            className="font-semibold text-[var(--ds-accent)] !text-[var(--ds-accent)]"
+          >
+            {name.startsWith("@") ? name : `@${name}`}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
+  const rawText = message?.text || message?.text_content || messageContent || "";
+
+  // 1. Check Shared Post
+  const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:post))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
+  const extractedPostId = rawText.match(postUrlRegex)?.[1];
+  const hasSharedPost = Boolean(
+    message && (
+      message.sharedPost ||
+      (message as any).shared_post ||
+      message.sharedPostId ||
+      (message as any).shared_post_id ||
+      ((message.entityType === 'post' || message.entityType === 'article') && message.entityId) ||
+      extractedPostId
+    )
+  );
+
+  // 2. Check Shared Profile
+  const profileUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:profile|organization|company)\/([a-zA-Z0-9_.-]+)/i;
+  const extractedProfileId = rawText.match(profileUrlRegex)?.[1];
+  const hasSharedProfile = Boolean(
+    message && !hasSharedPost && (
+      message.sharedProfile ||
+      message.sharedProfileId ||
+      ((message.entityType === 'profile' || message.entityType === 'company') && message.entityId) ||
+      extractedProfileId
+    )
+  );
+
+  // 3. Check Shared Job
+  const jobUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/jobs\/([a-zA-Z0-9_-]+)/i;
+  const extractedJobId = rawText.match(jobUrlRegex)?.[1];
+  const isJobEntity = message?.entityType === "job" || message?.entityType === "offer";
+  const hasSharedJob = Boolean(
+    message && !hasSharedPost && !hasSharedProfile && (
+      (isJobEntity && message.entityId) ||
+      extractedJobId
+    )
+  );
+
+  // 4. Check Media
+  const hasMedia = Boolean(message?.media && message.media.length > 0);
+
   // Content to display in preview bubble
   const displayContent = useMemo(() => {
     if (messageContent) return messageContent;
@@ -202,11 +281,15 @@ export default function MessageInfoModal({
 
     if (!isMe) {
       // For other member's message: simply show sender user in the list with their sent time
+      const isSenderBlocked = Boolean(
+        (message?.senderId && isBlocked(message.senderId)) ||
+        message?.isBlocked
+      );
       setSeenBy([
         {
           user_id: message?.senderId || "sender",
-          full_name: senderName,
-          avatar_url: senderAvatar || "",
+          full_name: isSenderBlocked ? "Unknown user" : senderName,
+          avatar_url: isSenderBlocked ? "" : (senderAvatar || ""),
           read_at: sentRawTime || "",
         },
       ]);
@@ -262,6 +345,30 @@ export default function MessageInfoModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  const previewText = useMemo(() => {
+    if (hasSharedPost) return "Post";
+    if (hasMedia) {
+      if (message?.media && message.media.length > 0) {
+        const first = message.media[0] as any;
+        return first.name || first.filename || (first.type === "image" ? "Photo" : first.type === "video" ? "Video" : first.type === "document" ? "Document" : "Attachment");
+      }
+      return "Attachment";
+    }
+    if (hasSharedProfile) return "Profile";
+    if (hasSharedJob) return "Job";
+
+    const text = messageContent || message?.text || message?.text_content || "";
+    if (!text) return "Message";
+    return text.replace(/@\[([^\]]+)\]\([^)]+\)/g, (_, name) => (name.startsWith("@") ? name : `@${name}`));
+  }, [hasSharedPost, hasMedia, hasSharedProfile, hasSharedJob, message, messageContent]);
+
+  const isSeen = useMemo(() => {
+    if (effectiveIsGroup) {
+      return seenBy.length > 0;
+    }
+    return Boolean(effectiveReadAt);
+  }, [effectiveIsGroup, seenBy.length, effectiveReadAt]);
+
   if (!isOpen) return null;
 
   return (
@@ -269,54 +376,48 @@ export default function MessageInfoModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      {/* info pop up box */}
+      {/* info pop up box: 400px x 320px, padding: 12px, border-radius: 16px, background: #030303 / var(--ds-bg) */}
       <div
-        className="w-[400px] max-w-[calc(100vw-32px)] h-[328px] max-h-[85vh] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] p-3 flex flex-col items-center relative box-border shadow-2xl animate-in zoom-in-95 duration-200"
+        className="w-[400px] max-w-[calc(100vw-32px)] h-[320px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] p-3 flex flex-col items-center relative box-border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Frame 2609536: Header row with cancel cross icon */}
-        <div className="w-full h-5 flex flex-row justify-end items-center gap-[10px] flex-none order-0 self-stretch">
+        {/* Frame 2609536: Header row with cancel cross icon (376px x 20px) */}
+        <div className="w-full max-w-[376px] h-5 flex flex-row justify-end items-center gap-2.5 shrink-0">
           <button
             onClick={onClose}
             aria-label="Close message info"
-            className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors focus:outline-none"
+            className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors focus:outline-none p-0 bg-transparent border-none cursor-pointer"
           >
             <CancelIcon size={20} className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Frame 2608581: Main body */}
-        <div className="w-full flex-1 flex flex-col items-center gap-3 overflow-hidden flex-none order-1 self-stretch">
-          {/* Message info title */}
-          <h2 className="w-auto h-6 font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-[var(--ds-text-primary)] select-none flex-none order-0">
+        {/* Frame 2608581: Main body (376px x 276px, gap: 12px) */}
+        <div className="w-full max-w-[376px] h-[276px] flex flex-col items-center gap-3 shrink-0 overflow-hidden">
+          {/* Message info title (height: 24px) */}
+          <h2 className="w-auto h-6 font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-[var(--ds-text-primary)] select-none shrink-0 m-0 p-0">
             Message info
           </h2>
 
-          {/* Message preview row */}
-          <div className={cn(
-            "w-full flex flex-col justify-center gap-[2px] flex-none order-1 self-stretch",
-            isMe ? "items-end" : "items-start"
-          )}>
-            {/* Message bubble outline */}
-            <div className="box-border flex flex-row justify-center items-center px-3 py-2 gap-[10px] border border-[var(--ds-border)] rounded-[16px] bg-transparent max-w-[85%] w-fit">
-              <span className={cn(
-                "font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-primary)] break-words line-clamp-2",
-                isMe ? "text-right" : "text-left"
-              )}>
-                {displayContent}
+          {/* Frame 2610041: Message preview row (height: 48px, gap: 2px, align-items: flex-end) */}
+          <div className="w-full max-w-[376px] h-12 flex flex-col justify-center items-end gap-0.5 shrink-0">
+            {/* Frame 2610036: Bubble (max-w-[313px], min-h-[34px], padding: 8px 12px) */}
+            <div className="box-border flex flex-row justify-center items-center px-3 py-2 gap-2.5 max-w-[313px] min-h-[34px] border border-[var(--ds-border)] rounded-[16px] bg-transparent">
+              <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-[var(--ds-text-primary)] truncate max-w-[287px]">
+                {previewText}
               </span>
             </div>
 
-            {/* Double checks container for author's outgoing message */}
-            {isMe && (
-              <div className="w-5 h-5 flex flex-row justify-center items-center text-[var(--ds-accent)] flex-none order-1">
-                <CheckCheck className="w-5 h-5 text-[var(--ds-accent)] stroke-[2.2]" />
-              </div>
-            )}
+            {/* Frame 2610069: Status row (height: 12px, Seen / Delivered) */}
+            <div className="flex flex-row justify-center items-center gap-2 h-3">
+              <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-text-secondary)]">
+                {isSeen ? "Seen" : "Delivered"}
+              </span>
+            </div>
           </div>
 
-          {/* List of members who read the message (or sender for incoming message) */}
-          <div className="w-full flex-1 overflow-y-auto overflow-x-hidden space-y-1 pr-1 custom-scrollbar flex-none order-2 self-stretch">
+          {/* List of members (gap: 12px, scrollable, custom-scrollbar hidden) */}
+          <div className="w-full max-w-[376px] flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pr-0.5">
             {loading ? (
               <div className="flex items-center justify-center h-24">
                 <Loader2 className="w-5 h-5 animate-spin text-[var(--ds-accent)]" />
@@ -326,30 +427,40 @@ export default function MessageInfoModal({
                 Not read by anyone yet
               </div>
             ) : (
-              seenBy.map((user) => (
-                <div
-                  key={user.user_id}
-                  className="w-full min-h-[52px] flex flex-row items-center py-2 px-0 gap-[10px] flex-none order-2 self-stretch"
-                >
-                  {/* Rectangle 82: Avatar */}
-                  <Avatar
-                    url={user.avatar_url}
-                    name={user.full_name}
-                    size="sm"
-                    className="w-8 h-8 rounded-full flex-shrink-0"
-                  />
+              seenBy.map((user) => {
+                const isUserBlocked = Boolean(
+                  (user.user_id && isBlocked(user.user_id)) ||
+                  user.full_name?.toLowerCase() === "unknown user"
+                );
+                const displayName = isUserBlocked ? "Unknown user" : user.full_name;
+                const displayAvatar = isUserBlocked ? undefined : user.avatar_url;
 
-                  {/* Frame 2609904: Text column */}
-                  <div className="flex flex-col items-start min-w-0 flex-1 flex-none order-1">
-                    <span className="font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-text-primary)] truncate max-w-full">
-                      {user.full_name}
-                    </span>
-                    <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-text-secondary)]">
-                      {formatExactMessageTime(user.read_at)}
-                    </span>
+                return (
+                  <div
+                    key={user.user_id}
+                    className="w-full max-w-[376px] h-[52px] flex flex-row items-center py-2 px-0 gap-2.5 shrink-0"
+                  >
+                    {/* Rectangle 82: Avatar 32x32 */}
+                    <Avatar
+                      url={displayAvatar}
+                      name={displayName}
+                      size="sm"
+                      isUnknown={isUserBlocked}
+                      className="w-8 h-8 rounded-full shrink-0"
+                    />
+
+                    {/* Frame 2609904: Text column (h: 36px) */}
+                    <div className="flex flex-col items-start min-w-0 flex-1 h-9 justify-center">
+                      <span className="font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-text-primary)] truncate max-w-full">
+                        {displayName}
+                      </span>
+                      <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-text-secondary)]">
+                        {formatExactMessageTime(user.read_at)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

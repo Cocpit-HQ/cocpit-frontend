@@ -145,10 +145,8 @@ export default function ChatModals({
       {/* Block Confirmation Modal */}
       <CocpitConfirmBox
         isOpen={modals.showBlockConfirm}
-        title="Block this user?"
-        message="They won't be able to message or find you"
-        confirmText="Block"
-        cancelText="Cancel"
+        type="block_profile"
+        targetName={chat.name}
         onConfirm={modals.onConfirmBlock}
         onCancel={() => modals.setShowBlockConfirm(false)}
       />
@@ -156,10 +154,7 @@ export default function ChatModals({
       {/* Delete Chat Confirmation Modal */}
       <CocpitConfirmBox
         isOpen={modals.showDeleteConfirm}
-        title="Delete this chat?"
-        message="This will remove the chat from your inbox"
-        confirmText="Delete"
-        cancelText="Cancel"
+        type="delete_conversation"
         onConfirm={modals.onConfirmDeleteChat}
         onCancel={() => modals.setShowDeleteConfirm(false)}
       />
@@ -167,10 +162,7 @@ export default function ChatModals({
       {/* Clear Chat Confirmation Modal */}
       <CocpitConfirmBox
         isOpen={modals.showClearConfirm}
-        title="Clear this chat?"
-        message="This will clear all messages in this conversation for you."
-        confirmText="Clear"
-        cancelText="Cancel"
+        type="clear_chat"
         onConfirm={modals.onConfirmClearChat}
         onCancel={() => modals.setShowClearConfirm(false)}
       />
@@ -197,10 +189,7 @@ export default function ChatModals({
       {/* Leave Group Confirmation Modal */}
       <CocpitConfirmBox
         isOpen={modals.showLeaveConfirm}
-        title="Leave this group?"
-        message="You won't receive messages from this group anymore."
-        confirmText="Leave"
-        cancelText="Cancel"
+        type="leave_group"
         onConfirm={modals.onConfirmLeaveGroup}
         onCancel={() => modals.setShowLeaveConfirm(false)}
       />

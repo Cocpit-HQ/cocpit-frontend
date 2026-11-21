@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { DateRange } from 'react-day-picker';
-import { getAnalyticsOpportunities } from '@/services/api/analytics';
+import { getAnalyticsOpportunities } from '../services/analytics.service';
 import { serializeDateRange } from './useAnalyticsFilter';
 
 export function useAnalyticsOpportunities(filter: string, dateRange?: DateRange) {

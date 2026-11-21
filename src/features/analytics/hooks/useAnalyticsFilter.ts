@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { DateRange } from 'react-day-picker';
-import { useAnalyticsStore } from '@/store/analytics.store';
+import { useAnalyticsStore } from '../store/analytics.store';
 
 export function serializeDateRange(dateRange?: DateRange): string {
   if (!dateRange) return 'none';

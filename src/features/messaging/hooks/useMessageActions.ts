@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useMutation, InfiniteData, QueryClient } from "@tanstack/react-query";
 import { Message, ChatThread } from "@/types/messaging";
 import {
@@ -15,6 +15,7 @@ import {
   getPinnedMessageId,
   setPinnedMessageId,
 } from "@/features/messaging/utils/pinMessageUtils";
+import { unmarkJobContextSent } from "./useChatSharedContext";
 
 interface ToastFunction {
   (props: {
@@ -68,12 +69,83 @@ export function useMessageActions({
   const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
 
   const [pinnedMessageId, setPinnedMessageIdState] = useState<string | null>(() => {
-    return getPinnedMessageId(chat?.id, activeProfile?.type, activeProfile?.id);
+    return chat?.pinned_message_id || getPinnedMessageId(chat?.id, activeProfile?.type, activeProfile?.id);
   });
+  const pinnedMessageIdRef = useRef<string | null>(pinnedMessageId);
+  useEffect(() => {
+    pinnedMessageIdRef.current = pinnedMessageId;
+  }, [pinnedMessageId]);
+
+  const [pendingPinMessageId, setPendingPinMessageId] = useState<string | null>(null);
+  const [isReplacePinModalOpen, setIsReplacePinModalOpen] = useState(false);
+  const [isRemovePinModalOpen, setIsRemovePinModalOpen] = useState(false);
 
   useEffect(() => {
-    setPinnedMessageIdState(getPinnedMessageId(chat?.id, activeProfile?.type, activeProfile?.id));
-  }, [chat?.id, activeProfile?.type, activeProfile?.id]);
+    const initialPinnedId = chat?.pinned_message_id || getPinnedMessageId(chat?.id, activeProfile?.type, activeProfile?.id);
+    setPinnedMessageIdState(initialPinnedId);
+    pinnedMessageIdRef.current = initialPinnedId;
+    if (chat?.pinned_message_id && chat?.id) {
+      setPinnedMessageId(chat.id, chat.pinned_message_id, activeProfile?.type, activeProfile?.id);
+    }
+  }, [chat?.id, chat?.pinned_message_id, activeProfile?.type, activeProfile?.id]);
+
+  const executePinMessage = useCallback((msgId: string) => {
+    const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+    setPinnedMessageId(chat.id, msgId, activeProfile?.type, activeProfile?.id);
+    setPinnedMessageIdState(String(msgId));
+    pinnedMessageIdRef.current = String(msgId);
+    toast({ description: "A message was pinned" });
+    pinMessage(String(chat.id), String(msgId), true, companyId).catch((err) => {
+      console.error("Failed to pin message on server:", err);
+    });
+  }, [activeProfile?.id, activeProfile?.type, chat.id, toast]);
+
+  const executeUnpinMessage = useCallback(() => {
+    const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+    setPinnedMessageId(chat.id, null, activeProfile?.type, activeProfile?.id);
+    setPinnedMessageIdState(null);
+    pinnedMessageIdRef.current = null;
+    toast({ description: "A message was unpinned" });
+    pinMessage(String(chat.id), null, false, companyId).catch((err) => {
+      console.error("Failed to unpin message on server:", err);
+    });
+  }, [activeProfile?.id, activeProfile?.type, chat.id, toast]);
+
+  const confirmReplacePin = useCallback(() => {
+    if (pendingPinMessageId) {
+      executePinMessage(pendingPinMessageId);
+      setPendingPinMessageId(null);
+    }
+    setIsReplacePinModalOpen(false);
+  }, [executePinMessage, pendingPinMessageId]);
+
+  const cancelReplacePin = useCallback(() => {
+    setPendingPinMessageId(null);
+    setIsReplacePinModalOpen(false);
+  }, []);
+
+  const confirmRemovePin = useCallback(() => {
+    executeUnpinMessage();
+    setIsRemovePinModalOpen(false);
+  }, [executeUnpinMessage]);
+
+  const cancelRemovePin = useCallback(() => {
+    setIsRemovePinModalOpen(false);
+  }, []);
+
+  const requestPinMessage = useCallback((msgId: string) => {
+    const currentPinnedId = pinnedMessageIdRef.current || pinnedMessageId;
+    if (currentPinnedId && String(currentPinnedId) !== String(msgId)) {
+      setPendingPinMessageId(String(msgId));
+      setIsReplacePinModalOpen(true);
+    } else {
+      executePinMessage(String(msgId));
+    }
+  }, [executePinMessage, pinnedMessageId]);
+
+  const requestUnpinMessage = useCallback(() => {
+    setIsRemovePinModalOpen(true);
+  }, []);
 
   const setSelectedMessage = useCallback((msg: Message | null) => {
     if (!msg) {
@@ -105,6 +177,20 @@ export function useMessageActions({
     entityType?: string | null;
     entityId?: string | null;
     isAttachment?: boolean;
+    sharedProfile?: {
+      name: string;
+      avatar?: string | null;
+      headline?: string;
+    } | null;
+    sharedPost?: {
+      id?: string;
+      content?: string;
+      caption?: string;
+      media?: { url: string; type?: string }[];
+      poll?: any;
+      post_type?: string;
+    } | null;
+    poll?: any;
   } | null>(null);
 
   // Multi-message selection toggle
@@ -139,6 +225,7 @@ export function useMessageActions({
     if (pinnedMessageId && targetIds.has(pinnedMessageId)) {
       setPinnedMessageId(chat.id, null, activeProfile?.type, activeProfile?.id);
       setPinnedMessageIdState(null);
+      // Delete for Me hides the pinned message locally for this user only; does not unpin for the other participant
     }
 
     try {
@@ -218,6 +305,10 @@ export function useMessageActions({
     if (pinnedMessageId && targetIds.has(pinnedMessageId)) {
       setPinnedMessageId(chat.id, null, activeProfile?.type, activeProfile?.id);
       setPinnedMessageIdState(null);
+      const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+      pinMessage(String(chat.id), null, false, companyId).catch((err) => {
+        console.error("Failed to unpin deleted message on server:", err);
+      });
     }
 
     const updateCache = (old: InfiniteData<Message[]> | undefined) => {
@@ -252,6 +343,16 @@ export function useMessageActions({
       updateCache,
     );
     queryClient.setQueryData(["messages", chat.id], updateCache);
+
+    // If job/offer card message was deleted for everyone, clear the sent record for that specific entityId
+    // so subsequent actions from the application dashboard for that job can re-attach the context
+    targetMsgs.forEach((m) => {
+      const mType = (m as any).entityType || (m as any).entity_type;
+      const mId = (m as any).entityId || (m as any).entity_id;
+      if (mType === "job" || mType === "offer") {
+        unmarkJobContextSent(chat.id, mId);
+      }
+    });
 
     try {
       await Promise.allSettled(targetMsgs.map((m) => deleteMessage(m.id, true)));
@@ -454,13 +555,47 @@ export function useMessageActions({
 
     const hasRealMessageText = Boolean(textContent && !isGenericText && textContent !== firstMedia?.name);
 
+    const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:posts?))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
+    const extractedPostId = textContent.match(postUrlRegex)?.[1];
+    const targetPostId =
+      msg.sharedPostId ||
+      (msg as any).shared_post_id ||
+      (msg.entityType === 'post' || msg.entityType === 'article' ? msg.entityId : null) ||
+      msg.sharedPost?.id ||
+      extractedPostId;
+    const cachedPost = targetPostId ? queryClient.getQueryData<any>(["sharedPost", targetPostId]) : null;
+
+    const pollObj =
+      (msg as any).poll ||
+      msg.sharedPost?.poll ||
+      (msg as any).shared_post?.poll ||
+      cachedPost?.poll ||
+      (cachedPost?.post_type === 'poll' ? { question: cachedPost.content } : null) ||
+      null;
+
+    const profileObj = msg.sharedProfile || (msg as any).shared_profile || null;
+    const postObj = msg.sharedPost || (msg as any).shared_post || cachedPost || null;
+    const postMediaUrl = postObj?.media?.[0]?.url || null;
+    const resolvedMediaUrl = firstMedia?.url || postMediaUrl || null;
+    const resolvedMediaType =
+      firstMedia?.type ||
+      (postMediaUrl ? (postObj?.media?.[0]?.type || 'image') : null) ||
+      detectedMediaType;
+
     let finalContent = "";
-    if (isAttachmentCard) {
-      finalContent = "Attachment";
-    } else if (hasRealMessageText) {
+    if (pollObj) {
+      const pollQ = (pollObj as any)?.question || cachedPost?.content || msg.sharedPost?.content;
+      finalContent = pollQ && !pollQ.startsWith('http') && pollQ.trim().toLowerCase() !== 'poll' ? pollQ : (cachedPost?.content || "Poll");
+    } else if (profileObj?.name) {
+      finalContent = profileObj.name;
+    } else if (postObj?.content || postObj?.caption) {
+      finalContent = postObj.content || postObj.caption || "";
+    } else if (hasRealMessageText && !textContent.startsWith('http')) {
       finalContent = textContent;
     } else if (detectedMediaType === "document") {
       finalContent = firstMedia?.name || textContent || "Document";
+    } else if (isAttachmentCard) {
+      finalContent = "Attachment";
     }
 
     setReplyingTo({
@@ -468,16 +603,58 @@ export function useMessageActions({
       senderName: msg.senderName || "Unknown",
       content: finalContent,
       isMe: isSelf,
-      mediaType: isAttachmentCard ? "attachment" : detectedMediaType,
+      mediaType: isAttachmentCard && !postMediaUrl ? "attachment" : resolvedMediaType,
       mediaName: firstMedia?.name || (detectedMediaType === "document" ? textContent : null),
-      mediaUrl: isAttachmentCard ? null : (firstMedia?.url || null),
-      sharedPostId: msg.sharedPostId || (msg as any).shared_post_id || null,
+      mediaUrl: resolvedMediaUrl,
+      sharedPostId: targetPostId || msg.sharedPostId || (msg as any).shared_post_id || null,
       sharedProfileId: msg.sharedProfileId || (msg as any).shared_profile_id || null,
       sharedProfileType: (msg as any).shared_profile_type || null,
-      entityType: msg.entityType || (msg as any).entity_type || (hasPost ? "post" : hasJob ? "job" : hasProfile ? "profile" : null),
-      entityId: msg.entityId || (msg as any).entity_id || null,
+      entityType: msg.entityType || (msg as any).entity_type || (hasPost || targetPostId ? "post" : hasJob ? "job" : hasProfile ? "profile" : null),
+      entityId: msg.entityId || (msg as any).entity_id || targetPostId || null,
       isAttachment: isAttachmentCard,
+      sharedProfile: profileObj,
+      sharedPost: postObj,
+      poll: pollObj ? { ...(typeof pollObj === 'object' ? pollObj : {}), question: finalContent } : null,
     });
+
+    // If post metadata was not immediately cached, fetch asynchronously to update preview and reply state
+    if (targetPostId && !cachedPost) {
+      import("@/services/api/posts").then(({ getPostById }) => {
+        getPostById(targetPostId).then((backendPost) => {
+          if (!backendPost) return;
+          const media = backendPost.media?.map((m) => ({
+            url: m.url,
+            type: m.media_type as "image" | "video",
+          })) || [];
+          const postData = {
+            id: backendPost.post_id,
+            content: backendPost.content || "",
+            post_type: backendPost.post_type,
+            poll: backendPost.poll,
+            media,
+          };
+          queryClient.setQueryData(["sharedPost", targetPostId], postData);
+          queryClient.setQueryData(["repliedPostPreview", targetPostId], postData);
+          setReplyingTo((prev) => {
+            if (!prev || prev.messageId !== msg.id) return prev;
+            const updatedPoll =
+              backendPost.poll ||
+              (backendPost.post_type === 'poll' ? { question: backendPost.content } : null);
+            const updatedMediaUrl = media[0]?.url || prev.mediaUrl;
+            const pollQ = (updatedPoll as any)?.question || backendPost.content;
+            const updatedContent = pollQ && !pollQ.startsWith('http') && pollQ.trim().toLowerCase() !== 'poll' ? pollQ : prev.content;
+            return {
+              ...prev,
+              content: updatedContent,
+              mediaUrl: updatedMediaUrl,
+              mediaType: media[0]?.type || (updatedMediaUrl ? 'image' : prev.mediaType),
+              sharedPost: postData,
+              poll: updatedPoll ? { ...(typeof updatedPoll === 'object' ? updatedPoll : {}), question: updatedContent } : null,
+            };
+          });
+        }).catch(console.error);
+      });
+    }
   };
 
   const handleMediaClick = (
@@ -543,27 +720,11 @@ export function useMessageActions({
       setSelectedMessages([]);
     } else if (action === "pin") {
       if (targetMsg) {
-        const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
-        setPinnedMessageId(chat.id, targetMsg.id, activeProfile?.type, activeProfile?.id);
-        setPinnedMessageIdState(String(targetMsg.id));
-        toast({
-          description: "Message pinned",
-        });
-        pinMessage(String(chat.id), String(targetMsg.id), true, companyId).catch((err) => {
-          console.error("Failed to pin message on server:", err);
-        });
+        requestPinMessage(String(targetMsg.id));
       }
       setSelectedMessages([]);
     } else if (action === "unpin") {
-      const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
-      setPinnedMessageId(chat.id, null, activeProfile?.type, activeProfile?.id);
-      setPinnedMessageIdState(null);
-      toast({
-        description: "Message unpinned",
-      });
-      pinMessage(String(chat.id), null, false, companyId).catch((err) => {
-        console.error("Failed to unpin message on server:", err);
-      });
+      requestUnpinMessage();
       setSelectedMessages([]);
     } else if (action === "info") {
       const msgForInfo = targetMsg || (selectedMessages.length > 0 ? selectedMessages[0] : null);
@@ -613,24 +774,14 @@ export function useMessageActions({
     handleReply,
     pinnedMessageId,
     setPinnedMessageId: setPinnedMessageIdState,
-    handlePinMessage: (msgId: string) => {
-      const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
-      setPinnedMessageId(chat.id, msgId, activeProfile?.type, activeProfile?.id);
-      setPinnedMessageIdState(String(msgId));
-      toast({ description: "Message pinned" });
-      pinMessage(String(chat.id), String(msgId), true, companyId).catch((err) => {
-        console.error("Failed to pin message on server:", err);
-      });
-    },
-    handleUnpinMessage: () => {
-      const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
-      setPinnedMessageId(chat.id, null, activeProfile?.type, activeProfile?.id);
-      setPinnedMessageIdState(null);
-      toast({ description: "Message unpinned" });
-      pinMessage(String(chat.id), null, false, companyId).catch((err) => {
-        console.error("Failed to unpin message on server:", err);
-      });
-    },
+    isReplacePinModalOpen,
+    isRemovePinModalOpen,
+    confirmReplacePin,
+    cancelReplacePin,
+    confirmRemovePin,
+    cancelRemovePin,
+    handlePinMessage: requestPinMessage,
+    handleUnpinMessage: requestUnpinMessage,
     handleMediaClick,
     handleMessageActionWithMsg,
   };

@@ -27,6 +27,7 @@ interface MobileChatHeaderProps {
   onDeleteClick?: () => void;
   onLeaveClick?: () => void;
   onTogglePin?: () => void;
+  onOpenDetails?: () => void;
   isQuickChat?: boolean;
 }
 
@@ -42,6 +43,7 @@ export default function MobileChatHeader({
   onDeleteClick,
   onLeaveClick,
   onTogglePin,
+  onOpenDetails,
   isQuickChat
 }: MobileChatHeaderProps) {
   const allSelected =
@@ -111,9 +113,16 @@ export default function MobileChatHeader({
                   </div>
                 </div>
               ) : (
-                <Link 
-                  href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
-                  className={`flex items-center gap-2.5 overflow-hidden flex-1 group`}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenDetails && !(chat.isBlockedByOther || chat.isDeactivated || chat.isDeleted)) {
+                      onOpenDetails();
+                    }
+                  }}
+                  className={`flex items-center gap-2.5 overflow-hidden flex-1 group p-0 bg-transparent border-0 text-left ${
+                    (chat.isBlockedByOther || chat.isDeactivated || chat.isDeleted) ? "cursor-default" : "cursor-pointer"
+                  }`}
                 >
                   <div className={`w-8 h-8 flex-shrink-0 relative ${chat.otherUserType === 'COMPANY' ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden`}>
                     {!(chat.isBlockedByOther || chat.isDeactivated || chat.isDeleted) && chat.avatar ? (
@@ -157,7 +166,7 @@ export default function MobileChatHeader({
                       <p className={`${isQuickChat ? "font-['DM_Sans'] font-normal text-[10px] leading-[14px] text-[var(--ds-text-secondary)] truncate" : "font-['DM_Sans'] text-xs text-[var(--ds-text-secondary)] truncate"}`}>{chat.role}</p>
                     )}
                   </div>
-                </Link>
+                </button>
               )}
             </div>
           ) : (
@@ -211,12 +220,18 @@ export default function MobileChatHeader({
                       <Pencil className="w-4 h-4 mr-2" /> Edit
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => onMessageAction?.('delete_for_me')} className="text-destructive focus:text-destructive">
-                    <Trash2 className="w-4 h-4 mr-2" /> Delete for me
+                  <DropdownMenuItem
+                    onClick={() => onMessageAction?.('delete_for_me')}
+                    className="cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2 text-[var(--ds-error)]" /> <span className="!text-[var(--ds-error)]">Delete for me</span>
                   </DropdownMenuItem>
                   {allAreMine && (
-                    <DropdownMenuItem onClick={() => onMessageAction?.('delete_for_everyone')} className="text-destructive focus:text-destructive">
-                      <Trash2 className="w-4 h-4 mr-2" /> Delete for everyone
+                    <DropdownMenuItem
+                      onClick={() => onMessageAction?.('delete_for_everyone')}
+                      className="cursor-pointer outline-none border-none !bg-transparent hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent shadow-none transition-opacity !text-[var(--ds-error)] hover:!text-[var(--ds-error)] focus:!text-[var(--ds-error)] data-[highlighted]:!text-[var(--ds-error)] hover:opacity-80 focus:opacity-80 data-[highlighted]:opacity-80"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2 text-[var(--ds-error)]" /> <span className="!text-[var(--ds-error)]">Delete for everyone</span>
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>

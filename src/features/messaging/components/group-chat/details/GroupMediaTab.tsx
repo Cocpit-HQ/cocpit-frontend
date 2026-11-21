@@ -18,11 +18,11 @@ export const GroupMediaTab: React.FC<GroupMediaTabProps> = ({
     onPreviewMedia
 }) => {
     return (
-        /* Frame 2608673: 16px below tabs, max-w-[618px], gap 8px */
-        <div className="mt-4 max-w-[618px] mx-auto w-full font-['DM_Sans']">
+        /* Frame 2608673: 16px below tabs, max-w-[618px], responsive height, gap 8px */
+        <div className="mt-4 max-w-[618px] mx-auto w-full font-['DM_Sans'] pb-6">
             {isLoading ? (
                 /* Skeleton showing 6 items matching Frame 2608673 */
-                <div className="grid grid-cols-3 gap-2 max-w-[618px] mx-auto w-full max-h-[413.32px] overflow-hidden">
+                <div className="grid grid-cols-3 gap-2 max-w-[618px] mx-auto w-full">
                     {[1, 2, 3, 4, 5, 6].map((n) => (
                         <div
                             key={n}
@@ -31,8 +31,8 @@ export const GroupMediaTab: React.FC<GroupMediaTabProps> = ({
                     ))}
                 </div>
             ) : media && media.length > 0 ? (
-                /* Frame 2608673: 3 columns, gap 8px (horizontal and vertical), max height 413.32px (6 visible), hidden scrollbar */
-                <div className="grid grid-cols-3 gap-2 max-w-[618px] mx-auto w-full max-h-[413.32px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                /* Frame 2608673: 3 columns, gap 8px (horizontal and vertical), responsive height */
+                <div className="grid grid-cols-3 gap-2 max-w-[618px] mx-auto w-full">
                     {media.map((item, idx) => {
                         const isVideo = Boolean(item.media_type === 'video' || item.url?.includes('.mp4'));
                         const uniqueKey = item.media_id ? `${item.media_id}-${idx}` : `media-${idx}`;
@@ -42,17 +42,17 @@ export const GroupMediaTab: React.FC<GroupMediaTabProps> = ({
                             <div
                                 key={uniqueKey}
                                 onClick={() => onPreviewMedia(item, idx)}
-                                className="h-[202.66px] w-full rounded-[8px] overflow-hidden relative cursor-pointer group bg-[var(--ds-bg)] border border-[var(--ds-border)] transition-transform hover:opacity-95"
+                                className="h-[202.66px] w-full rounded-[8px] overflow-hidden relative cursor-pointer group bg-[var(--ds-surface-1)] border border-[var(--ds-border)] transition-transform hover:opacity-95 flex items-center justify-center"
                             >
                                 {isVideo ? (
-                                    /* Video Media: Edge-to-edge video fill with subtle play overlay */
+                                    /* Video Media: Full view contain without cropping */
                                     <div className="w-full h-full relative bg-black flex items-center justify-center">
                                         <video
                                             src={item.url}
                                             preload="metadata"
                                             muted
                                             playsInline
-                                            className="w-full h-full object-cover rounded-[8px]"
+                                            className="w-full h-full object-contain rounded-[8px]"
                                         />
                                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
                                             <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white">
@@ -61,14 +61,14 @@ export const GroupMediaTab: React.FC<GroupMediaTabProps> = ({
                                         </div>
                                     </div>
                                 ) : (
-                                    /* Image Media: Edge-to-edge image fill */
-                                    <div className="w-full h-full relative bg-[var(--ds-surface-1)]">
+                                    /* Image Media: Full view contain without cropping */
+                                    <div className="w-full h-full relative bg-[var(--ds-surface-1)] flex items-center justify-center p-0.5">
                                         <Image
                                             src={item.url}
                                             alt={item.filename || "Group media"}
                                             fill
                                             sizes="(max-width: 768px) 33vw, 200px"
-                                            className="object-cover rounded-[8px] group-hover:scale-105 transition-transform duration-300"
+                                            className="object-contain rounded-[8px] group-hover:scale-105 transition-transform duration-300"
                                         />
                                     </div>
                                 )}

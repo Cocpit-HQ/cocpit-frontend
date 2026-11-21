@@ -143,11 +143,11 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
             ref={listRef} 
             onScroll={handleScroll}
             className={cn(
-                "w-full max-w-[560px] h-[168px] self-stretch flex flex-col items-start pl-[12px] pr-0 py-0 gap-[8px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden box-border",
+                "w-full h-[168px] self-stretch flex flex-col items-start pl-[12px] pr-0 py-0 gap-[8px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden box-border",
                 className
             )}
         >
-            {/* ── User rows (Frame 2609539: 548px × 36px, gap 8px) ── */}
+            {/* ── User rows ── */}
             {users.map((user, index) => {
                 const isActive = index === activeIndex;
                 const displayName = user.full_name || user.account_name || "User";
@@ -169,7 +169,7 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                         onMouseEnter={() => onHoverIndex(index)}
                         onClick={() => onSelect(user)}
                         className={cn(
-                            "w-full max-w-[548px] h-[36px] self-stretch shrink-0 flex flex-row justify-between items-center p-0 gap-[8px] cursor-pointer transition-colors duration-150 box-border group",
+                            "w-full h-[36px] self-stretch shrink-0 flex flex-row justify-between items-center p-0 gap-[8px] cursor-pointer transition-colors duration-150 box-border group",
                             isActive
                                 ? "opacity-100"
                                 : "opacity-80 hover:opacity-100"

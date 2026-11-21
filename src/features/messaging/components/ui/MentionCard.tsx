@@ -106,68 +106,48 @@ export function Mention({ username, isMe, children }: MentionProps) {
       {/* Portaled by default in Radix, prevents overflow issues */}
       <HoverCardContent 
         side="top" 
-        align="start" 
+        align={isMe ? "end" : "start"} 
         sideOffset={6}
-        className="w-72  bg-popover/95 backdrop-blur-xl border-white/10 shadow-2xl rounded-2xl will-change-[opacity,transform] z-[100]"
+        collisionPadding={12}
+        className="w-72 bg-[var(--ds-bg)] border border-[var(--ds-border)] shadow-xl rounded-2xl p-3 will-change-[opacity,transform] z-[100] text-[var(--ds-text-primary)] font-['DM_Sans'] outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {isLoading ? (
-           <div className="flex flex-col items-center justify-center py-6 gap-3">
-             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-             <p className="text-xs font-medium text-muted-foreground">Loading profile...</p>
+           <div className="flex flex-col items-center justify-center py-4 gap-2">
+             <Loader2 className="w-5 h-5 animate-spin text-[var(--ds-accent)]" />
+             <p className="text-xs font-medium text-[var(--ds-text-secondary)]">Loading profile...</p>
            </div>
         ) : userData ? (
           <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-start gap-2">
-              <Avatar className="w-10 h-10 border border-white/10 shadow-sm ring-2 ring-background">
+            <div className="flex items-start gap-2.5">
+              <Avatar className="w-10 h-10 border border-[var(--ds-border)] bg-[var(--ds-surface-1)] shrink-0">
                 <AvatarImage src={userData.avatar_url || ""} alt={userData.full_name} className="object-cover" />
-                <AvatarFallback className="bg-primary/10 text-primary font-medium text-lg">
+                <AvatarFallback className="bg-[var(--ds-surface-1)] text-[var(--ds-text-primary)] font-medium text-sm">
                   {userData.full_name.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0 ">
-                <h4 className="text-[15px] font-semibold text-foreground truncate leading-tight">
+              <div className="flex-1 min-w-0">
+                <h4 className="text-[14px] font-semibold text-[var(--ds-text-primary)] truncate leading-tight font-['DM_Sans']">
                   {userData.full_name}
                 </h4>
-                <p className="text-xs text-[var(--primary-tint-foreground)] font-medium truncate mt-0.5">
+                <p className="text-xs text-[var(--ds-text-secondary)] font-normal truncate mt-0.5 font-['DM_Sans']">
                   @{userData.account_name}
                 </p>
                 {userData.headline && (
-                  <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-snug">
+                  <p className="text-xs text-[var(--ds-text-secondary)] mt-1 line-clamp-2 leading-snug font-['DM_Sans']">
                     {userData.headline}
                   </p>
                 )}
               </div>
             </div>
-            
-            {/* <div className="flex items-center gap-2 mt-1">
-              <Button 
-                variant="default" 
-                size="sm" 
-                className="flex-1 h-8 rounded-full text-xs font-medium hover:scale-[1.02] active:scale-[0.98] transition-transform"
-                onClick={handleMessage}
-              >
-                <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-                Message
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 h-8 rounded-full text-xs font-medium border-white/10 hover:bg-white/5 hover:scale-[1.02] active:scale-[0.98] transition-transform"
-                onClick={handleNavigateToProfile}
-              >
-                <User className="w-3.5 h-3.5 mr-1.5" />
-                Profile
-              </Button>
-            </div> */}
           </div>
         ) : (
-          <div className="py-6 text-center animate-in fade-in">
-             <div className="w-10 h-10 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-3">
-               <User className="w-5 h-5 text-muted-foreground/50" />
+          <div className="py-4 text-center animate-in fade-in">
+             <div className="w-8 h-8 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-full flex items-center justify-center mx-auto mb-2">
+               <User className="w-4 h-4 text-[var(--ds-text-secondary)]" />
              </div>
-             <p className="text-sm text-foreground font-medium">User not found</p>
-             <p className="text-xs text-muted-foreground mt-1">This account may have been removed.</p>
+             <p className="text-xs text-[var(--ds-text-primary)] font-medium font-['DM_Sans']">User not found</p>
+             <p className="text-[11px] text-[var(--ds-text-secondary)] mt-0.5 font-['DM_Sans']">This account may have been removed.</p>
           </div>
         )}
       </HoverCardContent>

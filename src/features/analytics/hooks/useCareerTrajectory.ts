@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { MOCK_TRAJECTORY, MOCK_STUDENT_TRAJECTORY } from '../data/mock-data';
+import { MOCK_TRAJECTORY, MOCK_STUDENT_TRAJECTORY } from '../utils/mock-data';
 import { CareerTrajectorySnapshot } from '../types/trajectory.types';
 // import api from "@/lib/axios"; // use api when endpoint is ready
 
